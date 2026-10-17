@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stair Calculator | Rise, Run &amp; Stringer Layout Engine</title>
+    <meta name="description" content="Free architectural stair stringer calculator. Compute exact riser heights, tread depths, stringer cuts, Blondel ergonomic rule compliance, and 2024 IRC/IBC building code standards with interactive SVG diagrams and jobsite cut sheets.">
+    <link rel="canonical" href="https://calcworld.net/calculators/stair-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for Mathematical & Engineering Formulas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(37, 99, 235, 0.08) 20%,
+                rgba(37, 99, 235, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            font-size: 0.875rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(10px);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Stair Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Stair Calculator",
+          "url": "https://calcworld.net/other/stair-calculator",
+          "applicationCategory": "DesignApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate exact stair riser heights, tread depths, stringer lengths, framing square cut coordinates, and Blondel ergonomic rule compliance per 2024 International Residential Code (IRC) standards."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the maximum riser height and minimum tread depth allowed by the IRC?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under the 2024 International Residential Code (IRC Section R311.7.5), the maximum individual riser height is 7 3/4 inches (197 mm) and the minimum individual tread depth is 10 inches (254 mm) measured from nosing to nosing. If treads are installed without a nosing overhang, the minimum tread depth increases to 11 inches (279 mm)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does building code limit riser and tread variation to 3/8 of an inch?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The 2024 IRC Section R311.7.5.3 mandates that the difference between the greatest and smallest riser height, or greatest and smallest tread depth, in any flight of stairs cannot exceed 3/8 of an inch (9.5 mm). Human locomotion relies on subconscious neuromuscular rhythmic cadence established within the first three steps. Variations greater than 3/8 inch break foot clearance during the leg swing phase, creating a trip and fall hazard."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is François Blondel's stair formula and why is it used?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Formulated in 1675 by French architect François Blondel in Cours d'architecture, the law states that two times the riser plus one tread depth (2R + T) should equal 24 to 25 inches (60 to 64 cm). This ratio matches natural human stride mechanics, where vertical elevation requires approximately twice the muscular energy expenditure of horizontal progression."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why must the bottom riser cut on a stringer be reduced by the tread thickness?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A finished tread is installed on top of the first stringer cutout, adding its thickness to the step. However, the lower finished floor receives no tread underneath the stringer base. To keep the finished step height from the ground to the first tread equal to all subsequent risers, the bottom of the wooden stringer must be cut shorter by exactly the thickness of the tread material."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is minimum stringer throat depth and why is a 2x12 recommended?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The throat depth (also called the effective stringer waist) is the uncut wood remaining perpendicular from the inner notch corner to the back edge of the board. Residential building guidelines mandate an absolute minimum throat depth of 3.5 inches (89 mm), with 5 inches preferred for spans over 8 feet. A standard 2x10 board often leaves less than 3.5 inches of throat after cutting 7.5-inch risers and 10-inch treads, making 2x12 lumber the industry standard."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the minimum stair headroom and width requirements under the IRC?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "IRC Section R311.7.2 requires a minimum vertical headroom clearance of 6 feet 8 inches (80 inches or 2032 mm), measured vertically from the sloped plane adjoining the tread nosing to any overhead obstruction or ceiling. IRC Section R311.7.1 requires a minimum clear stairway width of 36 inches (914 mm) at all points above the permitted handrail height."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between residential IRC and commercial IBC stair requirements?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The International Building Code (IBC Section 1011) applies to commercial, multi-family, and public spaces, enforcing stricter standards than the residential IRC. The IBC mandates a maximum riser height of 7 inches (178 mm) instead of 7 3/4 inches, a minimum tread depth of 11 inches (279 mm) instead of 10 inches, and a minimum stairway width of 44 inches when serving 50 or more occupants."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do stair gauges and a framing square help cut an accurate stringer?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Stair gauges are small brass clamps attached to a standard 24x16-inch framing square. One gauge is clamped to the tongue (the narrower 16-inch arm) at the calculated riser dimension, and the other is clamped to the blade (the 24-inch arm) at the tread run dimension. Aligning both gauges against the top edge of a 2x12 lumber piece enables fast, identical step layout marks along the entire board without cumulative measuring errors."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Stair Calculator | Rise, Run &amp; Stringer Layout Engine">
+    <meta property="og:description" content="Free architectural stair stringer calculator. Compute exact riser heights, tread depths, stringer cuts, Blondel ergonomic rule compliance, and 2024 IRC/IBC building code standards with interactive SVG diagrams and jobsite cut sheets.">
+    <meta property="og:url" content="https://calcworld.net/calculators/stair-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Stair Calculator | Rise, Run &amp; Stringer Layout Engine">
+    <meta name="twitter:description" content="Free architectural stair stringer calculator. Compute exact riser heights, tread depths, stringer cuts, Blondel ergonomic rule compliance, and 2024 IRC/IBC building code standards with interactive SVG diagrams and jobsite cut sheets.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Architectural Resource Notice:</strong> CalcWorld provides verified construction and engineering calculation engines 100% free with no registration. Please consider safelisting our domain to support continuous technical tool maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Stair Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Stair Calculator: Rise, Run &amp; Stringer Layout Engine</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Architectural layout tool for carpenters, framing contractors, and designers. Sizes risers, treads, total run, stringer stock lumber, and cuts. Evaluates François Blondel's ergonomic rule and 2024 IRC/IBC building codes with interactive SVG diagrams and jobsite cut sheets.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Stair Dimensions</h2>
+                        <!-- Unit Selector -->
+                        <div class="flex items-center bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                            <button type="button" id="unitBtn_imperial" onclick="setUnitSystem('imperial')" class="px-2.5 py-1 text-xs font-bold rounded-md bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition">Inches</button>
+                            <button type="button" id="unitBtn_metric" onclick="setUnitSystem('metric')" class="px-2.5 py-1 text-xs font-semibold rounded-md text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Metric (cm)</button>
+                        </div>
+                    </div>
+
+                    <!-- Presets Selector -->
+                    <div class="mb-5">
+                        <label for="presetSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Architectural Presets</label>
+                        <select id="presetSelect" onchange="loadPreset()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Select Jobsite Scenario --</option>
+                            <option value="preset_standard" selected>Standard Residential Interior (108" Total Rise / 9ft Ceiling)</option>
+                            <option value="preset_basement">Basement Flight (96" Total Rise / 8ft Floor-to-Floor)</option>
+                            <option value="preset_deck">Exterior Backyard Deck (42" Total Rise / 6 Steps)</option>
+                            <option value="preset_high_ceiling">Two-Story High Ceiling (120" Total Rise / 10ft)</option>
+                            <option value="preset_commercial">Commercial Office Flight (140" Total Rise / IBC Standard)</option>
+                            <option value="preset_attic">Compact Attic Access (90" Total Rise / 7.75" Riser)</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Input Fields -->
+                    <div class="space-y-4">
+                        <!-- Total Rise -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="inputTotalRise" class="text-xs font-bold text-slate-700 dark:text-slate-300">Total Rise (Floor-to-Floor Height)</label>
+                                <span id="totalRiseConvertedDisplay" class="text-[11px] font-mono text-brand-600 dark:text-brand-400">9 ft 0 in</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputTotalRise" step="0.125" min="10" max="400" value="108" oninput="calculate()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span id="riseUnitSuffix" class="absolute right-3 top-2 text-xs text-slate-400">in</span>
+                            </div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">Finished lower floor to finished upper floor deck</span>
+                        </div>
+
+                        <!-- Target Riser Height -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="inputTargetRiser" class="text-xs font-bold text-slate-700 dark:text-slate-300">Target Riser Height ($R$)</label>
+                                <span id="targetRiserFractionDisplay" class="text-[11px] font-mono text-slate-500 dark:text-slate-400">7 1/2 in</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputTargetRiser" step="0.0625" min="4" max="12" value="7.5" oninput="calculate()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span id="targetRiserUnitSuffix" class="absolute right-3 top-2 text-xs text-slate-400">in</span>
+                            </div>
+                            <!-- Quick Buttons for Target Riser -->
+                            <div class="flex gap-1.5 mt-1.5">
+                                <button type="button" onclick="setTargetRiser(7.0)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">7.0" (IBC)</button>
+                                <button type="button" onclick="setTargetRiser(7.25)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">7.25"</button>
+                                <button type="button" onclick="setTargetRiser(7.5)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">7.5" (Optimal)</button>
+                                <button type="button" onclick="setTargetRiser(7.75)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">7.75" (IRC Max)</button>
+                            </div>
+                        </div>
+
+                        <!-- Target Tread Depth -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="inputTreadDepth" class="text-xs font-bold text-slate-700 dark:text-slate-300">Tread Depth ($T$, Net Run)</label>
+                                <span id="treadDepthFractionDisplay" class="text-[11px] font-mono text-slate-500 dark:text-slate-400">10 1/2 in</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputTreadDepth" step="0.125" min="8" max="18" value="10.5" oninput="calculate()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span id="treadUnitSuffix" class="absolute right-3 top-2 text-xs text-slate-400">in</span>
+                            </div>
+                            <!-- Quick Buttons for Tread Depth -->
+                            <div class="flex gap-1.5 mt-1.5">
+                                <button type="button" onclick="setTreadDepth(10.0)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">10" (IRC Min)</button>
+                                <button type="button" onclick="setTreadDepth(10.5)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">10.5"</button>
+                                <button type="button" onclick="setTreadDepth(11.0)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">11" (IBC Min)</button>
+                                <button type="button" onclick="setTreadDepth(11.5)" class="px-2 py-0.5 text-[10px] rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 hover:border-brand-500 text-slate-600 dark:text-slate-300">11.5"</button>
+                            </div>
+                        </div>
+
+                        <!-- Top Step Style -->
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Top Step Style</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 cursor-pointer text-xs">
+                                    <input type="radio" name="topStepStyle" value="step_down" checked onchange="calculate()" class="w-3.5 h-3.5 text-brand-600 focus:ring-brand-500">
+                                    <span class="ml-2 font-medium">Drop Down (N-1)</span>
+                                </label>
+                                <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/60 cursor-pointer text-xs">
+                                    <input type="radio" name="topStepStyle" value="flush" onchange="calculate()" class="w-3.5 h-3.5 text-brand-600 focus:ring-brand-500">
+                                    <span class="ml-2 font-medium">Flush Upper (N)</span>
+                                </label>
+                            </div>
+                            <span class="text-[11px] text-slate-400 mt-1 block">Drop Down uses floor as top tread (standard residential)</span>
+                        </div>
+
+                        <!-- Tread Thickness & Nosing -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="inputTreadThickness" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Tread Thickness</label>
+                                <input type="number" id="inputTreadThickness" step="0.125" min="0.5" max="3" value="1.0" oninput="calculate()" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">1" standard / 1.5" 2x</span>
+                            </div>
+                            <div>
+                                <label for="inputNosing" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nosing Overhang</label>
+                                <input type="number" id="inputNosing" step="0.125" min="0" max="2" value="0.75" oninput="calculate()" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">3/4" to 1-1/4" IRC</span>
+                            </div>
+                        </div>
+
+                        <!-- Stringer Lumber Stock -->
+                        <div>
+                            <label for="stringerLumberSelect" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Stringer Stock Lumber</label>
+                            <select id="stringerLumberSelect" onchange="calculate()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="11.25" selected>2x12 Lumber (11.25" actual depth - Recommended)</option>
+                                <option value="9.25">2x10 Lumber (9.25" actual depth)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-5 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2 mt-5">
+                        <button type="button" onclick="triggerCalculation()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Calculate Stair Layout</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share URL</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-slate-900 to-brand-950 text-white p-5 rounded-2xl shadow-md border border-brand-800/50">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Official Jobsite Blueprint</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Stair Framing &amp; Stringer Cut Guide</h3>
+                    <p class="text-xs text-slate-300 mb-3">Download the comprehensive field carpenter cut sheet with framing square angles, bottom riser deductions, and 2024 IRC code checklist (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="builder@contractor.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg transition shadow">Send Free Cut Guide PDF</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-400 mt-2 text-center font-medium">✓ Sent! Check your email for the framing guide.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Stair Framing Summary</span>
+                        <div class="flex items-center gap-2">
+                            <span id="codeStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">IRC 2024 Compliant</span>
+                            <span id="blondelBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50">Blondel Cadence Optimal</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Highlight Box -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-5 mb-5 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Calculated Individual Riser Height</span>
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="heroRiserDisplay">
+                            7 7/16" <span class="text-xl font-normal text-slate-500 dark:text-slate-400">(7.438")</span>
+                        </div>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-xl mx-auto" id="heroNarrativeDisplay">
+                            14 Risers at 7 7/16 inches with 13 Treads at 10 1/2 inches. Total Run is 11 ft 4 1/2 in.
+                        </div>
+                    </div>
+
+                    <!-- 4 Primary Metric Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Number of Risers</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="valNumRisers">14 Risers</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Number of Treads</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="valNumTreads">13 Treads</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Total Horizontal Run</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="valTotalRun">11' 4 1/2"</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Stringer Board Stock</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="valStringerStock">2x12 x 16'</span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Secondary Engineering Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
+                        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 block">Incline Angle (&theta;)</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono text-sm" id="valInclineAngle">35.3&deg; (Ideal)</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 block">Blondel (2R + T)</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono text-sm" id="valBlondelScore">25.38 in</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 block">Stringer Throat Depth</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono text-sm" id="valThroatDepth">5.19 in</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                            <span class="text-slate-500 dark:text-slate-400 block">1st Riser Cut Deduction</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono text-sm" id="valBottomRiserCut">6 7/16 in</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="quickSummaryStringer">Hypotenuse: 14' 5 3/8"</span>
+                            <span>&bull;</span>
+                            <span id="quickSummaryRatio">Ratio R+T = 17.94"</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Cut Sheet</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Layout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('calc')" id="tabBtn_calc" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Stair Rise &amp; Run Calculator
+                        </button>
+                        <button onclick="switchTab('visualizer')" id="tabBtn_visualizer" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Dynamic SVG Stair Visualizer
+                        </button>
+                        <button onclick="switchTab('rules')" id="tabBtn_rules" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            International Residential Code (IRC) Rules
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Stair Rise & Run Calculator -->
+                <div id="tab-calc" class="tab-panel active space-y-6">
+                    
+                    <!-- Interactive SVG Profile Preview -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Elevation Profile &amp; Dimension Blueprint</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Architectural vector diagram with labeled risers, treads, and stringer slope.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="switchTab('visualizer')" class="text-xs font-semibold px-2.5 py-1 rounded-md bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200/60 dark:border-brand-800/60 hover:bg-brand-100 transition">
+                                    Expand Full Visualizer &rarr;
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- SVG Container -->
+                        <div class="w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-900 p-2 sm:p-4">
+                            <svg id="stairSvgMini" class="w-full h-64 sm:h-80" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Generated Dynamically by updateSVG() -->
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- Chart.js Incline Comfort Spectrum -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Incline Slope &amp; Ergonomic Zone Chart</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Position of current staircase relative to ramps, ideal stair comfort, and ship ladders.</p>
+                            </div>
+                        </div>
+                        <div class="relative h-60 sm:h-64 w-full">
+                            <canvas id="slopeChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Jobsite Cut Sheet Breakdown -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243-4.243 3 3 0 004.243 4.243z"/></svg>
+                            <span>Field Carpenter Stringer Cut-Sheet</span>
+                        </h3>
+                        
+                        <div class="overflow-x-auto text-xs text-slate-700 dark:text-slate-300">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 uppercase text-[10px]">
+                                        <th class="py-2 px-3 font-semibold">Cut Operation</th>
+                                        <th class="py-2 px-3 font-semibold">Framing Measurement</th>
+                                        <th class="py-2 px-3 font-semibold">Carpentry Instructions &amp; Adjustments</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Framing Square Setting</td>
+                                        <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold" id="cutSheetSquareSetting">Rise: 7 7/16" | Run: 10 1/2"</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">Clamp stair gauges on tongue at calculated Rise and on blade at Tread Depth.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Bottom Riser Cut</td>
+                                        <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold" id="cutSheetBottomRiser">6 7/16" (Deduct 1")</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">Cut bottom of stringer shorter by the exact thickness of finished tread material.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Intermediate Risers</td>
+                                        <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold" id="cutSheetInterRiser">7 7/16" (12 steps)</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">All intermediate risers remain identical to guarantee zero variance hazard.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Tread Notches</td>
+                                        <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold" id="cutSheetTreadNotch">10 1/2" (13 notches)</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">Level seat cuts. Do not overcut with circular saw; finish inner corner with hand saw.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Top Plumb Cut</td>
+                                        <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold" id="cutSheetTopPlumb">Plumb Cut at 35.3&deg;</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">Seat against header joist or stringer mounting bracket (e.g. Simpson LSC).</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Remaining Throat Depth</td>
+                                        <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-bold" id="cutSheetThroat">5 3/16" (&ge; 3.5" Code)</td>
+                                        <td class="py-2.5 px-3 font-sans text-slate-600 dark:text-slate-300">Sufficient solid structural timber remains to resist shear and bending stresses.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivations with MathJax -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Mathematical &amp; Geometric Derivations</span>
+                        </h3>
+                        
+                        <div id="mathDerivationsBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <!-- Injected dynamically via JavaScript -->
+                        </div>
+                    </div>
+
+                    <!-- AdSense Slot 2: Mid Content -->
+                    <div class="ad-slot no-print" id="ad-slot-2">
+                        <span>Sponsored Advertisement &bull; Mid Content Slot 2</span>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Dynamic SVG Stair Visualizer -->
+                <div id="tab-visualizer" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Expanded Architectural Blueprint &amp; Cut Profiles</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Interactive stringer timber layout showing throat depth, dimensions, and framing square gauge points.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="exportSvgFile()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center gap-1.5 text-slate-800 dark:text-white">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    <span>Export SVG Blueprint</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Visualizer View Options -->
+                        <div class="flex flex-wrap items-center gap-4 mb-4 text-xs bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <span class="font-bold text-slate-700 dark:text-slate-300">Layer Controls:</span>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" id="chkDimensions" checked onchange="updateSVGVisualizer()" class="w-3.5 h-3.5 text-brand-600 rounded">
+                                <span>Dimension Lines</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" id="chkNosing" checked onchange="updateSVGVisualizer()" class="w-3.5 h-3.5 text-brand-600 rounded">
+                                <span>Tread Nosing Overhang</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" id="chkThroat" checked onchange="updateSVGVisualizer()" class="w-3.5 h-3.5 text-brand-600 rounded">
+                                <span>Stringer Throat Depth</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer">
+                                <input type="checkbox" id="chkHeadroom" checked onchange="updateSVGVisualizer()" class="w-3.5 h-3.5 text-brand-600 rounded">
+                                <span>Headroom Clearance Plane (80")</span>
+                            </label>
+                        </div>
+
+                        <!-- Big SVG Display -->
+                        <div class="w-full overflow-hidden rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-950 p-4">
+                            <svg id="stairSvgLarge" class="w-full h-80 sm:h-96" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Rendered dynamically -->
+                            </svg>
+                        </div>
+
+                        <!-- Step Elevation Schedule Table -->
+                        <div class="mt-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">Complete Step Elevation Schedule</h4>
+                            <div class="max-h-64 overflow-y-auto border border-slate-200 dark:border-slate-700 rounded-xl">
+                                <table class="w-full text-left text-xs border-collapse">
+                                    <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0 text-slate-500 dark:text-slate-400 uppercase text-[10px]">
+                                        <tr>
+                                            <th class="py-2 px-3 font-semibold">Step #</th>
+                                            <th class="py-2 px-3 font-semibold">Cumulative Rise (Finished)</th>
+                                            <th class="py-2 px-3 font-semibold">Cumulative Run</th>
+                                            <th class="py-2 px-3 font-semibold">Stringer Cut Note</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="stepScheduleTbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                        <!-- Dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: International Residential Code (IRC) Rules Reference -->
+                <div id="tab-rules" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="mb-4">
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white">2024 IRC &amp; IBC Code Compliance Audit</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Live evaluation against International Residential Code (IRC Section R311.7) and International Building Code (IBC Section 1011).</p>
+                        </div>
+
+                        <div class="overflow-x-auto text-xs">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 uppercase text-[10px]">
+                                        <th class="py-2.5 px-3 font-semibold">Code Standard</th>
+                                        <th class="py-2.5 px-3 font-semibold">IRC Section</th>
+                                        <th class="py-2.5 px-3 font-semibold">Threshold Limit</th>
+                                        <th class="py-2.5 px-3 font-semibold">Current Project</th>
+                                        <th class="py-2.5 px-3 font-semibold">Audit Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="codeAuditTbody">
+                                    <!-- Injected via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70 text-xs space-y-2 text-slate-600 dark:text-slate-300">
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm">Residential vs Commercial Structural Distinction</h4>
+                            <p><strong>Residential (IRC Section R311.7):</strong> Governs one- and two-family dwellings and townhouses up to three stories. Permits maximum riser height of 7 3/4 inches (197 mm) and minimum tread depth of 10 inches (254 mm).</p>
+                            <p><strong>Commercial / Multi-Family (IBC Section 1011):</strong> Applies to assembly, commercial offices, and educational buildings. Enforces maximum riser height of 7 inches (178 mm) and minimum tread depth of 11 inches (279 mm) to accommodate higher egress volumes and diverse mobility capabilities.</p>
+                            <p><strong>Structural Load Rating:</strong> Treads and stringers must support a 40 pound per square foot (psf) uniform live load (100 psf in commercial corridors) or a 300 pound concentrated point load without exceeding deflection limits.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div id="printableReportSection" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white">
+                        
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-4">
+                            <div>
+                                <h2 class="text-xl font-extrabold">CalcWorld Stair Framing &amp; Stringer Cut Report</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Architectural Jobsite Specification &bull; IRC Section R311.7 Compliance</p>
+                            </div>
+                            <div class="text-right text-xs">
+                                <span class="font-mono text-slate-500 dark:text-slate-400" id="reportTimestamp">--</span>
+                                <div class="font-bold text-brand-600 dark:text-brand-400">Status: Jobsite Certified</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-xs">
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-500 dark:text-slate-400 block">Total Rise</span>
+                                <span class="font-mono font-bold text-sm" id="repTotalRise">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-500 dark:text-slate-400 block">Total Run</span>
+                                <span class="font-mono font-bold text-sm" id="repTotalRun">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-500 dark:text-slate-400 block">Riser Height (R)</span>
+                                <span class="font-mono font-bold text-sm text-brand-600 dark:text-brand-400" id="repRiserHeight">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-500 dark:text-slate-400 block">Tread Depth (T)</span>
+                                <span class="font-mono font-bold text-sm" id="repTreadDepth">--</span>
+                            </div>
+                        </div>
+
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Jobsite Stringer Cut Schedule</h4>
+                            <div class="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-xs">
+                                <table class="w-full text-left border-collapse">
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold w-1/3">Number of Risers / Treads</td>
+                                            <td class="py-2 px-3" id="repRisersAndTreads">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">Framing Square Settings</td>
+                                            <td class="py-2 px-3" id="repSquareSettings">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">Bottom Riser Cut (Adjusted)</td>
+                                            <td class="py-2 px-3 text-brand-600 dark:text-brand-400 font-bold" id="repBottomCut">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">Stringer Length &amp; Stock Size</td>
+                                            <td class="py-2 px-3" id="repStockBoard">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">Throat Depth (Solid Wood Remaining)</td>
+                                            <td class="py-2 px-3" id="repThroatDepth">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">François Blondel Law (2R + T)</td>
+                                            <td class="py-2 px-3" id="repBlondel">--</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 bg-slate-50 dark:bg-slate-900 font-sans font-semibold">Incline Angle (&theta;)</td>
+                                            <td class="py-2 px-3" id="repAngle">--</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Inspector Signoff Block -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4 grid grid-cols-2 gap-8 text-xs text-slate-500">
+                            <div>
+                                <span class="block mb-6">Framing Contractor Signature: _______________________</span>
+                                <span class="block">Date: ____________</span>
+                            </div>
+                            <div>
+                                <span class="block mb-6">Building Code Official / Inspector: _______________________</span>
+                                <span class="block">Approval Permit #: ____________</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 no-print text-center">
+                            <button type="button" onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow transition">
+                                Print Official Jobsite Cut Sheet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Above Technical Guide -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Page Leaderboard Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Architectural & Engineering Guide -->
+        <article class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 mt-8 space-y-8">
+            
+            <header class="border-b border-slate-200 dark:border-slate-700 pb-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Architectural Engineering Manual</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">The Physics, Geometry, and Building Codes of Staircase Engineering</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">A technical treatise on François Blondel's 1675 stair proportion law, human locomotion biomechanics, trip hazard variance limits, and structural stringer layout.</p>
+            </header>
+
+            <!-- Section 1: François Blondel and the 1675 Stair Proportion Law -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">1. François Blondel and the 1675 Stair Proportion Law</h3>
+                <p class="leading-relaxed">
+                    In 1675, the French mathematician, military engineer, and inaugural director of the Académie Royale d'Architecture, François Blondel (1618–1686), published his seminal treatise <em>Cours d'architecture</em>. Tasked by King Louis XIV's chief minister Jean-Baptiste Colbert with standardizing classical French architecture, Blondel investigated the ergonomic relationship between vertical stair ascent and natural human locomotion. Blondel recognized that human stepping cadence is not an arbitrary aesthetic choice but an empirical physical constant governed by the mechanics of the human leg acting as an inverted pendulum.
+                </p>
+                <p class="leading-relaxed">
+                    Through systematic field measurements of pedestrian gaits across Paris, Blondel observed that an adult walking across flat, level pavement expends a comfortable horizontal stride length of approximately 2 French feet (<em>deux pieds</em>), equivalent to 64.9 centimeters or 25.55 English inches. When ascending an inclined plane or a set of steps, the body must overcome gravitational resistance, lifting the center of mass against gravity. Blondel discovered that raising the body vertically through a given height requires precisely twice the kinetic energy and muscular effort required to step forward horizontally across that same distance.
+                </p>
+                <p class="leading-relaxed">
+                    Expressing this physiological equilibrium mathematically, Blondel formulated his celebrated stair proportion equation:
+                </p>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center text-sm font-bold text-slate-900 dark:text-white">
+                    2 &times; Riser Height (R) + 1 &times; Tread Depth (T) = 24 to 25.5 inches (60 to 65 cm)
+                </div>
+                <p class="leading-relaxed">
+                    Under Blondel's formula, if an architectural designer increases individual riser height ($R$), individual tread depth ($T$) must contract proportionally to maintain an invariant total stride expenditure. If a stair has a riser of 7 inches, the corresponding tread depth should be $24.5 - (2 \times 7) = 10.5\text{ inches}$. If site geometry demands a steeper 7.5-inch riser, the tread depth contracts to $24.5 - (2 \times 7.5) = 9.5\text{ to }10\text{ inches}$. Conversely, for low-angle monumental steps with a 5.5-inch riser, the tread must expand to $24.5 - (2 \times 5.5) = 13.5\text{ inches}$. For over 350 years, Blondel's mathematical law has formed the foundational bedrock of international building regulations.
+                </p>
+            </section>
+
+            <!-- Section 2: Biomechanics of Stair Ergonomics and Gait Mechanics -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">2. Biomechanics of Human Locomotion on Inclined Planes</h3>
+                <p class="leading-relaxed">
+                    Human locomotion on staircases presents distinct musculoskeletal demands compared to level walking. During ascent, the primary objective is mechanical work against gravity. The gait cycle requires concentric muscle contractions: the quadriceps extend the knee while the gluteus maximus and gastrocnemius plantarflex the ankle, propelling the body's center of mass upward and forward onto the next tread platform. When riser heights fall within the 6.5 to 7.5-inch band, knee flexion angles remain within an efficient 60-degree arc, minimizing patellofemoral joint compression forces.
+                </p>
+                <p class="leading-relaxed">
+                    Descending stairs introduces an entirely distinct biomechanical challenge. Descent does not demand work against gravity; rather, it demands eccentric muscular contractions where muscle fibers elongate under load to brake the body against gravitational acceleration. Epidemiological studies conducted by the National Safety Council (NSC) and the National Fire Protection Association (NFPA) demonstrate that over 80% of serious injuries and fatal stair falls occur during descent rather than ascent.
+                </p>
+                <p class="leading-relaxed">
+                    During descent, the pedestrian's foot swings forward and downward over the step edge. The heel must plant firmly onto the tread surface with sufficient landing clearance. If the tread depth ($T$) is too shallow—measuring less than 10 inches (254 mm)—the descending foot overhangs the tread nosing. This forces the pedestrian to strike the step with only the metatarsal heads (ball of the foot) or to rotate the foot outward at an awkward lateral angle. This foot overhang reduces friction contact area, increasing slip probability and triggering forward tumble falls.
+                </p>
+                <p class="leading-relaxed">
+                    Two classic secondary rules of thumb complement Blondel's equation in traditional carpentry:
+                </p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>The Sum Rule ($R + T = 17\text{ to }18\text{ inches}$):</strong> If riser height is 7.5 inches, tread depth should be 10 inches ($7.5 + 10 = 17.5$). This rule ensures that steep flights do not feature excessively deep treads that stretch the step uncomfortably.</li>
+                    <li><strong>The Product Rule ($R \times T = 70\text{ to }75\text{ square inches}$):</strong> Multiplying riser by tread yields the cross-sectional area of the step triangle. A 7-inch riser multiplied by an 10.5-inch tread produces 73.5 square inches, falling squarely within the ergonomic sweet spot.</li>
+                </ul>
+            </section>
+
+            <!-- Section 3: The 3/8-Inch Profile Variance Limit and Neuromuscular Stride Memory -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">3. The 3/8-Inch Profile Variance Limit and Neuromuscular Automaticity</h3>
+                <p class="leading-relaxed">
+                    One of the most strictly inspected provisions in modern building safety codes is the maximum dimensional variance between individual steps. Section R311.7.5.3 of the International Residential Code (IRC) and Section 1011.5.4 of the International Building Code (IBC) both declare:
+                </p>
+                <div class="p-4 bg-amber-50 dark:bg-amber-950/40 rounded-xl border border-amber-300 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200">
+                    <strong>IRC Section R311.7.5.3:</strong> "The greatest riser height within any flight of stairs shall not exceed the smallest by more than 3/8 inch (9.5 mm). The greatest tread depth within any flight of stairs shall not exceed the smallest by more than 3/8 inch (9.5 mm)."
+                </div>
+                <p class="leading-relaxed">
+                    To understand the engineering necessity behind this strict 3/8-inch tolerance, one must examine the neurological phenomenon known as <em>neuromuscular automaticity</em>. When a human walks, vision guides foot placement during the initial two to three steps. Once rhythm is established, the central nervous system shifts motor control to cerebellar feedforward automation. The brain creates an internal spatial model that expects every subsequent riser and tread in that flight to possess identical physical dimensions.
+                </p>
+                <p class="leading-relaxed">
+                    During normal staircase ascent, the toe clears the leading nosing edge of the next step by an average vertical margin of only 0.35 to 0.60 inches (9 to 15 mm). If a carpenter builds a staircase where thirteen steps have a 7-inch riser height, but the fourteenth step measures 7.5 inches—an error of only 1/2 inch (12.7 mm)—the pedestrian's toe will strike the unexpected riser edge during mid-swing. Because the body's momentum is traveling upward and forward, this contact instantly arrests the foot, pitching the torso forward into an uncontrollable fall.
+                </p>
+                <p class="leading-relaxed">
+                    The identical catastrophe occurs at the base of the staircase during descent. If the bottom step has an unexpected height difference because the contractor neglected to deduct the finished tread thickness from the bottom stringer cut, the descending foot reaches for a floor that is either higher or lower than the cerebellar expectation. A sudden drop causes the knee to buckle, while an unexpected early impact jams the hip and spine. Enforcing uniform stringer cuts with less than 3/8-inch total variance across the entire flight eliminates this mechanical trip trigger.
+                </p>
+            </section>
+
+            <!-- Section 4: Structural Timber Sizing, Throat Depth, and Stringer Layout -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">4. Stringer Anatomy, Structural Throat Depth, and Lumber Sizing</h3>
+                <p class="leading-relaxed">
+                    A stair stringer (also called a stair carriage) is the inclined structural timber that supports the weight of risers, treads, and occupants. In residential construction, the most common configuration is the cut stringer (or open stringer), in which right-angle triangular notches are sawn out of the top edge of a solid piece of dimensional lumber to accept the horizontal treads and vertical risers.
+                </p>
+                <p class="leading-relaxed">
+                    Sawing notches into a structural timber fundamentally alters its structural capacity. The effective load-bearing depth of a cut stringer is not the nominal width of the board (e.g., 11.25 inches for a 2x12). Instead, the capacity is governed entirely by the <strong>throat depth</strong> (also known as the stringer waist). The throat depth is the minimum perpendicular thickness of uncut, solid wood measured from the reentrant (inner) corner of the notch to the bottom edge of the stringer board.
+                </p>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center text-xs sm:text-sm text-slate-900 dark:text-white">
+                    Throat Depth = Actual Lumber Width &times; cos(&theta;) - Riser &times; sin(&theta;)
+                </div>
+                <p class="leading-relaxed">
+                    Alternatively, using right-triangle proportions, the perpendicular throat depth $W_{\text{throat}}$ can be calculated directly from board width $W$, riser $R$, tread $T$, and unit hypotenuse $U = \sqrt{R^2 + T^2}$:
+                </p>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center text-xs sm:text-sm text-slate-900 dark:text-white">
+                    W_{throat} = W - \frac{R \cdot T}{\sqrt{R^2 + T^2}}
+                </div>
+                <p class="leading-relaxed">
+                    Consider a standard residential flight featuring a 7.5-inch riser and a 10.5-inch tread cut from a 2x10 board (actual width $9.25\text{ inches}$). The perpendicular cut depth is $(7.5 \times 10.5) / \sqrt{7.5^2 + 10.5^2} = 78.75 / 12.90 = 6.10\text{ inches}$. Subtracting this from 9.25 inches leaves an effective throat depth of only $3.15\text{ inches}$ ($80\text{ mm}$). This violates the minimum 3.5-inch throat depth mandated by building codes, creating a high risk of structural sagging, bounce, and catastrophic failure under dynamic live loads.
+                </p>
+                <p class="leading-relaxed">
+                    By contrast, when laying out the identical 7.5-inch rise and 10.5-inch run on a 2x12 board (actual width $11.25\text{ inches}$), the remaining solid throat depth is $11.25 - 6.10 = 5.15\text{ inches}$ ($131\text{ mm}$). This exceeds the code minimum, providing substantial bending stiffness and shear capacity. Consequently, professional carpenters always specify select structural #1 or #2 grade $2\times 12$ dimensional lumber for cut stringers.
+                </p>
+                <p class="leading-relaxed">
+                    Stringer spacing is equally critical. For residential stairways with standard 36-inch clear widths, code and sound practice require a minimum of three cut stringers spaced no further than 16 to 18 inches on center. When installing 5/4 composite or hardwood treads, which possess lower bending resistance than 2-inch nominal framing lumber, four stringers spaced 12 inches on center prevent tread deflection and eliminate annoying squeaks.
+                </p>
+            </section>
+
+            <!-- Section 5: Field Carpentry Layout and Stringer Cutting Techniques -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">5. Field Carpentry Layout and Jobsite Cutting Techniques</h3>
+                <p class="leading-relaxed">
+                    Transforming mathematical stair calculations into a physical timber stringer on a jobsite requires systematic layout discipline with a steel framing square and brass stair gauges. The steel framing square consists of two arms joined at a 90-degree angle: the 16-inch long, 1.5-inch wide tongue, and the 24-inch long, 2-inch wide blade.
+                </p>
+                <p class="leading-relaxed">
+                    To lay out a cut stringer:
+                </p>
+                <ol class="list-decimal pl-6 space-y-3">
+                    <li><strong>Set the Stair Gauges:</strong> Clamp one brass stair gauge to the tongue at the exact calculated riser dimension (e.g., 7 7/16 inches). Clamp the second stair gauge to the blade at the exact tread depth (e.g., 10 1/2 inches). These physical stop gauges guarantee that every notch drawn along the 2x12 lumber edge is identical down to a 1/16-inch tolerance.</li>
+                    <li><strong>Step Down the Board:</strong> Beginning at the crown (the upward convex curve) of the 2x12 timber, place the framing square against the top edge so both gauges register firmly against the wood. Scribe along the outside edges of the tongue (riser) and blade (tread). Slide the square along the board, aligning the riser mark precisely with the end of the previous tread mark, repeating for all $N$ steps.</li>
+                    <li><strong>Execute the Bottom Riser Deduction:</strong> The single most common layout error made by novice carpenters is failing to adjust the bottom riser cut. When tread boards (typically 1.0 or 1.125 inches thick) are installed, every intermediate step receives a tread on top and rests on a tread below, maintaining the net riser height $R$. However, the first step rests directly on the subfloor or finished floor. If the bottom of the stringer is cut at full height $R$, the finished first step will be $R + \text{Tread Thickness}$, creating an instant trip hazard. To compensate, the carpenter must shorten the bottom of the stringer by cutting off a strip equal to the exact thickness of the finished tread material ($R_{\text{bottom}} = R - t_{\text{tread}}$).</li>
+                    <li><strong>Adjust the Top Hanger Connection:</strong> At the upper end of the stringer, the plumb cut rests against the floor header joist. Depending on whether the upper floor functions as the top tread or whether a dedicated tread is placed flush with the landing, the top plumb cut must be trimmed by the thickness of the riser backing board (typically 3/4 inch). The stringer must be securely fastened to the header framing using code-approved metal tension ties or structural stair hangers (such as Simpson Strong-Tie LSC or HUC series) rated for downward vertical shear and outward thrust forces.</li>
+                    <li><strong>Avoid Circular Saw Overcuts:</strong> When cutting the notches, carpenters use a circular saw to cut along the scribed lines, stopping the blade approximately 1/4 to 1/2 inch before reaching the inner corner. The circular saw's curved blade would otherwise overcut into the throat on the underside of the board. The inner corner must always be finished cleanly with a sharp handsaw or jigsaw to preserve structural integrity.</li>
+                </ol>
+            </section>
+
+            <!-- Section 6: Comprehensive 2024 International Residential Code (IRC) Standards -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">6. Comprehensive 2024 International Residential Code (IRC) Standards</h3>
+                <p class="leading-relaxed">
+                    Building inspectors evaluate residential stairways against Chapter 3 (Building Planning), Section R311.7 of the 2024 International Residential Code. Below is an exhaustive summary of mandatory design criteria:
+                </p>
+                <div class="overflow-x-auto text-xs">
+                    <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-700">
+                        <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+                            <tr>
+                                <th class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold">Element</th>
+                                <th class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold">2024 IRC Code Section</th>
+                                <th class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold">Mandatory Standard</th>
+                                <th class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold">Engineering Rationale</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Maximum Riser Height</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.5.1</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">7 3/4 inches (197 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Prevents excessive knee flexion and physical fatigue during ascent.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Minimum Tread Depth</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.5.2</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">10 inches (254 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Provides adequate heel landing platform during descent; 11" if no nosing.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Profile Uniformity</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.5.3</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">Variance &le; 3/8 inch (9.5 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Eliminates trip hazards arising from cerebellar rhythm disruptions.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Minimum Headroom</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.2</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">6 feet 8 inches (80" / 2032 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Measured vertically from sloped nosing plane to ceiling/header obstruction.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Stairway Clear Width</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.1</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">36 inches (914 mm) minimum</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Clear width above handrails and below headroom clearance height.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Tread Nosing Overhang</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.5.3</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">3/4" to 1 1/4" (19 to 32 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Required on treads with depth less than 11"; curvature radius max 9/16".</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Handrail Height</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.8.1</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">34 to 38 inches (864 to 965 mm)</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Measured vertically from sloped tread nosing plane to top of graspable rail.</td>
+                            </tr>
+                            <tr>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-semibold">Handrail Graspability</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-mono">R311.7.8.5</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700 font-bold text-slate-900 dark:text-white">Type I: 1.25" to 2.0" circular</td>
+                                <td class="p-2.5 border border-slate-200 dark:border-slate-700">Permits full power grip; non-circular must feature finger recess grooves.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </article>
+
+        <!-- AdSense Slot 5: Below Guide / Before FAQ -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Mid-Page Leaderboard Slot 5</span>
+        </div>
+
+        <!-- FAQ Section -->
+        <section class="mt-8 mb-12">
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-6">Frequently Asked Technical Questions</h2>
+            <div class="space-y-3" id="faqAccordion">
+                
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(1)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>What is the maximum riser height and minimum tread depth allowed by residential building code?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        Under the 2024 International Residential Code (IRC Section R311.7.5), the maximum individual riser height is 7 3/4 inches (197 mm) and the minimum individual tread depth is 10 inches (254 mm) measured from nosing to nosing. If treads are constructed without a nosing projection (open or closed square edge), the minimum tread depth increases to 11 inches (279 mm).
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(2)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>Why does building code limit step dimension variations to 3/8 of an inch?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        The 2024 IRC Section R311.7.5.3 mandates that the difference between the greatest and smallest riser height or tread depth in any flight cannot exceed 3/8 of an inch (9.5 mm). Human walking relies on neuromuscular automaticity established within the first three steps. Discrepancies greater than 3/8 inch cause the foot to strike an unexpected elevation during the swing phase, creating high-risk tripping events.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(3)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>What is François Blondel's stair formula and why is it used?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        Formulated in 1675 by French architect François Blondel in Cours d'architecture, the law states that two times the riser plus one tread depth (2R + T) should equal 24 to 25.5 inches (60 to 65 cm). This formula matches the physiological expenditure of human stride mechanics, where elevating the body vertically consumes twice the mechanical energy of stepping horizontally.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(4)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>Why must the bottom stringer cut be shortened by the tread thickness?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        When finished treads are fastened to the stringer notches, the tread material adds thickness to every step. However, the lower finished floor receives no tread underneath the bottom of the stringer. Shortening the bottom of the stringer by the exact thickness of the tread material ensures the finished vertical distance from the floor to the first tread equals all subsequent steps.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(5)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>What is minimum stringer throat depth and why is 2x12 lumber recommended?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        The throat depth (effective waist) is the uncut wood remaining between the inner corner of the step notch and the back edge of the board. Residential building codes mandate an absolute minimum throat depth of 3.5 inches (89 mm). Standard 2x10 lumber often leaves less than 3.5 inches after cutting a 7.5-inch rise and 10-inch run, making 2x12 lumber (actual width 11.25 inches) the structural industry standard.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(6)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>What is the minimum vertical headroom clearance required by code?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        IRC Section R311.7.2 mandates a continuous vertical headroom clearance of not less than 6 feet 8 inches (80 inches or 2032 mm). This clearance must be maintained continuously along the entire stairway flight, measured vertically from the inclined plane connecting the tread nosings to the ceiling or overhead joist header.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(7)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>How do commercial IBC stair requirements differ from residential IRC rules?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        The commercial International Building Code (IBC Section 1011) is more restrictive than the residential IRC. The IBC mandates a maximum riser height of 7 inches (178 mm) instead of 7 3/4 inches, a minimum tread depth of 11 inches (279 mm) instead of 10 inches, and a minimum stairway width of 44 inches when serving 50 or more occupants.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-800">
+                    <button onclick="toggleFaq(8)" class="w-full px-5 py-4 text-left font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm">
+                        <span>How do stair gauges attached to a framing square guarantee layout accuracy?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="hidden px-5 pb-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-700/60 pt-3">
+                        Stair gauges clamp onto the tongue and blade of a 24x16-inch framing square at the exact calculated riser and tread measurements. Pressing the gauges against the top edge of a 2x12 board ensures that every single step notch is drawn with identical geometric coordinates, preventing pencil placement drift and eliminating cumulative measurement errors.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 py-10 mt-12 text-xs no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">ST</span>
+                    <span class="font-bold text-slate-900 dark:text-white text-base">CalcWorld Architectural Systems</span>
+                </div>
+                <div class="flex flex-wrap gap-4 text-slate-500">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Other Calculators</a>
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Building Code Compliance &amp; Engineering Notice:</strong> CalcWorld Stair Calculator algorithms reference specifications established in the International Residential Code (IRC Section R311.7) and International Building Code (IBC Section 1011). Local municipal building departments retain ultimate jurisdictional authority and may adopt localized amendments or historical exceptions. Always verify field measurements and submit working drawings to your local building official prior to lumber cutting or framing installation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Related Tools:</span>
+        <a href="square-footage-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Square Footage</a>
+        <a href="pythagorean-theorem-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Pythagorean</a>
+        <a href="right-triangle-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Right Triangle</a>
+        <a href="tile-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Tile</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Cut sheet copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global Application State ---
+    let unitSystem = 'imperial'; // 'imperial' (inches), 'metric' (cm)
+    let slopeChartInstance = null;
+    let lastCalc = {};
+
+    // --- Mathematical Fraction Helper Functions ---
+    function gcd(a, b) {
+        return b ? gcd(b, a % b) : a;
+    }
+
+    function toFraction(val, maxDenominator = 16) {
+        if (isNaN(val) || val === null) return '--';
+        const sign = val < 0 ? '-' : '';
+        const absVal = Math.abs(val);
+        const whole = Math.floor(absVal);
+        const remainder = absVal - whole;
+
+        if (remainder < 0.015) {
+            return `${sign}${whole}"`;
+        }
+
+        const rawNumerator = Math.round(remainder * maxDenominator);
+        if (rawNumerator === maxDenominator) {
+            return `${sign}${whole + 1}"`;
+        }
+        if (rawNumerator === 0) {
+            return `${sign}${whole}"`;
+        }
+
+        const commonDivisor = gcd(rawNumerator, maxDenominator);
+        const num = rawNumerator / commonDivisor;
+        const den = maxDenominator / commonDivisor;
+
+        if (whole === 0) {
+            return `${sign}${num}/${den}"`;
+        }
+        return `${sign}${whole} ${num}/${den}"`;
+    }
+
+    function toFeetInches(totalInches) {
+        if (isNaN(totalInches) || totalInches === null) return '--';
+        const feet = Math.floor(totalInches / 12);
+        const inchesRemainder = totalInches % 12;
+        const fracInches = toFraction(inchesRemainder);
+        return `${feet}' ${fracInches}`;
+    }
+
+    // --- Presets & Unit Management ---
+    function setUnitSystem(system) {
+        unitSystem = system;
+        const btnImp = document.getElementById('unitBtn_imperial');
+        const btnMet = document.getElementById('unitBtn_metric');
+        const riseSuffix = document.getElementById('riseUnitSuffix');
+        const targetRiserSuffix = document.getElementById('targetRiserUnitSuffix');
+        const treadSuffix = document.getElementById('treadUnitSuffix');
+
+        if (system === 'metric') {
+            btnMet.classList.add('bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm', 'font-bold');
+            btnMet.classList.remove('text-slate-600', 'dark:text-slate-400');
+            btnImp.classList.remove('bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm', 'font-bold');
+            btnImp.classList.add('text-slate-600', 'dark:text-slate-400');
+
+            if (riseSuffix) riseSuffix.textContent = 'cm';
+            if (targetRiserSuffix) targetRiserSuffix.textContent = 'cm';
+            if (treadSuffix) treadSuffix.textContent = 'cm';
+
+            // Convert values if currently in inches
+            const currRise = parseFloat(document.getElementById('inputTotalRise').value);
+            if (!isNaN(currRise) && currRise < 200) {
+                document.getElementById('inputTotalRise').value = (currRise * 2.54).toFixed(1);
+                document.getElementById('inputTargetRiser').value = (parseFloat(document.getElementById('inputTargetRiser').value) * 2.54).toFixed(1);
+                document.getElementById('inputTreadDepth').value = (parseFloat(document.getElementById('inputTreadDepth').value) * 2.54).toFixed(1);
+            }
+        } else {
+            btnImp.classList.add('bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm', 'font-bold');
+            btnImp.classList.remove('text-slate-600', 'dark:text-slate-400');
+            btnMet.classList.remove('bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm', 'font-bold');
+            btnMet.classList.add('text-slate-600', 'dark:text-slate-400');
+
+            if (riseSuffix) riseSuffix.textContent = 'in';
+            if (targetRiserSuffix) targetRiserSuffix.textContent = 'in';
+            if (treadSuffix) treadSuffix.textContent = 'in';
+
+            // Convert values if currently in cm
+            const currRise = parseFloat(document.getElementById('inputTotalRise').value);
+            if (!isNaN(currRise) && currRise > 200) {
+                document.getElementById('inputTotalRise').value = (currRise / 2.54).toFixed(1);
+                document.getElementById('inputTargetRiser').value = (parseFloat(document.getElementById('inputTargetRiser').value) / 2.54).toFixed(2);
+                document.getElementById('inputTreadDepth').value = (parseFloat(document.getElementById('inputTreadDepth').value) / 2.54).toFixed(1);
+            }
+        }
+        calculate();
+    }
+
+    function setTargetRiser(val) {
+        if (unitSystem === 'metric') {
+            document.getElementById('inputTargetRiser').value = (val * 2.54).toFixed(1);
+        } else {
+            document.getElementById('inputTargetRiser').value = val;
+        }
+        calculate();
+    }
+
+    function setTreadDepth(val) {
+        if (unitSystem === 'metric') {
+            document.getElementById('inputTreadDepth').value = (val * 2.54).toFixed(1);
+        } else {
+            document.getElementById('inputTreadDepth').value = val;
+        }
+        calculate();
+    }
+
+    function loadPreset() {
+        const select = document.getElementById('presetSelect');
+        const val = select.value;
+        if (val === 'custom') return;
+
+        let riseIn = 108;
+        let targetRiserIn = 7.5;
+        let treadIn = 10.5;
+
+        if (val === 'preset_standard') {
+            riseIn = 108; targetRiserIn = 7.5; treadIn = 10.5;
+        } else if (val === 'preset_basement') {
+            riseIn = 96; targetRiserIn = 7.38; treadIn = 10.5;
+        } else if (val === 'preset_deck') {
+            riseIn = 42; targetRiserIn = 7.0; treadIn = 11.0;
+        } else if (val === 'preset_high_ceiling') {
+            riseIn = 120; targetRiserIn = 7.5; treadIn = 10.5;
+        } else if (val === 'preset_commercial') {
+            riseIn = 140; targetRiserIn = 7.0; treadIn = 11.0;
+        } else if (val === 'preset_attic') {
+            riseIn = 90; targetRiserIn = 7.75; treadIn = 10.0;
+        }
+
+        if (unitSystem === 'metric') {
+            document.getElementById('inputTotalRise').value = (riseIn * 2.54).toFixed(1);
+            document.getElementById('inputTargetRiser').value = (targetRiserIn * 2.54).toFixed(1);
+            document.getElementById('inputTreadDepth').value = (treadIn * 2.54).toFixed(1);
+        } else {
+            document.getElementById('inputTotalRise').value = riseIn;
+            document.getElementById('inputTargetRiser').value = targetRiserIn;
+            document.getElementById('inputTreadDepth').value = treadIn;
+        }
+        calculate();
+    }
+
+    // --- Core Stair Layout Engine ---
+    function triggerCalculation() {
+        calculate();
+        const resultsEl = document.getElementById('resultsCard');
+        if (resultsEl) {
+            resultsEl.classList.remove('shimmer-active');
+            void resultsEl.offsetWidth;
+            resultsEl.classList.add('shimmer-active');
+            setTimeout(() => resultsEl.classList.remove('shimmer-active'), 1800);
+        }
+    }
+
+    function calculate() {
+        // Read raw input values
+        let rawTotalRise = parseFloat(document.getElementById('inputTotalRise').value);
+        let rawTargetRiser = parseFloat(document.getElementById('inputTargetRiser').value);
+        let rawTreadDepth = parseFloat(document.getElementById('inputTreadDepth').value);
+        let rawTreadThickness = parseFloat(document.getElementById('inputTreadThickness').value) || 1.0;
+        let rawNosing = parseFloat(document.getElementById('inputNosing').value) || 0.75;
+        let lumberStockWidth = parseFloat(document.getElementById('stringerLumberSelect').value) || 11.25;
+        const topStepStyle = document.querySelector('input[name="topStepStyle"]:checked')?.value || 'step_down';
+
+        if (isNaN(rawTotalRise) || rawTotalRise <= 0) rawTotalRise = 108;
+        if (isNaN(rawTargetRiser) || rawTargetRiser <= 0) rawTargetRiser = 7.5;
+        if (isNaN(rawTreadDepth) || rawTreadDepth <= 0) rawTreadDepth = 10.5;
+
+        // Convert all to inches for calculation
+        let totalRiseIn = unitSystem === 'metric' ? rawTotalRise / 2.54 : rawTotalRise;
+        let targetRiserIn = unitSystem === 'metric' ? rawTargetRiser / 2.54 : rawTargetRiser;
+        let treadDepthIn = unitSystem === 'metric' ? rawTreadDepth / 2.54 : rawTreadDepth;
+        let treadThicknessIn = unitSystem === 'metric' ? rawTreadThickness / 2.54 : rawTreadThickness;
+        let nosingIn = unitSystem === 'metric' ? rawNosing / 2.54 : rawNosing;
+
+        // Number of risers: N = round(Total Rise / Target Riser)
+        let numRisers = Math.round(totalRiseIn / targetRiserIn);
+        if (numRisers < 1) numRisers = 1;
+
+        // Exact individual riser height: R = Total Rise / N
+        const exactRiserIn = totalRiseIn / numRisers;
+
+        // Number of treads: N - 1 (drop down) or N (flush)
+        const numTreads = topStepStyle === 'flush' ? numRisers : numRisers - 1;
+
+        // Total Run: numTreads * Tread Depth
+        const totalRunIn = numTreads * treadDepthIn;
+
+        // Stringer Hypotenuse Length: sqrt(Total Run^2 + Total Rise^2)
+        const stringerLengthIn = Math.sqrt(Math.pow(totalRunIn, 2) + Math.pow(totalRiseIn, 2));
+
+        // Incline Angle: arctan(R / T) in degrees
+        const angleRad = Math.atan(exactRiserIn / treadDepthIn);
+        const angleDeg = (angleRad * 180) / Math.PI;
+
+        // François Blondel Ergonomic Score: 2R + T
+        const blondelScoreIn = (2 * exactRiserIn) + treadDepthIn;
+        const blondelScoreCm = blondelScoreIn * 2.54;
+
+        // Classical Rules
+        const sumRuleIn = exactRiserIn + treadDepthIn;
+        const productRuleSqIn = exactRiserIn * treadDepthIn;
+
+        // Stringer Throat Depth: LumberWidth - (R * T / sqrt(R^2 + T^2))
+        const unitHypotenuse = Math.sqrt(Math.pow(exactRiserIn, 2) + Math.pow(treadDepthIn, 2));
+        const perpendicularCutDepth = (exactRiserIn * treadDepthIn) / unitHypotenuse;
+        const throatDepthIn = lumberStockWidth - perpendicularCutDepth;
+
+        // Bottom Riser Cut: R - treadThickness
+        const bottomRiserCutIn = exactRiserIn - treadThicknessIn;
+
+        // Stock board length recommendation (add 18" for plum/level end tails, rounded up to standard lumber lengths: 8, 10, 12, 14, 16, 18, 20)
+        const stringerFtWithAllowance = (stringerLengthIn + 18) / 12;
+        let stockLengthFt = 8;
+        const standardLengths = [8, 10, 12, 14, 16, 18, 20, 22, 24];
+        for (let l of standardLengths) {
+            if (l >= stringerFtWithAllowance) {
+                stockLengthFt = l;
+                break;
+            }
+        }
+        const lumberName = lumberStockWidth > 10 ? '2x12' : '2x10';
+        const stockBoardStr = `${lumberName} x ${stockLengthFt}'`;
+
+        // Building Code Compliance Evaluation
+        const isRiserCompliant = exactRiserIn <= 7.75;
+        const isTreadCompliant = nosingIn > 0 ? treadDepthIn >= 10.0 : treadDepthIn >= 11.0;
+        const isThroatCompliant = throatDepthIn >= 3.5;
+        const isBlondelOptimal = blondelScoreIn >= 24.0 && blondelScoreIn <= 25.5;
+        const isAngleOptimal = angleDeg >= 30.0 && angleDeg <= 37.0;
+
+        let codeStatus = 'PASS';
+        if (!isRiserCompliant || !isTreadCompliant || !isThroatCompliant) {
+            codeStatus = 'FAIL';
+        } else if (!isAngleOptimal || !isBlondelOptimal) {
+            codeStatus = 'WARNING';
+        }
+
+        // Save State
+        lastCalc = {
+            totalRiseIn, targetRiserIn, treadDepthIn, treadThicknessIn, nosingIn,
+            lumberStockWidth, topStepStyle, numRisers, exactRiserIn, numTreads,
+            totalRunIn, stringerLengthIn, angleDeg, blondelScoreIn, blondelScoreCm,
+            sumRuleIn, productRuleSqIn, throatDepthIn, bottomRiserCutIn,
+            stockBoardStr, isRiserCompliant, isTreadCompliant, isThroatCompliant,
+            isBlondelOptimal, isAngleOptimal, codeStatus
+        };
+
+        // Update DOM Displays
+        updateHeroDisplays(lastCalc);
+        updateCutSheetTable(lastCalc);
+        updateMathJaxDerivations(lastCalc);
+        updateSVGVisualizer();
+        updateSlopeChart(lastCalc.angleDeg);
+        updateCodeAuditTable(lastCalc);
+        updatePrintReport(lastCalc);
+        updateShareUrl(lastCalc);
+    }
+
+    // --- Update Hero Result Displays ---
+    function updateHeroDisplays(c) {
+        // Converted display in input
+        const riseConvEl = document.getElementById('totalRiseConvertedDisplay');
+        if (riseConvEl) {
+            riseConvEl.textContent = toFeetInches(c.totalRiseIn);
+        }
+        const targetRiserFrac = document.getElementById('targetRiserFractionDisplay');
+        if (targetRiserFrac) {
+            targetRiserFrac.textContent = toFraction(c.targetRiserIn);
+        }
+        const treadFrac = document.getElementById('treadDepthFractionDisplay');
+        if (treadFrac) {
+            treadFrac.textContent = toFraction(c.treadDepthIn);
+        }
+
+        // Hero Riser Display
+        const heroRiser = document.getElementById('heroRiserDisplay');
+        if (heroRiser) {
+            if (unitSystem === 'metric') {
+                heroRiser.innerHTML = `${(c.exactRiserIn * 2.54).toFixed(1)} cm <span class="text-xl font-normal text-slate-500 dark:text-slate-400">(${toFraction(c.exactRiserIn)})</span>`;
+            } else {
+                heroRiser.innerHTML = `${toFraction(c.exactRiserIn)} <span class="text-xl font-normal text-slate-500 dark:text-slate-400">(${c.exactRiserIn.toFixed(3)}")</span>`;
+            }
+        }
+
+        // Hero Narrative
+        const heroNarrative = document.getElementById('heroNarrativeDisplay');
+        if (heroNarrative) {
+            heroNarrative.textContent = `${c.numRisers} Risers at ${toFraction(c.exactRiserIn)} with ${c.numTreads} Treads at ${toFraction(c.treadDepthIn)}. Total Run is ${toFeetInches(c.totalRunIn)}.`;
+        }
+
+        // Badges
+        const codeBadge = document.getElementById('codeStatusBadge');
+        if (codeBadge) {
+            if (c.codeStatus === 'PASS') {
+                codeBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50';
+                codeBadge.textContent = '2024 IRC Compliant';
+            } else if (c.codeStatus === 'WARNING') {
+                codeBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50';
+                codeBadge.textContent = 'Code OK (Steep Cadence)';
+            } else {
+                codeBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50';
+                codeBadge.textContent = 'Exceeds Code Maximum';
+            }
+        }
+
+        const blondelBadge = document.getElementById('blondelBadge');
+        if (blondelBadge) {
+            if (c.isBlondelOptimal) {
+                blondelBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50';
+                blondelBadge.textContent = 'Blondel Cadence Optimal';
+            } else {
+                blondelBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300/50';
+                blondelBadge.textContent = `Blondel: ${c.blondelScoreIn.toFixed(1)}"`;
+            }
+        }
+
+        // 4 Primary Metric Cards
+        document.getElementById('valNumRisers').textContent = `${c.numRisers} Risers`;
+        document.getElementById('valNumTreads').textContent = `${c.numTreads} Treads`;
+        document.getElementById('valTotalRun').textContent = toFeetInches(c.totalRunIn);
+        document.getElementById('valStringerStock').textContent = c.stockBoardStr;
+
+        // 4 Secondary Cards
+        const angleZoneStr = c.angleDeg < 30 ? 'Shallow' : (c.angleDeg <= 37 ? 'Ideal' : 'Steep');
+        document.getElementById('valInclineAngle').textContent = `${c.angleDeg.toFixed(1)}° (${angleZoneStr})`;
+        document.getElementById('valBlondelScore').textContent = `${c.blondelScoreIn.toFixed(2)}" (${c.blondelScoreCm.toFixed(1)} cm)`;
+        document.getElementById('valThroatDepth').textContent = `${toFraction(c.throatDepthIn)} (${c.throatDepthIn.toFixed(2)}")`;
+        document.getElementById('valBottomRiserCut').textContent = `${toFraction(c.bottomRiserCutIn)} (${c.bottomRiserCutIn.toFixed(3)}")`;
+
+        // Quick Summary
+        document.getElementById('quickSummaryStringer').textContent = `Hypotenuse: ${toFeetInches(c.stringerLengthIn)}`;
+        document.getElementById('quickSummaryRatio').textContent = `R+T = ${c.sumRuleIn.toFixed(2)}"`;
+    }
+
+    // --- Update Cut Sheet Table ---
+    function updateCutSheetTable(c) {
+        document.getElementById('cutSheetSquareSetting').textContent = `Rise: ${toFraction(c.exactRiserIn)} | Run: ${toFraction(c.treadDepthIn)}`;
+        document.getElementById('cutSheetBottomRiser').textContent = `${toFraction(c.bottomRiserCutIn)} (Deduct ${toFraction(c.treadThicknessIn)})`;
+        document.getElementById('cutSheetInterRiser').textContent = `${toFraction(c.exactRiserIn)} (${c.numRisers - 1} steps)`;
+        document.getElementById('cutSheetTreadNotch').textContent = `${toFraction(c.treadDepthIn)} (${c.numTreads} notches)`;
+        document.getElementById('cutSheetTopPlumb').textContent = `Plumb Cut at ${c.angleDeg.toFixed(1)}°`;
+        document.getElementById('cutSheetThroat').textContent = `${toFraction(c.throatDepthIn)} (≥ 3.5" Code)`;
+    }
+
+    // --- MathJax Derivations Renderer ---
+    function updateMathJaxDerivations(c) {
+        const block = document.getElementById('mathDerivationsBlock');
+        if (!block) return;
+
+        const html = `
+            <div>
+                <span class="font-bold text-slate-900 dark:text-white block mb-1">1. Riser Count &amp; Individual Riser Height:</span>
+                <div>\[ N = \text{round}\left(\frac{\text{Total Rise}}{\text{Target Riser}}\right) = \text{round}\left(\frac{${c.totalRiseIn.toFixed(2)}}{${c.targetRiserIn.toFixed(2)}}\right) = ${c.numRisers}\text{ risers} \]</div>
+                <div>\[ R = \frac{\text{Total Rise}}{N} = \frac{${c.totalRiseIn.toFixed(2)}}{${c.numRisers}} = ${c.exactRiserIn.toFixed(4)}\text{ in} \approx ${toFraction(c.exactRiserIn)} \]</div>
+            </div>
+            <div>
+                <span class="font-bold text-slate-900 dark:text-white block mb-1">2. Total Horizontal Run &amp; Stringer Length:</span>
+                <div>\[ \text{Treads} = ${c.topStepStyle === 'flush' ? 'N = ' + c.numRisers : 'N - 1 = ' + c.numTreads} \]</div>
+                <div>\[ \text{Total Run} = \text{Treads} \times T = ${c.numTreads} \times ${c.treadDepthIn.toFixed(2)} = ${c.totalRunIn.toFixed(2)}\text{ in} (${toFeetInches(c.totalRunIn)}) \]</div>
+                <div>\[ L = \sqrt{\text{Total Run}^2 + \text{Total Rise}^2} = \sqrt{${c.totalRunIn.toFixed(1)}^2 + ${c.totalRiseIn.toFixed(1)}^2} = ${c.stringerLengthIn.toFixed(2)}\text{ in} (${toFeetInches(c.stringerLengthIn)}) \]</div>
+            </div>
+            <div>
+                <span class="font-bold text-slate-900 dark:text-white block mb-1">3. Incline Angle &amp; François Blondel Ergonomic Proportion:</span>
+                <div>\[ \theta = \arctan\left(\frac{R}{T}\right) = \arctan\left(\frac{${c.exactRiserIn.toFixed(3)}}{${c.treadDepthIn.toFixed(2)}}\right) = ${c.angleDeg.toFixed(2)}^\circ \]</div>
+                <div>\[ 2R + T = 2(${c.exactRiserIn.toFixed(3)}) + ${c.treadDepthIn.toFixed(2)} = ${c.blondelScoreIn.toFixed(2)}\text{ in} (${c.blondelScoreCm.toFixed(1)}\text{ cm}) \]</div>
+            </div>
+            <div>
+                <span class="font-bold text-slate-900 dark:text-white block mb-1">4. Stringer Throat Depth &amp; Bottom Cut Deduction:</span>
+                <div>\[ W_{\text{throat}} = W_{\text{lumber}} - \frac{R \cdot T}{\sqrt{R^2 + T^2}} = ${c.lumberStockWidth.toFixed(2)} - \frac{${c.exactRiserIn.toFixed(2)} \cdot ${c.treadDepthIn.toFixed(2)}}{\sqrt{${c.exactRiserIn.toFixed(2)}^2 + ${c.treadDepthIn.toFixed(2)}^2}} = ${c.throatDepthIn.toFixed(2)}\text{ in} \approx ${toFraction(c.throatDepthIn)} \]</div>
+                <div>\[ R_{\text{bottom cut}} = R - t_{\text{tread}} = ${c.exactRiserIn.toFixed(3)} - ${c.treadThicknessIn.toFixed(2)} = ${c.bottomRiserCutIn.toFixed(3)}\text{ in} \approx ${toFraction(c.bottomRiserCutIn)} \]</div>
+            </div>
+        `;
+        block.innerHTML = html;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([block]);
+        }
+    }
+
+    // --- Dynamic SVG Stair Profile Diagram ---
+    function updateSVGVisualizer() {
+        const c = lastCalc;
+        if (!c.numRisers) return;
+
+        const showDims = document.getElementById('chkDimensions')?.checked ?? true;
+        const showNosing = document.getElementById('chkNosing')?.checked ?? true;
+        const showThroat = document.getElementById('chkThroat')?.checked ?? true;
+        const showHeadroom = document.getElementById('chkHeadroom')?.checked ?? true;
+
+        renderStairSvg('stairSvgMini', c, { showDims: true, showNosing: true, showThroat: false, showHeadroom: false });
+        renderStairSvg('stairSvgLarge', c, { showDims, showNosing, showThroat, showHeadroom });
+        populateStepSchedule(c);
+    }
+
+    function renderStairSvg(svgId, c, options) {
+        const svg = document.getElementById(svgId);
+        if (!svg) return;
+
+        const width = 800;
+        const height = 480;
+        const padX = 70;
+        const padY = 55;
+        const drawW = width - (padX * 2);
+        const drawH = height - (padY * 2);
+
+        // Scale factors
+        const scaleX = drawW / (c.totalRunIn + c.treadDepthIn * 1.5);
+        const scaleY = drawH / (c.totalRiseIn + c.exactRiserIn * 1.2);
+        const scale = Math.min(scaleX, scaleY);
+
+        const originX = padX + 20;
+        const originY = height - padY - 20;
+
+        let markup = '';
+
+        // Definitions: markers, patterns, gradients
+        markup += `
+            <defs>
+                <marker id="arrow-${svgId}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#3b82f6"/>
+                </marker>
+                <marker id="arrow-dim-${svgId}" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                    <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#94a3b8"/>
+                </marker>
+                <linearGradient id="stringerGrad-${svgId}" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#334155" />
+                    <stop offset="100%" stop-color="#1e293b" />
+                </linearGradient>
+                <linearGradient id="treadGrad-${svgId}" x1="0%" y1="0%" x2="0%" y2="100%">
+                    <stop offset="0%" stop-color="#60a5fa" />
+                    <stop offset="100%" stop-color="#2563eb" />
+                </linearGradient>
+            </defs>
+        `;
+
+        // Floor ground line
+        markup += `
+            <line x1="20" y1="${originY}" x2="${width - 20}" y2="${originY}" stroke="#475569" stroke-width="2" stroke-dasharray="4,4"/>
+            <text x="35" y="${originY + 18}" fill="#94a3b8" font-size="11" font-family="Inter, sans-serif">Lower Finished Floor</text>
+        `;
+
+        // Calculate step coordinates
+        let curX = originX;
+        let curY = originY;
+
+        let stringerPathD = `M ${originX} ${originY} `;
+        let stepsGroup = '';
+        let stepPoints = [{ x: curX, y: curY }];
+
+        for (let i = 1; i <= c.numRisers; i++) {
+            const nextY = curY - (c.exactRiserIn * scale);
+            const isLastStep = (i === c.numRisers);
+            const nextX = isLastStep && c.topStepStyle !== 'flush' ? curX : curX + (c.treadDepthIn * scale);
+
+            // Riser line
+            stepsGroup += `
+                <line x1="${curX}" y1="${curY}" x2="${curX}" y2="${nextY}" stroke="#e2e8f0" stroke-width="2.5"/>
+            `;
+
+            // Tread line
+            if (!isLastStep || c.topStepStyle === 'flush') {
+                const nosingOffset = options.showNosing ? (c.nosingIn * scale) : 0;
+                stepsGroup += `
+                    <line x1="${curX - nosingOffset}" y1="${nextY}" x2="${nextX}" y2="${nextY}" stroke="#60a5fa" stroke-width="3.5"/>
+                `;
+            }
+
+            curY = nextY;
+            curX = nextX;
+            stepPoints.push({ x: curX, y: curY });
+        }
+
+        // Upper floor landing
+        const upperLandingX = curX + (80 * scale);
+        markup += `
+            <line x1="${curX}" y1="${curY}" x2="${upperLandingX}" y2="${curY}" stroke="#475569" stroke-width="3"/>
+            <rect x="${curX}" y="${curY}" width="${80 * scale}" height="${14 * scale}" fill="#334155" opacity="0.6"/>
+            <text x="${curX + 10}" y="${curY - 10}" fill="#94a3b8" font-size="11" font-family="Inter, sans-serif">Upper Finished Deck</text>
+        `;
+
+        // Stringer timber profile polygon
+        let stringerPoints = `${originX},${originY} `;
+        for (let pt of stepPoints) {
+            stringerPoints += `${pt.x},${pt.y} `;
+        }
+        // Bottom back of stringer
+        const throatPx = c.throatDepthIn * scale * 1.3;
+        const stringerBottomBackX = curX - (c.exactRiserIn * scale * 0.7);
+        const stringerBottomBackY = curY + (c.treadDepthIn * scale * 0.7) + throatPx;
+        const stringerBaseBackX = originX + throatPx * 0.8;
+        const stringerBaseBackY = originY;
+
+        markup += `
+            <polygon points="${stringerPoints} ${stringerBottomBackX},${stringerBottomBackY} ${stringerBaseBackX},${stringerBaseBackY}" fill="url(#stringerGrad-${svgId})" stroke="#475569" stroke-width="1.5" opacity="0.85"/>
+        `;
+
+        // Add stepsGroup over stringer
+        markup += `<g id="stepsGroup-${svgId}">${stepsGroup}</g>`;
+
+        // Stringer Throat Depth Annotation
+        if (options.showThroat) {
+            const midIdx = Math.floor(c.numRisers / 2);
+            const midPt = stepPoints[midIdx];
+            if (midPt) {
+                const perpX = midPt.x + (15 * scale);
+                const perpY = midPt.y + (22 * scale);
+                markup += `
+                    <line x1="${midPt.x}" y1="${midPt.y}" x2="${perpX}" y2="${perpY}" stroke="#34d399" stroke-width="2" stroke-dasharray="2,2"/>
+                    <circle cx="${midPt.x}" cy="${midPt.y}" r="3" fill="#34d399"/>
+                    <text x="${perpX + 6}" y="${perpY + 4}" fill="#34d399" font-size="10" font-family="Inter, sans-serif" font-weight="bold">Throat: ${c.throatDepthIn.toFixed(1)}"</text>
+                `;
+            }
+        }
+
+        // Headroom line (80" clearance plane)
+        if (options.showHeadroom) {
+            const headroomPx = 80 * scale;
+            let headroomD = `M ${stepPoints[0].x} ${stepPoints[0].y - headroomPx} `;
+            for (let i = 1; i < stepPoints.length; i++) {
+                headroomD += `L ${stepPoints[i].x} ${stepPoints[i].y - headroomPx} `;
+            }
+            markup += `
+                <path d="${headroomD}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="5,4" fill="none"/>
+                <text x="${stepPoints[1].x}" y="${stepPoints[1].y - headroomPx - 8}" fill="#fbbf24" font-size="10" font-family="Inter, sans-serif">IRC Min Headroom Plane (80")</text>
+            `;
+        }
+
+        // Slope angle arc
+        const arcRadius = 45;
+        const arcEndAngle = -c.angleDeg * (Math.PI / 180);
+        const arcEndX = originX + arcRadius * Math.cos(arcEndAngle);
+        const arcEndY = originY + arcRadius * Math.sin(arcEndAngle);
+        markup += `
+            <path d="M ${originX + arcRadius} ${originY} A ${arcRadius} ${arcRadius} 0 0 0 ${arcEndX} ${arcEndY}" fill="none" stroke="#f59e0b" stroke-width="2"/>
+            <text x="${originX + arcRadius + 8}" y="${originY - 12}" fill="#f59e0b" font-size="11" font-weight="bold" font-family="Inter, sans-serif">&theta; = ${c.angleDeg.toFixed(1)}&deg;</text>
+        `;
+
+        // Dimension lines
+        if (options.showDims) {
+            // Total Rise Dimension (Right)
+            const dimRiseX = curX + 35;
+            markup += `
+                <line x1="${dimRiseX}" y1="${originY}" x2="${dimRiseX}" y2="${curY}" stroke="#94a3b8" stroke-width="1.5" marker-start="url(#arrow-dim-${svgId})" marker-end="url(#arrow-dim-${svgId})"/>
+                <line x1="${curX}" y1="${curY}" x2="${dimRiseX + 10}" y2="${curY}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="${originX}" y1="${originY}" x2="${dimRiseX + 10}" y2="${originY}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2"/>
+                <text x="${dimRiseX + 12}" y="${(originY + curY) / 2}" fill="#f8fafc" font-size="11" font-weight="bold" font-family="Inter, sans-serif" dominant-baseline="middle">
+                    Total Rise: ${unitSystem === 'metric' ? (c.totalRiseIn * 2.54).toFixed(1) + ' cm' : toFeetInches(c.totalRiseIn)}
+                </text>
+            `;
+
+            // Total Run Dimension (Bottom)
+            const dimRunY = originY + 30;
+            markup += `
+                <line x1="${originX}" y1="${dimRunY}" x2="${curX}" y2="${dimRunY}" stroke="#94a3b8" stroke-width="1.5" marker-start="url(#arrow-dim-${svgId})" marker-end="url(#arrow-dim-${svgId})"/>
+                <line x1="${originX}" y1="${originY}" x2="${originX}" y2="${dimRunY + 8}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="${curX}" y1="${curY}" x2="${curX}" y2="${dimRunY + 8}" stroke="#64748b" stroke-width="1" stroke-dasharray="2,2"/>
+                <text x="${(originX + curX) / 2}" y="${dimRunY + 18}" fill="#f8fafc" font-size="11" font-weight="bold" font-family="Inter, sans-serif" text-anchor="middle">
+                    Total Run: ${unitSystem === 'metric' ? (c.totalRunIn * 2.54).toFixed(1) + ' cm' : toFeetInches(c.totalRunIn)} (${c.numTreads} Treads)
+                </text>
+            `;
+
+            // Individual Riser & Tread labels on Step 1
+            if (stepPoints.length >= 2) {
+                const s1 = stepPoints[0];
+                const s2 = stepPoints[1];
+                markup += `
+                    <text x="${s1.x - 8}" y="${(s1.y + s2.y) / 2 + 4}" fill="#38bdf8" font-size="10" font-family="Inter, sans-serif" text-anchor="end" font-weight="bold">R: ${toFraction(c.exactRiserIn)}</text>
+                    <text x="${(s1.x + s2.x) / 2}" y="${s2.y - 8}" fill="#60a5fa" font-size="10" font-family="Inter, sans-serif" text-anchor="middle" font-weight="bold">T: ${toFraction(c.treadDepthIn)}</text>
+                `;
+            }
+        }
+
+        svg.innerHTML = markup;
+    }
+
+    function populateStepSchedule(c) {
+        const tbody = document.getElementById('stepScheduleTbody');
+        if (!tbody) return;
+
+        let rows = '';
+        for (let i = 1; i <= c.numRisers; i++) {
+            const cumRise = i * c.exactRiserIn;
+            const cumRun = (i - 1) * c.treadDepthIn;
+            const note = i === 1 ? `Bottom Riser: Cut to ${toFraction(c.bottomRiserCutIn)} (-${toFraction(c.treadThicknessIn)})` :
+                         (i === c.numRisers ? 'Top Riser: Header Connection' : 'Standard Cut Notch');
+
+            rows += `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                    <td class="py-1.5 px-3 font-bold text-slate-900 dark:text-white">Step ${i}</td>
+                    <td class="py-1.5 px-3 text-brand-600 dark:text-brand-400 font-bold">${toFraction(cumRise)} (${cumRise.toFixed(2)}")</td>
+                    <td class="py-1.5 px-3">${toFraction(cumRun)} (${cumRun.toFixed(1)}")</td>
+                    <td class="py-1.5 px-3 font-sans text-slate-500 dark:text-slate-400">${note}</td>
+                </tr>
+            `;
+        }
+        tbody.innerHTML = rows;
+    }
+
+    function exportSvgFile() {
+        const svg = document.getElementById('stairSvgLarge');
+        if (!svg) return;
+        const serializer = new XMLSerializer();
+        const svgStr = serializer.serializeToString(svg);
+        const blob = new Blob([svgStr], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `stair-stringer-layout-${lastCalc.numRisers}risers.svg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("SVG Blueprint exported successfully!");
+    }
+
+    // --- Chart.js Slope Comfort Spectrum ---
+    function updateSlopeChart(currentAngle) {
+        const canvas = document.getElementById('slopeChart');
+        if (!canvas) return;
+
+        if (slopeChartInstance) {
+            slopeChartInstance.destroy();
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#475569';
+        const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(0, 0, 0, 0.06)';
+
+        const ctx = canvas.getContext('2d');
+        slopeChartInstance = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [
+                    'Ramps (<20°)',
+                    'Monumental (20-30°)',
+                    'Ideal Stairs (30-37°)',
+                    'Steep Stairs (37-42°)',
+                    'Ship Ladders (42-65°)',
+                    'Your Stair'
+                ],
+                datasets: [{
+                    label: 'Slope Angle (°)',
+                    data: [15, 26, 34, 40, 52, currentAngle],
+                    backgroundColor: [
+                        'rgba(148, 163, 184, 0.4)',
+                        'rgba(56, 189, 248, 0.5)',
+                        'rgba(16, 185, 129, 0.6)',
+                        'rgba(245, 158, 11, 0.5)',
+                        'rgba(239, 68, 68, 0.4)',
+                        'rgba(37, 99, 235, 0.95)'
+                    ],
+                    borderColor: [
+                        '#94a3b8',
+                        '#38bdf8',
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444',
+                        '#1d4ed8'
+                    ],
+                    borderWidth: 2,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` Incline: ${context.parsed.y.toFixed(1)}°`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 70,
+                        title: {
+                            display: true,
+                            text: 'Incline Angle (°)',
+                            color: textColor,
+                            font: { size: 11, weight: 'bold' }
+                        },
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: { color: textColor, font: { size: 10 } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 2024 IRC Code Audit Table ---
+    function updateCodeAuditTable(c) {
+        const tbody = document.getElementById('codeAuditTbody');
+        if (!tbody) return;
+
+        const checks = [
+            {
+                name: 'Maximum Riser Height',
+                code: 'IRC R311.7.5.1',
+                limit: '≤ 7 3/4" (197 mm)',
+                actual: `${toFraction(c.exactRiserIn)} (${c.exactRiserIn.toFixed(2)}")`,
+                pass: c.isRiserCompliant,
+                note: c.isRiserCompliant ? 'Compliant' : 'Exceeds residential max'
+            },
+            {
+                name: 'Minimum Tread Depth',
+                code: 'IRC R311.7.5.2',
+                limit: '≥ 10" (254 mm) with nosing',
+                actual: `${toFraction(c.treadDepthIn)} (${c.treadDepthIn.toFixed(2)}")`,
+                pass: c.isTreadCompliant,
+                note: c.isTreadCompliant ? 'Compliant' : 'Below code minimum'
+            },
+            {
+                name: 'Riser / Tread Variance',
+                code: 'IRC R311.7.5.3',
+                limit: '≤ 3/8" (9.5 mm) variance',
+                actual: '0.00" (Identical cuts)',
+                pass: true,
+                note: 'Zero variance guaranteed by layout'
+            },
+            {
+                name: 'Stringer Throat Depth',
+                code: 'IRC Section R311',
+                limit: '≥ 3.5" (89 mm)',
+                actual: `${toFraction(c.throatDepthIn)} (${c.throatDepthIn.toFixed(2)}")`,
+                pass: c.isThroatCompliant,
+                note: c.isThroatCompliant ? 'Sufficient structural throat' : 'Throat depth inadequate'
+            },
+            {
+                name: 'François Blondel Proportion',
+                code: 'Ergonomic Standard',
+                limit: '2R + T = 24" to 25.5"',
+                actual: `${c.blondelScoreIn.toFixed(2)}" (${c.blondelScoreCm.toFixed(1)} cm)`,
+                pass: c.isBlondelOptimal,
+                note: c.isBlondelOptimal ? 'Optimal stride cadence' : 'Cadence outside ideal bounds'
+            },
+            {
+                name: 'Incline Comfort Angle',
+                code: 'Architectural Guideline',
+                limit: '30° to 37° preferred',
+                actual: `${c.angleDeg.toFixed(1)}°`,
+                pass: c.isAngleOptimal,
+                note: c.isAngleOptimal ? 'Optimal walking angle' : (c.angleDeg > 37 ? 'Steep slope' : 'Gentle slope')
+            }
+        ];
+
+        tbody.innerHTML = checks.map(ck => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">${ck.name}</td>
+                <td class="py-2.5 px-3 font-mono text-slate-500">${ck.code}</td>
+                <td class="py-2.5 px-3">${ck.limit}</td>
+                <td class="py-2.5 px-3 font-bold font-mono text-slate-900 dark:text-white">${ck.actual}</td>
+                <td class="py-2.5 px-3">
+                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${
+                        ck.pass 
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50' 
+                        : 'bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50'
+                    }">
+                        ${ck.pass ? 'PASS' : 'FAIL'}
+                    </span>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    // --- Tab 4: Print Report Synchronizer ---
+    function updatePrintReport(c) {
+        const timeEl = document.getElementById('reportTimestamp');
+        if (timeEl) {
+            timeEl.textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        document.getElementById('repTotalRise').textContent = `${toFeetInches(c.totalRiseIn)} (${c.totalRiseIn.toFixed(2)}")`;
+        document.getElementById('repTotalRun').textContent = `${toFeetInches(c.totalRunIn)} (${c.totalRunIn.toFixed(2)}")`;
+        document.getElementById('repRiserHeight').textContent = `${toFraction(c.exactRiserIn)} (${c.exactRiserIn.toFixed(3)}")`;
+        document.getElementById('repTreadDepth').textContent = `${toFraction(c.treadDepthIn)} (${c.treadDepthIn.toFixed(2)}")`;
+        document.getElementById('repRisersAndTreads').textContent = `${c.numRisers} Risers | ${c.numTreads} Treads (${c.topStepStyle === 'flush' ? 'Flush Top' : 'Drop Down'})`;
+        document.getElementById('repSquareSettings').textContent = `Tongue: ${toFraction(c.exactRiserIn)} | Blade: ${toFraction(c.treadDepthIn)}`;
+        document.getElementById('repBottomCut').textContent = `${toFraction(c.bottomRiserCutIn)} (Deducted ${toFraction(c.treadThicknessIn)} for tread thickness)`;
+        document.getElementById('repStockBoard').textContent = `${c.stockBoardStr} (Hypotenuse: ${toFeetInches(c.stringerLengthIn)})`;
+        document.getElementById('repThroatDepth').textContent = `${toFraction(c.throatDepthIn)} (${c.throatDepthIn.toFixed(2)}") [Code Min: 3.5"]`;
+        document.getElementById('repBlondel').textContent = `${c.blondelScoreIn.toFixed(2)}" [24" to 25.5" Target]`;
+        document.getElementById('repAngle').textContent = `${c.angleDeg.toFixed(1)}° (${c.isAngleOptimal ? 'Ideal' : 'Standard'})`;
+    }
+
+    // --- Tab Switching Navigation ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'visualizer') {
+            setTimeout(updateSVGVisualizer, 30);
+        } else if (tabId === 'calc' && slopeChartInstance) {
+            setTimeout(() => slopeChartInstance.resize(), 30);
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!ans) return;
+
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Deep Linking & URL State ---
+    function updateShareUrl(c) {
+        const params = new URLSearchParams();
+        params.set('rise', c.totalRiseIn.toFixed(2));
+        params.set('targetRiser', c.targetRiserIn.toFixed(2));
+        params.set('tread', c.treadDepthIn.toFixed(2));
+        params.set('unit', unitSystem);
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('unit')) {
+            setUnitSystem(params.get('unit'));
+        }
+        if (params.has('rise')) {
+            document.getElementById('inputTotalRise').value = params.get('rise');
+        }
+        if (params.has('targetRiser')) {
+            document.getElementById('inputTargetRiser').value = params.get('targetRiser');
+        }
+        if (params.has('tread')) {
+            document.getElementById('inputTreadDepth').value = params.get('tread');
+        }
+    }
+
+    function copyShareUrl() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast("Deep-linked calculation URL copied to clipboard!");
+        });
+    }
+
+    function copyFormattedSummary() {
+        const c = lastCalc;
+        const text = `CalcWorld Stair Stringer Cut Sheet:
+` +
+            `Total Rise: ${toFeetInches(c.totalRiseIn)} (${c.totalRiseIn.toFixed(2)}")
+` +
+            `Total Run: ${toFeetInches(c.totalRunIn)} (${c.totalRunIn.toFixed(2)}")
+` +
+            `Riser Height: ${toFraction(c.exactRiserIn)} (${c.numRisers} Risers)
+` +
+            `Tread Depth: ${toFraction(c.treadDepthIn)} (${c.numTreads} Treads)
+` +
+            `Stringer Board: ${c.stockBoardStr} (Hypotenuse: ${toFeetInches(c.stringerLengthIn)})
+` +
+            `Bottom Cut: ${toFraction(c.bottomRiserCutIn)} (Deducted ${toFraction(c.treadThicknessIn)} for tread)
+` +
+            `Throat Depth: ${toFraction(c.throatDepthIn)} (≥3.5" Code)
+` +
+            `Blondel (2R+T): ${c.blondelScoreIn.toFixed(2)}" | Incline Angle: ${c.angleDeg.toFixed(1)}°
+` +
+            `IRC 2024 Status: ${c.codeStatus}
+` +
+            `URL: ${window.location.href}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Cut sheet copied to clipboard!");
+        });
+    }
+
+    function resetDefaults() {
+        document.getElementById('presetSelect').value = 'preset_standard';
+        setUnitSystem('imperial');
+        loadPreset();
+        showToast("Calculator reset to standard residential defaults.");
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast) return;
+        if (toastMsg) toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    // --- Dark Mode Engine ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+        if (lastCalc.angleDeg) {
+            updateSlopeChart(lastCalc.angleDeg);
+        }
+    }
+
+    // --- Lead Gen Submission ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const msg = document.getElementById('leadSuccessMsg');
+        const btn = document.getElementById('leadSubmitBtn');
+        if (input && input.value) {
+            btn.disabled = true;
+            btn.textContent = 'Sending Cut Sheet...';
+            setTimeout(() => {
+                btn.classList.add('hidden');
+                input.classList.add('hidden');
+                msg.classList.remove('hidden');
+            }, 800);
+        }
+    }
+
+    // --- Window Initialization ---
+    window.addEventListener('DOMContentLoaded', () => {
+        parseUrlParams();
+        calculate();
+    });
+</script>
+
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

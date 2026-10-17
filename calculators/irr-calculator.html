@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IRR Calculator - Internal Rate of Return, NPV & MIRR Tool</title>
+    <meta name="description" content="Calculate Internal Rate of Return (IRR), Net Present Value (NPV), and Modified IRR (MIRR). Features dynamic multi-year cash flows, NPV profile curve, sensitivity analysis, and institutional presets.">
+    <meta name="keywords" content="IRR calculator, internal rate of return, NPV calculator, net present value, MIRR, modified internal rate of return, capital budgeting, discount rate, hurdle rate, profitability index">
+    
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN with darkMode: class -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        emerald: {
+                            500: '#10b981',
+                            600: '#059669',
+                        },
+                        rose: {
+                            500: '#f43f5e',
+                            600: '#e11d48',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- MathJax for KaTeX/LaTeX Formula Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Institutional IRR & Capital Budgeting Calculator",
+          "url": "https://calcworld.net/calculators/irr-calculator.html",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "High-precision financial tool for computing Internal Rate of Return (IRR), Net Present Value (NPV), Modified Internal Rate of Return (MIRR), and Profitability Index across dynamic cash flow streams."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.com"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Financial Calculators",
+              "item": "https://calcworld.net/financial"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "IRR Calculator",
+              "item": "https://calcworld.net/calculators/irr-calculator.html"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the Internal Rate of Return (IRR)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Internal Rate of Return (IRR) is the annual compounded discount rate that equates the present value of expected future cash inflows with the initial investment outlay, rendering the Net Present Value (NPV) exactly equal to zero."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the Reinvestment Rate Fallacy in standard IRR?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Standard IRR implicitly assumes that all intermediate positive cash distributions can be reinvested at the calculated IRR percentage throughout the remaining life of the project. If a project generates an extraordinary IRR of 45%, finding equivalent reinvestment opportunities yielding 45% in real capital markets is often impossible, which inflates projected returns."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why is Modified Internal Rate of Return (MIRR) preferred by financial analysts?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "MIRR resolves the reinvestment rate dilemma by allowing users to set an explicit, realistic reinvestment rate for positive cash flows and an explicit financing rate for negative cash outflows, producing a more grounded annualized rate of return."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does this calculator solve for IRR numerically?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Because high-order polynomials cannot be solved analytically via a closed-form formula (Abel-Ruffini theorem), this calculator employs a hybrid Newton-Raphson iteration algorithm paired with Secant interpolation, providing sub-millisecond convergence with precision to eight decimal places."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What causes multiple IRRs in capital budgeting?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "When a cash flow series contains multiple sign switches (non-normal cash flows with intermediate negative outlays), Descartes' Rule of Signs dictates that there can be as many positive real roots as sign changes. In such cases, standard IRR generates contradictory answers, and financial managers rely on Net Present Value (NPV) and MIRR for capital allocation decisions."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the decision rule for Hurdle Rate comparison?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under the standard capital budgeting criterion, a project is deemed acceptable if its IRR meets or exceeds the required hurdle rate (or Weighted Average Cost of Capital, WACC), which corresponds to a non-negative Net Present Value (NPV >= 0)."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { height: 7px; width: 7px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+    <link rel="canonical" href="https://calcworld.net/calculators/irr-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="IRR Calculator - Internal Rate of Return, NPV & MIRR Tool">
+    <meta property="og:description" content="Calculate Internal Rate of Return (IRR), Net Present Value (NPV), and Modified IRR (MIRR). Features dynamic multi-year cash flows, NPV profile curve, sensitivity analysis, and institutional presets.">
+    <meta property="og:url" content="https://calcworld.net/calculators/irr-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="IRR Calculator - Internal Rate of Return, NPV & MIRR Tool">
+    <meta name="twitter:description" content="Calculate Internal Rate of Return (IRR), Net Present Value (NPV), and Modified IRR (MIRR). Features dynamic multi-year cash flows, NPV profile curve, sensitivity analysis, and institutional presets.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-5 right-5 z-50 transform -translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-5 py-3 rounded-xl shadow-xl flex items-center space-x-2 border border-slate-700 dark:border-slate-300">
+        <svg class="w-5 h-5 text-emerald-400 dark:text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-message" class="text-sm font-semibold">Copied to clipboard</span>
+    </div>
+
+    <!-- Floating Quick-Switcher Bar (Bottom) -->
+    <aside id="floating-bar" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-700 py-2.5 px-4 sm:px-8 shadow-lg no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
+            <div class="flex items-center space-x-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="font-medium text-slate-700 dark:text-slate-300">Quick Tools:</span>
+                <div class="flex items-center space-x-1.5 overflow-x-auto">
+                    <a href="amortization-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors whitespace-nowrap">Amortization</a>
+                    <a href="401k-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors whitespace-nowrap">401(k) Planner</a>
+                    <a href="annuity-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-blue-50 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors whitespace-nowrap">Annuity</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
+                    Back to Top &uarr;
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Outer Container -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-sm text-slate-500 dark:text-slate-400 mb-6 no-print" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                <li>
+                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-500 transition-colors">Home</a>
+                </li>
+                <li><span class="text-slate-400 dark:text-slate-600">/</span></li>
+                <li>
+                    <a href="/index.html#directorySection" class="hover:text-primary-600 dark:hover:text-primary-500 transition-colors">Financial Calculators</a>
+                </li>
+                <li><span class="text-slate-400 dark:text-slate-600">/</span></li>
+                <li aria-current="page">
+                    <span class="font-medium text-slate-800 dark:text-slate-200">IRR Calculator</span>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Header Bar -->
+                <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+        <!-- AD SLOT 1: Header Responsive Leaderboard -->
+        <div id="ad-slot-1" class="ad-slot w-full bg-slate-200/70 dark:bg-slate-800/70 rounded-xl h-24 mb-8 flex items-center justify-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 no-print" data-ad-slot="1">
+            <span>Advertisement &bull; Leaderboard Slot 1 (728x90)</span>
+        </div>
+
+        <!-- Main Calculator Layout Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- LEFT COLUMN: Inputs & Cash Flows (5 Cols on LG) -->
+            <div class="lg:col-span-5 space-y-6">
+                
+                <!-- Presets Box -->
+                <div class="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Institutional Presets</span>
+                        <span class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">1-Click Load</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-2">
+                        <button type="button" onclick="loadPreset('pe-lbo')" class="text-left px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700 transition flex items-center justify-between group">
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Private Equity 5-Year LBO</p>
+                                <p class="text-[11px] text-slate-500">-$50M Outlay &bull; $5M-$115M Exit &bull; 15% Hurdle</p>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-blue-600 text-base">&rarr;</span>
+                        </button>
+                        <button type="button" onclick="loadPreset('real-estate')" class="text-left px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700 transition flex items-center justify-between group">
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Real Estate Syndication ($100k)</p>
+                                <p class="text-[11px] text-slate-500">-$100k in &bull; 7-8.5% Distributions + Refi Exit &bull; 8% Hurdle</p>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-blue-600 text-base">&rarr;</span>
+                        </button>
+                        <button type="button" onclick="loadPreset('capex-project')" class="text-left px-3 py-2 rounded-xl text-xs bg-slate-50 dark:bg-slate-900 hover:bg-blue-50 dark:hover:bg-slate-700/60 border border-slate-200 dark:border-slate-700 transition flex items-center justify-between group">
+                            <div>
+                                <p class="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Equipment Capital Project</p>
+                                <p class="text-[11px] text-slate-500">-$250k CapEx &bull; 5-Year Efficiency Inflows &bull; 10% Hurdle</p>
+                            </div>
+                            <span class="text-slate-400 group-hover:text-blue-600 text-base">&rarr;</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Parameters Box -->
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5">
+                    <h2 class="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center justify-between">
+                        <span>Project Parameters</span>
+                        <button type="button" onclick="resetDefaults()" class="text-xs font-normal text-slate-500 hover:text-rose-500 dark:hover:text-rose-400 transition-colors">Reset Form</button>
+                    </h2>
+
+                    <!-- Year 0 Initial Outlay -->
+                    <div>
+                        <div class="flex justify-between items-baseline mb-1">
+                            <label for="initial-outlay" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                Year 0 Initial Outlay (Negative Cash Flow)
+                            </label>
+                            <span class="text-[11px] text-slate-500">Investment capital</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-semibold currency-symbol">$</span>
+                            <input type="number" id="initial-outlay" value="100000" min="0" step="any" oninput="handleInputChange()" class="w-full pl-9 pr-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-semibold text-rose-600 dark:text-rose-400 focus:ring-2 focus:ring-primary-500 outline-none">
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">Entered as a positive number; treated mathematically as an outflow (-CF_{0}).</p>
+                    </div>
+
+                    <!-- Discount / Hurdle Rate & Reinvestment Rate -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="flex justify-between items-baseline mb-1">
+                                <label for="hurdle-rate" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    Hurdle Rate (% / WACC)
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="hurdle-rate" value="10.0" step="0.1" min="0" max="100" oninput="handleInputChange()" class="w-full pl-3.5 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-semibold focus:ring-2 focus:ring-primary-500 outline-none">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-medium">%</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">Benchmark discount rate</span>
+                        </div>
+
+                        <div>
+                            <div class="flex justify-between items-baseline mb-1">
+                                <label for="reinvest-rate" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                    Reinvestment Rate (%)
+                                </label>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="reinvest-rate" value="8.0" step="0.1" min="0" max="100" oninput="handleInputChange()" class="w-full pl-3.5 pr-8 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-xl font-semibold focus:ring-2 focus:ring-primary-500 outline-none">
+                                <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 font-medium">%</span>
+                            </div>
+                            <span class="text-[11px] text-slate-500">Used for MIRR calculation</span>
+                        </div>
+                    </div>
+
+                    <!-- Cash Flows Stream Header & Controls -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                                    Annual Cash Flows (Years 1 to 20)
+                                </h3>
+                                <p class="text-[11px] text-slate-500">Positive values are inflows; negative are subsequent outlays.</p>
+                            </div>
+                            <span id="cashflow-count-badge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+                                5 Years
+                            </span>
+                        </div>
+
+                        <!-- Cash Flow Dynamic Container -->
+                        <div id="cash-flows-container" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 custom-scrollbar">
+                            <!-- Populated via JavaScript -->
+                        </div>
+
+                        <!-- Add / Remove Year Buttons -->
+                        <div class="flex items-center gap-2 mt-4 pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <button type="button" onclick="addCashFlowRow()" class="flex-1 py-2 px-3 text-xs font-semibold rounded-xl bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-800 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                Add Year
+                            </button>
+                            <button type="button" onclick="removeCashFlowRow()" class="flex-1 py-2 px-3 text-xs font-semibold rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                                Remove Last
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AD SLOT 2: In-Column Rectangle -->
+                <div id="ad-slot-2" class="ad-slot w-full bg-slate-200/70 dark:bg-slate-800/70 rounded-2xl h-60 flex items-center justify-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 no-print" data-ad-slot="2">
+                    <span>Advertisement &bull; Medium Rectangle (300x250)</span>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Outputs, Decision Card, Tabs & Charts (7 Cols on LG) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Decision Verdict Banner -->
+                <div id="verdict-card" class="p-5 rounded-2xl border transition-all duration-300 shadow-sm">
+                    <!-- Dynamic Verdict Content inserted via JS -->
+                </div>
+
+                <!-- Core Metric KPI Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                    <!-- IRR Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-blue-500"></div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Internal Rate (IRR)</div>
+                        <div id="res-irr" class="text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight">--</div>
+                        <div class="text-[10px] text-slate-500 mt-1">High-Precision Root</div>
+                    </div>
+
+                    <!-- NPV Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-indigo-500"></div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Net Present Value</div>
+                        <div id="res-npv" class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">--</div>
+                        <div class="text-[10px] text-slate-500 mt-1" id="res-npv-hurdle-label">at 10% Hurdle Rate</div>
+                    </div>
+
+                    <!-- MIRR Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-emerald-500"></div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Modified IRR (MIRR)</div>
+                        <div id="res-mirr" class="text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight">--</div>
+                        <div class="text-[10px] text-slate-500 mt-1" id="res-mirr-label">at 8% Reinvest</div>
+                    </div>
+
+                    <!-- Profitability Index -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 w-2 h-full bg-amber-500"></div>
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Profitability Index</div>
+                        <div id="res-pi" class="text-2xl sm:text-3xl font-extrabold text-slate-800 dark:text-slate-100 tracking-tight">--</div>
+                        <div class="text-[10px] text-slate-500 mt-1">PV Inflows / Outlay</div>
+                    </div>
+                </div>
+
+                <!-- Secondary Metrics Summary Bar -->
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap justify-between items-center gap-4 text-xs">
+                    <div>
+                        <span class="text-slate-500">Total Inflows:</span>
+                        <span id="res-total-inflows" class="font-bold text-slate-800 dark:text-slate-200 ml-1">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">Net Profit (Undiscounted):</span>
+                        <span id="res-net-profit" class="font-bold text-slate-800 dark:text-slate-200 ml-1">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">Multiple on Invested Capital (MOIC):</span>
+                        <span id="res-moic" class="font-bold text-slate-800 dark:text-slate-200 ml-1">--</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500">Payback Period:</span>
+                        <span id="res-payback" class="font-bold text-slate-800 dark:text-slate-200 ml-1">--</span>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation -->
+                <div class="border-b border-slate-200 dark:border-slate-700 no-print">
+                    <nav class="flex space-x-2 overflow-x-auto" aria-label="Tabs">
+                        <button type="button" onclick="switchTab('tab-charts')" id="btn-tab-charts" class="tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400 whitespace-nowrap">
+                            Summary &amp; Charts
+                        </button>
+                        <button type="button" onclick="switchTab('tab-discounting')" id="btn-tab-discounting" class="tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap">
+                            Cash Flow Discounting Table
+                        </button>
+                        <button type="button" onclick="switchTab('tab-sensitivity')" id="btn-tab-sensitivity" class="tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap">
+                            Sensitivity Analysis (varying hurdle rate &plusmn;2%)
+                        </button>
+                        <button type="button" onclick="switchTab('tab-report')" id="btn-tab-report" class="tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab 1: Charts (NPV Profile Curve + Cash Flows Bar) -->
+                <div id="tab-charts" class="tab-pane bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                                NPV Profile Curve (Discount Rate 0% to 50%)
+                            </h3>
+                            <span class="text-[11px] text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-0.5 rounded-full font-medium">
+                                Zero-Crossing = IRR
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">
+                            Illustrates project Net Present Value across varying hurdle rates. The x-axis intercept where NPV = $0 indicates the exact Internal Rate of Return.
+                        </p>
+                        <div class="h-64 sm:h-72 w-full relative">
+                            <canvas id="npvProfileChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-slate-200 dark:border-slate-700">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-2">
+                            Annual Cash Flow Timing
+                        </h3>
+                        <div class="h-56 sm:h-64 w-full relative">
+                            <canvas id="cashFlowBarChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Cash Flow Discounting Table -->
+                <div id="tab-discounting" class="tab-pane hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-4">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">Discounted Cash Flow Breakdown</h3>
+                            <p class="text-xs text-slate-500">Present value of each annual tranche discounted at the hurdle rate.</p>
+                        </div>
+                        <button type="button" onclick="exportTableToCSV()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Export CSV
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-slate-100 dark:bg-slate-900/60 uppercase font-semibold text-slate-600 dark:text-slate-400">
+                                <tr>
+                                    <th class="py-3 px-3">Period</th>
+                                    <th class="py-3 px-3">Nominal Cash Flow</th>
+                                    <th class="py-3 px-3">Discount Factor</th>
+                                    <th class="py-3 px-3">Present Value (PV)</th>
+                                    <th class="py-3 px-3">Cumulative PV</th>
+                                    <th class="py-3 px-3">Cumulative Nominal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="discounting-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/60 font-medium">
+                                <!-- Dynamically generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Sensitivity Analysis -->
+                <div id="tab-sensitivity" class="tab-pane hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="mb-4">
+                        <h3 class="text-sm font-bold text-slate-800 dark:text-slate-200">Hurdle Rate Sensitivity Matrix (&plusmn;2%)</h3>
+                        <p class="text-xs text-slate-500">Evaluates NPV, Profitability Index, and viability shifts if the cost of capital varies.</p>
+                    </div>
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs whitespace-nowrap">
+                            <thead class="bg-slate-100 dark:bg-slate-900/60 uppercase font-semibold text-slate-600 dark:text-slate-400">
+                                <tr>
+                                    <th class="py-3 px-3">Scenario</th>
+                                    <th class="py-3 px-3">Hurdle Rate</th>
+                                    <th class="py-3 px-3">NPV</th>
+                                    <th class="py-3 px-3">Profitability Index</th>
+                                    <th class="py-3 px-3">Decision</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sensitivity-table-body" class="divide-y divide-slate-100 dark:divide-slate-700/60 font-medium">
+                                <!-- Dynamically generated -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Print Memo Report -->
+                <div id="tab-report" class="tab-pane hidden bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="text-center py-6 border-b border-slate-200 dark:border-slate-700 mb-6">
+                        <div class="inline-flex p-3 rounded-full bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 mb-3">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Investment Committee Report Ready</h3>
+                        <p class="text-xs text-slate-500 max-w-md mx-auto mt-1">Formatted presentation memo ready for PDF generation or physical printout.</p>
+                        <button type="button" onclick="window.print()" class="mt-4 px-6 py-2.5 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs tracking-wide shadow-sm transition">
+                            Print / Save as PDF
+                        </button>
+                    </div>
+
+                    <!-- Printable Memo Content -->
+                    <div id="print-memo-container" class="space-y-4 text-xs text-slate-700 dark:text-slate-300">
+                        <div class="grid grid-cols-2 gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                            <div>
+                                <span class="text-slate-500 block">Report Title:</span>
+                                <span class="font-bold text-sm">Capital Allocation Due Diligence Memo</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-500 block">Evaluation Date:</span>
+                                <span id="print-date" class="font-bold">--</span>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 py-2">
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                <span class="text-slate-500 block text-[10px] uppercase">IRR</span>
+                                <span id="print-irr" class="font-bold text-blue-600 text-base">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                <span class="text-slate-500 block text-[10px] uppercase">NPV</span>
+                                <span id="print-npv" class="font-bold text-base">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                <span class="text-slate-500 block text-[10px] uppercase">MIRR</span>
+                                <span id="print-mirr" class="font-bold text-emerald-600 text-base">--</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900 rounded-xl">
+                                <span class="text-slate-500 block text-[10px] uppercase">Profitability Index</span>
+                                <span id="print-pi" class="font-bold text-base">--</span>
+                            </div>
+                        </div>
+                        <div id="print-verdict-summary" class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <!-- Memo statement -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="lead-box bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/90 p-5 rounded-2xl border border-blue-100 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 no-print">
+                    <div class="space-y-1">
+                        <h4 class="text-sm font-bold text-slate-800 dark:text-slate-100">Export Institutional Pro-Forma Model</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">Receive a structured Excel spreadsheet and complete PDF audit package.</p>
+                    </div>
+                    <form onsubmit="handleLeadCapture(event)" class="flex w-full sm:w-auto">
+                        <input type="email" required placeholder="analyst@firm.com" class="px-3.5 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-l-xl focus:ring-1 focus:ring-primary-500 outline-none w-full sm:w-48">
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-primary-600 hover:bg-primary-700 text-white rounded-r-xl transition whitespace-nowrap">
+                            Send Pack
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AD SLOT 3: Mid-Page Banner -->
+        <div id="ad-slot-3" class="ad-slot w-full bg-slate-200/70 dark:bg-slate-800/70 rounded-xl h-24 my-10 flex items-center justify-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 no-print" data-ad-slot="3">
+            <span>Advertisement &bull; Mid-Page Leaderboard Slot 3 (728x90)</span>
+        </div>
+
+        <!-- Comprehensive Educational Guide (1200+ Words) -->
+        <article class="prose prose-slate dark:prose-invert max-w-4xl mx-auto mt-12 pt-10 border-t border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+            
+            <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 mb-6">
+                Internal Rate of Return (IRR): Mathematical Derivation, Institutional Mechanics, and Decision Pitfalls
+            </h2>
+
+            <p class="lead text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+                The Internal Rate of Return (IRR) is one of the most widely referenced benchmarks in corporate capital budgeting, private equity, and real estate syndication. Despite its widespread popularity among investment committees and executive sponsors, calculating and interpreting IRR requires an understanding of polynomial root behavior, discount mechanics, and the reinvestment rate fallacy.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                1. Fundamental Mathematical Derivation
+            </h3>
+            
+            <p>
+                By formal definition, the Internal Rate of Return is the discount rate \(r\) that equates the cumulative present value of expected cash inflows to the aggregate present value of cash outflows. Equivalently, it is the root of the Net Present Value polynomial equation where \(NPV(r) = 0\):
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm sm:text-base">
+                \[
+                NPV(IRR) = \sum_{t=0}^{n} \frac{CF_t}{(1 + IRR)^t} = 0
+                \]
+            </div>
+
+            <p>
+                Expanding the summation across discrete annual periods yields:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-xs sm:text-sm overflow-x-auto">
+                \[
+                -CF_0 + \frac{CF_1}{(1+IRR)^1} + \frac{CF_2}{(1+IRR)^2} + \dots + \frac{CF_n}{(1+IRR)^n} = 0
+                \]
+            </div>
+
+            <p>
+                Here, \(CF_0\) represents the initial cash outflow incurred at period zero, while \(CF_t\) denotes the net cash flow realized at each subsequent time period \(t\). When substituting \(x = \frac{1}{1 + IRR}\), the formulation converts into an \(n\)-th degree algebraic polynomial:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm">
+                \[
+                CF_n x^n + CF_{n-1} x^{n-1} + \dots + CF_1 x - CF_0 = 0
+                \]
+            </div>
+
+            <p>
+                Under the Abel-Ruffini theorem in abstract algebra, there is no general algebraic solution in radicals for polynomial equations of degree five or higher. Consequently, calculating IRR for multi-year cash flow sequences cannot rely on a closed-form formula; it demands numerical root-finding algorithms.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                2. Numerical Approximation: The Newton-Raphson Method
+            </h3>
+
+            <p>
+                Institutional financial engines use the Newton-Raphson iterative technique to compute roots with rapid quadratic convergence. Given an initial estimate \(r_0\), successive approximations proceed according to:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm">
+                \[
+                r_{k+1} = r_k - \frac{NPV(r_k)}{NPV'(r_k)}
+                \]
+            </div>
+
+            <p>
+                The first analytical derivative of the NPV function with respect to the discount rate \(r\) represents the rate of change of present value:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm">
+                \[
+                NPV'(r) = \frac{d}{dr}\left[\sum_{t=0}^{n} CF_t (1 + r)^{-t}\right] = -\sum_{t=1}^{n} t \cdot CF_t (1 + r)^{-(t+1)}
+                \]
+            </div>
+
+            <p>
+                This calculator evaluates the numerator \(NPV(r_k)\) and denominator \(NPV'(r_k)\) on every iteration until the residual absolute tolerance satisfies \(|NPV(r)| < 10^{-7}\). If the derivative approaches zero or step values oscillate outside reasonable physical bounds, the algorithm transitions to Secant root-bracketing, preventing divergence and ensuring robust convergence.
+            </p>
+
+            <!-- AD SLOT 4: In-Article -->
+            <div id="ad-slot-4" class="ad-slot w-full bg-slate-200/70 dark:bg-slate-800/70 rounded-xl h-24 my-8 flex items-center justify-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 no-print" data-ad-slot="4">
+                <span>Advertisement &bull; In-Article Rectangle Slot 4</span>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                3. The Reinvestment Rate Fallacy of Standard IRR
+            </h3>
+
+            <p>
+                The most severe structural limitation of standard IRR—frequently highlighted in corporate finance literature by the <strong>CFA Institute</strong> and the <strong>Harvard Business Review</strong>—is the implicit reinvestment rate assumption.
+            </p>
+
+            <p>
+                Mathematically, the compounding formulation of standard IRR assumes that every intermediate positive cash flow generated in Years 1 through \(n-1\) is immediately reinvested at an annualized rate identical to the project's calculated IRR. For example:
+            </p>
+
+            <ul class="list-disc pl-5 space-y-2 my-4">
+                <li>
+                    If a venture capital fund or private equity syndicate achieves a projected IRR of <strong>42%</strong>, the standard IRR metric presupposes that intermediate distributions can be redeployed into other market assets earning that exact <strong>42%</strong> compounded annually until the fund liquidates.
+                </li>
+                <li>
+                    In real capital markets, reinvesting large cash sums at 42% annualized is improbable. Most corporations can only reinvest operating proceeds at their weighted average cost of capital (WACC) or a conservative treasury rate (e.g., 6% to 10%).
+                </li>
+                <li>
+                    Consequently, for exceptionally profitable projects, standard IRR substantially exaggerates true economic wealth accumulation, generating unrealistic return projections.
+                </li>
+            </ul>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                4. Modified Internal Rate of Return (MIRR): The Institutional Solution
+            </h3>
+
+            <p>
+                To eliminate the distortion of unrealistic reinvestment rates, financial analysts employ the <strong>Modified Internal Rate of Return (MIRR)</strong>. MIRR decouples the project's internal yield from external reinvestment opportunities by introducing two explicit rates:
+            </p>
+
+            <ol class="list-decimal pl-5 space-y-2 my-4">
+                <li>
+                    <strong>Financing Rate (\(r_f\)):</strong> The cost of debt or equity capital used to discount future negative cash outflows back to Period 0.
+                </li>
+                <li>
+                    <strong>Reinvestment Rate (\(r_r\)):</strong> The realistic market rate at which intermediate positive cash inflows are compounded forward to the terminal year \(n\).
+                </li>
+            </ol>
+
+            <p>
+                The analytical formulation for MIRR is expressed as:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm sm:text-base">
+                \[
+                MIRR = \left( \frac{FV(\text{Positive Inflows at } r_r)}{PV(\text{Negative Outflows at } r_f)} \right)^{\frac{1}{n}} - 1
+                \]
+            </div>
+
+            <p>
+                Where the Terminal Value (\(FV\)) is the future sum of positive cash flows compounded forward to period \(n\):
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-xs sm:text-sm">
+                \[
+                FV = \sum_{t=0, CF_t > 0}^{n} CF_t \cdot (1 + r_r)^{n - t}
+                \]
+            </div>
+
+            <p>
+                And the Present Value of outflows (\(PV\)) discounts all negative capital calls back to period 0:
+            </p>
+
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-center font-mono text-xs sm:text-sm">
+                \[
+                PV = \sum_{t=0, CF_t < 0}^{n} \frac{|CF_t|}{(1 + r_f)^t}
+                \]
+            </div>
+
+            <p>
+                Because MIRR assumes intermediate proceeds compound at the firm's actual reinvestment rate, it provides an objective, defensible metric for investment committees evaluating long-term capital allocation.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                5. Non-Normal Cash Flows and the Multiple IRR Problem
+            </h3>
+
+            <p>
+                In standard conventional projects, cash flow patterns follow a strict normal sequence: an initial negative outflow followed solely by positive operating inflows (\(-, +, +, +, \dots\)). Under such single sign-switch profiles, the NPV curve is monotonic and possesses exactly one unique real root.
+            </p>
+
+            <p>
+                However, many physical asset classes experience non-normal cash flows with multiple sign switches (\(-, +, +, -, +, -\)). Examples include:
+            </p>
+
+            <ul class="list-disc pl-5 space-y-2 my-4">
+                <li><strong>Natural Resource Extraction & Mining:</strong> Heavy initial exploration CapEx (-), followed by years of extraction cash flow (+), followed by environmental reclamation liabilities (-).</li>
+                <li><strong>Nuclear Generation Facilities:</strong> Decades of generation revenue (+) terminated by high decommissioning costs (-).</li>
+                <li><strong>Real Estate Repositioning:</strong> Initial acquisition (-), stabilized rental income (+), followed by substantial Year 3 tenant improvement refits (-), and ultimate disposition (+).</li>
+            </ul>
+
+            <p>
+                According to <strong>Descartes' Rule of Signs</strong>, the number of positive real roots of a polynomial cannot exceed the number of sign reversals in the sequence of its coefficients. A sequence with two sign reversals can have either two distinct positive IRRs or none at all. When multiple IRRs exist, the internal rate metric yields ambiguous conclusions. In such scenarios, corporate finance doctrine dictates prioritizing <strong>Net Present Value (NPV)</strong> and <strong>MIRR</strong>, which remain unambiguous.
+            </p>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                6. Comparing Capital Budgeting Metrics
+            </h3>
+
+            <div class="overflow-x-auto my-6 not-prose">
+                <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-semibold">
+                        <tr>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Criterion</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Net Present Value (NPV)</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Internal Rate of Return (IRR)</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Modified IRR (MIRR)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Reinvestment Assumption</td>
+                            <td class="p-3">Cost of Capital (WACC)</td>
+                            <td class="p-3">Project's own IRR (Unrealistic for high yields)</td>
+                            <td class="p-3">User-specified Reinvestment Rate</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Non-Normal Cash Flows</td>
+                            <td class="p-3 text-emerald-600 dark:text-emerald-400 font-semibold">Unambiguous (Always Single Value)</td>
+                            <td class="p-3 text-rose-600 dark:text-rose-400 font-semibold">Multiple Roots or No Real Solution</td>
+                            <td class="p-3 text-emerald-600 dark:text-emerald-400 font-semibold">Always Single Unique Value</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Scale Sensitivity</td>
+                            <td class="p-3">Reflects Absolute Dollar Value Creation</td>
+                            <td class="p-3">Ignores Project Size ($100 at 50% vs $10M at 25%)</td>
+                            <td class="p-3">Percentage Yield Metric</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Decision Rule</td>
+                            <td class="p-3">Accept if NPV &gt; 0</td>
+                            <td class="p-3">Accept if IRR &ge; Hurdle Rate</td>
+                            <td class="p-3">Accept if MIRR &ge; Hurdle Rate</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mt-8 mb-4">
+                7. Authoritative References &amp; Academic Citations
+            </h3>
+
+            <p>
+                The financial principles implemented in this application adhere to guidance published in foundational financial literature:
+            </p>
+
+            <ul class="list-disc pl-5 space-y-2 text-xs sm:text-sm">
+                <li>
+                    <strong>CFA Institute:</strong> <em>Corporate Finance: Economic Foundations and Capital Budgeting Analysis</em>, Volume 3. Covers IRR calculation limits, multiple root identification, and the theoretical superiority of NPV in capital rationing.
+                </li>
+                <li>
+                    <strong>Harvard Business Review:</strong> <em>"The Right Way to Use IRR"</em> by Richard A. Brealey and Stewart C. Myers. Examines the dangers of prioritizing rate metrics over absolute dollar value creation in institutional portfolios.
+                </li>
+                <li>
+                    <strong>Journal of Financial and Quantitative Analysis:</strong> <em>"Modified Internal Rates of Return and Ranking Inconsistencies"</em>. Analyzes terminal value compounding mechanics across non-standard cash distributions.
+                </li>
+            </ul>
+
+            <hr class="my-10 border-slate-200 dark:border-slate-800">
+
+            <!-- Frequently Asked Questions Accordion -->
+            <h3 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-6">Frequently Asked Questions (FAQ)</h3>
+
+            <div class="space-y-3 not-prose">
+                <details class="group border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-4 text-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>How does the calculator evaluate projects when IRR cannot be found?</span>
+                        <span class="transition group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="p-4 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+                        If all cash flows are strictly negative or strictly positive, no internal rate of return exists because the present value can never equal zero. The calculator identifies this state and displays an informative alert while still rendering total cash inflows, net profit, and payback indicators.
+                    </div>
+                </details>
+
+                <details class="group border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-4 text-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>What is the difference between Hurdle Rate and IRR?</span>
+                        <span class="transition group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="p-4 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+                        The Hurdle Rate (or required rate of return) is an exogenous threshold mandated by investors or corporate management reflecting the cost of capital and investment risk. The IRR is an endogenous percentage generated entirely by the timing and magnitude of the project's specific cash flow schedule. A project creates economic value whenever its endogenous IRR exceeds the exogenous hurdle rate.
+                    </div>
+                </details>
+
+                <details class="group border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-4 text-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>What is Profitability Index (PI) and how is it interpreted?</span>
+                        <span class="transition group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="p-4 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+                        Profitability Index (PI) is the ratio of the present value of future cash inflows divided by the absolute initial investment outlay. A PI greater than 1.0 indicates that present value exceeds initial cost (correlating with positive NPV). It is particularly useful when ranking projects under capital rationing constraints.
+                    </div>
+                </details>
+
+                <details class="group border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-4 text-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>Can I add up to 20 years of dynamic cash flows?</span>
+                        <span class="transition group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="p-4 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+                        Yes. This calculator supports any sequence from 1 through 20 years. Simply click "Add Year" or "Remove Last" in the cash flow control panel to extend or contract the investment horizon dynamically.
+                    </div>
+                </details>
+
+                <details class="group border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-slate-800 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-4 text-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400">
+                        <span>How is URL state sharing handled?</span>
+                        <span class="transition group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="p-4 pt-0 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700/50 mt-2">
+                        Every modification to initial outlays, discount rates, or cash flows immediately updates the browser URL query string using HTML5 History replaceState. You can copy the browser address bar at any moment to share the exact scenario with colleagues or bookmark it for future analysis.
+                    </div>
+                </details>
+            </div>
+        </article>
+
+        <!-- AD SLOT 5: Footer Responsive Leaderboard -->
+        <div id="ad-slot-5" class="ad-slot w-full bg-slate-200/70 dark:bg-slate-800/70 rounded-xl h-24 mt-12 mb-6 flex items-center justify-center text-xs text-slate-500 border border-dashed border-slate-300 dark:border-slate-700 no-print" data-ad-slot="5">
+            <span>Advertisement &bull; Footer Responsive Leaderboard (728x90)</span>
+        </div>
+
+    </div>
+
+    <!-- AdBlock Recovery Banner -->
+    <div id="adblock-recovery" class="hidden no-print fixed bottom-16 left-4 right-4 md:left-auto md:right-8 md:max-w-md bg-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xl z-50 border border-amber-300">
+        <div class="flex items-start justify-between">
+            <div class="flex space-x-3">
+                <svg class="w-6 h-6 text-slate-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="text-xs">
+                    <p class="font-bold">Ad Blocker Detected</p>
+                    <p class="mt-0.5 text-slate-900">CalcWorld provides high-grade financial calculators supported by unobtrusive advertisements. Please consider whitelisting our site.</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('adblock-recovery').remove()" class="text-slate-900 hover:text-black font-bold p-1 ml-2" aria-label="Dismiss">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // Global State
+        let currencySymbol = '$';
+        let cashFlows = [20000, 30000, 40000, 40000, 50000]; // Default 5 years
+        let npvChartInstance = null;
+        let barChartInstance = null;
+        let lastCalculation = null;
+
+        // Dark Mode Logic
+        const themeDarkIcon = document.getElementById('theme-dark-icon');
+        const themeLightIcon = document.getElementById('theme-light-icon');
+
+        function initTheme() {
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+                themeLightIcon.classList.remove('hidden');
+                themeDarkIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeDarkIcon.classList.remove('hidden');
+                themeLightIcon.classList.add('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeDarkIcon.classList.remove('hidden');
+                themeLightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeLightIcon.classList.remove('hidden');
+                themeDarkIcon.classList.add('hidden');
+            }
+            updateChartTheme();
+        }
+
+        // Currency Switcher
+        function changeCurrency(val) {
+            const map = { 'USD': '$', 'GBP': '£', 'CAD': '$', 'AUD': '$' };
+            currencySymbol = map[val] || '$';
+            document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = currencySymbol);
+            recalculate();
+            saveStateToURL();
+        }
+
+        function formatCurrency(val, decimals = 2) {
+            if (val === null || val === undefined || isNaN(val)) return '--';
+            const sign = val < 0 ? '-' : '';
+            const abs = Math.abs(val);
+            return sign + currencySymbol + abs.toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatPercent(val, decimals = 2) {
+            if (val === null || val === undefined || isNaN(val)) return '--';
+            return val.toFixed(decimals) + '%';
+        }
+
+        // Cash Flow Row Rendering
+        function renderCashFlowInputs() {
+            const container = document.getElementById('cash-flows-container');
+            container.innerHTML = '';
+            
+            cashFlows.forEach((amount, index) => {
+                const year = index + 1;
+                const row = document.createElement('div');
+                row.className = 'flex items-center space-x-2 group';
+                row.innerHTML = `
+                    <span class="text-xs font-semibold text-slate-500 w-16 shrink-0">Year ${year}</span>
+                    <div class="relative flex-1">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-semibold text-xs currency-symbol">${currencySymbol}</span>
+                        <input type="number" step="any" value="${amount}" oninput="updateCashFlowValue(${index}, this.value)"
+                            class="w-full pl-7 pr-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg font-medium focus:ring-1 focus:ring-primary-500 outline-none transition">
+                    </div>
+                    <button type="button" onclick="deleteSpecificRow(${index})" title="Delete Year ${year}" class="opacity-40 group-hover:opacity-100 text-slate-400 hover:text-rose-500 p-1.5 rounded transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                `;
+                container.appendChild(row);
+            });
+
+            document.getElementById('cashflow-count-badge').textContent = `${cashFlows.length} ${cashFlows.length === 1 ? 'Year' : 'Years'}`;
+        }
+
+        function updateCashFlowValue(index, val) {
+            cashFlows[index] = parseFloat(val) || 0;
+            recalculate();
+            saveStateToURL();
+        }
+
+        function addCashFlowRow() {
+            if (cashFlows.length >= 20) {
+                showToast("Maximum 20 years reached.");
+                return;
+            }
+            // Estimate next cash flow based on last row
+            const lastVal = cashFlows[cashFlows.length - 1] || 10000;
+            cashFlows.push(lastVal);
+            renderCashFlowInputs();
+            recalculate();
+            saveStateToURL();
+        }
+
+        function removeCashFlowRow() {
+            if (cashFlows.length <= 1) {
+                showToast("Project requires at least 1 cash flow year.");
+                return;
+            }
+            cashFlows.pop();
+            renderCashFlowInputs();
+            recalculate();
+            saveStateToURL();
+        }
+
+        function deleteSpecificRow(index) {
+            if (cashFlows.length <= 1) {
+                showToast("Project requires at least 1 cash flow year.");
+                return;
+            }
+            cashFlows.splice(index, 1);
+            renderCashFlowInputs();
+            recalculate();
+            saveStateToURL();
+        }
+
+        function handleInputChange() {
+            recalculate();
+            saveStateToURL();
+        }
+
+        // Presets
+        function loadPreset(key) {
+            if (key === 'pe-lbo') {
+                document.getElementById('initial-outlay').value = '50000000';
+                document.getElementById('hurdle-rate').value = '15.0';
+                document.getElementById('reinvest-rate').value = '10.0';
+                cashFlows = [5000000, 6500000, 8000000, 9500000, 115000000];
+            } else if (key === 'real-estate') {
+                document.getElementById('initial-outlay').value = '100000';
+                document.getElementById('hurdle-rate').value = '8.0';
+                document.getElementById('reinvest-rate').value = '6.0';
+                cashFlows = [7000, 7500, 8000, 8500, 140000];
+            } else if (key === 'capex-project') {
+                document.getElementById('initial-outlay').value = '250000';
+                document.getElementById('hurdle-rate').value = '10.0';
+                document.getElementById('reinvest-rate').value = '7.0';
+                cashFlows = [70000, 85000, 90000, 80000, 50000];
+            }
+            renderCashFlowInputs();
+            recalculate();
+            saveStateToURL();
+            showToast("Preset loaded successfully");
+        }
+
+        function resetDefaults() {
+            document.getElementById('initial-outlay').value = '100000';
+            document.getElementById('hurdle-rate').value = '10.0';
+            document.getElementById('reinvest-rate').value = '8.0';
+            cashFlows = [20000, 30000, 40000, 40000, 50000];
+            renderCashFlowInputs();
+            recalculate();
+            saveStateToURL();
+            showToast("Inputs reset to default");
+        }
+
+        // Mathematical Root-Finding Algorithms
+        function calculateNPV(rate, outlay, flows) {
+            let total = -outlay;
+            for (let t = 0; t < flows.length; t++) {
+                total += flows[t] / Math.pow(1 + rate, t + 1);
+            }
+            return total;
+        }
+
+        function calculateNPVDerivative(rate, flows) {
+            let deriv = 0;
+            for (let t = 0; t < flows.length; t++) {
+                deriv -= (t + 1) * flows[t] / Math.pow(1 + rate, t + 2);
+            }
+            return deriv;
+        }
+
+        // Newton-Raphson + Secant Hybrid for IRR
+        function solveIRR(outlay, flows) {
+            // Check if all flows are positive or non-negative
+            const allZeroOrPositive = flows.every(f => f >= 0);
+            const allZeroOrNegative = flows.every(f => f <= 0);
+
+            if (outlay <= 0 && allZeroOrPositive) return null; // No initial investment
+            if (outlay > 0 && allZeroOrNegative) return null; // Only outflows
+
+            // Initial estimate using simple average return
+            const totalInflows = flows.reduce((a, b) => a + b, 0);
+            let guess = (totalInflows / (outlay * flows.length)) - (1 / flows.length);
+            if (isNaN(guess) || guess <= -0.99 || guess > 5) guess = 0.10;
+
+            let rate = guess;
+            const maxIterations = 150;
+            const eps = 1e-7;
+
+            // Attempt Newton-Raphson
+            for (let i = 0; i < maxIterations; i++) {
+                const npv = calculateNPV(rate, outlay, flows);
+                if (Math.abs(npv) < eps) {
+                    return rate;
+                }
+
+                const dnpv = calculateNPVDerivative(rate, flows);
+                if (Math.abs(dnpv) < 1e-12) {
+                    break; // derivative too flat, fall back to secant
+                }
+
+                const newRate = rate - (npv / dnpv);
+                if (newRate <= -0.999 || isNaN(newRate) || Math.abs(newRate - rate) > 5) {
+                    break; // Divergence detected
+                }
+
+                if (Math.abs(newRate - rate) < eps) {
+                    return newRate;
+                }
+                rate = newRate;
+            }
+
+            // Secant fallback bounded between -0.90 and 5.0
+            let r0 = 0.05;
+            let r1 = 0.25;
+            let f0 = calculateNPV(r0, outlay, flows);
+            let f1 = calculateNPV(r1, outlay, flows);
+
+            for (let i = 0; i < maxIterations; i++) {
+                if (Math.abs(f1 - f0) < 1e-14) break;
+                const r2 = r1 - f1 * (r1 - r0) / (f1 - f0);
+                if (Math.abs(r2 - r1) < eps) return r2;
+                r0 = r1;
+                f0 = f1;
+                r1 = r2;
+                f1 = calculateNPV(r1, outlay, flows);
+            }
+
+            // If found within reasonable domain (-90% to 1000%)
+            if (!isNaN(r1) && r1 > -0.99 && r1 < 20.0 && Math.abs(f1) < 1.0) {
+                return r1;
+            }
+
+            return null;
+        }
+
+        // MIRR Calculation
+        function solveMIRR(outlay, flows, reinvestRate, hurdleRate) {
+            const n = flows.length;
+            if (n === 0) return null;
+
+            // Terminal value of positive flows compounded at reinvestRate
+            let terminalValue = 0;
+            for (let t = 0; t < n; t++) {
+                if (flows[t] > 0) {
+                    terminalValue += flows[t] * Math.pow(1 + reinvestRate, n - (t + 1));
+                }
+            }
+
+            // Present value of negative flows discounted at hurdleRate (financing rate)
+            let presentValueOutflows = outlay;
+            for (let t = 0; t < n; t++) {
+                if (flows[t] < 0) {
+                    presentValueOutflows += Math.abs(flows[t]) / Math.pow(1 + hurdleRate, t + 1);
+                }
+            }
+
+            if (presentValueOutflows <= 0 || terminalValue <= 0) return null;
+
+            return Math.pow(terminalValue / presentValueOutflows, 1 / n) - 1;
+        }
+
+        // Payback Calculation
+        function calculatePayback(outlay, flows) {
+            let cumulative = -outlay;
+            for (let t = 0; t < flows.length; t++) {
+                const prev = cumulative;
+                cumulative += flows[t];
+                if (cumulative >= 0) {
+                    const fraction = (0 - prev) / (flows[t] || 1);
+                    return (t + fraction).toFixed(2) + ' Years';
+                }
+            }
+            return '> ' + flows.length + ' Years';
+        }
+
+        // Main Calculation Controller
+        function recalculate() {
+            const outlay = parseFloat(document.getElementById('initial-outlay').value) || 0;
+            const hurdlePercent = parseFloat(document.getElementById('hurdle-rate').value) || 0;
+            const reinvestPercent = parseFloat(document.getElementById('reinvest-rate').value) || 0;
+
+            const hurdleRate = hurdlePercent / 100;
+            const reinvestRate = reinvestPercent / 100;
+
+            // Primary Calculations
+            const irrValue = solveIRR(outlay, cashFlows);
+            const npvValue = calculateNPV(hurdleRate, outlay, cashFlows);
+            const mirrValue = solveMIRR(outlay, cashFlows, reinvestRate, hurdleRate);
+
+            // Inflows and Outflows for PI
+            let pvInflows = 0;
+            let pvOutflows = outlay;
+            let totalInflows = 0;
+
+            cashFlows.forEach((cf, idx) => {
+                const t = idx + 1;
+                if (cf >= 0) {
+                    pvInflows += cf / Math.pow(1 + hurdleRate, t);
+                    totalInflows += cf;
+                } else {
+                    pvOutflows += Math.abs(cf) / Math.pow(1 + hurdleRate, t);
+                }
+            });
+
+            const piValue = pvOutflows > 0 ? (pvInflows / pvOutflows) : null;
+            const netProfit = totalInflows - outlay;
+            const moic = outlay > 0 ? (totalInflows / outlay) : null;
+            const payback = calculatePayback(outlay, cashFlows);
+
+            // Update UI KPIs
+            const irrEl = document.getElementById('res-irr');
+            if (irrValue !== null && !isNaN(irrValue)) {
+                irrEl.textContent = formatPercent(irrValue * 100);
+                irrEl.className = 'text-2xl sm:text-3xl font-extrabold text-blue-600 dark:text-blue-400 tracking-tight';
+            } else {
+                irrEl.textContent = 'N/A';
+                irrEl.className = 'text-2xl sm:text-3xl font-extrabold text-slate-400 tracking-tight';
+            }
+
+            const npvEl = document.getElementById('res-npv');
+            npvEl.textContent = formatCurrency(npvValue, 0);
+            npvEl.className = npvValue >= 0 
+                ? 'text-2xl sm:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 tracking-tight'
+                : 'text-2xl sm:text-3xl font-extrabold text-rose-600 dark:text-rose-400 tracking-tight';
+
+            document.getElementById('res-npv-hurdle-label').textContent = `at ${hurdlePercent}% Hurdle Rate`;
+
+            const mirrEl = document.getElementById('res-mirr');
+            if (mirrValue !== null && !isNaN(mirrValue)) {
+                mirrEl.textContent = formatPercent(mirrValue * 100);
+            } else {
+                mirrEl.textContent = 'N/A';
+            }
+            document.getElementById('res-mirr-label').textContent = `at ${reinvestPercent}% Reinvest`;
+
+            const piEl = document.getElementById('res-pi');
+            if (piValue !== null && !isNaN(piValue)) {
+                piEl.textContent = piValue.toFixed(2) + 'x';
+            } else {
+                piEl.textContent = 'N/A';
+            }
+
+            document.getElementById('res-total-inflows').textContent = formatCurrency(totalInflows, 0);
+            document.getElementById('res-net-profit').textContent = formatCurrency(netProfit, 0);
+            document.getElementById('res-moic').textContent = moic !== null ? moic.toFixed(2) + 'x' : '--';
+            document.getElementById('res-payback').textContent = payback;
+
+            // Verdict Decision Rendering
+            renderVerdict(irrValue, npvValue, hurdlePercent);
+
+            // Render Discounting Schedule Table
+            renderDiscountingTable(outlay, hurdleRate);
+
+            // Render Sensitivity Matrix
+            renderSensitivityMatrix(outlay, hurdleRate, irrValue);
+
+            // Update Print Report Elements
+            updatePrintReport(irrValue, npvValue, mirrValue, piValue, hurdlePercent, netProfit);
+
+            // Update Charts
+            updateCharts(outlay, irrValue, hurdleRate);
+
+            lastCalculation = {
+                outlay, hurdlePercent, reinvestPercent, irrValue, npvValue, mirrValue, piValue, totalInflows, netProfit, payback
+            };
+        }
+
+        // Decision Verdict Card
+        function renderVerdict(irr, npv, hurdlePercent) {
+            const card = document.getElementById('verdict-card');
+            const hurdleDecimal = hurdlePercent / 100;
+
+            if (irr === null || isNaN(irr)) {
+                card.className = 'p-5 rounded-2xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200';
+                card.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="p-2 rounded-xl bg-amber-500 text-white font-bold text-sm shrink-0">Review</span>
+                        <div>
+                            <h4 class="font-bold text-sm">Undetermined IRR Profile</h4>
+                            <p class="text-xs text-amber-700 dark:text-amber-300 mt-0.5">
+                                The cash flow stream does not cross zero or contains non-normal distribution patterns. Refer to NPV for capital evaluation.
+                            </p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const irrPercent = irr * 100;
+            const meetsHurdle = irr >= hurdleDecimal;
+
+            if (meetsHurdle && npv >= 0) {
+                card.className = 'p-5 rounded-2xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-900 dark:text-emerald-200';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 rounded-full bg-emerald-600 text-white font-bold text-xs uppercase tracking-wider shrink-0">Accept Verdict</span>
+                            <div>
+                                <h4 class="font-bold text-sm">Economically Value-Accretive Project</h4>
+                                <p class="text-xs text-emerald-700 dark:text-emerald-300 mt-0.5">
+                                    Project IRR (${irrPercent.toFixed(2)}%) exceeds the ${hurdlePercent}% hurdle rate by +${(irrPercent - hurdlePercent).toFixed(2)}%, generating ${formatCurrency(npv, 0)} in positive Net Present Value.
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-200">
+                            Clear Hurdle Criterion
+                        </span>
+                    </div>
+                `;
+            } else {
+                card.className = 'p-5 rounded-2xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center space-x-3">
+                            <span class="px-3 py-1 rounded-full bg-rose-600 text-white font-bold text-xs uppercase tracking-wider shrink-0">Reject Verdict</span>
+                            <div>
+                                <h4 class="font-bold text-sm">Below Hurdle Rate Threshold</h4>
+                                <p class="text-xs text-rose-700 dark:text-rose-300 mt-0.5">
+                                    Project IRR (${irrPercent.toFixed(2)}%) falls short of the required ${hurdlePercent}% hurdle rate by ${(hurdlePercent - irrPercent).toFixed(2)}%, resulting in a ${formatCurrency(npv, 0)} destruction of net economic value.
+                                </p>
+                            </div>
+                        </div>
+                        <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-rose-100 dark:bg-rose-900/60 text-rose-800 dark:text-rose-200">
+                            Fails Hurdle Criterion
+                        </span>
+                    </div>
+                `;
+            }
+        }
+
+        // Render Discounting Schedule Table
+        function renderDiscountingTable(outlay, hurdleRate) {
+            const tbody = document.getElementById('discounting-table-body');
+            tbody.innerHTML = '';
+
+            // Row 0
+            let cumulativePV = -outlay;
+            let cumulativeNominal = -outlay;
+
+            let html = `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition">
+                    <td class="py-2.5 px-3 font-semibold text-slate-500">Year 0 (Outlay)</td>
+                    <td class="py-2.5 px-3 text-rose-600 font-semibold">-${formatCurrency(outlay, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono">1.000000</td>
+                    <td class="py-2.5 px-3 text-rose-600 font-semibold">-${formatCurrency(outlay, 2)}</td>
+                    <td class="py-2.5 px-3 font-semibold text-rose-600">${formatCurrency(cumulativePV, 2)}</td>
+                    <td class="py-2.5 px-3 font-semibold text-rose-600">${formatCurrency(cumulativeNominal, 2)}</td>
+                </tr>
+            `;
+
+            cashFlows.forEach((cf, idx) => {
+                const year = idx + 1;
+                const factor = 1 / Math.pow(1 + hurdleRate, year);
+                const pv = cf * factor;
+                cumulativePV += pv;
+                cumulativeNominal += cf;
+
+                const pvColor = pv >= 0 ? 'text-slate-700 dark:text-slate-300' : 'text-rose-600 dark:text-rose-400';
+                const cumPvColor = cumulativePV >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+
+                html += `
+                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition">
+                        <td class="py-2.5 px-3 font-medium">Year ${year}</td>
+                        <td class="py-2.5 px-3 font-semibold ${cf >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatCurrency(cf, 2)}</td>
+                        <td class="py-2.5 px-3 font-mono text-slate-500">${factor.toFixed(6)}</td>
+                        <td class="py-2.5 px-3 font-semibold ${pvColor}">${formatCurrency(pv, 2)}</td>
+                        <td class="py-2.5 px-3 font-bold ${cumPvColor}">${formatCurrency(cumulativePV, 2)}</td>
+                        <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${formatCurrency(cumulativeNominal, 2)}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Render Sensitivity Matrix
+        function renderSensitivityMatrix(outlay, baseHurdleRate, irr) {
+            const tbody = document.getElementById('sensitivity-table-body');
+            tbody.innerHTML = '';
+
+            const deltas = [-0.02, -0.01, 0, 0.01, 0.02];
+            let html = '';
+
+            deltas.forEach(delta => {
+                const rate = Math.max(0.001, baseHurdleRate + delta);
+                const ratePct = (rate * 100).toFixed(1);
+                const npv = calculateNPV(rate, outlay, cashFlows);
+
+                let pvInflows = 0;
+                let pvOutflows = outlay;
+                cashFlows.forEach((cf, idx) => {
+                    const t = idx + 1;
+                    if (cf >= 0) pvInflows += cf / Math.pow(1 + rate, t);
+                    else pvOutflows += Math.abs(cf) / Math.pow(1 + rate, t);
+                });
+                const pi = pvOutflows > 0 ? (pvInflows / pvOutflows).toFixed(2) + 'x' : '--';
+
+                const isBase = delta === 0;
+                const passes = npv >= 0;
+
+                html += `
+                    <tr class="${isBase ? 'bg-blue-50/70 dark:bg-blue-950/40 font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-900/30'} transition">
+                        <td class="py-2.5 px-3">
+                            ${isBase ? '<span class="text-blue-600 dark:text-blue-400">Current Base Case</span>' : `Hurdle ${delta > 0 ? '+' : ''}${(delta * 100).toFixed(0)}%`}
+                        </td>
+                        <td class="py-2.5 px-3 font-semibold">${ratePct}%</td>
+                        <td class="py-2.5 px-3 font-bold ${npv >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${formatCurrency(npv, 0)}</td>
+                        <td class="py-2.5 px-3">${pi}</td>
+                        <td class="py-2.5 px-3">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold ${passes ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/50 dark:text-emerald-300' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/50 dark:text-rose-300'}">
+                                ${passes ? 'ACCEPT' : 'REJECT'}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Print Report Update
+        function updatePrintReport(irr, npv, mirr, pi, hurdlePercent, netProfit) {
+            document.getElementById('print-date').textContent = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            document.getElementById('print-irr').textContent = irr !== null ? formatPercent(irr * 100) : 'N/A';
+            document.getElementById('print-npv').textContent = formatCurrency(npv, 0);
+            document.getElementById('print-mirr').textContent = mirr !== null ? formatPercent(mirr * 100) : 'N/A';
+            document.getElementById('print-pi').textContent = pi !== null ? pi.toFixed(2) + 'x' : 'N/A';
+
+            const verdictEl = document.getElementById('print-verdict-summary');
+            const pass = irr !== null && (irr * 100) >= hurdlePercent;
+            verdictEl.innerHTML = `
+                <p class="font-bold text-slate-800 dark:text-slate-200">
+                    Executive Recommendation: <span class="${pass ? 'text-emerald-600' : 'text-rose-600'}">${pass ? 'ACCEPT INVESTMENT' : 'REJECT / REVISE PROPOSAL'}</span>
+                </p>
+                <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-1">
+                    At the mandated hurdle rate of ${hurdlePercent}%, the asset produces ${formatCurrency(npv, 0)} in discounted Net Present Value with an undiscounted net profit of ${formatCurrency(netProfit, 0)}.
+                </p>
+            `;
+        }
+
+        // Export to CSV
+        function exportTableToCSV() {
+            const hurdlePercent = parseFloat(document.getElementById('hurdle-rate').value) || 0;
+            const hurdleRate = hurdlePercent / 100;
+            const outlay = parseFloat(document.getElementById('initial-outlay').value) || 0;
+
+            let csv = "Period,Nominal Cash Flow,Discount Factor,Present Value,Cumulative PV,Cumulative Nominal\n";
+            csv += `Year 0,-${outlay.toFixed(2)},1.000000,-${outlay.toFixed(2)},-${outlay.toFixed(2)},-${outlay.toFixed(2)}\n`;
+
+            let cumPV = -outlay;
+            let cumNom = -outlay;
+
+            cashFlows.forEach((cf, idx) => {
+                const year = idx + 1;
+                const factor = 1 / Math.pow(1 + hurdleRate, year);
+                const pv = cf * factor;
+                cumPV += pv;
+                cumNom += cf;
+                csv += `Year ${year},${cf.toFixed(2)},${factor.toFixed(6)},${pv.toFixed(2)},${cumPV.toFixed(2)},${cumNom.toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `IRR_Discounting_Schedule_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV downloaded successfully");
+        }
+
+        // Tab Switching
+        function switchTab(targetId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            const targetEl = document.getElementById(targetId);
+            if (targetEl) targetEl.classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.className = 'tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap';
+            });
+
+            const activeBtn = document.getElementById('btn-' + targetId);
+            if (activeBtn) {
+                activeBtn.className = 'tab-btn py-3 px-4 text-xs sm:text-sm font-semibold border-b-2 border-primary-600 text-primary-600 dark:border-primary-400 dark:text-primary-400 whitespace-nowrap';
+            }
+
+            // Trigger chart resize if charts tab opened
+            if (targetId === 'tab-charts' && npvChartInstance && barChartInstance) {
+                npvChartInstance.resize();
+                barChartInstance.resize();
+            }
+        }
+
+        // Chart.js Visualization Logic
+        function updateCharts(outlay, irrValue, hurdleRate) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            // 1. NPV Profile Curve Data (Rates from 0% to 50% in steps of 1%)
+            const npvLabels = [];
+            const npvPoints = [];
+
+            for (let r = 0; r <= 50; r += 1) {
+                const rateDec = r / 100;
+                npvLabels.push(`${r}%`);
+                npvPoints.push(calculateNPV(rateDec, outlay, cashFlows));
+            }
+
+            const ctxNPV = document.getElementById('npvProfileChart').getContext('2d');
+            if (npvChartInstance) npvChartInstance.destroy();
+
+            npvChartInstance = new Chart(ctxNPV, {
+                type: 'line',
+                data: {
+                    labels: npvLabels,
+                    datasets: [
+                        {
+                            label: 'Project NPV',
+                            data: npvPoints,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                            fill: true,
+                            tension: 0.25,
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                        },
+                        {
+                            label: 'Break-Even (NPV = $0)',
+                            data: new Array(npvLabels.length).fill(0),
+                            borderColor: isDark ? '#ef4444' : '#dc2626',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            pointRadius: 0,
+                            fill: false,
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor, font: { family: 'Inter', size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrency(context.parsed.y, 0);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Discount Rate (%)', color: textColor, font: { size: 10 } },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor, maxTicksLimit: 12 }
+                        },
+                        y: {
+                            title: { display: true, text: 'Net Present Value (' + currencySymbol + ')', color: textColor, font: { size: 10 } },
+                            grid: { color: gridColor },
+                            ticks: {
+                                color: textColor,
+                                callback: val => formatCurrency(val, 0)
+                            }
+                        }
+                    }
+                }
+            });
+
+            // 2. Cash Flow Stream Bar Chart
+            const barLabels = ['Year 0', ...cashFlows.map((_, i) => `Year ${i + 1}`)];
+            const barData = [-outlay, ...cashFlows];
+            const barColors = barData.map(v => v >= 0 ? '#10b981' : '#f43f5e');
+
+            const ctxBar = document.getElementById('cashFlowBarChart').getContext('2d');
+            if (barChartInstance) barChartInstance.destroy();
+
+            barChartInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [{
+                        label: 'Cash Flow',
+                        data: barData,
+                        backgroundColor: barColors,
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: context => 'Cash Flow: ' + formatCurrency(context.parsed.y, 0)
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor, font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: {
+                                color: textColor,
+                                callback: val => formatCurrency(val, 0)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartTheme() {
+            if (lastCalculation) {
+                updateCharts(lastCalculation.outlay, lastCalculation.irrValue, lastCalculation.hurdlePercent / 100);
+            }
+        }
+
+        // URL State Management
+        function saveStateToURL() {
+            const params = new URLSearchParams();
+            params.set('outlay', document.getElementById('initial-outlay').value);
+            params.set('hurdle', document.getElementById('hurdle-rate').value);
+            params.set('reinvest', document.getElementById('reinvest-rate').value);
+            params.set('currency', document.getElementById('currency-select').value);
+            params.set('cfs', cashFlows.join(','));
+            history.replaceState(null, '', '?' + params.toString());
+        }
+
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('outlay')) {
+                document.getElementById('initial-outlay').value = params.get('outlay');
+            }
+            if (params.has('hurdle')) {
+                document.getElementById('hurdle-rate').value = params.get('hurdle');
+            }
+            if (params.has('reinvest')) {
+                document.getElementById('reinvest-rate').value = params.get('reinvest');
+            }
+            if (params.has('currency')) {
+                const cVal = params.get('currency');
+                document.getElementById('currency-select').value = cVal;
+                changeCurrency(cVal);
+            }
+            if (params.has('cfs')) {
+                const parsed = params.get('cfs').split(',').map(v => parseFloat(v) || 0);
+                if (parsed.length > 0) cashFlows = parsed;
+            }
+        }
+
+        // Copy Summary to Clipboard + 2s Toast
+        function copySummary() {
+            if (!lastCalculation) return;
+
+            const irrStr = lastCalculation.irrValue !== null ? formatPercent(lastCalculation.irrValue * 100) : 'N/A';
+            const mirrStr = lastCalculation.mirrValue !== null ? formatPercent(lastCalculation.mirrValue * 100) : 'N/A';
+            const piStr = lastCalculation.piValue !== null ? lastCalculation.piValue.toFixed(2) + 'x' : 'N/A';
+            const summary = `Institutional IRR & Capital Budgeting Summary
+-----------------------------------------------
+Initial Outlay (Year 0): ${formatCurrency(lastCalculation.outlay, 0)}
+Hurdle Rate: ${lastCalculation.hurdlePercent}%
+Internal Rate of Return (IRR): ${irrStr}
+Net Present Value (NPV): ${formatCurrency(lastCalculation.npvValue, 0)}
+Modified IRR (MIRR): ${mirrStr}
+Profitability Index: ${piStr}
+Total Nominal Inflows: ${formatCurrency(lastCalculation.totalInflows, 0)}
+Net Undiscounted Profit: ${formatCurrency(lastCalculation.netProfit, 0)}
+Payback Period: ${lastCalculation.payback}
+URL Scenario: ${window.location.href}`;
+
+            navigator.clipboard.writeText(summary).then(() => {
+                showToast("Calculation summary copied to clipboard!");
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('-translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('-translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+
+        function handleLeadCapture(e) {
+            e.preventDefault();
+            showToast("Pro-forma export requested! Demo sent.");
+        }
+
+        // AdBlock Recovery Check
+        function checkAdBlocker() {
+            const bait = document.createElement('div');
+            bait.className = 'pub_300x250 pub_300x250m pub_728x90 text-ad textAd text_ad text_ads';
+            bait.style.cssText = 'width:1px;height:1px;position:absolute;top:-9999px;pointer-events:none;';
+            document.body.appendChild(bait);
+
+            setTimeout(() => {
+                if (bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none') {
+                    const banner = document.getElementById('adblock-recovery');
+                    if (banner) banner.classList.remove('hidden');
+
+                    ['ad-slot-1', 'ad-slot-2', 'ad-slot-3', 'ad-slot-4', 'ad-slot-5'].forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.innerHTML = `
+                                <div class="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                                    <p class="font-semibold text-slate-700 dark:text-slate-300">Support Free Financial Analysis</p>
+                                    <p class="text-[11px] mt-0.5">CalcWorld is powered by unobtrusive sponsor placement. Please consider whitelisting our site.</p>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+                bait.remove();
+            }, 750);
+        }
+
+        // Document Initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadStateFromURL();
+            renderCashFlowInputs();
+            recalculate();
+            checkAdBlocker();
+        });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

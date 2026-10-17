@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en" class="light dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Time Card Calculator | Calculate Payroll & Overtime Hours</title>
+    <meta name="description" content="Calculate your weekly time card hours, regular pay, and overtime pay instantly. Features daily breakdown, FLSA rules, and printable reports.">
+    
+    <!-- JSON-LD Schemas -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Time Card Calculator",
+      "url": "https://calcworld.net/calculators/time-card-calculator",
+      "description": "Calculate your weekly time card hours, regular pay, and overtime pay instantly.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://calcworld.net"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Financial Calculators",
+        "item": "https://calcworld.net/financial"
+      },{
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Payroll",
+        "item": "https://calcworld.net/financial/payroll"
+      },{
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Time Card Calculator"
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does decimal hours conversion work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Decimal hours conversion divides the minutes by 60. For example, 15 minutes is 0.25 hours, 30 minutes is 0.5 hours, and 45 minutes is 0.75 hours. Therefore, 8 hours and 15 minutes becomes 8.25 hours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the standard FLSA overtime rules?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Under the Fair Labor Standards Act (FLSA), covered nonexempt employees must receive overtime pay for hours worked over 40 per workweek at a rate not less than time and one-half their regular rates of pay."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: 'var(--color-canvas)',
+                        card: 'var(--color-card)',
+                        text: 'var(--color-text)',
+                        sub: 'var(--color-sub)',
+                        border: 'var(--color-border)',
+                        accent: 'var(--color-accent)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Dark Mode Script (FOUC Prevention) -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --color-canvas: #F8FAFC;
+            --color-card: #FFFFFF;
+            --color-text: #0F172A;
+            --color-sub: #64748B;
+            --color-border: #E2E8F0;
+            --color-accent: #3B82F6;
+        }
+        .dark {
+            --color-canvas: #0B0F19;
+            --color-card: #111827;
+            --color-text: #F9FAFB;
+            --color-sub: #9CA3AF;
+            --color-border: #1F2937;
+        }
+        
+        body {
+            background-color: var(--color-canvas);
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Shimmer Effect */
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 1s infinite;
+        }
+        .dark .shimmer::after {
+            background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.05), transparent);
+        }
+        @keyframes shimmer {
+            100% { left: 200%; }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--color-text);
+            color: var(--color-canvas);
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            transition: bottom 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 50;
+        }
+        .toast.show {
+            bottom: 80px;
+        }
+
+        /* Accordion */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+
+        input[type="time"], input[type="number"], select {
+            background-color: var(--color-card);
+            border-color: var(--color-border);
+            color: var(--color-text);
+        }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+    <link rel="canonical" href="https://calcworld.net/calculators/time-card-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Free Time Card Calculator | Calculate Payroll & Overtime Hours">
+    <meta property="og:description" content="Calculate your weekly time card hours, regular pay, and overtime pay instantly. Features daily breakdown, FLSA rules, and printable reports.">
+    <meta property="og:url" content="https://calcworld.net/calculators/time-card-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Free Time Card Calculator | Calculate Payroll & Overtime Hours">
+    <meta name="twitter:description" content="Calculate your weekly time card hours, regular pay, and overtime pay instantly. Features daily breakdown, FLSA rules, and printable reports.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Breadcrumbs -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-4 gap-8 pb-24 sm:pb-16">
+        
+        <!-- Main Calculator Column -->
+        <div class="lg:col-span-3 space-y-8">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight mb-2">Time Card Calculator</h1>
+                <p class="text-sub">Instantly compute your weekly hours, overtime, and gross pay. Enter your schedule below to generate a detailed timesheet breakdown.</p>
+            </div>
+
+            <!-- Configuration Card -->
+            <div class="bg-card rounded-2xl shadow-sm border border-border p-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Hourly Pay Rate</label>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-sub currency-symbol">$</span>
+                            <input type="number" id="hourly-rate" value="25.00" step="0.01" class="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent outline-none transition">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Overtime Rule</label>
+                        <select id="overtime-rule" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent outline-none transition">
+                            <option value="40">Standard 1.5x (over 40 hrs/wk)</option>
+                            <option value="daily_8">Daily 1.5x (over 8 hrs/day)</option>
+                            <option value="none">No Overtime</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Rounding Option</label>
+                        <select id="rounding-option" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-accent outline-none transition">
+                            <option value="none">None (Exact Minutes)</option>
+                            <option value="15">Nearest 15 minutes</option>
+                            <option value="30">Nearest 30 minutes</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap gap-3 mb-6 border-b border-border pb-6">
+                    <span class="text-sm font-medium text-sub flex items-center mr-2">Quick Fill:</span>
+                    <button class="px-4 py-1.5 text-sm font-medium rounded-full bg-canvas border border-border hover:border-accent hover:text-accent transition" onclick="quickFill('9-5')">Standard 9-5 (40 hrs)</button>
+                    <button class="px-4 py-1.5 text-sm font-medium rounded-full bg-canvas border border-border hover:border-accent hover:text-accent transition" onclick="quickFill('4x10')">4x10 Shift</button>
+                    <button class="px-4 py-1.5 text-sm font-medium rounded-full bg-canvas border border-border hover:text-red-500 transition ml-auto" onclick="quickFill('clear')">Clear All</button>
+                </div>
+
+                <!-- Timesheet Table -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse" id="timesheet-table">
+                        <thead>
+                            <tr class="text-sm font-semibold text-sub border-b border-border">
+                                <th class="pb-3 pl-2 w-32">Day</th>
+                                <th class="pb-3">Start Time</th>
+                                <th class="pb-3">End Time</th>
+                                <th class="pb-3 w-32">Break (mins)</th>
+                                <th class="pb-3 text-right pr-2">Total Hours</th>
+                            </tr>
+                        </thead>
+                        <tbody class="text-sm" id="timesheet-body">
+                            <!-- JS Will Populate This -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-card rounded-2xl shadow-sm border border-border overflow-hidden" id="results-container">
+                <div class="flex border-b border-border overflow-x-auto hide-scrollbar">
+                    <button class="tab-btn active px-6 py-4 font-medium text-accent border-b-2 border-accent whitespace-nowrap" data-target="tab-summary">Summary</button>
+                    <button class="tab-btn px-6 py-4 font-medium text-sub hover:text-text whitespace-nowrap" data-target="tab-breakdown">Weekly Breakdown</button>
+                    <button class="tab-btn px-6 py-4 font-medium text-sub hover:text-text whitespace-nowrap" data-target="tab-chart">Visual Chart</button>
+                    <button class="tab-btn px-6 py-4 font-medium text-sub hover:text-text whitespace-nowrap" data-target="tab-print">Print Report</button>
+                </div>
+                
+                <div class="p-6 relative">
+                    <div id="recalc-overlay" class="absolute inset-0 bg-card/50 backdrop-blur-sm z-10 hidden flex items-center justify-center rounded-b-2xl">
+                        <div class="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+
+                    <!-- Tab: Summary -->
+                    <div id="tab-summary" class="tab-pane block">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                            <div class="bg-canvas p-4 rounded-xl border border-border text-center col-span-2 md:col-span-1">
+                                <p class="text-xs font-semibold text-sub uppercase tracking-wider mb-1">Total Hours</p>
+                                <p class="text-2xl font-bold number-anim" id="out-total-hrs">0.00</p>
+                            </div>
+                            <div class="bg-canvas p-4 rounded-xl border border-border text-center">
+                                <p class="text-xs font-semibold text-sub uppercase tracking-wider mb-1">Regular Hrs</p>
+                                <p class="text-2xl font-bold number-anim" id="out-reg-hrs">0.00</p>
+                            </div>
+                            <div class="bg-canvas p-4 rounded-xl border border-border text-center">
+                                <p class="text-xs font-semibold text-sub uppercase tracking-wider mb-1">OT Hrs</p>
+                                <p class="text-2xl font-bold text-orange-500 number-anim" id="out-ot-hrs">0.00</p>
+                            </div>
+                            <div class="bg-canvas p-4 rounded-xl border border-border text-center col-span-2 md:col-span-2 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/10 border-blue-200 dark:border-blue-800">
+                                <p class="text-xs font-semibold text-blue-600 dark:text-blue-400 uppercase tracking-wider mb-1">Total Gross Pay</p>
+                                <p class="text-3xl font-bold text-blue-700 dark:text-blue-300 flex justify-center items-baseline gap-1">
+                                    <span class="currency-symbol text-xl">$</span><span class="number-anim" id="out-gross-pay">0.00</span>
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row gap-4 justify-between items-center bg-canvas p-4 rounded-xl border border-border">
+                            <div class="text-sm">
+                                <p><span class="font-semibold">Regular Pay:</span> <span class="currency-symbol">$</span><span id="out-reg-pay">0.00</span></p>
+                                <p><span class="font-semibold text-orange-500">Overtime Pay:</span> <span class="currency-symbol text-orange-500">$</span><span id="out-ot-pay" class="text-orange-500">0.00</span></p>
+                            </div>
+                            <button onclick="copySummary()" class="flex items-center gap-2 bg-accent hover:bg-blue-600 text-white px-5 py-2.5 rounded-lg font-medium transition shadow-md hover:shadow-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Copy Summary
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Breakdown -->
+                    <div id="tab-breakdown" class="tab-pane hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="text-sm font-semibold text-sub border-b border-border bg-canvas">
+                                        <th class="p-3 rounded-tl-lg">Day</th>
+                                        <th class="p-3">In - Out</th>
+                                        <th class="p-3">Break</th>
+                                        <th class="p-3 text-right">Reg Hrs</th>
+                                        <th class="p-3 text-right">OT Hrs</th>
+                                        <th class="p-3 text-right rounded-tr-lg">Earned</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-sm divide-y divide-border" id="breakdown-body">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Chart -->
+                    <div id="tab-chart" class="tab-pane hidden">
+                        <div class="w-full max-w-md mx-auto aspect-square relative flex items-center justify-center">
+                            <canvas id="payChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Tab: Print -->
+                    <div id="tab-print" class="tab-pane hidden text-center py-8">
+                        <svg class="w-16 h-16 mx-auto text-sub mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <h3 class="text-xl font-bold mb-2">Printable Time Card Report</h3>
+                        <p class="text-sub mb-6">Generate a clean, ad-free PDF or physical copy of your timesheet for payroll submission.</p>
+                        <button onclick="window.print()" class="bg-card border-2 border-accent text-accent hover:bg-accent hover:text-white px-6 py-3 rounded-lg font-bold transition shadow-sm">
+                            Print / Save as PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Unit 1: Under-Result -->
+            <div class="bg-canvas border border-border rounded-xl p-4 text-center">
+                <span class="text-[10px] uppercase text-sub tracking-widest block mb-2">Sponsored Advertisement</span>
+                <div class="w-full h-24 bg-gray-200 dark:bg-gray-800 border border-dashed border-gray-400 dark:border-gray-600 rounded flex items-center justify-center text-sub">
+                    AdSense Horizontal Display Unit (728x90)
+                </div>
+            </div>
+
+            <!-- Comprehensive Guide Section -->
+            <article class="prose dark:prose-invert max-w-none pt-8 border-t border-border text-slate-700 dark:text-slate-300">
+    <h2 class="text-3xl font-bold border-b pb-2 mb-6 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">Payroll Timekeeping: FLSA Standards, Rounding Rules, and Overtime Auditing</h2>
+    <p class="text-lg leading-relaxed mb-6">
+        Accurate employee time tracking is a statutory requirement under the Fair Labor Standards Act (FLSA) enforced by the United States Department of Labor (DOL). Whether administering hourly wage payroll for a small enterprise or managing multi-shift workforce scheduling, converting sexagesimal clock minutes (base-60) into decimal hours (base-10), accounting for mandatory meal breaks, and enforcing federal and state overtime thresholds is critical for regulatory compliance and avoiding back-wage litigation.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">The 7-Minute Rounding Rule (Code of Federal Regulations &sect; 785.48(b))</h3>
+    <p class="mb-4">
+        Under federal law, employers may round employee clock-in and clock-out timestamps to the nearest 15-minute interval (one-quarter of an hour), provided the rounding rule is applied neutrally and does not systematically withhold earned wages from workers over time:
+    </p>
+    <div class="overflow-x-auto my-6">
+        <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 text-sm">
+            <thead class="bg-slate-100 dark:bg-slate-800/80">
+                <tr>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Actual Clock Punch Minute</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Rounding Threshold</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Recorded Payroll Minute</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Recorded Decimal Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">:53 to :07 past the hour</td>
+                    <td class="p-3">Nearest hour</td>
+                    <td class="p-3">:00</td>
+                    <td class="p-3 font-mono">0.00 hours</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">:08 to :22 past the hour</td>
+                    <td class="p-3">First quarter hour</td>
+                    <td class="p-3">:15</td>
+                    <td class="p-3 font-mono">0.25 hours</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">:23 to :37 past the hour</td>
+                    <td class="p-3">Half hour</td>
+                    <td class="p-3">:30</td>
+                    <td class="p-3 font-mono">0.50 hours</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">:38 to :52 past the hour</td>
+                    <td class="p-3">Third quarter hour</td>
+                    <td class="p-3">:45</td>
+                    <td class="p-3 font-mono">0.75 hours</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Converting Clock Minutes to Decimal Payroll Hours</h3>
+    <p class="mb-4">
+        Because payroll software computes wages by multiplying hours by hourly wage rates, sexagesimal minutes must be converted to base-10 decimals:
+    </p>
+    <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 font-mono text-center text-lg overflow-x-auto">
+        \text{Total Decimal Hours} = \text{Whole Hours} + \left( \frac{\text{Minutes}}{60} 
+ight)
+    </div>
+    <p class="mb-4">
+        For example, an employee working 8 hours and 27 minutes worked 8 + (27 / 60) = <strong>8.45 decimal hours</strong>. Multiplying 8.27 by an hourly wage results in a significant payroll calculation error.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Step-by-Step Worked Numerical Example: Weekly Payroll with Overtime</h3>
+    <p class="mb-4">
+        An employee earning a base rate of $22.50 per hour records the following daily shift hours across a 5-day workweek, taking an unpaid 45-minute meal break each day:
+    </p>
+    <div class="space-y-4 mb-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p><strong>Step 1: Compute Daily Gross and Net Shift Durations</strong><br>
+        - Monday: 8:00 AM to 5:30 PM = 9h 30m gross - 45m break = 8h 45m (8.75 hours).<br>
+        - Tuesday: 8:00 AM to 6:00 PM = 10h 00m gross - 45m break = 9h 15m (9.25 hours).<br>
+        - Wednesday: 8:00 AM to 5:15 PM = 9h 15m gross - 45m break = 8h 30m (8.50 hours).<br>
+        - Thursday: 8:00 AM to 6:30 PM = 10h 30m gross - 45m break = 9h 45m (9.75 hours).<br>
+        - Friday: 8:00 AM to 4:45 PM = 8h 45m gross - 45m break = 8h 00m (8.00 hours).</p>
+        <p><strong>Step 2: Sum Total Weekly Work Hours</strong><br>
+        Total Hours = 8.75 + 9.25 + 8.50 + 9.75 + 8.00 = <strong>44.25 total hours</strong>.</p>
+        <p><strong>Step 3: Separate Regular Hours from FLSA Overtime</strong><br>
+        - Regular Hours (up to 40.0) = <strong>40.00 hours</strong>.<br>
+        - Overtime Hours (hours in excess of 40.0) = 44.25 - 40.0 = <strong>4.25 hours</strong>.</p>
+        <p><strong>Step 4: Compute Gross Earnings</strong><br>
+        - Regular Wages: 40.00 &times; $22.50 = <strong>$900.00</strong>.<br>
+        - Overtime Rate (1.5x time-and-a-half): $22.50 &times; 1.5 = $33.75 per hour.<br>
+        - Overtime Wages: 4.25 &times; $33.75 = <strong>$143.44</strong>.<br>
+        - Total Gross Pay = $900.00 + $143.44 = <strong>$1,043.44</strong>.</p>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">FLSA Meal Breaks vs. Rest Breaks Regulations</h3>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li><strong>Rest Breaks (5 to 20 minutes):</strong> Federal law does not mandate rest breaks, but if an employer provides short breaks, DOL regulations mandate that they MUST be counted as compensable paid hours worked.</li>
+        <li><strong>Bona Fide Meal Periods (30+ minutes):</strong> Meal periods are non-compensable unpaid time, provided the employee is completely relieved from all work duties. If an employee answers business phone calls or monitors equipment while eating at their desk, the meal period must be paid.</li>
+    </ul>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Frequently Asked Questions</h3>
+    <div class="space-y-4 my-6">
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What is California's daily overtime rule?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Unlike federal law, which only mandates overtime after 40 hours in a workweek, California law requires overtime (1.5x) for any hours worked beyond 8 hours in a single workday, and double-time (2.0x) for any hours worked beyond 12 hours in a single day.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">Can salaried employees qualify for overtime pay?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Yes. To be exempt from overtime under the FLSA, an employee must meet both the salary basis test (earning above the statutory weekly threshold) AND the job duties test (executive, administrative, or professional duties). Salaried workers in non-exempt roles are entitled to overtime.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">How do overnight shifts crossing midnight calculate?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">For shifts crossing midnight (e.g., 10:00 PM to 6:00 AM), time card engines add 24 hours to the end timestamp before subtracting the start timestamp, ensuring elapsed duration calculates accurately without negative numbers.</p>
+        </div>
+    </div>
+</article>
+
+            <!-- Ad Unit 2: Multiplex Grid -->
+            <div class="mt-8 border-t border-border pt-8">
+                <span class="text-[10px] uppercase text-sub tracking-widest block mb-2 text-center">Sponsored Recommendations</span>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="aspect-square bg-gray-200 dark:bg-gray-800 rounded flex items-center justify-center text-xs text-sub text-center p-2 border border-dashed border-gray-400 dark:border-gray-600">Multiplex Slot 1</div>
+                    <div class="aspect-square bg-gray-200 dark:bg-gray-800 rounded flex items-center justify-center text-xs text-sub text-center p-2 border border-dashed border-gray-400 dark:border-gray-600">Multiplex Slot 2</div>
+                    <div class="aspect-square bg-gray-200 dark:bg-gray-800 rounded flex items-center justify-center text-xs text-sub text-center p-2 border border-dashed border-gray-400 dark:border-gray-600 hidden md:flex">Multiplex Slot 3</div>
+                    <div class="aspect-square bg-gray-200 dark:bg-gray-800 rounded flex items-center justify-center text-xs text-sub text-center p-2 border border-dashed border-gray-400 dark:border-gray-600 hidden md:flex">Multiplex Slot 4</div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="mt-12">
+                <h2 class="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+                <div class="space-y-4">
+                    <div class="border border-border rounded-xl bg-card overflow-hidden">
+                        <button class="w-full px-6 py-4 text-left font-semibold flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            Are unpaid lunch breaks deducted automatically?
+                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content px-6 bg-canvas">
+                            <p class="py-4 text-sub text-sm">Yes. If you input minutes into the "Break (mins)" column, that amount of time is automatically subtracted from the total hours calculated between the Start Time and End Time for that specific day.</p>
+                        </div>
+                    </div>
+                    <div class="border border-border rounded-xl bg-card overflow-hidden">
+                        <button class="w-full px-6 py-4 text-left font-semibold flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            How does the rounding feature work?
+                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content px-6 bg-canvas">
+                            <p class="py-4 text-sub text-sm">Rounding adjusts your calculated daily hours to the nearest specified interval (15 or 30 minutes) according to standard rounding rules. For instance, with 15-minute rounding, 8 hours and 7 minutes rounds down to 8.0 hours, while 8 hours and 8 minutes rounds up to 8.25 hours.</p>
+                        </div>
+                    </div>
+                    <div class="border border-border rounded-xl bg-card overflow-hidden">
+                        <button class="w-full px-6 py-4 text-left font-semibold flex justify-between items-center focus:outline-none" onclick="toggleAccordion(this)">
+                            Does this tool store my wage data?
+                            <svg class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="accordion-content px-6 bg-canvas">
+                            <p class="py-4 text-sub text-sm">No personal data is sent to our servers. The calculator relies on client-side JavaScript, meaning all calculations occur securely within your own web browser. Your current inputs are temporarily saved in the URL parameters so you can bookmark the page or share your specific calculation setup.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Sidebar Column -->
+        <aside class="lg:col-span-1 space-y-6">
+            
+            <!-- Lead Gen Box -->
+            <div class="bg-gradient-to-br from-accent to-blue-700 text-white rounded-2xl p-6 shadow-lg">
+                <h3 class="text-lg font-bold mb-2">Need an Official Record?</h3>
+                <p class="text-sm text-blue-100 mb-4">Get a clean, professional PDF version of this timesheet delivered straight to your inbox for payroll submission.</p>
+                <form onsubmit="event.preventDefault(); alert('Email sent successfully!');" class="space-y-3">
+                    <input type="email" placeholder="Your Email Address" required class="w-full px-4 py-2 rounded-lg text-text outline-none focus:ring-2 focus:ring-white">
+                    <button type="submit" class="w-full bg-white text-accent font-bold py-2 rounded-lg hover:bg-gray-50 transition shadow">Email My Timesheet</button>
+                </form>
+                <p class="text-[10px] text-blue-200 mt-3 text-center">100% Free. No spam guaranteed.</p>
+            </div>
+
+            <!-- Sticky Sidebar Ad -->
+            <div class="sticky top-24">
+                <span class="text-[10px] uppercase text-sub tracking-widest block mb-2 text-center">Advertisement</span>
+                <div class="w-[300px] h-[600px] mx-auto bg-gray-200 dark:bg-gray-800 border border-dashed border-gray-400 dark:border-gray-600 rounded flex flex-col items-center justify-center text-sub p-4 text-center">
+                    <p class="font-bold mb-2">Sticky Sidebar Slot (300x600)</p>
+                    <p class="text-xs">Visible while scrolling past main content.</p>
+                </div>
+                
+                <!-- AdBlock Fallback -->
+                <div class="hidden w-[300px] mx-auto mt-4 bg-orange-50 border border-orange-200 text-orange-800 rounded-lg p-4 text-sm">
+                    <p class="font-bold mb-1">Using an AdBlocker?</p>
+                    <p>We keep our calculators free by showing ads. Please consider whitelisting CalcWorld.net to support our tools.</p>
+                </div>
+            </div>
+
+        </aside>
+
+    </main>
+
+    <!-- Floating Quick-Switcher Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 transform translate-y-full transition-transform duration-300" id="floating-bar">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between overflow-x-auto hide-scrollbar gap-4">
+            <span class="text-sm font-semibold text-sub whitespace-nowrap hidden sm:block">Related Tools:</span>
+            <div class="flex gap-2 flex-grow">
+                <a href="../index.html" class="px-4 py-1.5 bg-canvas rounded-full text-sm font-medium border border-border hover:border-accent hover:text-accent whitespace-nowrap transition">1099 vs W2 Calculator</a>
+                <a href="../index.html" class="px-4 py-1.5 bg-canvas rounded-full text-sm font-medium border border-border hover:border-accent hover:text-accent whitespace-nowrap transition">Salary to Hourly</a>
+                <a href="#" class="px-4 py-1.5 bg-canvas rounded-full text-sm font-medium border border-border hover:border-accent hover:text-accent whitespace-nowrap transition">Solar Payoff</a>
+            </div>
+            <button onclick="document.getElementById('floating-bar').classList.add('translate-y-full')" class="text-sub hover:text-text p-1 rounded bg-canvas ml-auto">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast flex items-center gap-3">
+        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-msg">Copied to clipboard!</span>
+    </div>
+
+    <script>
+        // --- Dark Mode Toggle Logic ---
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function updateThemeIcons() {
+            if (document.documentElement.classList.contains('dark')) {
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            } else {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            }
+        }
+        
+        updateThemeIcons();
+
+        themeToggleBtn.addEventListener('click', function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateThemeIcons();
+            if(window.payChartInstance) {
+                updateChartColors();
+            }
+        });
+
+        // --- Currency Logic ---
+        const symbols = { 'USD': '$', 'GBP': '£', 'CAD': '$', 'AUD': '$' };
+        const currencySelect = document.getElementById('currency-select');
+        
+        currencySelect.addEventListener('change', (e) => {
+            const sym = symbols[e.target.value];
+            document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = sym);
+            saveToUrl();
+        });
+
+        // --- Tabs Logic ---
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('active', 'text-accent', 'border-b-2', 'border-accent');
+                    b.classList.add('text-sub');
+                });
+                btn.classList.add('active', 'text-accent', 'border-b-2', 'border-accent');
+                btn.classList.remove('text-sub');
+
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById(btn.dataset.target).classList.remove('hidden');
+                
+                if(btn.dataset.target === 'tab-chart') {
+                    renderChart();
+                }
+            });
+        });
+
+        // --- Accordion Logic ---
+        function toggleAccordion(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('svg');
+            
+            if (content.style.maxHeight) {
+                content.style.maxHeight = null;
+                icon.classList.remove('rotate-180');
+            } else {
+                content.style.maxHeight = content.scrollHeight + "px";
+                icon.classList.add('rotate-180');
+            }
+        }
+
+        // --- Toast Logic ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
+
+        // --- Calculator Core Logic ---
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+        const tbody = document.getElementById('timesheet-body');
+        
+        // Init table
+        days.forEach(day => {
+            const tr = document.createElement('tr');
+            tr.className = 'border-b border-border last:border-0 hover:bg-canvas transition';
+            tr.innerHTML = `
+                <td class="py-3 pl-2 font-medium">${day}</td>
+                <td class="py-3 pr-2"><input type="time" class="w-full px-2 py-1.5 border rounded focus:ring-1 focus:ring-accent outline-none text-sm day-start" data-day="${day}"></td>
+                <td class="py-3 pr-2"><input type="time" class="w-full px-2 py-1.5 border rounded focus:ring-1 focus:ring-accent outline-none text-sm day-end" data-day="${day}"></td>
+                <td class="py-3 pr-2"><input type="number" min="0" step="5" class="w-full px-2 py-1.5 border rounded focus:ring-1 focus:ring-accent outline-none text-sm day-break" data-day="${day}" placeholder="0"></td>
+                <td class="py-3 text-right pr-2 font-bold day-total">0.00</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        const inputs = document.querySelectorAll('input, select');
+        inputs.forEach(input => input.addEventListener('input', () => {
+            debounceCalculate();
+        }));
+
+        let calcTimeout;
+        function debounceCalculate() {
+            clearTimeout(calcTimeout);
+            const overlay = document.getElementById('recalc-overlay');
+            if(overlay) overlay.classList.remove('hidden');
+            
+            calcTimeout = setTimeout(() => {
+                calculate();
+                saveToUrl();
+                if(overlay) overlay.classList.add('hidden');
+            }, 300);
+        }
+
+        function getMinutes(timeStr) {
+            if(!timeStr) return 0;
+            const [h, m] = timeStr.split(':');
+            return parseInt(h) * 60 + parseInt(m);
+        }
+
+        function roundHours(hours, rule) {
+            if (rule === 'none') return hours;
+            const factor = rule === '15' ? 4 : 2; // 1/4 hr or 1/2 hr
+            return Math.round(hours * factor) / factor;
+        }
+
+        // Animation Helper
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = (progress * (end - start) + start).toFixed(2);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.classList.remove('shimmer');
+                }
+            };
+            obj.classList.add('shimmer');
+            window.requestAnimationFrame(step);
+        }
+
+        let currentResults = { regHrs: 0, otHrs: 0, regPay: 0, otPay: 0, gross: 0 };
+
+        function calculate() {
+            const rate = parseFloat(document.getElementById('hourly-rate').value) || 0;
+            const otRule = document.getElementById('overtime-rule').value;
+            const roundRule = document.getElementById('rounding-option').value;
+
+            let totalWeeklyHours = 0;
+            let dailyData = [];
+
+            // Calculate daily totals
+            document.querySelectorAll('#timesheet-body tr').forEach(tr => {
+                const day = tr.querySelector('.day-start').dataset.day;
+                const startStr = tr.querySelector('.day-start').value;
+                const endStr = tr.querySelector('.day-end').value;
+                const breakMins = parseInt(tr.querySelector('.day-break').value) || 0;
+                
+                let dailyHrs = 0;
+                if (startStr && endStr) {
+                    let start = getMinutes(startStr);
+                    let end = getMinutes(endStr);
+                    if (end < start) end += 24 * 60; // overnight
+                    
+                    let netMins = Math.max(0, (end - start) - breakMins);
+                    dailyHrs = netMins / 60;
+                    dailyHrs = roundHours(dailyHrs, roundRule);
+                }
+
+                tr.querySelector('.day-total').textContent = dailyHrs.toFixed(2);
+                if(dailyHrs > 0) tr.querySelector('.day-total').classList.add('text-accent');
+                else tr.querySelector('.day-total').classList.remove('text-accent');
+
+                totalWeeklyHours += dailyHrs;
+                
+                dailyData.push({
+                    day: day,
+                    start: startStr,
+                    end: endStr,
+                    breakMins: breakMins,
+                    hrs: dailyHrs
+                });
+            });
+
+            // Calculate Reg and OT
+            let regHrs = 0;
+            let otHrs = 0;
+            let breakdownHTML = '';
+
+            if (otRule === 'daily_8') {
+                dailyData.forEach(d => {
+                    let dReg = Math.min(d.hrs, 8);
+                    let dOt = Math.max(0, d.hrs - 8);
+                    regHrs += dReg;
+                    otHrs += dOt;
+                    
+                    let dEarned = (dReg * rate) + (dOt * rate * 1.5);
+                    
+                    if(d.hrs > 0) {
+                        breakdownHTML += `
+                        <tr class="hover:bg-canvas">
+                            <td class="p-3 font-medium">${d.day.substring(0,3)}</td>
+                            <td class="p-3 text-sub">${d.start} - ${d.end}</td>
+                            <td class="p-3">${d.breakMins}m</td>
+                            <td class="p-3 text-right">${dReg.toFixed(2)}</td>
+                            <td class="p-3 text-right ${dOt > 0 ? 'text-orange-500 font-medium' : ''}">${dOt.toFixed(2)}</td>
+                            <td class="p-3 text-right font-medium">${symbols[currencySelect.value]}${dEarned.toFixed(2)}</td>
+                        </tr>`;
+                    }
+                });
+            } else {
+                // Weekly rule or None
+                if (otRule === '40') {
+                    regHrs = Math.min(totalWeeklyHours, 40);
+                    otHrs = Math.max(0, totalWeeklyHours - 40);
+                } else { // None
+                    regHrs = totalWeeklyHours;
+                    otHrs = 0;
+                }
+                
+                // For weekly breakdown, we approximate accumulation
+                let runningTotal = 0;
+                dailyData.forEach(d => {
+                    if(d.hrs > 0) {
+                        let prevTotal = runningTotal;
+                        runningTotal += d.hrs;
+                        
+                        let dReg = 0, dOt = 0;
+                        if(otRule === '40') {
+                            if(prevTotal >= 40) {
+                                dOt = d.hrs;
+                            } else if (runningTotal > 40) {
+                                dReg = 40 - prevTotal;
+                                dOt = runningTotal - 40;
+                            } else {
+                                dReg = d.hrs;
+                            }
+                        } else {
+                            dReg = d.hrs;
+                        }
+                        
+                        let dEarned = (dReg * rate) + (dOt * rate * 1.5);
+
+                        breakdownHTML += `
+                        <tr class="hover:bg-canvas">
+                            <td class="p-3 font-medium">${d.day.substring(0,3)}</td>
+                            <td class="p-3 text-sub">${d.start} - ${d.end}</td>
+                            <td class="p-3">${d.breakMins}m</td>
+                            <td class="p-3 text-right">${dReg.toFixed(2)}</td>
+                            <td class="p-3 text-right ${dOt > 0 ? 'text-orange-500 font-medium' : ''}">${dOt.toFixed(2)}</td>
+                            <td class="p-3 text-right font-medium">${symbols[currencySelect.value]}${dEarned.toFixed(2)}</td>
+                        </tr>`;
+                    }
+                });
+            }
+
+            if(breakdownHTML === '') {
+                breakdownHTML = '<tr><td colspan="6" class="p-4 text-center text-sub">No hours recorded yet.</td></tr>';
+            }
+            document.getElementById('breakdown-body').innerHTML = breakdownHTML;
+
+            const regPay = regHrs * rate;
+            const otPay = otHrs * rate * 1.5;
+            const grossPay = regPay + otPay;
+
+            // Animate Outputs
+            animateValue(document.getElementById('out-total-hrs'), parseFloat(document.getElementById('out-total-hrs').innerText), totalWeeklyHours, 500);
+            animateValue(document.getElementById('out-reg-hrs'), parseFloat(document.getElementById('out-reg-hrs').innerText), regHrs, 500);
+            animateValue(document.getElementById('out-ot-hrs'), parseFloat(document.getElementById('out-ot-hrs').innerText), otHrs, 500);
+            animateValue(document.getElementById('out-reg-pay'), parseFloat(document.getElementById('out-reg-pay').innerText.replace(/,/g, '')), regPay, 500);
+            animateValue(document.getElementById('out-ot-pay'), parseFloat(document.getElementById('out-ot-pay').innerText.replace(/,/g, '')), otPay, 500);
+            animateValue(document.getElementById('out-gross-pay'), parseFloat(document.getElementById('out-gross-pay').innerText.replace(/,/g, '')), grossPay, 500);
+
+            // Store for chart and copy
+            currentResults = { regHrs, otHrs, regPay, otPay, gross: grossPay };
+            
+            if(!document.getElementById('tab-chart').classList.contains('hidden')) {
+                renderChart();
+            }
+        }
+
+        // --- Quick Fill ---
+        function quickFill(type) {
+            const starts = document.querySelectorAll('.day-start');
+            const ends = document.querySelectorAll('.day-end');
+            const breaks = document.querySelectorAll('.day-break');
+            
+            for(let i=0; i<7; i++) {
+                starts[i].value = '';
+                ends[i].value = '';
+                breaks[i].value = '';
+                
+                if(type === '9-5' && i < 5) { // Mon-Fri
+                    starts[i].value = '09:00';
+                    ends[i].value = '17:00';
+                    breaks[i].value = '0';
+                } else if (type === '4x10' && i < 4) { // Mon-Thu
+                    starts[i].value = '08:00';
+                    ends[i].value = '18:30';
+                    breaks[i].value = '30';
+                }
+            }
+            debounceCalculate();
+        }
+
+        // --- URL State Management ---
+        function saveToUrl() {
+            const data = {
+                rate: document.getElementById('hourly-rate').value,
+                curr: document.getElementById('currency-select').value,
+                rule: document.getElementById('overtime-rule').value,
+                rnd: document.getElementById('rounding-option').value,
+                d: []
+            };
+            
+            document.querySelectorAll('#timesheet-body tr').forEach(tr => {
+                const s = tr.querySelector('.day-start').value;
+                const e = tr.querySelector('.day-end').value;
+                const b = tr.querySelector('.day-break').value;
+                if(s || e || b) {
+                    data.d.push(`${s}|${e}|${b}`);
+                } else {
+                    data.d.push('');
+                }
+            });
+
+            const encoded = btoa(JSON.stringify(data));
+            const newurl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?state=' + encoded;
+            window.history.replaceState({path:newurl}, '', newurl);
+        }
+
+        function loadFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const stateParam = urlParams.get('state');
+            
+            if (stateParam) {
+                try {
+                    const data = JSON.parse(atob(stateParam));
+                    if(data.rate) document.getElementById('hourly-rate').value = data.rate;
+                    if(data.curr) {
+                        document.getElementById('currency-select').value = data.curr;
+                        document.getElementById('currency-select').dispatchEvent(new Event('change'));
+                    }
+                    if(data.rule) document.getElementById('overtime-rule').value = data.rule;
+                    if(data.rnd) document.getElementById('rounding-option').value = data.rnd;
+                    
+                    if(data.d && Array.isArray(data.d)) {
+                        const trs = document.querySelectorAll('#timesheet-body tr');
+                        data.d.forEach((str, i) => {
+                            if(str && trs[i]) {
+                                const parts = str.split('|');
+                                trs[i].querySelector('.day-start').value = parts[0] || '';
+                                trs[i].querySelector('.day-end').value = parts[1] || '';
+                                trs[i].querySelector('.day-break').value = parts[2] || '';
+                            }
+                        });
+                    }
+                } catch(e) {
+                    console.error("Could not parse state from URL");
+                }
+            }
+            calculate(); // initial calculation
+        }
+
+        // --- Copy Summary ---
+        function copySummary() {
+            const totalHrs = (currentResults.regHrs + currentResults.otHrs).toFixed(2);
+            const sym = symbols[currencySelect.value];
+            const text = `Time Card Summary: ${totalHrs} hrs | Overtime: ${currentResults.otHrs.toFixed(2)} hrs | Gross: ${sym}${currentResults.gross.toFixed(2)} (via CalcWorld.net)`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                showToast(text);
+            }).catch(err => {
+                console.error('Failed to copy', err);
+            });
+        }
+
+        // --- Chart.js ---
+        window.payChartInstance = null;
+        function renderChart() {
+            const ctx = document.getElementById('payChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#F9FAFB' : '#0F172A';
+            const gridColor = isDark ? '#1F2937' : '#E2E8F0';
+
+            if(window.payChartInstance) {
+                window.payChartInstance.destroy();
+            }
+            
+            if(currentResults.regPay === 0 && currentResults.otPay === 0) {
+                // Empty state
+                window.payChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['No Data'],
+                        datasets: [{ data: [1], backgroundColor: [gridColor], borderWidth: 0 }]
+                    },
+                    options: { plugins: { legend: { display: false }, tooltip: { enabled: false } }, cutout: '75%' }
+                });
+                return;
+            }
+
+            window.payChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Regular Pay', 'Overtime Pay'],
+                    datasets: [{
+                        data: [currentResults.regPay, currentResults.otPay],
+                        backgroundColor: ['#3B82F6', '#F97316'],
+                        borderWidth: 2,
+                        borderColor: isDark ? '#111827' : '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '75%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: textColor, padding: 20, font: { family: 'Inter' } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed !== null) {
+                                        label += symbols[currencySelect.value] + context.parsed.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if(currentResults.regPay > 0 || currentResults.otPay > 0) {
+                renderChart();
+            }
+        }
+
+        // Show floating bar after scrolling down a bit
+        window.addEventListener('scroll', () => {
+            const bar = document.getElementById('floating-bar');
+            if(window.scrollY > 400) {
+                bar.classList.remove('translate-y-full');
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFromUrl();
+            
+            // Check AdBlocker dummy logic (simulated by checking if an ad class got blocked)
+            setTimeout(() => {
+                const adBlockMsg = document.querySelector('.sticky .hidden');
+                // Normally you check client height of ad div, simulating showing it randomly for demo
+                if(Math.random() > 0.8 && adBlockMsg) {
+                    adBlockMsg.classList.remove('hidden');
+                }
+            }, 1500);
+        });
+
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

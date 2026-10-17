@@ -1,0 +1,2708 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speed Calculator | Velocity, Distance &amp; Time Multi-Solver</title>
+    <meta name="description" content="Free scientific speed calculator. Solve velocity, distance, and time (v = d/t) with multi-leg average speed trip planning, unit conversions (mph, km/h, m/s, knots, Mach, c), Chart.js velocity slope charts, and step-by-step mathematical proofs.">
+    <link rel="canonical" href="https://calcworld.net/calculators/speed-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(37, 99, 235, 0.08) 20%,
+                rgba(37, 99, 235, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            background-color: #1e293b;
+            color: #ffffff;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            z-index: 50;
+            opacity: 0;
+            transform: translateY(1rem);
+            transition: all 0.25s ease-in-out;
+            pointer-events: none;
+        }
+        .toast-notify.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Speed Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Speed Calculator",
+          "url": "https://calcworld.net/other/speed-calculator",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Scientific kinematic multi-solver for speed, velocity, distance, and time with multi-leg journey planning, harmonic mean derivations, comprehensive unit conversions, and interactive velocity charts."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the physical difference between speed and velocity?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Speed is a scalar quantity measuring the rate at which an object covers distance along a trajectory, defined as distance divided by elapsed time (v = d/t) without regard to direction. Velocity is a vector quantity that specifies both the speed of the motion and its directional orientation in space, defined mathematically as the rate of change of the displacement vector (v = dr/dt). An object moving at a constant speed along a circular track has continually changing velocity because its direction vector rotates continuously."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why is average speed over equal distances calculated using the harmonic mean instead of the arithmetic mean?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Average speed is defined universally as total distance divided by total elapsed time. When traveling equal distances d at two distinct speeds v1 and v2, the time spent on each leg is inversely proportional to that speed (t1 = d/v1 and t2 = d/v2). Because the traveler spends more time traveling at the slower speed, the slower speed receives greater temporal weight. The overall average speed simplifies to 2 / (1/v1 + 1/v2) = 2*v1*v2 / (v1 + v2), which is the exact mathematical definition of the harmonic mean."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the Doppler effect alter observed frequencies for moving sources?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Doppler effect describes the frequency change of acoustic or electromagnetic waves resulting from relative motion between source and observer. When a sound source approaches an observer at speed vs, each successive wave crest is emitted closer to the previous crest, compressing the perceived wavelength lambda' = (a - vs)/f and shifting the detected frequency higher according to f' = f * a / (a - vs), where a is the local speed of sound. When receding, the wavelength stretches and frequency drops."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does classical velocity addition fail near the speed of light?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In Newtonian mechanics, velocities add linearly according to Galilean relativity (u = v + w). However, Albert Einstein demonstrated in special relativity that the speed of light in vacuum (c = 299,792,458 m/s) is invariant across all inertial reference frames. Velociies must combine using the relativistic velocity addition formula u = (v + w) / (1 + v*w/c^2). Even if two objects approach each other at 0.9c relative to a third observer, their relative velocity reaches only approximately 0.9945c, never exceeding c."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the official definition of a knot and a nautical mile in international navigation?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under international aviation and maritime standards ratified by the International Hydrographic Organization (IHO), International Civil Aviation Organization (ICAO), and FAA, one international nautical mile (NM) equals exactly 1,852 meters (approximately 6,076.12 feet). A knot is defined as one nautical mile per hour (1 kn = 1 NM/h = 1.852 km/h = 0.514444 m/s). Historically, 1 nautical mile corresponded to one minute of latitude arc along an Earth meridian."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is the meter defined relative to the speed of light in the SI system?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "According to the 9th edition of the BIPM SI Brochure (2019), the speed of light in vacuum c is a fixed fundamental constant set to exactly 299,792,458 meters per second. Consequently, the meter is an exact derived unit defined as the distance traveled by light in vacuum during a time interval of 1 / 299,792,458 of a second, with the second calibrated to the unperturbed ground-state hyperfine transition frequency of the cesium-133 atom."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between instantaneous velocity and average velocity in calculus?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Average velocity is calculated over a finite, nonzero time interval Delta t as the secant slope between two positions: v_avg = Delta r / Delta t. Instantaneous velocity is the derivative of position with respect to time, evaluated as the infinitesimal limit as Delta t approaches zero: v(t) = lim(Delta t -> 0) [r(t + Delta t) - r(t)] / Delta t = dr/dt. Geometrically, instantaneous velocity represents the tangent line slope on a position-time coordinate graph."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does atmospheric temperature determine the speed of sound and Mach number?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In an ideal gas such as dry air, the speed of sound depends exclusively on absolute thermodynamic temperature T according to a = sqrt(gamma * R_specific * T), where gamma is the adiabatic index (1.4 for diatomic gas) and R_specific is the specific gas constant for dry air (287.05 J/(kg*K)). At standard sea level temperature of 20 degrees Celsius (293.15 K), sound travels at approximately 343.21 m/s (1,235.5 km/h or 767.8 mph). The Mach number is the dimensionless ratio of vehicle velocity to this local sound speed: M = v / a."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Speed Calculator | Velocity, Distance &amp; Time Multi-Solver">
+    <meta property="og:description" content="Free scientific speed calculator. Solve velocity, distance, and time (v = d/t) with multi-leg average speed trip planning, unit conversions (mph, km/h, m/s, knots, Mach, c), Chart.js velocity slope charts, and step-by-step mathematical proofs.">
+    <meta property="og:url" content="https://calcworld.net/calculators/speed-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Speed Calculator | Velocity, Distance &amp; Time Multi-Solver">
+    <meta name="twitter:description" content="Free scientific speed calculator. Solve velocity, distance, and time (v = d/t) with multi-leg average speed trip planning, unit conversions (mph, km/h, m/s, knots, Mach, c), Chart.js velocity slope charts, and step-by-step mathematical proofs.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Kinematics Engine:</strong> CalcWorld provides peer-reviewed scientific and physical calculation tools 100% free with zero login. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Speed Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Speed Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Compute kinematic speed, velocity, distance, and time ($v = d/t, d = vt, t = d/v$). Plan multi-leg journeys with harmonic mean average speed calculations, inspect dynamic Chart.js velocity slopes, and convert across international speed and pacing standards.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5/4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Kinematic Parameters</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">Multi-Solver</span>
+                    </h2>
+
+                    <!-- Calculation Target Selector -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Solve For</label>
+                        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+                            <button type="button" onclick="setSolveTarget('speed')" id="targetBtn_speed" class="target-btn py-2 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition">Speed (\(v\))</button>
+                            <button type="button" onclick="setSolveTarget('distance')" id="targetBtn_distance" class="target-btn py-2 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Distance (\(d\))</button>
+                            <button type="button" onclick="setSolveTarget('time')" id="targetBtn_time" class="target-btn py-2 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Time (\(t\))</button>
+                        </div>
+                    </div>
+
+                    <!-- Presets Selector -->
+                    <div class="mb-5">
+                        <label for="presetSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Real-World Benchmarks</label>
+                        <select id="presetSelect" onchange="loadSinglePreset()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Select Scenario Preset --</option>
+                            <option value="preset_bolt" selected>Usain Bolt 100m Sprint (100 m in 9.58 s)</option>
+                            <option value="preset_marathon">Marathon Record (42.195 km in 2h 00m 35s)</option>
+                            <option value="preset_highway">Highway Road Trip (300 miles at 65 mph)</option>
+                            <option value="preset_flight">Transatlantic Flight (3,450 NM at 490 knots)</option>
+                            <option value="preset_sound">Sound Barrier / Mach 1 (1,235.5 km/h for 1 hour)</option>
+                            <option value="preset_orbit">Low Earth Orbit / ISS (400 km orbit, 27,576 km/h)</option>
+                        </select>
+                    </div>
+
+                    <!-- Dynamic Input Fields -->
+                    <!-- Distance Input Group -->
+                    <div id="group_distance" class="space-y-1 mb-4">
+                        <div class="flex items-center justify-between">
+                            <label for="input_distance" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Distance (\(d\))</label>
+                            <span class="text-[11px] text-slate-400" id="distanceLabelHint">Total path length</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="input_distance" step="any" min="0" value="100" oninput="calculateSingle()" class="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <select id="unit_distance" onchange="calculateSingle()" class="w-28 px-2 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="m" selected>Meters (m)</option>
+                                <option value="km">Kilometers (km)</option>
+                                <option value="mi">Miles (mi)</option>
+                                <option value="ft">Feet (ft)</option>
+                                <option value="yd">Yards (yd)</option>
+                                <option value="NM">Nautical mi (NM)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Time Input Group -->
+                    <div id="group_time" class="space-y-1 mb-4">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300">Elapsed Time (\(t\))</label>
+                            <div class="flex items-center gap-1 text-[11px]">
+                                <button type="button" onclick="setTimeInputMode('hms')" id="btn_time_hms" class="text-brand-600 dark:text-brand-400 font-bold hover:underline">H:M:S</button>
+                                <span class="text-slate-400">|</span>
+                                <button type="button" onclick="setTimeInputMode('decimal')" id="btn_time_dec" class="text-slate-500 dark:text-slate-400 hover:underline">Decimal</button>
+                            </div>
+                        </div>
+
+                        <!-- Decimal Time Container -->
+                        <div id="time_decimal_box" class="flex gap-2 hidden">
+                            <input type="number" id="input_time_decimal" step="any" min="0.000001" value="9.58" oninput="syncFromDecimalTime(); calculateSingle();" class="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <select id="unit_time" onchange="syncFromDecimalTime(); calculateSingle();" class="w-28 px-2 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="s" selected>Seconds (s)</option>
+                                <option value="min">Minutes (min)</option>
+                                <option value="h">Hours (hr)</option>
+                                <option value="d">Days (d)</option>
+                            </select>
+                        </div>
+
+                        <!-- HMS Structured Time Container -->
+                        <div id="time_hms_box" class="grid grid-cols-3 gap-2">
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Hours</div>
+                                <input type="number" id="input_time_h" step="1" min="0" value="0" placeholder="0" oninput="syncFromHmsTime(); calculateSingle();" class="w-full px-2.5 py-1.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Minutes</div>
+                                <input type="number" id="input_time_m" step="1" min="0" max="59" value="0" placeholder="0" oninput="syncFromHmsTime(); calculateSingle();" class="w-full px-2.5 py-1.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                            </div>
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider mb-0.5">Seconds</div>
+                                <input type="number" id="input_time_s" step="any" min="0" max="59.999" value="9.58" placeholder="0" oninput="syncFromHmsTime(); calculateSingle();" class="w-full px-2.5 py-1.5 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Speed Input Group (Hidden when solving for Speed) -->
+                    <div id="group_speed" class="space-y-1 mb-5 hidden">
+                        <div class="flex items-center justify-between">
+                            <label for="input_speed" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Speed / Velocity (\(v\))</label>
+                            <span class="text-[11px] text-slate-400">Rate of travel</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="input_speed" step="any" min="0" value="37.58" oninput="calculateSingle()" class="flex-1 px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <select id="unit_speed" onchange="calculateSingle()" class="w-28 px-2 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="km/h">km/h</option>
+                                <option value="mph" selected>mph</option>
+                                <option value="m/s">m/s</option>
+                                <option value="ft/s">ft/s</option>
+                                <option value="knots">knots</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Preferred Output Unit Selector (For Speed Target) -->
+                    <div id="group_output_unit" class="mb-5">
+                        <label for="preferred_output_unit" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Display Result Unit</label>
+                        <select id="preferred_output_unit" onchange="calculateSingle()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="km/h">Kilometers per Hour (km/h)</option>
+                            <option value="mph" selected>Miles per Hour (mph)</option>
+                            <option value="m/s">Meters per Second (m/s) [SI Base]</option>
+                            <option value="ft/s">Feet per Second (ft/s)</option>
+                            <option value="knots">Knots (Nautical Miles/hr)</option>
+                            <option value="pace_km">Running Pace (min/km)</option>
+                            <option value="pace_mi">Running Pace (min/mile)</option>
+                            <option value="mach">Mach Number (Dry Air 20°C)</option>
+                            <option value="c">Fraction of Light Speed (c)</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                        <button type="button" onclick="calculateSingle()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span id="calcActionBtnText">Calculate Speed</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share URL</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-blue-900 to-indigo-950 text-white p-5 rounded-2xl shadow-md border border-blue-700/50">
+                    <div class="flex items-center gap-2 mb-2 text-blue-300 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Official Physics Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Kinematics &amp; Speed Formula Guide</h3>
+                    <p class="text-xs text-blue-200 mb-3">Download our verified kinematics engineering reference sheet with conversion constants, Doppler formulas, and relativistic transformations (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="engineer@laboratory.org" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-blue-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Send Free PDF Guide</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">✓ Check your inbox! Your kinematics formula sheet is on the way.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 7/8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Kinematic Velocity Result</span>
+                        <div class="flex items-center gap-2">
+                            <span id="diagnosticBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/50">Subsonic Regime (M &lt; 0.8)</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Solved Value Display -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-5 mb-5 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1" id="mainResultSublabel">Calculated Kinematic Speed (\(v = d / t\))</span>
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="mainResultDisplay">
+                            23.35 mph
+                        </div>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-xl mx-auto" id="mainNarrativeDisplay">
+                            Traveling 100 meters in 9.58 seconds yields a velocity of 10.44 m/s (23.35 mph or 37.58 km/h).
+                        </div>
+                    </div>
+
+                    <!-- 4 Metric Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block" id="metric1Label">Metric Speed (km/h)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metric1Val">37.58 km/h</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block" id="metric2Label">Running Pace (min/mi)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metric2Val">2:34 /mi</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block" id="metric3Label">Mach Number (\(M\))</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metric3Val">0.0304 M</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block" id="metric4Label">Fraction of Light (\(c\))</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metric4Val">3.48e-8 c</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="quickDistanceSummary">Distance: 100 m</span>
+                            <span>&bull;</span>
+                            <span id="quickTimeSummary">Time: 9.580 s</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('solver')" id="tabBtn_solver" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Speed/Distance/Time Solver
+                        </button>
+                        <button onclick="switchTab('multileg')" id="tabBtn_multileg" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Multi-Leg Journey Average Speed
+                        </button>
+                        <button onclick="switchTab('converter')" id="tabBtn_converter" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Unit Converter &amp; Pace Matrix
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Speed/Distance/Time Solver -->
+                <div id="tab-solver" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart 1: Distance vs. Time Kinematic Velocity Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Kinematic Motion Trajectory</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Position vs. elapsed time graph with slope representing velocity (\(\Delta d / \Delta t = v\)).</p>
+                            </div>
+                            <span class="text-xs font-mono px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700" id="chartSlopeBadge">Slope = 10.44 m/s</span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full">
+                            <canvas id="trajectoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Speed Comparison Scale -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Comparative Velocity Benchmark Scale</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Logarithmic velocity benchmark across walking, cheetah sprint, bullet trains, commercial aviation, SR-71, and escape velocity.</p>
+                            </div>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full">
+                            <canvas id="comparisonChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Kinematic Derivation</span>
+                        </h3>
+                        
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="text-center py-2 text-slate-400">Loading kinematic derivation...</div>
+                        </div>
+                    </div>
+
+                    <!-- Unit Equivalents Table for Active Calculation -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3">Multi-Unit Kinematic Equivalents</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Instantaneous conversions for the calculated speed across scientific, nautical, and athletic metrics.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">System</th>
+                                        <th class="px-3 py-2.5">Unit Name</th>
+                                        <th class="px-3 py-2.5">Abbreviation</th>
+                                        <th class="px-3 py-2.5">Value</th>
+                                        <th class="px-3 py-2.5">Exact SI Multiplier</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unitEquivTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Multi-Leg Journey Average Speed Planner -->
+                <div id="tab-multileg" class="tab-panel space-y-6">
+                    
+                    <!-- Theoretical Harmonic Mean Alert Banner -->
+                    <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
+                        <div class="flex items-center gap-2 font-bold mb-1 text-sm">
+                            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                            <span>The Harmonic Mean Principle for Multi-Leg Journeys</span>
+                        </div>
+                        <span>Average speed is universally governed by total distance divided by total time: \(v_{\text{avg}} = \frac{\sum d_i}{\sum t_i}\). It is <strong>not</strong> the simple arithmetic mean \(\frac{v_1 + v_2}{2}\) unless both legs have the exact same duration. Over equal distances, slower speeds occupy more elapsed time and pull the true average down to the <em>harmonic mean</em>: \(v_{\text{avg}} = \frac{2 v_1 v_2}{v_1 + v_2}\).</span>
+                    </div>
+
+                    <!-- Multi-Leg Planner Control Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Segment Trip Builder</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Configure journey segments with distinct distances and speeds.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="loadMultiLegPreset('commute')" class="px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium">Preset: Commute</button>
+                                <button type="button" onclick="loadMultiLegPreset('roundtrip')" class="px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium">Preset: Round Trip</button>
+                                <button type="button" onclick="loadMultiLegPreset('triathlon')" class="px-2.5 py-1 text-xs rounded border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium">Preset: Triathlon</button>
+                            </div>
+                        </div>
+
+                        <!-- Dynamic Segments Container -->
+                        <div id="segmentsListContainer" class="space-y-3 mb-4">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+
+                        <!-- Segment Controls -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <button type="button" onclick="addJourneyLeg()" class="px-3 py-1.5 rounded-lg bg-brand-50 hover:bg-brand-100 dark:bg-brand-950/60 dark:hover:bg-brand-900/60 text-brand-700 dark:text-brand-300 font-bold text-xs flex items-center gap-1.5 transition border border-brand-200 dark:border-brand-800/60">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>Add Segment</span>
+                            </button>
+                            <span class="text-xs text-slate-400" id="legCountSummary">3 Segments configured</span>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Leg Journey Summary Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-4">Journey Summary &amp; Harmonic Comparison</h3>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Total Distance</span>
+                                <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="mlTotalDistance">35.00 mi</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Total Elapsed Time</span>
+                                <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="mlTotalTime">1h 02m 46s</span>
+                            </div>
+                            <div class="bg-blue-50/60 dark:bg-brand-950/40 p-3 rounded-xl border border-brand-200/60 dark:border-brand-800/60">
+                                <span class="text-[11px] font-bold text-brand-700 dark:text-brand-300 block">True Average Speed</span>
+                                <span class="text-lg font-extrabold text-brand-600 dark:text-brand-400 font-mono" id="mlTrueAvgSpeed">33.46 mph</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Arithmetic Mean</span>
+                                <span class="text-lg font-bold text-slate-500 dark:text-slate-400 font-mono" id="mlArithMean">35.00 mph</span>
+                            </div>
+                        </div>
+
+                        <div id="mlHarmonicNotice" class="text-xs text-slate-600 dark:text-slate-300 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-5">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+
+                        <!-- Multi-Leg Chart: Distance vs. Time Segment Slopes -->
+                        <div class="relative h-64 sm:h-72 w-full">
+                            <canvas id="multiLegChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Segment Detailed Breakdown Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3">Segment-by-Segment Itinerary</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">#</th>
+                                        <th class="px-3 py-2.5">Segment Name</th>
+                                        <th class="px-3 py-2.5">Distance (% Total)</th>
+                                        <th class="px-3 py-2.5">Speed</th>
+                                        <th class="px-3 py-2.5">Duration (% Total)</th>
+                                        <th class="px-3 py-2.5">Pace</th>
+                                        <th class="px-3 py-2.5">Cumul. Distance</th>
+                                        <th class="px-3 py-2.5">Cumul. Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="multiLegTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 3: Speed Unit Converter & Running Pace Matrix -->
+                <div id="tab-converter" class="tab-panel space-y-6">
+                    
+                    <!-- Instant Live Bidirectional Speed Converter Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">Bidirectional Speed &amp; Pace Converter</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-5">Type any value into any box below; all other scientific, nautical, and running pace metrics synchronize instantaneously.</p>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- mph -->
+                            <div>
+                                <label for="conv_mph" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Miles per Hour (mph)</label>
+                                <input type="number" id="conv_mph" step="any" min="0" oninput="syncFromConverter('mph')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">1 mph = 0.44704 m/s</span>
+                            </div>
+
+                            <!-- km/h -->
+                            <div>
+                                <label for="conv_kmh" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Kilometers per Hour (km/h)</label>
+                                <input type="number" id="conv_kmh" step="any" min="0" oninput="syncFromConverter('kmh')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">1 km/h = 0.27778 m/s</span>
+                            </div>
+
+                            <!-- m/s -->
+                            <div>
+                                <label for="conv_ms" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Meters per Second (m/s) [SI]</label>
+                                <input type="number" id="conv_ms" step="any" min="0" oninput="syncFromConverter('ms')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Standard BIPM metric base unit</span>
+                            </div>
+
+                            <!-- ft/s -->
+                            <div>
+                                <label for="conv_fts" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Feet per Second (ft/s)</label>
+                                <input type="number" id="conv_fts" step="any" min="0" oninput="syncFromConverter('fts')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">1 ft/s = 0.3048 m/s</span>
+                            </div>
+
+                            <!-- knots -->
+                            <div>
+                                <label for="conv_knots" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Knots (NM/h, Nautical)</label>
+                                <input type="number" id="conv_knots" step="any" min="0" oninput="syncFromConverter('knots')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">1 knot = 1.852 km/h</span>
+                            </div>
+
+                            <!-- Mach -->
+                            <div>
+                                <label for="conv_mach" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Mach Number (\(M\) at 20°C)</label>
+                                <input type="number" id="conv_mach" step="any" min="0" oninput="syncFromConverter('mach')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Sound speed \(a = 343.21\) m/s</span>
+                            </div>
+
+                            <!-- Running Pace min/mile -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pace (min:sec per Mile)</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="conv_pacemi_m" placeholder="min" min="0" oninput="syncFromConverter('pacemi')" class="w-1/2 px-2.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                                    <input type="number" id="conv_pacemi_s" placeholder="sec" min="0" max="59" oninput="syncFromConverter('pacemi')" class="w-1/2 px-2.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                                </div>
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Athletic mile split time</span>
+                            </div>
+
+                            <!-- Running Pace min/km -->
+                            <div>
+                                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Pace (min:sec per km)</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="conv_pacekm_m" placeholder="min" min="0" oninput="syncFromConverter('pacekm')" class="w-1/2 px-2.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                                    <input type="number" id="conv_pacekm_s" placeholder="sec" min="0" max="59" oninput="syncFromConverter('pacekm')" class="w-1/2 px-2.5 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono text-center">
+                                </div>
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Athletic kilometer split time</span>
+                            </div>
+
+                            <!-- Fraction of Light Speed c -->
+                            <div>
+                                <label for="conv_c" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Fraction of Light Speed (\(c\))</label>
+                                <input type="text" id="conv_c" oninput="syncFromConverter('c')" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">\(c = 299,792,458\) m/s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Standard Running Race Pacing Matrix Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">Running Pacing &amp; Standard Race Matrix</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Benchmark finishing times for standard athletics race distances (5K, 10K, Half Marathon, Full Marathon) across customary training paces.</p>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Speed (km/h)</th>
+                                        <th class="px-3 py-2.5">Speed (mph)</th>
+                                        <th class="px-3 py-2.5">Pace / km</th>
+                                        <th class="px-3 py-2.5">Pace / mile</th>
+                                        <th class="px-3 py-2.5">5K Time</th>
+                                        <th class="px-3 py-2.5">10K Time</th>
+                                        <th class="px-3 py-2.5">Half Marathon</th>
+                                        <th class="px-3 py-2.5">Full Marathon</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="pacingMatrixTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Mach Regime Classification Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">Aerodynamic Flow &amp; Mach Regimes</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Standard aerospace aerodynamic classifications based on local flow Mach numbers.</p>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2">Regime</th>
+                                        <th class="px-3 py-2">Mach Range</th>
+                                        <th class="px-3 py-2">Speed at 20°C (km/h)</th>
+                                        <th class="px-3 py-2">Speed at 20°C (mph)</th>
+                                        <th class="px-3 py-2">Aerodynamic Characteristics</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-emerald-600 dark:text-emerald-400">Subsonic</td>
+                                        <td class="px-3 py-2 font-mono">M &lt; 0.8</td>
+                                        <td class="px-3 py-2 font-mono">&lt; 988 km/h</td>
+                                        <td class="px-3 py-2 font-mono">&lt; 614 mph</td>
+                                        <td class="px-3 py-2">Airflow remains entirely subsonic over all aircraft airfoils; incompressibility assumptions hold for M &lt; 0.3.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-amber-600 dark:text-amber-400">Transonic</td>
+                                        <td class="px-3 py-2 font-mono">0.8 &le; M &lt; 1.2</td>
+                                        <td class="px-3 py-2 font-mono">988 – 1,482 km/h</td>
+                                        <td class="px-3 py-2 font-mono">614 – 921 mph</td>
+                                        <td class="px-3 py-2">Mixed flow where local supersonic flow zones form over the upper wing surfaces; shock waves and wave drag rise sharply.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-indigo-600 dark:text-indigo-400">Supersonic</td>
+                                        <td class="px-3 py-2 font-mono">1.2 &le; M &lt; 5.0</td>
+                                        <td class="px-3 py-2 font-mono">1,482 – 6,178 km/h</td>
+                                        <td class="px-3 py-2 font-mono">921 – 3,839 mph</td>
+                                        <td class="px-3 py-2">Shock waves attach or detach forming Mach cones; sonic booms propagate; sharp aerodynamically swept leading edges required.</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-3 py-2 font-bold text-rose-600 dark:text-rose-400">Hypersonic</td>
+                                        <td class="px-3 py-2 font-mono">M &ge; 5.0</td>
+                                        <td class="px-3 py-2 font-mono">&ge; 6,178 km/h</td>
+                                        <td class="px-3 py-2 font-mono">&ge; 3,839 mph</td>
+                                        <td class="px-3 py-2">Severe aerothermodynamic shock layer heating; high molecular dissociation and ionization of surrounding atmospheric gases.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700" id="printableReportSection">
+                        
+                        <!-- Print Certificate Header -->
+                        <div class="border-b border-slate-200 dark:border-slate-700 pb-5 mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-base">V</span>
+                                    <h2 class="font-extrabold text-xl text-slate-900 dark:text-white tracking-tight">Kinematic Motion &amp; Speed Audit Report</h2>
+                                </div>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Generated by CalcWorld Kinematics &amp; Motion Analysis Engine</p>
+                            </div>
+                            <div class="text-right text-xs text-slate-500 dark:text-slate-400">
+                                <div><strong>Date &amp; Time:</strong> <span id="reportTimestamp" class="font-mono">--</span></div>
+                                <div><strong>Standard:</strong> BIPM SI &amp; FAA Technical Norms</div>
+                            </div>
+                        </div>
+
+                        <!-- Report Summary Data Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6 text-xs">
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Problem Target</span>
+                                <span id="reportTargetType" class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm">Velocity (\(v\))</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Calculated Result</span>
+                                <span id="reportMainResult" class="font-bold text-brand-600 dark:text-brand-400 font-mono text-sm">23.35 mph</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Metric Equivalent</span>
+                                <span id="reportMetricResult" class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm">37.58 km/h</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Total Distance</span>
+                                <span id="reportDistance" class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm">100 m</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Elapsed Duration</span>
+                                <span id="reportDuration" class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm">9.580 s</span>
+                            </div>
+                            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-slate-400 font-semibold uppercase text-[10px] block">Running Split Pace</span>
+                                <span id="reportPace" class="font-bold text-slate-800 dark:text-slate-100 font-mono text-sm">2:34 min/mile</span>
+                            </div>
+                        </div>
+
+                        <!-- Report Mathematical Verification Block -->
+                        <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-6">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Kinematic Formulation Verification</h4>
+                            <div id="reportDerivationBlock" class="text-xs text-slate-700 dark:text-slate-300 font-mono space-y-1">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Report Verification Notice -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4 text-[11px] text-slate-500 dark:text-slate-400">
+                            <p><strong>Certification of Methodology:</strong> Computations rendered in this document conform to the International System of Units (SI) codified in the 9th edition BIPM brochure, using invariant speed of light \(c = 299,792,458\text{ m/s}\) and nautical definition \(1\text{ NM} = 1,852\text{ meters}\) mandated by the International Civil Aviation Organization (ICAO) and Federal Aviation Administration (FAA).</p>
+                        </div>
+
+                        <div class="pt-5 flex justify-end no-print">
+                            <button type="button" onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-bold text-xs transition flex items-center gap-2 shadow">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Audit Certificate / Export PDF</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 2: Under-Result Display Ad -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide (Strictly Clean & Authoritative) -->
+        <article class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose prose-slate dark:prose-invert max-w-none">
+            
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Physics &amp; Kinematics Monograph</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Foundations of Kinematic Speed, Velocity, and Multi-Segment Dynamics</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">An authoritative guide to Newtonian motion, harmonic mean trip averaging, Doppler acoustic shifts, relativistic composition, and international metrology standards.</p>
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Kinematics is the branch of classical mechanics that describes the motion of points, bodies, and systems of bodies without consideration of the forces that cause them to move. While seemingly intuitive in everyday navigation and vehicular transit, the quantitative study of speed and velocity requires rigorous mathematical formalism, dimensional consistency, and careful distinction between scalar and vector quantities. Whether computing travel times along multi-segment highways, evaluating aerodynamic regimes in aeronautics, or navigating maritime shipping lanes, a precise understanding of rate, displacement, and time is foundational to science and applied engineering.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">1. Classical Kinematics: Scalar Speed vs. Vector Velocity</h3>
+            
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In introductory physics, the terms <em>speed</em> and <em>velocity</em> are frequently conflated in informal discourse, yet they represent distinct mathematical entities with different algebraic structures.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Speed</strong> is a scalar quantity possessing magnitude only, having the physical dimension of length divided by time (\([L][T]^{-1}\)). It measures the distance traversed per unit time along the actual curved path of motion, irrespective of the direction of travel:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$v = \frac{\mathrm{d}s}{\mathrm{d}t} \ge 0$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Because path length \(s\) is monotonically non-decreasing over time, scalar speed cannot be negative. Speed describes how rapidly an object moves through space, regardless of whether it travels along a straight highway, a meandering river, or an elliptical racecourse.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Velocity</strong>, by contrast, is a vector quantity that specifies both the speed of movement and its instantaneous directional orientation in space. Formally, velocity is the time derivative of the position vector \(\mathbf{r}(t)\):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\mathbf{v}(t) = \frac{\mathrm{d}\mathbf{r}}{\mathrm{d}t} = \lim_{\Delta t 	o 0} \frac{\mathbf{r}(t + \Delta t) - \mathbf{r}(t)}{\Delta t} = \dot{x}\mathbf{\hat{i}} + \dot{y}\mathbf{\hat{j}} + \dot{z}\mathbf{\hat{k}}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The scalar magnitude of the velocity vector equals the instantaneous speed: \(\|\mathbf{v}(t)\| = \sqrt{\dot{x}^2 + \dot{y}^2 + \dot{z}^2} = v(t)\). However, because velocity includes direction, an object traveling at constant speed around a circular radius \(R\) experiences continuously changing velocity due to the continuous rotation of its direction vector. This directional variation gives rise to centripetal acceleration \(a_c = v^2 / R\), directed toward the center of curvature, demonstrating that zero change in speed does not imply zero acceleration.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Furthermore, over a closed trajectory where an object departs from a origin, completes a circuit of 400 meters, and returns to the identical starting coordinates, the net displacement vector is zero (\(\Delta \mathbf{r} = \mathbf{0}\)). Consequently, the average velocity over the completed lap is identically zero (\(\mathbf{v}_{\text{avg}} = \mathbf{0}\)), while the average speed is strictly positive (\(v_{\text{avg}} = 400\text{ m} / \Delta t &gt; 0\)).</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">2. Instantaneous Velocity vs. Average Velocity</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">A central triumph of Newtonian calculus was resolving the dichotomy between motion over an extended duration and motion at an isolated, infinitesimal instant in time.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Average velocity</strong> evaluates gross displacement over a macroscopic, finite duration \(\Delta t = t_2 - t_1\):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\mathbf{v}_{\text{avg}} = \frac{\Delta \mathbf{r}}{\Delta t} = \frac{\mathbf{r}(t_2) - \mathbf{r}(t_1)}{t_2 - t_1}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">On a position-time graph, average velocity corresponds to the slope of the secant line intersecting the coordinates \((t_1, r_1)\) and \((t_2, r_2)\). It conveys no information regarding fluctuations, stops, decelerations, or peak sprints occurring between those boundaries.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Instantaneous velocity</strong> represents the mathematical limit of the average velocity as the sampling duration \(\Delta t\) contracts toward zero:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\mathbf{v}(t) = \lim_{\Delta t 	o 0} \frac{\mathbf{r}(t + \Delta t) - \mathbf{r}(t)}{\Delta t} = \frac{\mathrm{d}\mathbf{r}}{\mathrm{d}t}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Geometrically, instantaneous velocity is the tangent slope to the position curve at coordinate \(t\). The Mean Value Theorem of differential calculus guarantees that for any continuous, differentiable trajectory, there exists at least one instant \(c \in (t_1, t_2)\) where the instantaneous velocity exactly equals the overall average velocity:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\mathbf{v}(c) = \frac{\mathbf{r}(t_2) - \mathbf{r}(t_1)}{t_2 - t_1}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">This mathematical reality forms the legal and evidentiary basis for vehicular point-to-point average speed enforcement cameras: if a vehicle enters a monitored 10-mile highway zone at 14:00:00 and exits at 14:07:30 (elapsed time 7.5 minutes, yielding an average speed of 80 mph), the vehicle must have reached an instantaneous speed of at least 80 mph at some point during the transit, irrespective of radar detector avoidance.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">3. The Harmonic Mean Fallacy: Average Speed Over Equal Distances</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">One of the most persistent mathematical misconceptions in quantitative travel planning is the assumption that average speed across multiple segments equals the simple arithmetic mean of the individual segment speeds. In general, this assumption is mathematically false.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Average speed is governed strictly by the foundational definition of kinematics:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$v_{\text{avg}} = \frac{\text{Total Distance}}{\text{Total Time}} = \frac{\sum_{i=1}^n d_i}{\sum_{i=1}^n t_i}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Consider a journey comprised of two distinct segments. If both segments are conducted over equal <em>time intervals</em> (\(t_1 = t_2 = T\)), the distance covered in each segment is \(d_1 = v_1 T\) and \(d_2 = v_2 T\). Substituting into the average speed definition yields:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$v_{\text{avg}} = \frac{v_1 T + v_2 T}{T + T} = \frac{(v_1 + v_2)T}{2T} = \frac{v_1 + v_2}{2}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Thus, the arithmetic mean applies exclusively when time durations are identical. In contrast, consider the far more common real-world situation where two segments span equal <em>distances</em> (\(d_1 = d_2 = D\)), such as an outbound and return commute. The elapsed durations for the legs are \(t_1 = D / v_1\) and \(t_2 = D / v_2\). Substituting into the kinematics equation yields:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$v_{\text{avg}} = \frac{D + D}{\frac{D}{v_1} + \frac{D}{v_2}} = \frac{2D}{D\left(\frac{1}{v_1} + \frac{1}{v_2}
+ight)} = \frac{2}{\frac{1}{v_1} + \frac{1}{v_2}} = \frac{2 v_1 v_2}{v_1 + v_2}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">This expression is the classical <strong>harmonic mean</strong> of the two velocities. Because an object moving at a slower speed takes longer to cover a given distance, it spends disproportionately more time traveling at the slower speed. Consequently, time-weighted averaging shifts the overall average speed toward the lower value.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">For example, if a motorist drives 60 miles outward at 60 mph (\(t_1 = 1\text{ hour}\)) and returns along the same 60-mile route at 30 mph due to congestion (\(t_2 = 2\text{ hours}\)), the arithmetic mean suggests an average of \((60 + 30)/2 = 45\text{ mph}\). However, the actual total distance is 120 miles and the total elapsed duration is 3 hours, producing a true average speed of:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$v_{\text{avg}} = \frac{120\text{ miles}}{3\text{ hours}} = 40\text{ mph}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">By the Arithmetic Mean-Harmonic Mean (AM-HM) inequality, the harmonic mean is strictly less than the arithmetic mean whenever \(v_1 
+e v_2\), with equality holding only when both speeds are identical (\(v_1 = v_2\)):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\frac{2}{\frac{1}{v_1} + \frac{1}{v_2}} \le \sqrt{v_1 v_2} \le \frac{v_1 + v_2}{2}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">This mathematical principle demonstrates that severe traffic delays on one leg of a journey cannot be easily compensated for by driving slightly faster on another leg of identical distance.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">4. Acoustic Waves, Speed of Sound, and the Doppler Effect</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When velocity analysis extends to compressible fluid media such as the Earth's atmosphere, motion couples with acoustic wave propagation. Sound waves represent longitudinal compression waves transmitted through molecular collisions in the medium.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In an ideal gas, the acoustic wave propagation velocity \(a\) is determined by the thermodynamic state of the fluid according to the Laplace equation:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$a = \sqrt{\frac{\gamma p}{
+ho}} = \sqrt{\gamma R_{\text{specific}} T}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">where \(\gamma\) is the adiabatic index (heat capacity ratio, approximately \(1.40\) for diatomic atmospheric air), \(R_{\text{specific}} = R / M_{\text{air}} \approx 287.05\text{ J}/(\text{kg}\cdot\text{K})\) is the specific gas constant for dry air, and \(T\) is the absolute temperature in Kelvin. Under standard sea level conditions at \(20^\circ\text{C}\) (\(293.15\text{ K}\)):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$a = \sqrt{1.4 \times 287.05 \times 293.15} \approx 343.21\text{ m/s} \approx 1,235.5\text{ km/h} \approx 767.8\text{ mph}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The dimensionless ratio of an object's speed \(v\) to the local speed of sound \(a\) defines the <strong>Mach number</strong>, named in honor of Austrian physicist Ernst Mach:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$M = \frac{v}{a}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When a sound source moves relative to a stationary observer, the emitted wave crests are compressed ahead of the source and elongated behind it. This phenomenon, discovered in 1842 by Christian Doppler, is described by the classical acoustic Doppler equation:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$f' = f_0 \left( \frac{a \pm v_{\text{observer}}}{a \mp v_{\text{source}}} 
+ight)$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">As the source approaches an observer at speed \(v_s &lt; a\), the received frequency shifts higher by the factor \(\frac{a}{a - v_s}\). When the source velocity approaches the speed of sound (\(M 	o 1\)), the wavefronts pile up into a high-pressure discontinuity known as a shock wave. In supersonic regimes (\(M &gt; 1\)), the wavefronts form a conical envelope called the Mach cone, with a half-angle \(\mu\) defined by:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\sin(\mu) = \frac{a}{v} = \frac{1}{M}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">An observer hears nothing until this conical shock boundary passes, at which point the sudden atmospheric pressure jump produces the acoustic transient perceived as a sonic boom.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">5. Relativistic Kinematics: Einstein's Velocity Addition Law</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In classical Galilean kinematics, velocities in a single dimension transform additively between inertial frames. If reference frame \(S'\) travels at velocity \(v\) relative to frame \(S\), and an object moves at velocity \(w\) relative to \(S'\), Newtonian mechanics asserts that the velocity of the object measured in frame \(S\) is simply \(u = v + w\).</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In 1905, Albert Einstein recognized that this linear addition contradicts James Clerk Maxwell's electrodynamics and the empirical null result of the Michelson-Morley experiment. Einstein's second postulate of special relativity establishes that the speed of light in vacuum, \(c = 299,792,458\text{ m/s}\), has the identical invariant value in all inertial reference frames, regardless of the motion of the emitter or receiver.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Applying the Lorentz transformation to differential spacetime coordinates \(\mathrm{d}x\) and \(\mathrm{d}t\) yields Einstein's one-dimensional relativistic velocity addition formula:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$u = \frac{v + w}{1 + \frac{v w}{c^2}}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">At terrestrial and orbital velocities, the product \(v w\) is negligible relative to \(c^2 \approx 8.98755 \times 10^{16}\text{ m}^2/\text{s}^2\). The denominator \((1 + v w / c^2)\) equals \(1.000000000000\) to many decimal places, reducing Einstein's formula to the Galilean approximation with unmeasurable discrepancy.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">However, at relativistic speeds, the nonlinear denominator prevents any physical mass from exceeding the speed of light. For example, if two spacecraft travel directly toward each other, each moving at \(0.90c\) relative to an earthbound tracking station, their mutual closing velocity measured from either spacecraft is not \(0.90c + 0.90c = 1.80c\), but rather:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$u = \frac{0.90c + 0.90c}{1 + \frac{(0.90c)(0.90c)}{c^2}} = \frac{1.80c}{1 + 0.81} = \frac{1.80c}{1.81} \approx 0.994475c$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Furthermore, if a beam of light (\(w = c\)) is emitted from a spacecraft traveling at speed \(v\), the combined velocity measured by any stationary observer evaluates to:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$u = \frac{v + c}{1 + \frac{v c}{c^2}} = \frac{v + c}{1 + \frac{v}{c}} = \frac{c\left(\frac{v}{c} + 1
+ight)}{\frac{v}{c} + 1} = c$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The mathematical invariance of \(c\) holds identically, confirming the internal consistency of relativistic kinematics.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">6. Metrology and Standards: BIPM SI Brochure and FAA Navigation Norms</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The practical utility of speed calculations rests on international measurement standards codified by metrological organizations and aviation authorities.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>The BIPM SI Standard:</strong> The Bureau International des Poids et Mesures (BIPM), headquartered in Sèvres, France, maintains the International System of Units (SI). Under the 2019 redefinition codified in the 9th edition of the SI Brochure, physical base units are defined by fixing the exact numerical values of fundamental physical constants. Rather than defining the meter via a physical platinum-iridium prototype bar, the speed of light in vacuum \(c\) is fixed as an exact constant:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$c = 299,792,458\text{ m/s (exact)}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Consequently, the meter is an exact derived unit defined as the length of the path traveled by light in vacuum during a time interval of \(1 / 299,792,458\) of a second, with the second itself calibrated to the hyperfine transition frequency of the unperturbed cesium-133 ground state (\(\Delta 
+u_{\text{Cs}} = 9,192,631,770\text{ Hz}\)). In modern metrology, velocity is not derived from distance and time; rather, distance is derived from time and an invariant speed constant.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>FAA and ICAO Aeronautical Navigation Standards:</strong> In international aviation and maritime operations governed by the Federal Aviation Administration (FAA) and the International Civil Aviation Organization (ICAO), distances and speeds are standardized around nautical metrics:</p>
+
+            <ul class="list-disc pl-5 my-3 text-sm space-y-1 text-slate-700 dark:text-slate-300">
+                <li><strong>International Nautical Mile (NM):</strong> Defined by international agreement in 1929 as exactly \(1,852\text{ meters}\) (approximately \(6,076.12\text{ feet}\) or \(1.15078\text{ statute miles}\)). This length corresponds closely to one minute (\(1/60^\circ\)) of latitude arc along a meridian of Earth's reference geoid.</li>
+                <li><strong>Knot (kn):</strong> Defined as one nautical mile per hour: \(1\text{ kn} = 1\text{ NM/h} = 1.852\text{ km/h} \approx 0.514444\text{ m/s} \approx 1.15078\text{ mph}\).</li>
+            </ul>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Furthermore, aviation standards distinguish between four operational speed measurements:</p>
+
+            <ol class="list-decimal pl-5 my-3 text-sm space-y-1 text-slate-700 dark:text-slate-300">
+                <li><strong>Indicated Airspeed (IAS):</strong> The raw dynamic pressure reading measured by pitot-static probes, uncorrected for air density, instrument placement, or compressibility.</li>
+                <li><strong>Calibrated Airspeed (CAS):</strong> Indicated airspeed corrected for pitot tube position errors and instrument calibration bias.</li>
+                <li><strong>True Airspeed (TAS):</strong> The physical velocity of the aircraft relative to the surrounding air mass, corrected for ambient air temperature and pressure altitude.</li>
+                <li><strong>Groundspeed (GS):</strong> The physical velocity of the aircraft relative to the Earth's surface, representing the vector sum of True Airspeed and the wind vector: \(\mathbf{v}_{\text{ground}} = \mathbf{v}_{\text{TAS}} + \mathbf{v}_{\text{wind}}\).</li>
+            </ol>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">7. Practical Applied Scenarios</h3>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Flight Planning Wind Asymmetry:</strong> A classic aviation problem demonstrates wind vector asymmetry. Suppose an aircraft cruises at a True Airspeed of \(500\text{ knots}\) on a round-trip between two waypoints separated by \(1,000\text{ NM}\). In calm air, the trip requires \(2\text{ hours}\) outbound and \(2\text{ hours}\) returning (total duration \(4.0\text{ hours}\), average groundspeed \(500\text{ knots}\)).</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">If a direct \(100\text{ knot}\) headwind exists along the route, the outbound groundspeed is \(500 - 100 = 400\text{ knots}\) (elapsed time \(1,000 / 400 = 2.5\text{ hours}\)). On the return leg, the identical wind becomes a tailwind, producing a groundspeed of \(500 + 100 = 600\text{ knots}\) (elapsed time \(1,000 / 600 \approx 1.667\text{ hours}\)). The total flight time is:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$T_{\text{total}} = 2.500 + 1.667 = 4.167\text{ hours}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The overall average groundspeed falls to \(2,000\text{ NM} / 4.167\text{ h} = 480\text{ knots}\). The tailwind fails to compensate for the headwind because the aircraft spends 2.5 hours suffering the headwind and only 1.67 hours benefiting from the tailwind. A symmetric wind speed always increases round-trip flight duration.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3"><strong>Athletics and Running Pacing:</strong> In endurance running, performance is measured in pace (time per unit distance, such as minutes per mile or minutes per kilometer) rather than speed. Pace is the mathematical reciprocal of speed:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{Pace} = \frac{t}{d} = \frac{1}{v}$$</div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Because pace is linear with respect to elapsed time, a runner maintaining a constant 5:00 min/km pace will complete a 10K in exactly \(10 \times 5 = 50\text{ minutes}\). In contrast, calculating split times using speed (km/h) requires continuous reciprocal conversion, illustrating why pacing metrics are favored in athletic training.</p>
+
+        </article>
+
+        <!-- Interactive FAQ Section -->
+        <section class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-6">Frequently Asked Questions</h3>
+            <div class="space-y-3">
+                
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the fundamental difference between speed and velocity?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Speed is a scalar quantity measuring the rate at which an object covers distance along a trajectory, defined as distance divided by elapsed time (\(v = d/t\)) without regard to direction. Velocity is a vector quantity that specifies both the speed of the motion and its directional orientation in space, defined mathematically as the rate of change of the displacement vector (\(\mathbf{v} = \mathrm{d}\mathbf{r}/\mathrm{d}t\)). An object moving at a constant speed along a circular track has continually changing velocity because its direction vector rotates continuously.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why is average speed over equal distances calculated using the harmonic mean?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Average speed is defined universally as total distance divided by total elapsed time. When traveling equal distances \(d\) at two distinct speeds \(v_1\) and \(v_2\), the time spent on each leg is inversely proportional to that speed (\(t_1 = d/v_1\) and \(t_2 = d/v_2\)). Because the traveler spends more time traveling at the slower speed, the slower speed receives greater temporal weight. The overall average speed simplifies to \(2 / (1/v_1 + 1/v_2) = 2 v_1 v_2 / (v_1 + v_2)\), which is the exact mathematical definition of the harmonic mean.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does the Doppler effect alter observed frequencies for moving sources?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Doppler effect describes the frequency change of acoustic or electromagnetic waves resulting from relative motion between source and observer. When a sound source approaches an observer at speed \(v_s\), each successive wave crest is emitted closer to the previous crest, compressing the perceived wavelength \(\lambda' = (a - v_s)/f\) and shifting the detected frequency higher according to \(f' = f_0 \frac{a}{a - v_s}\), where \(a\) is the local speed of sound. When receding, the wavelength stretches and frequency drops.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why does classical velocity addition fail near the speed of light?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        In Newtonian mechanics, velocities add linearly according to Galilean relativity (\(u = v + w\)). However, Albert Einstein demonstrated in special relativity that the speed of light in vacuum (\(c = 299,792,458\text{ m/s}\)) is invariant across all inertial reference frames. Velocities must combine using the relativistic velocity addition formula \(u = (v + w) / (1 + v w / c^2)\). Even if two objects approach each other at \(0.9c\) relative to a third observer, their relative velocity reaches only approximately \(0.9945c\), never exceeding \(c\).
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the official definition of a knot and a nautical mile?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Under international aviation and maritime standards ratified by the International Hydrographic Organization (IHO), International Civil Aviation Organization (ICAO), and FAA, one international nautical mile (NM) equals exactly \(1,852\text{ meters}\) (approximately \(6,076.12\text{ feet}\)). A knot is defined as one nautical mile per hour (\(1\text{ kn} = 1\text{ NM/h} = 1.852\text{ km/h} \approx 0.514444\text{ m/s}\)). Historically, 1 nautical mile corresponded to one minute of latitude arc along an Earth meridian.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is the meter defined relative to the speed of light in the SI system?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        According to the 9th edition of the BIPM SI Brochure (2019), the speed of light in vacuum \(c\) is a fixed fundamental constant set to exactly \(299,792,458\text{ meters per second}\). Consequently, the meter is an exact derived unit defined as the distance traveled by light in vacuum during a time interval of \(1 / 299,792,458\) of a second, with the second calibrated to the unperturbed ground-state hyperfine transition frequency of the cesium-133 atom.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between instantaneous velocity and average velocity?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Average velocity is calculated over a finite, nonzero time interval \(\Delta t\) as the secant slope between two positions: \(\mathbf{v}_{\text{avg}} = \Delta \mathbf{r} / \Delta t\). Instantaneous velocity is the derivative of position with respect to time, evaluated as the infinitesimal limit as \(\Delta t\) approaches zero: \(\mathbf{v}(t) = \lim_{\Delta t 	o 0} \frac{\mathbf{r}(t + \Delta t) - \mathbf{r}(t)}{\Delta t} = \frac{\mathrm{d}\mathbf{r}}{\mathrm{d}t}\). Geometrically, instantaneous velocity represents the tangent line slope on a position-time coordinate graph.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does air temperature determine the speed of sound and Mach number?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        In an ideal gas such as dry air, the speed of sound depends exclusively on absolute thermodynamic temperature \(T\) according to \(a = \sqrt{\gamma R_{\text{specific}} T}\), where \(\gamma\) is the adiabatic index (\(1.4\) for diatomic gas) and \(R_{\text{specific}}\) is the specific gas constant for dry air (\(287.05\text{ J}/(\text{kg}\cdot\text{K})\)). At standard sea level temperature of \(20^\circ\text{C}\) (\(293.15\text{ K}\)), sound travels at approximately \(343.21\text{ m/s}\) (\(1,235.5\text{ km/h}\) or \(767.8\text{ mph}\)). The Mach number is the dimensionless ratio of vehicle velocity to this local sound speed: \(M = v / a\).
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">V</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Enterprise Network. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Physical &amp; Kinematic Reference Notice:</strong> CalcWorld Speed Calculator implements verified algorithms adhering to physical mechanics and international measurement standards from the Bureau International des Poids et Mesures (BIPM SI Brochure 9th Edition), International Civil Aviation Organization (ICAO Annex 5), and Federal Aviation Administration (FAA). This tool is provided for academic, engineering, athletics planning, and scientific research purposes.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Related Tools:</span>
+        <a href="pace-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Pace</a>
+        <a href="time-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Time</a>
+        <a href="pythagorean-theorem-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Distance Vector</a>
+        <a href="scientific-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Scientific Calc</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global Application State & Conversion Constants ---
+    const C_LIGHT = 299792458; // Exact speed of light in vacuum (m/s) BIPM SI
+    const MACH_1_MS = 343.21; // Speed of sound in dry air at 20 deg C (m/s)
+
+    const DISTANCE_TO_METERS = {
+        'm': 1,
+        'km': 1000,
+        'mi': 1609.344,
+        'ft': 0.3048,
+        'yd': 0.9144,
+        'NM': 1852 // Exact international nautical mile
+    };
+
+    const TIME_TO_SECONDS = {
+        's': 1,
+        'min': 60,
+        'h': 3600,
+        'd': 86400
+    };
+
+    const SPEED_TO_MS = {
+        'm/s': 1,
+        'km/h': 1 / 3.6,
+        'mph': 1609.344 / 3600,
+        'ft/s': 0.3048,
+        'knots': 1852 / 3600
+    };
+
+    let solveTarget = 'speed'; // 'speed', 'distance', 'time'
+    let timeInputMode = 'hms'; // 'hms', 'decimal'
+    let activeResult = {};
+    let trajectoryChart = null;
+    let comparisonChart = null;
+    let multiLegChart = null;
+
+    // Multi-leg journey state
+    let journeyLegs = [
+        { id: 1, name: "City Arterials", distance: 10, distUnit: "mi", speed: 25, speedUnit: "mph" },
+        { id: 2, name: "Interstate Freeway", distance: 20, distUnit: "mi", speed: 65, speedUnit: "mph" },
+        { id: 3, name: "Downtown Destination", distance: 5, distUnit: "mi", speed: 15, speedUnit: "mph" }
+    ];
+    let nextLegId = 4;
+
+    // --- DOM Ready Initializer ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initCharts();
+        populatePacingMatrixTable();
+        renderJourneyLegs();
+        calculateMultiLeg();
+        parseUrlParams();
+        calculateSingle();
+
+        // AdBlock Detection Recovery
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Theme Controller ---
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.theme = isDark ? 'dark' : 'light';
+        updateChartTheme();
+    }
+
+    function updateChartTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
+
+        [trajectoryChart, comparisonChart, multiLegChart].forEach(chart => {
+            if (chart) {
+                if (chart.options.scales.x) {
+                    chart.options.scales.x.ticks.color = textColor;
+                    chart.options.scales.x.grid.color = gridColor;
+                }
+                if (chart.options.scales.y) {
+                    chart.options.scales.y.ticks.color = textColor;
+                    chart.options.scales.y.grid.color = gridColor;
+                }
+                chart.update();
+            }
+        });
+    }
+
+    // --- Target Mode Switcher ---
+    function setSolveTarget(target) {
+        solveTarget = target;
+        
+        ['speed', 'distance', 'time'].forEach(t => {
+            const btn = document.getElementById('targetBtn_' + t);
+            if (t === target) {
+                btn.className = "target-btn py-2 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition";
+            } else {
+                btn.className = "target-btn py-2 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition";
+            }
+        });
+
+        const grpDist = document.getElementById('group_distance');
+        const grpTime = document.getElementById('group_time');
+        const grpSpeed = document.getElementById('group_speed');
+        const grpOutUnit = document.getElementById('group_output_unit');
+        const btnText = document.getElementById('calcActionBtnText');
+
+        if (target === 'speed') {
+            grpDist.classList.remove('hidden');
+            grpTime.classList.remove('hidden');
+            grpSpeed.classList.add('hidden');
+            grpOutUnit.classList.remove('hidden');
+            btnText.textContent = "Calculate Speed";
+        } else if (target === 'distance') {
+            grpDist.classList.add('hidden');
+            grpTime.classList.remove('hidden');
+            grpSpeed.classList.remove('hidden');
+            grpOutUnit.classList.add('hidden');
+            btnText.textContent = "Calculate Distance";
+        } else if (target === 'time') {
+            grpDist.classList.remove('hidden');
+            grpTime.classList.add('hidden');
+            grpSpeed.classList.remove('hidden');
+            grpOutUnit.classList.add('hidden');
+            btnText.textContent = "Calculate Time";
+        }
+
+        calculateSingle();
+    }
+
+    // --- Time Input Mode (HMS vs Decimal) ---
+    function setTimeInputMode(mode) {
+        timeInputMode = mode;
+        const boxHms = document.getElementById('time_hms_box');
+        const boxDec = document.getElementById('time_decimal_box');
+        const btnHms = document.getElementById('btn_time_hms');
+        const btnDec = document.getElementById('btn_time_dec');
+
+        if (mode === 'hms') {
+            boxHms.classList.remove('hidden');
+            boxDec.classList.add('hidden');
+            btnHms.className = "text-brand-600 dark:text-brand-400 font-bold hover:underline";
+            btnDec.className = "text-slate-500 dark:text-slate-400 hover:underline";
+        } else {
+            boxHms.classList.add('hidden');
+            boxDec.classList.remove('hidden');
+            btnDec.className = "text-brand-600 dark:text-brand-400 font-bold hover:underline";
+            btnHms.className = "text-slate-500 dark:text-slate-400 hover:underline";
+        }
+    }
+
+    function syncFromHmsTime() {
+        const h = parseFloat(document.getElementById('input_time_h').value) || 0;
+        const m = parseFloat(document.getElementById('input_time_m').value) || 0;
+        const s = parseFloat(document.getElementById('input_time_s').value) || 0;
+        const totalSec = h * 3600 + m * 60 + s;
+
+        const unit = document.getElementById('unit_time').value;
+        const factor = TIME_TO_SECONDS[unit] || 1;
+        document.getElementById('input_time_decimal').value = (totalSec / factor).toFixed(4);
+    }
+
+    function syncFromDecimalTime() {
+        const val = parseFloat(document.getElementById('input_time_decimal').value) || 0;
+        const unit = document.getElementById('unit_time').value;
+        const totalSec = val * (TIME_TO_SECONDS[unit] || 1);
+
+        const h = Math.floor(totalSec / 3600);
+        const rem = totalSec % 3600;
+        const m = Math.floor(rem / 60);
+        const s = rem % 60;
+
+        document.getElementById('input_time_h').value = h;
+        document.getElementById('input_time_m').value = m;
+        document.getElementById('input_time_s').value = Number.isInteger(s) ? s : s.toFixed(3);
+    }
+
+    function getActiveTimeSeconds() {
+        if (timeInputMode === 'hms') {
+            const h = parseFloat(document.getElementById('input_time_h').value) || 0;
+            const m = parseFloat(document.getElementById('input_time_m').value) || 0;
+            const s = parseFloat(document.getElementById('input_time_s').value) || 0;
+            return Math.max(0.000001, h * 3600 + m * 60 + s);
+        } else {
+            const val = parseFloat(document.getElementById('input_time_decimal').value) || 0;
+            const unit = document.getElementById('unit_time').value;
+            return Math.max(0.000001, val * (TIME_TO_SECONDS[unit] || 1));
+        }
+    }
+
+    function formatSecondsToHMS(totalSeconds) {
+        if (!isFinite(totalSeconds) || totalSeconds <= 0) return "0s";
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        const parts = [];
+        if (h > 0) parts.push(h + "h");
+        if (m > 0 || h > 0) parts.push(m + "m");
+        parts.push((Number.isInteger(s) ? s : s.toFixed(2)) + "s");
+        return parts.join(" ");
+    }
+
+    function formatPace(secondsPerUnit) {
+        if (!isFinite(secondsPerUnit) || secondsPerUnit <= 0) return "--:--";
+        if (secondsPerUnit > 360000) return "> 100h";
+        const m = Math.floor(secondsPerUnit / 60);
+        const s = Math.round(secondsPerUnit % 60);
+        return m + ":" + (s < 10 ? "0" : "") + s;
+    }
+
+    // --- Core Kinematic Calculation Engine ---
+    function calculateSingle() {
+        let distMeters = 0;
+        let timeSec = 0;
+        let speedMs = 0;
+
+        const distInput = parseFloat(document.getElementById('input_distance').value) || 0;
+        const distUnit = document.getElementById('unit_distance').value;
+        const speedInput = parseFloat(document.getElementById('input_speed').value) || 0;
+        const speedUnit = document.getElementById('unit_speed').value;
+
+        if (solveTarget === 'speed') {
+            distMeters = distInput * (DISTANCE_TO_METERS[distUnit] || 1);
+            timeSec = getActiveTimeSeconds();
+            speedMs = timeSec > 0 ? (distMeters / timeSec) : 0;
+        } else if (solveTarget === 'distance') {
+            timeSec = getActiveTimeSeconds();
+            speedMs = speedInput * (SPEED_TO_MS[speedUnit] || 1);
+            distMeters = speedMs * timeSec;
+            document.getElementById('input_distance').value = (distMeters / (DISTANCE_TO_METERS[distUnit] || 1)).toFixed(4);
+        } else if (solveTarget === 'time') {
+            distMeters = distInput * (DISTANCE_TO_METERS[distUnit] || 1);
+            speedMs = speedInput * (SPEED_TO_MS[speedUnit] || 1);
+            timeSec = speedMs > 0 ? (distMeters / speedMs) : 0;
+
+            const unit = document.getElementById('unit_time').value;
+            const factor = TIME_TO_SECONDS[unit] || 1;
+            document.getElementById('input_time_decimal').value = (timeSec / factor).toFixed(4);
+            syncFromDecimalTime();
+        }
+
+        const speedKmh = speedMs * 3.6;
+        const speedMph = speedMs / (1609.344 / 3600);
+        const speedFts = speedMs / 0.3048;
+        const speedKnots = speedMs / (1852 / 3600);
+        const mach = speedMs / MACH_1_MS;
+        const fractionC = speedMs / C_LIGHT;
+        const paceSecKm = speedMs > 0 ? (1000 / speedMs) : 0;
+        const paceSecMi = speedMs > 0 ? (1609.344 / speedMs) : 0;
+
+        activeResult = {
+            target: solveTarget,
+            distMeters,
+            distInput,
+            distUnit,
+            timeSec,
+            speedMs,
+            speedKmh,
+            speedMph,
+            speedFts,
+            speedKnots,
+            mach,
+            fractionC,
+            paceSecKm,
+            paceSecMi
+        };
+
+        renderMainResultCard(activeResult);
+        renderDerivationBlock(activeResult);
+        renderUnitEquivalentsTable(activeResult);
+        updateTrajectoryChart(activeResult);
+        updateComparisonChart(activeResult);
+        updatePrintReport(activeResult);
+        updateConverterFields(activeResult.speedMs);
+        updateShareUrl();
+    }
+
+    function renderMainResultCard(r) {
+        const mainDisplay = document.getElementById('mainResultDisplay');
+        const mainSublabel = document.getElementById('mainResultSublabel');
+        const narrative = document.getElementById('mainNarrativeDisplay');
+        const headerBadge = document.getElementById('resultHeaderBadge');
+        const diagBadge = document.getElementById('diagnosticBadge');
+
+        // Aerodynamic regime diagnosis
+        if (r.mach < 0.8) {
+            diagBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50";
+            diagBadge.textContent = "Subsonic Flow (M < 0.8)";
+        } else if (r.mach < 1.2) {
+            diagBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50";
+            diagBadge.textContent = "Transonic Shock Zone (0.8 ≤ M < 1.2)";
+        } else if (r.mach < 5.0) {
+            diagBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 border border-indigo-200/50";
+            diagBadge.textContent = "Supersonic Shock Cone (1.2 ≤ M < 5.0)";
+        } else {
+            diagBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50";
+            diagBadge.textContent = "Hypersonic Aerothermodynamic (M ≥ 5.0)";
+        }
+
+        const prefUnit = document.getElementById('preferred_output_unit').value;
+        let formattedVal = "";
+
+        if (r.target === 'speed') {
+            headerBadge.textContent = "Kinematic Velocity Result";
+            mainSublabel.textContent = "Calculated Kinematic Speed (v = d / t)";
+
+            if (prefUnit === 'km/h') formattedVal = r.speedKmh.toFixed(2) + " km/h";
+            else if (prefUnit === 'mph') formattedVal = r.speedMph.toFixed(2) + " mph";
+            else if (prefUnit === 'm/s') formattedVal = r.speedMs.toFixed(3) + " m/s";
+            else if (prefUnit === 'ft/s') formattedVal = r.speedFts.toFixed(2) + " ft/s";
+            else if (prefUnit === 'knots') formattedVal = r.speedKnots.toFixed(2) + " knots";
+            else if (prefUnit === 'pace_km') formattedVal = formatPace(r.paceSecKm) + " /km";
+            else if (prefUnit === 'pace_mi') formattedVal = formatPace(r.paceSecMi) + " /mi";
+            else if (prefUnit === 'mach') formattedVal = r.mach.toFixed(4) + " M";
+            else if (prefUnit === 'c') formattedVal = r.fractionC.toExponential(3) + " c";
+
+            narrative.textContent = `Traveling ${r.distInput} ${r.distUnit} in ${formatSecondsToHMS(r.timeSec)} yields an average velocity of ${r.speedMs.toFixed(3)} m/s (${r.speedMph.toFixed(2)} mph or ${r.speedKmh.toFixed(2)} km/h).`;
+        } else if (r.target === 'distance') {
+            headerBadge.textContent = "Kinematic Distance Result";
+            mainSublabel.textContent = "Calculated Total Distance (d = v × t)";
+            const unit = r.distUnit;
+            const distInUnit = r.distMeters / (DISTANCE_TO_METERS[unit] || 1);
+            formattedVal = distInUnit.toLocaleString(undefined, { maximumFractionDigits: 3 }) + " " + unit;
+            narrative.textContent = `At an average velocity of ${r.speedMph.toFixed(2)} mph over ${formatSecondsToHMS(r.timeSec)}, the total displacement covered equals ${distInUnit.toFixed(2)} ${unit} (${r.distMeters.toLocaleString(undefined, { maximumFractionDigits: 1 })} meters).`;
+        } else if (r.target === 'time') {
+            headerBadge.textContent = "Kinematic Duration Result";
+            mainSublabel.textContent = "Calculated Elapsed Duration (t = d / v)";
+            formattedVal = formatSecondsToHMS(r.timeSec);
+            narrative.textContent = `Covering ${r.distInput} ${r.distUnit} at an average speed of ${r.speedMph.toFixed(2)} mph requires an elapsed time of ${formatSecondsToHMS(r.timeSec)} (${r.timeSec.toFixed(2)} seconds).`;
+        }
+
+        mainDisplay.textContent = formattedVal;
+
+        // Metric grid cards
+        document.getElementById('metric1Label').textContent = "Metric Speed (km/h)";
+        document.getElementById('metric1Val').textContent = r.speedKmh.toFixed(2) + " km/h";
+
+        document.getElementById('metric2Label').textContent = "Running Pace (min/mi)";
+        document.getElementById('metric2Val').textContent = formatPace(r.paceSecMi) + " /mi";
+
+        document.getElementById('metric3Label').textContent = "Mach Number (M)";
+        document.getElementById('metric3Val').textContent = r.mach.toFixed(4) + " M";
+
+        document.getElementById('metric4Label').textContent = "Fraction of Light (c)";
+        document.getElementById('metric4Val').textContent = r.fractionC.toExponential(3) + " c";
+
+        document.getElementById('quickDistanceSummary').textContent = `Distance: ${r.distInput} ${r.distUnit}`;
+        document.getElementById('quickTimeSummary').textContent = `Time: ${formatSecondsToHMS(r.timeSec)}`;
+    }
+
+    function renderDerivationBlock(r) {
+        const block = document.getElementById('mathJaxDerivationBlock');
+        let html = '';
+
+        if (r.target === 'speed') {
+            html = `
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mb-1">1. Governing Kinematic Equation</div>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400">$$v = \frac{d}{t}$$</div>
+                
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">2. Standardization to SI Base Units</div>
+                <div>$$\text{Distance: } d = ${r.distInput}\text{ ${r.distUnit}} \times ${DISTANCE_TO_METERS[r.distUnit]} = ${r.distMeters.toFixed(3)}\text{ m}$$</div>
+                <div>$$\text{Time: } t = ${r.timeSec.toFixed(3)}\text{ s}$$</div>
+
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">3. Direct Substitution &amp; Evaluation</div>
+                <div>$$v = \frac{${r.distMeters.toFixed(3)}\text{ m}}{${r.timeSec.toFixed(3)}\text{ s}} = ${r.speedMs.toFixed(4)}\text{ m/s}$$</div>
+
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">4. Dimensional Conversions</div>
+                <div>$$\text{Metric: } ${r.speedMs.toFixed(4)}\text{ m/s} \times 3.6 = ${r.speedKmh.toFixed(2)}\text{ km/h}$$</div>
+                <div>$$\text{Imperial: } ${r.speedKmh.toFixed(2)}\text{ km/h} \times 0.621371 = ${r.speedMph.toFixed(2)}\text{ mph}$$</div>
+                <div>$$\text{Aviation: } ${r.speedKmh.toFixed(2)}\text{ km/h} \div 1.852 = ${r.speedKnots.toFixed(2)}\text{ knots}$$</div>
+            `;
+        } else if (r.target === 'distance') {
+            html = `
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mb-1">1. Governing Kinematic Equation</div>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400">$$d = v \times t$$</div>
+                
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">2. SI Normalization</div>
+                <div>$$\text{Velocity: } v = ${r.speedMs.toFixed(4)}\text{ m/s}$$</div>
+                <div>$$\text{Time: } t = ${r.timeSec.toFixed(3)}\text{ s}$$</div>
+
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">3. Displacement Evaluation</div>
+                <div>$$d = ${r.speedMs.toFixed(4)}\text{ m/s} \times ${r.timeSec.toFixed(3)}\text{ s} = ${r.distMeters.toFixed(3)}\text{ m}$$</div>
+                <div>$$d = \frac{${r.distMeters.toFixed(3)}\text{ m}}{${DISTANCE_TO_METERS[r.distUnit]}} = ${(r.distMeters / DISTANCE_TO_METERS[r.distUnit]).toFixed(3)}\text{ ${r.distUnit}}$$</div>
+            `;
+        } else {
+            html = `
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mb-1">1. Governing Kinematic Equation</div>
+                <div class="text-sm font-bold text-brand-600 dark:text-brand-400">$$t = \frac{d}{v}$$</div>
+                
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">2. SI Normalization</div>
+                <div>$$\text{Distance: } d = ${r.distMeters.toFixed(3)}\text{ m}$$</div>
+                <div>$$\text{Velocity: } v = ${r.speedMs.toFixed(4)}\text{ m/s}$$</div>
+
+                <div class="text-slate-500 font-semibold uppercase text-[11px] mt-3 mb-1">3. Elapsed Duration Evaluation</div>
+                <div>$$t = \frac{${r.distMeters.toFixed(3)}\text{ m}}{${r.speedMs.toFixed(4)}\text{ m/s}} = ${r.timeSec.toFixed(3)}\text{ s} = ${formatSecondsToHMS(r.timeSec)}$$</div>
+            `;
+        }
+
+        block.innerHTML = html;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([block]);
+        }
+    }
+
+    function renderUnitEquivalentsTable(r) {
+        const tbody = document.getElementById('unitEquivTableBody');
+        const rows = [
+            { sys: "SI Metric Base", name: "Meters per second", abbr: "m/s", val: r.speedMs.toFixed(4), factor: "1.000000 m/s" },
+            { sys: "International Metric", name: "Kilometers per hour", abbr: "km/h", val: r.speedKmh.toFixed(3), factor: "0.277778 m/s" },
+            { sys: "Imperial Customary", name: "Miles per hour", abbr: "mph", val: r.speedMph.toFixed(3), factor: "0.447040 m/s" },
+            { sys: "Imperial Engineering", name: "Feet per second", abbr: "ft/s", val: r.speedFts.toFixed(3), factor: "0.304800 m/s" },
+            { sys: "Aviation / Maritime", name: "Knots (Nautical mi/h)", abbr: "kn", val: r.speedKnots.toFixed(3), factor: "0.514444 m/s" },
+            { sys: "Athletic Pace", name: "Minutes per kilometer", abbr: "min/km", val: formatPace(r.paceSecKm), factor: "Reciprocal: 1000/v" },
+            { sys: "Athletic Pace", name: "Minutes per mile", abbr: "min/mi", val: formatPace(r.paceSecMi), factor: "Reciprocal: 1609.344/v" },
+            { sys: "Acoustic / Aero", name: "Mach Number (20°C air)", abbr: "M", val: r.mach.toFixed(4), factor: "Ratio to 343.21 m/s" },
+            { sys: "Relativistic", name: "Fraction of light speed", abbr: "c", val: r.fractionC.toExponential(4), factor: "Ratio to 299,792,458 m/s" }
+        ];
+
+        tbody.innerHTML = rows.map(row => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                <td class="px-3 py-2 text-slate-500 font-sans">${row.sys}</td>
+                <td class="px-3 py-2 font-bold text-slate-900 dark:text-white font-sans">${row.name}</td>
+                <td class="px-3 py-2 text-brand-600 dark:text-brand-400 font-bold">${row.abbr}</td>
+                <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">${row.val}</td>
+                <td class="px-3 py-2 text-slate-400">${row.factor}</td>
+            </tr>
+        `).join('');
+    }
+
+    // --- Chart.js Visualizations ---
+    function initCharts() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(51, 65, 85, 0.4)' : 'rgba(226, 232, 240, 0.8)';
+
+        // Chart 1: Trajectory
+        const ctxTraj = document.getElementById('trajectoryChart').getContext('2d');
+        trajectoryChart = new Chart(ctxTraj, {
+            type: 'line',
+            data: {
+                labels: [0, 1],
+                datasets: [{
+                    label: 'Kinematic Trajectory (d vs t)',
+                    data: [0, 100],
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0,
+                    pointRadius: [4, 6],
+                    pointBackgroundColor: '#2563eb'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `Distance: ${ctx.parsed.y.toFixed(2)} m at t = ${ctx.parsed.x.toFixed(2)} s`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: { display: true, text: 'Elapsed Time (seconds)', color: textColor, font: { weight: 'bold', size: 11 } },
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        title: { display: true, text: 'Displacement / Distance (meters)', color: textColor, font: { weight: 'bold', size: 11 } },
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+
+        // Chart 2: Benchmark Comparison
+        const ctxComp = document.getElementById('comparisonChart').getContext('2d');
+        comparisonChart = new Chart(ctxComp, {
+            type: 'bar',
+            data: {
+                labels: ['Walking', 'Cycling', 'Cheetah', 'Bullet Train', 'Commercial Jet', 'SR-71 Blackbird', 'Escape Velocity', 'Your Speed'],
+                datasets: [{
+                    label: 'Speed (km/h)',
+                    data: [5, 20, 105, 320, 900, 3529, 40270, 37.58],
+                    backgroundColor: [
+                        '#94a3b8',
+                        '#64748b',
+                        '#38bdf8',
+                        '#0284c7',
+                        '#6366f1',
+                        '#8b5cf6',
+                        '#ec4899',
+                        '#2563eb'
+                    ],
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.x.toLocaleString()} km/h (${(ctx.parsed.x * 0.621371).toFixed(1)} mph)`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'logarithmic',
+                        title: { display: true, text: 'Speed in km/h (Logarithmic Scale)', color: textColor, font: { weight: 'bold', size: 11 } },
+                        ticks: {
+                            color: textColor,
+                            callback: function(val) {
+                                if (val === 1 || val === 10 || val === 100 || val === 1000 || val === 10000 || val === 100000) {
+                                    return val.toLocaleString() + ' km/h';
+                                }
+                                return null;
+                            }
+                        },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        ticks: { color: textColor, font: { weight: '600' } },
+                        grid: { display: false }
+                    }
+                }
+            }
+        });
+
+        // Chart 3: Multi-Leg Slopes
+        const ctxMulti = document.getElementById('multiLegChart').getContext('2d');
+        multiLegChart = new Chart(ctxMulti, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Multi-Leg Profile',
+                        data: [],
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                        borderWidth: 3,
+                        pointRadius: 5,
+                        pointBackgroundColor: '#2563eb',
+                        tension: 0,
+                        fill: false
+                    },
+                    {
+                        label: 'True Average Speed Chord',
+                        data: [],
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 0,
+                        fill: false
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: textColor, font: { size: 11, weight: 'bold' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} mi at t = ${ctx.parsed.x.toFixed(2)} hr`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: { display: true, text: 'Cumulative Time (hours)', color: textColor, font: { weight: 'bold', size: 11 } },
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    },
+                    y: {
+                        title: { display: true, text: 'Cumulative Distance (miles)', color: textColor, font: { weight: 'bold', size: 11 } },
+                        ticks: { color: textColor },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateTrajectoryChart(r) {
+        if (!trajectoryChart) return;
+        const totalT = Math.max(0.1, r.timeSec);
+        const totalD = r.distMeters;
+
+        // 10 sample points along line
+        const steps = 10;
+        const points = [];
+        for (let i = 0; i <= steps; i++) {
+            const t = (totalT / steps) * i;
+            const d = r.speedMs * t;
+            points.push({ x: t, y: d });
+        }
+
+        trajectoryChart.data.datasets[0].data = points;
+        trajectoryChart.options.scales.x.max = totalT * 1.05;
+        trajectoryChart.options.scales.y.max = totalD * 1.05;
+        trajectoryChart.update();
+
+        document.getElementById('chartSlopeBadge').textContent = `Slope = ${r.speedMs.toFixed(3)} m/s (${r.speedMph.toFixed(2)} mph)`;
+    }
+
+    function updateComparisonChart(r) {
+        if (!comparisonChart) return;
+        const speedKmh = Math.max(0.1, r.speedKmh);
+        comparisonChart.data.datasets[0].data[7] = speedKmh;
+        comparisonChart.update();
+    }
+
+    // --- Multi-Leg Journey Planner Engine ---
+    function renderJourneyLegs() {
+        const container = document.getElementById('segmentsListContainer');
+        container.innerHTML = journeyLegs.map((leg, index) => `
+            <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center gap-3 text-xs" id="legRow_${leg.id}">
+                <div class="font-bold text-slate-500 w-6">#${index + 1}</div>
+                <div class="flex-1 min-w-[140px]">
+                    <input type="text" value="${leg.name}" onchange="updateLegField(${leg.id}, 'name', this.value)" placeholder="Leg Description" class="w-full px-2.5 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white font-medium focus:ring-1 focus:ring-brand-500">
+                </div>
+                <div class="flex items-center gap-1">
+                    <input type="number" step="any" min="0" value="${leg.distance}" oninput="updateLegField(${leg.id}, 'distance', parseFloat(this.value)||0)" class="w-16 px-2 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white font-mono text-right">
+                    <select onchange="updateLegField(${leg.id}, 'distUnit', this.value)" class="px-1.5 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-300">
+                        <option value="mi" ${leg.distUnit==='mi'?'selected':''}>mi</option>
+                        <option value="km" ${leg.distUnit==='km'?'selected':''}>km</option>
+                        <option value="m" ${leg.distUnit==='m'?'selected':''}>m</option>
+                    </select>
+                </div>
+                <div class="text-slate-400 font-bold">@</div>
+                <div class="flex items-center gap-1">
+                    <input type="number" step="any" min="0.001" value="${leg.speed}" oninput="updateLegField(${leg.id}, 'speed', parseFloat(this.value)||0)" class="w-16 px-2 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white font-mono text-right">
+                    <select onchange="updateLegField(${leg.id}, 'speedUnit', this.value)" class="px-1.5 py-1 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-md text-slate-700 dark:text-slate-300">
+                        <option value="mph" ${leg.speedUnit==='mph'?'selected':''}>mph</option>
+                        <option value="km/h" ${leg.speedUnit==='km/h'?'selected':''}>km/h</option>
+                        <option value="m/s" ${leg.speedUnit==='m/s'?'selected':''}>m/s</option>
+                    </select>
+                </div>
+                <div class="ml-auto flex items-center gap-2">
+                    <button type="button" onclick="removeJourneyLeg(${leg.id})" class="text-slate-400 hover:text-rose-500 transition p-1" title="Delete Segment">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        document.getElementById('legCountSummary').textContent = `${journeyLegs.length} Segments configured`;
+    }
+
+    function addJourneyLeg() {
+        journeyLegs.push({
+            id: nextLegId++,
+            name: `Segment ${journeyLegs.length + 1}`,
+            distance: 15,
+            distUnit: "mi",
+            speed: 55,
+            speedUnit: "mph"
+        });
+        renderJourneyLegs();
+        calculateMultiLeg();
+    }
+
+    function removeJourneyLeg(id) {
+        if (journeyLegs.length <= 1) {
+            showToast("A journey requires at least 1 segment.");
+            return;
+        }
+        journeyLegs = journeyLegs.filter(l => l.id !== id);
+        renderJourneyLegs();
+        calculateMultiLeg();
+    }
+
+    function updateLegField(id, field, value) {
+        const leg = journeyLegs.find(l => l.id === id);
+        if (leg) {
+            leg[field] = value;
+            calculateMultiLeg();
+        }
+    }
+
+    function calculateMultiLeg() {
+        let totalMeters = 0;
+        let totalSeconds = 0;
+        const speedListMph = [];
+        const legComputations = [];
+
+        journeyLegs.forEach(leg => {
+            const dMeters = leg.distance * (DISTANCE_TO_METERS[leg.distUnit] || 1);
+            const vMs = leg.speed * (SPEED_TO_MS[leg.speedUnit] || 1);
+            const tSec = vMs > 0 ? (dMeters / vMs) : 0;
+            const vMph = vMs / (1609.344 / 3600);
+
+            totalMeters += dMeters;
+            totalSeconds += tSec;
+            speedListMph.push(vMph);
+
+            legComputations.push({
+                leg,
+                dMeters,
+                dMi: dMeters / 1609.344,
+                vMs,
+                vMph,
+                vKmh: vMs * 3.6,
+                tSec,
+                paceSecMi: vMs > 0 ? (1609.344 / vMs) : 0
+            });
+        });
+
+        const totalMiles = totalMeters / 1609.344;
+        const trueAvgSpeedMs = totalSeconds > 0 ? (totalMeters / totalSeconds) : 0;
+        const trueAvgSpeedMph = trueAvgSpeedMs / (1609.344 / 3600);
+        const trueAvgSpeedKmh = trueAvgSpeedMs * 3.6;
+
+        // Arithmetic mean of speeds
+        const arithMeanMph = speedListMph.length > 0 ? (speedListMph.reduce((a, b) => a + b, 0) / speedListMph.length) : 0;
+        const diffMph = arithMeanMph - trueAvgSpeedMph;
+
+        document.getElementById('mlTotalDistance').textContent = `${totalMiles.toFixed(2)} mi (${(totalMeters/1000).toFixed(1)} km)`;
+        document.getElementById('mlTotalTime').textContent = formatSecondsToHMS(totalSeconds);
+        document.getElementById('mlTrueAvgSpeed').textContent = `${trueAvgSpeedMph.toFixed(2)} mph`;
+        document.getElementById('mlArithMean').textContent = `${arithMeanMph.toFixed(2)} mph`;
+
+        // Explanatory note
+        const harmonicBox = document.getElementById('mlHarmonicNotice');
+        if (Math.abs(diffMph) > 0.05) {
+            harmonicBox.innerHTML = `<strong>Discrepancy Detected:</strong> The naive arithmetic mean of individual speeds (${arithMeanMph.toFixed(2)} mph) overestimates true journey speed by <strong>${diffMph.toFixed(2)} mph</strong> (${((diffMph/trueAvgSpeedMph)*100).toFixed(1)}% error). Because segments with lower speeds occupy more elapsed duration, they pull the true time-weighted average down to <strong>${trueAvgSpeedMph.toFixed(2)} mph</strong>.`;
+        } else {
+            harmonicBox.innerHTML = `<strong>Equally Distributed Durations:</strong> The segment speeds and durations are proportional, so the true average speed closely matches the arithmetic mean.`;
+        }
+
+        renderMultiLegTable(legComputations, totalMeters, totalSeconds);
+        updateMultiLegChart(legComputations, totalMiles, totalSeconds / 3600);
+    }
+
+    function renderMultiLegTable(computations, totalMeters, totalSeconds) {
+        const tbody = document.getElementById('multiLegTableBody');
+        let cumDistMi = 0;
+        let cumTimeSec = 0;
+
+        tbody.innerHTML = computations.map((c, i) => {
+            cumDistMi += c.dMi;
+            cumTimeSec += c.tSec;
+            const distPct = totalMeters > 0 ? ((c.dMeters / totalMeters) * 100).toFixed(1) : 0;
+            const timePct = totalSeconds > 0 ? ((c.tSec / totalSeconds) * 100).toFixed(1) : 0;
+
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                    <td class="px-3 py-2 font-bold text-slate-500">${i + 1}</td>
+                    <td class="px-3 py-2 font-sans font-bold text-slate-900 dark:text-white">${c.leg.name}</td>
+                    <td class="px-3 py-2 font-mono">${c.dMi.toFixed(2)} mi (${distPct}%)</td>
+                    <td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">${c.vMph.toFixed(1)} mph</td>
+                    <td class="px-3 py-2 font-mono">${formatSecondsToHMS(c.tSec)} (${timePct}%)</td>
+                    <td class="px-3 py-2 font-mono">${formatPace(c.paceSecMi)} /mi</td>
+                    <td class="px-3 py-2 font-mono text-slate-500">${cumDistMi.toFixed(2)} mi</td>
+                    <td class="px-3 py-2 font-mono text-slate-500">${formatSecondsToHMS(cumTimeSec)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateMultiLegChart(computations, totalMiles, totalHours) {
+        if (!multiLegChart) return;
+        const profilePoints = [{ x: 0, y: 0 }];
+        let curT = 0;
+        let curD = 0;
+
+        computations.forEach(c => {
+            curT += c.tSec / 3600; // in hours
+            curD += c.dMi;
+            profilePoints.push({ x: curT, y: curD });
+        });
+
+        const chordPoints = [
+            { x: 0, y: 0 },
+            { x: totalHours, y: totalMiles }
+        ];
+
+        multiLegChart.data.datasets[0].data = profilePoints;
+        multiLegChart.data.datasets[1].data = chordPoints;
+        multiLegChart.options.scales.x.max = Math.max(0.1, totalHours * 1.05);
+        multiLegChart.options.scales.y.max = Math.max(1, totalMiles * 1.05);
+        multiLegChart.update();
+    }
+
+    function loadMultiLegPreset(type) {
+        if (type === 'commute') {
+            journeyLegs = [
+                { id: 1, name: "City Arterials", distance: 10, distUnit: "mi", speed: 25, speedUnit: "mph" },
+                { id: 2, name: "Interstate Freeway", distance: 20, distUnit: "mi", speed: 65, speedUnit: "mph" },
+                { id: 3, name: "Downtown Jam", distance: 5, distUnit: "mi", speed: 15, speedUnit: "mph" }
+            ];
+        } else if (type === 'roundtrip') {
+            journeyLegs = [
+                { id: 1, name: "Outbound Free Flow", distance: 60, distUnit: "mi", speed: 60, speedUnit: "mph" },
+                { id: 2, name: "Return Congestion", distance: 60, distUnit: "mi", speed: 30, speedUnit: "mph" }
+            ];
+        } else if (type === 'triathlon') {
+            journeyLegs = [
+                { id: 1, name: "1.5km Open Water Swim", distance: 1.5, distUnit: "km", speed: 4.09, speedUnit: "km/h" },
+                { id: 2, name: "40km Road Cycling", distance: 40, distUnit: "km", speed: 40.0, speedUnit: "km/h" },
+                { id: 3, name: "10km Running", distance: 10, distUnit: "km", speed: 15.79, speedUnit: "km/h" }
+            ];
+        }
+        nextLegId = journeyLegs.length + 1;
+        renderJourneyLegs();
+        calculateMultiLeg();
+    }
+
+    // --- Tab 3: Bidirectional Converter & Running Pace Matrix ---
+    let isConverterSyncing = false;
+
+    function syncFromConverter(source) {
+        if (isConverterSyncing) return;
+        isConverterSyncing = true;
+
+        let speedMs = 0;
+        if (source === 'mph') {
+            const v = parseFloat(document.getElementById('conv_mph').value) || 0;
+            speedMs = v * (1609.344 / 3600);
+        } else if (source === 'kmh') {
+            const v = parseFloat(document.getElementById('conv_kmh').value) || 0;
+            speedMs = v / 3.6;
+        } else if (source === 'ms') {
+            speedMs = parseFloat(document.getElementById('conv_ms').value) || 0;
+        } else if (source === 'fts') {
+            const v = parseFloat(document.getElementById('conv_fts').value) || 0;
+            speedMs = v * 0.3048;
+        } else if (source === 'knots') {
+            const v = parseFloat(document.getElementById('conv_knots').value) || 0;
+            speedMs = v * (1852 / 3600);
+        } else if (source === 'mach') {
+            const v = parseFloat(document.getElementById('conv_mach').value) || 0;
+            speedMs = v * MACH_1_MS;
+        } else if (source === 'pacemi') {
+            const m = parseFloat(document.getElementById('conv_pacemi_m').value) || 0;
+            const s = parseFloat(document.getElementById('conv_pacemi_s').value) || 0;
+            const totalSec = m * 60 + s;
+            speedMs = totalSec > 0 ? (1609.344 / totalSec) : 0;
+        } else if (source === 'pacekm') {
+            const m = parseFloat(document.getElementById('conv_pacekm_m').value) || 0;
+            const s = parseFloat(document.getElementById('conv_pacekm_s').value) || 0;
+            const totalSec = m * 60 + s;
+            speedMs = totalSec > 0 ? (1000 / totalSec) : 0;
+        } else if (source === 'c') {
+            const v = parseFloat(document.getElementById('conv_c').value) || 0;
+            speedMs = v * C_LIGHT;
+        }
+
+        updateConverterFields(speedMs, source);
+        isConverterSyncing = false;
+    }
+
+    function updateConverterFields(speedMs, excludeField) {
+        if (!isFinite(speedMs) || speedMs < 0) speedMs = 0;
+        const mph = speedMs / (1609.344 / 3600);
+        const kmh = speedMs * 3.6;
+        const fts = speedMs / 0.3048;
+        const knots = speedMs / (1852 / 3600);
+        const mach = speedMs / MACH_1_MS;
+        const fracC = speedMs / C_LIGHT;
+
+        const secPerMi = speedMs > 0 ? (1609.344 / speedMs) : 0;
+        const secPerKm = speedMs > 0 ? (1000 / speedMs) : 0;
+
+        if (excludeField !== 'mph') document.getElementById('conv_mph').value = mph.toFixed(3);
+        if (excludeField !== 'kmh') document.getElementById('conv_kmh').value = kmh.toFixed(3);
+        if (excludeField !== 'ms') document.getElementById('conv_ms').value = speedMs.toFixed(3);
+        if (excludeField !== 'fts') document.getElementById('conv_fts').value = fts.toFixed(3);
+        if (excludeField !== 'knots') document.getElementById('conv_knots').value = knots.toFixed(3);
+        if (excludeField !== 'mach') document.getElementById('conv_mach').value = mach.toFixed(4);
+        if (excludeField !== 'c') document.getElementById('conv_c').value = fracC.toExponential(4);
+
+        if (excludeField !== 'pacemi') {
+            document.getElementById('conv_pacemi_m').value = secPerMi > 0 ? Math.floor(secPerMi / 60) : '';
+            document.getElementById('conv_pacemi_s').value = secPerMi > 0 ? Math.round(secPerMi % 60) : '';
+        }
+        if (excludeField !== 'pacekm') {
+            document.getElementById('conv_pacekm_m').value = secPerKm > 0 ? Math.floor(secPerKm / 60) : '';
+            document.getElementById('conv_pacekm_s').value = secPerKm > 0 ? Math.round(secPerKm % 60) : '';
+        }
+    }
+
+    function populatePacingMatrixTable() {
+        const tbody = document.getElementById('pacingMatrixTableBody');
+        // Benchmarks speeds: 5 km/h to 25 km/h
+        const speedsKmh = [5, 6, 8, 10, 12, 14, 16, 18, 20, 21.1, 24];
+        
+        tbody.innerHTML = speedsKmh.map(kmh => {
+            const speedMs = kmh / 3.6;
+            const mph = kmh * 0.621371;
+            const secKm = 1000 / speedMs;
+            const secMi = 1609.344 / speedMs;
+
+            const time5k = secKm * 5;
+            const time10k = secKm * 10;
+            const timeHalf = secKm * 21.0975;
+            const timeFull = secKm * 42.195;
+
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">${kmh.toFixed(1)} km/h</td>
+                    <td class="px-3 py-2 font-mono">${mph.toFixed(1)} mph</td>
+                    <td class="px-3 py-2 font-mono text-brand-600 dark:text-brand-400 font-bold">${formatPace(secKm)}</td>
+                    <td class="px-3 py-2 font-mono text-brand-600 dark:text-brand-400 font-bold">${formatPace(secMi)}</td>
+                    <td class="px-3 py-2 font-mono">${formatSecondsToHMS(time5k)}</td>
+                    <td class="px-3 py-2 font-mono">${formatSecondsToHMS(time10k)}</td>
+                    <td class="px-3 py-2 font-mono">${formatSecondsToHMS(timeHalf)}</td>
+                    <td class="px-3 py-2 font-mono">${formatSecondsToHMS(timeFull)}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // --- Tab 4: Print Report Generator ---
+    function updatePrintReport(r) {
+        document.getElementById('reportTimestamp').textContent = new Date().toLocaleDateString('en-US', {
+            year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        });
+
+        document.getElementById('reportTargetType').textContent = `Target: ${r.target.toUpperCase()}`;
+        document.getElementById('reportMainResult').textContent = `${r.speedMph.toFixed(2)} mph (${r.speedKmh.toFixed(2)} km/h)`;
+        document.getElementById('reportMetricResult').textContent = `${r.speedMs.toFixed(4)} m/s (SI base)`;
+        document.getElementById('reportDistance').textContent = `${r.distInput} ${r.distUnit} (${r.distMeters.toLocaleString(undefined, { maximumFractionDigits: 1 })} m)`;
+        document.getElementById('reportDuration').textContent = formatSecondsToHMS(r.timeSec);
+        document.getElementById('reportPace').textContent = `${formatPace(r.paceSecMi)} /mi (${formatPace(r.paceSecKm)} /km)`;
+
+        document.getElementById('reportDerivationBlock').innerHTML = `
+            <div><strong>Equation:</strong> v = d / t &hArr; ${(r.speedMs).toFixed(4)} m/s = ${r.distMeters.toFixed(2)} m / ${r.timeSec.toFixed(2)} s</div>
+            <div><strong>Aviation:</strong> ${(r.speedKnots).toFixed(2)} knots (ICAO Annex 5)</div>
+            <div><strong>Mach Number:</strong> ${r.mach.toFixed(4)} M (20&deg;C dry air sea-level)</div>
+            <div><strong>Fraction of c:</strong> ${r.fractionC.toExponential(4)} c (BIPM 2019 standard)</div>
+        `;
+    }
+
+    // --- Presets Handler ---
+    function loadSinglePreset() {
+        const p = document.getElementById('presetSelect').value;
+        if (p === 'preset_bolt') {
+            setSolveTarget('speed');
+            document.getElementById('input_distance').value = 100;
+            document.getElementById('unit_distance').value = 'm';
+            setTimeInputMode('hms');
+            document.getElementById('input_time_h').value = 0;
+            document.getElementById('input_time_m').value = 0;
+            document.getElementById('input_time_s').value = 9.58;
+            syncFromHmsTime();
+        } else if (p === 'preset_marathon') {
+            setSolveTarget('speed');
+            document.getElementById('input_distance').value = 42.195;
+            document.getElementById('unit_distance').value = 'km';
+            setTimeInputMode('hms');
+            document.getElementById('input_time_h').value = 2;
+            document.getElementById('input_time_m').value = 0;
+            document.getElementById('input_time_s').value = 35;
+            syncFromHmsTime();
+        } else if (p === 'preset_highway') {
+            setSolveTarget('time');
+            document.getElementById('input_distance').value = 300;
+            document.getElementById('unit_distance').value = 'mi';
+            document.getElementById('input_speed').value = 65;
+            document.getElementById('unit_speed').value = 'mph';
+        } else if (p === 'preset_flight') {
+            setSolveTarget('time');
+            document.getElementById('input_distance').value = 3450;
+            document.getElementById('unit_distance').value = 'NM';
+            document.getElementById('input_speed').value = 490;
+            document.getElementById('unit_speed').value = 'knots';
+        } else if (p === 'preset_sound') {
+            setSolveTarget('distance');
+            document.getElementById('input_speed').value = 1235.5;
+            document.getElementById('unit_speed').value = 'km/h';
+            setTimeInputMode('hms');
+            document.getElementById('input_time_h').value = 1;
+            document.getElementById('input_time_m').value = 0;
+            document.getElementById('input_time_s').value = 0;
+            syncFromHmsTime();
+        } else if (p === 'preset_orbit') {
+            setSolveTarget('time');
+            document.getElementById('input_distance').value = 42500;
+            document.getElementById('unit_distance').value = 'km';
+            document.getElementById('input_speed').value = 27576;
+            document.getElementById('unit_speed').value = 'km/h';
+        }
+        calculateSingle();
+    }
+
+    function resetDefaults() {
+        document.getElementById('presetSelect').value = 'preset_bolt';
+        loadSinglePreset();
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'solver' && trajectoryChart) {
+            setTimeout(() => {
+                trajectoryChart.resize();
+                comparisonChart.resize();
+            }, 50);
+        } else if (tabId === 'multileg' && multiLegChart) {
+            setTimeout(() => {
+                multiLegChart.resize();
+            }, 50);
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!ans) return;
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Toast Alert Notification ---
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    // --- Clipboard & Share Functions ---
+    function copyFormattedSummary() {
+        if (!activeResult.speedMph) return;
+        const text = `CalcWorld Kinematics Speed Solver:
+` +
+            `Target: ${activeResult.target.toUpperCase()}
+` +
+            `Speed: ${activeResult.speedMph.toFixed(2)} mph (${activeResult.speedKmh.toFixed(2)} km/h, ${activeResult.speedMs.toFixed(3)} m/s)
+` +
+            `Pace: ${formatPace(activeResult.paceSecMi)} /mile (${formatPace(activeResult.paceSecKm)} /km)
+` +
+            `Mach: ${activeResult.mach.toFixed(4)} M | Fraction of c: ${activeResult.fractionC.toExponential(3)} c
+` +
+            `Distance: ${activeResult.distInput} ${activeResult.distUnit} | Time: ${formatSecondsToHMS(activeResult.timeSec)}
+` +
+            `URL: ${window.location.href}`;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Kinematic summary copied to clipboard!");
+        });
+    }
+
+    function copyShareUrl() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast("Deep-linked calculation URL copied to clipboard!");
+        });
+    }
+
+    function updateShareUrl() {
+        const p = new URLSearchParams();
+        p.set('target', solveTarget);
+        p.set('d', document.getElementById('input_distance').value);
+        p.set('du', document.getElementById('unit_distance').value);
+        p.set('v', document.getElementById('input_speed').value);
+        p.set('vu', document.getElementById('unit_speed').value);
+        p.set('t', getActiveTimeSeconds());
+        window.history.replaceState({}, '', window.location.pathname + '?' + p.toString());
+    }
+
+    function parseUrlParams() {
+        const p = new URLSearchParams(window.location.search);
+        if (!p.has('target')) return;
+        const target = p.get('target');
+        if (['speed', 'distance', 'time'].includes(target)) {
+            setSolveTarget(target);
+        }
+        if (p.has('d')) document.getElementById('input_distance').value = p.get('d');
+        if (p.has('du')) document.getElementById('unit_distance').value = p.get('du');
+        if (p.has('v')) document.getElementById('input_speed').value = p.get('v');
+        if (p.has('vu')) document.getElementById('unit_speed').value = p.get('vu');
+        if (p.has('t')) {
+            const sec = parseFloat(p.get('t')) || 0;
+            document.getElementById('input_time_decimal').value = sec;
+            document.getElementById('unit_time').value = 's';
+            syncFromDecimalTime();
+        }
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const btn = document.getElementById('leadSubmitBtn');
+        const msg = document.getElementById('leadSuccessMsg');
+        btn.textContent = "Sending Reference PDF...";
+        btn.disabled = true;
+        setTimeout(() => {
+            input.value = "";
+            btn.classList.add('hidden');
+            msg.classList.remove('hidden');
+            showToast("Formula guide sent! Check your inbox.");
+        }, 800);
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

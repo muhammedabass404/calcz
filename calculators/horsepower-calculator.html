@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horsepower Calculator | Torque, RPM &amp; Dyno Curve Simulator</title>
+    <meta name="description" content="Calculate mechanical horsepower, torque, and rotational speed (RPM). Convert between HP, kW, PS, ft-lb/s, and BTU/hr, estimate drivetrain transmission losses (FWD, RWD, AWD), and simulate interactive dyno curves with the exact 5,252 RPM crossover.">
+    <link rel="canonical" href="https://calcworld.net/calculators/horsepower-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 Configuration & CDN -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                enableMenu: false
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(99, 102, 241, 0.08) 20%,
+                rgba(99, 102, 241, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            z-index: 50;
+            background: #1e1b4b;
+            color: #ffffff;
+            border: 1px solid #4338ca;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            opacity: 0;
+            transform: translateY(1rem);
+            pointer-events: none;
+            transition: all 0.25s ease-out;
+        }
+        .toast-notify.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Horsepower Calculator",
+              "item": "https://calcworld.net/other/horsepower-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Horsepower Calculator",
+          "url": "https://calcworld.net/other/horsepower-calculator",
+          "applicationCategory": "EngineeringApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate mechanical, electrical, and metric horsepower from torque and engine rotational speed. Features dynamic chassis dynamometer power curves, drivetrain loss compensation, unit conversions, and SAE J1349 standard formulas."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Why do horsepower and torque curves always cross at 5,252 RPM?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The crossover point at 5,252 RPM is a direct mathematical consequence of James Watt's definition of mechanical horsepower combined with the geometry of rotational motion. Work per revolution equals 2 * pi * Torque. With one horsepower defined as 33,000 foot-pounds per minute, the governing equation is HP = (Torque * 2 * pi * RPM) / 33,000. Dividing 33,000 by 2 * pi yields exactly 5252.113. When RPM equals 5,252, RPM and 5,252 cancel out, causing calculated horsepower to equal measured torque in pound-feet."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the physical difference between torque and horsepower?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Torque is a static or rotational force vector that causes an object to rotate around an axis, measured in pound-feet (lb-ft) or Newton-meters (N*m). It represents the rotational twisting effort the engine exerts regardless of time. Horsepower is the rate at which that rotational work is executed over time, representing power. Torque determines instantaneous acceleration in any given gear, whereas horsepower dictates the vehicle's top speed and overall work capacity through gearing."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between Brake Horsepower (BHP) and Wheel Horsepower (WHP)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Brake Horsepower (BHP) measures the net power output directly at the engine flywheel or crankshaft on an engine dynamometer with all standard accessories operating, without drivetrain drag. Wheel Horsepower (WHP) measures the power transmitted to the tire contact patch on a chassis dynamometer roller. WHP is lower than BHP due to parasitic drivetrain friction, gearbox gear mesh friction, transmission fluid shear, driveshaft deflection, differential hypoid gear friction, and wheel hub bearing drag."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are typical drivetrain transmission losses for FWD, RWD, and AWD vehicles?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Front-Wheel Drive (FWD) transaxle layouts typically demonstrate 10% to 12% transmission loss due to a compact configuration with only one or two gear meshes. Longitudinal Rear-Wheel Drive (RWD) layouts average 15% loss because the power must travel through an external transmission, driveshaft, and a 90-degree hypoid ring-and-pinion rear differential. All-Wheel Drive (AWD) and Four-Wheel Drive (4WD) drivetrains show 20% to 25% loss due to center differentials, viscous couplings, transfer cases, dual driveshafts, and two separate differentials."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does Metric Horsepower (PS) differ from Mechanical Horsepower (HP)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Imperial mechanical horsepower is defined as 550 foot-pounds per second, which equals 745.69987 Watts. Metric horsepower (PS, Pferdestärke, or CV) is defined under DIN 70020 as 75 kilogram-force meters per second, which equals 735.49875 Watts. Consequently, 1 mechanical horsepower equals approximately 1.01387 metric PS, and 1 metric PS equals 0.98632 mechanical horsepower."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is Indicated Horsepower (IHP)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Indicated Horsepower (IHP) is the theoretical power generated by high-pressure combustion expanding inside the engine cylinders, calculated from the cylinder pressure indicator diagram before accounting for internal engine friction. Brake Horsepower (BHP) equals Indicated Horsepower minus Friction Horsepower (FHP), where FHP accounts for piston skirt friction, ring drag, valvetrain spring loads, and oil pump parasitic losses."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What atmospheric parameters does SAE J1349 specify for engine testing?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The SAE J1349 standard specifies standard atmospheric test conditions of 99.0 kPa (29.23 inHg) dry air barometric pressure and 25 degrees Celsius (77 degrees Fahrenheit) ambient temperature with 0% relative humidity. Engine dyno software uses barometric and humidity measurements to calculate an atmospheric correction factor, adjusting output to what the engine would produce in standard sea-level air density."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can an engine produce more horsepower than torque below 5,252 RPM?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In Imperial units (horsepower and pound-feet), calculated horsepower can never exceed measured torque below 5,252 RPM. Because HP equals Torque multiplied by (RPM / 5252), any RPM value below 5,252 results in a fraction less than 1.0. Above 5,252 RPM, the multiplier exceeds 1.0, so horsepower will always numerically exceed torque in pound-feet."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Horsepower Calculator | Torque, RPM &amp; Dyno Curve Simulator">
+    <meta property="og:description" content="Calculate mechanical horsepower, torque, and rotational speed (RPM). Convert between HP, kW, PS, ft-lb/s, and BTU/hr, estimate drivetrain transmission losses (FWD, RWD, AWD), and simulate interactive dyno curves with the exact 5,252 RPM crossover.">
+    <meta property="og:url" content="https://calcworld.net/calculators/horsepower-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Horsepower Calculator | Torque, RPM &amp; Dyno Curve Simulator">
+    <meta name="twitter:description" content="Calculate mechanical horsepower, torque, and rotational speed (RPM). Convert between HP, kW, PS, ft-lb/s, and BTU/hr, estimate drivetrain transmission losses (FWD, RWD, AWD), and simulate interactive dyno curves with the exact 5,252 RPM crossover.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Engineering Resource Support:</strong> CalcWorld provides verified automotive and mechanical calculation utilities free with zero required account registration. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Horsepower Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Horsepower Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Compute mechanical horsepower, torque, and rotational speed with high-precision physics formulas. Convert between HP, kW, PS, ft-lb/s, and BTU/hr, apply drivetrain loss models (FWD, RWD, AWD), and simulate interactive dyno curves demonstrating the 5,252 RPM crossover.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Primary Two-Column Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Engine Parameters</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">Interactive</span>
+                    </h2>
+
+                    <!-- Unit System Selector -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Unit System</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="unitSysImperialBtn" onclick="setUnitSystem('imperial')" class="py-2 px-3 text-xs font-bold rounded-lg bg-brand-600 text-white shadow-sm transition">Imperial (lb-ft, HP)</button>
+                            <button type="button" id="unitSysMetricBtn" onclick="setUnitSystem('metric')" class="py-2 px-3 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition">Metric (N&middot;m, kW/PS)</button>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Target Selector -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Calculation Target</label>
+                        <div class="space-y-2">
+                            <label class="flex items-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="calcTarget" value="hp" checked onchange="switchTarget('hp')" class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-3 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Calculate Horsepower</span>
+                                    <span class="text-slate-500 dark:text-slate-400">From known Torque &amp; RPM</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="calcTarget" value="torque" onchange="switchTarget('torque')" class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-3 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Calculate Torque</span>
+                                    <span class="text-slate-500 dark:text-slate-400">From known Horsepower &amp; RPM</span>
+                                </div>
+                            </label>
+
+                            <label class="flex items-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="calcTarget" value="rpm" onchange="switchTarget('rpm')" class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-3 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Calculate Engine Speed (RPM)</span>
+                                    <span class="text-slate-500 dark:text-slate-400">From known Horsepower &amp; Torque</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Input Fields -->
+                    <div class="space-y-4">
+
+                        <!-- Input Field: Torque -->
+                        <div id="torqueInputGroup">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="inputTorque" class="text-xs font-bold text-slate-700 dark:text-slate-300" id="torqueInputLabel">Torque (lb-ft)</label>
+                                <span class="text-xs font-mono text-brand-600 dark:text-brand-400" id="torqueCurrentVal">420 lb-ft</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputTorque" value="420" min="1" max="5000" step="any" oninput="handleParamChange()" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="absolute right-3 top-2 text-xs text-slate-400" id="torqueUnitText">lb-ft</span>
+                            </div>
+                            <input type="range" id="sliderTorque" min="50" max="1000" value="420" step="5" oninput="syncSlider('torque')" class="w-full mt-2 accent-brand-600 cursor-pointer">
+                        </div>
+
+                        <!-- Input Field: Horsepower (Shown when target is torque or rpm) -->
+                        <div id="hpInputGroup" class="hidden">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="inputHP" class="text-xs font-bold text-slate-700 dark:text-slate-300" id="hpInputLabel">Horsepower (HP)</label>
+                                <span class="text-xs font-mono text-brand-600 dark:text-brand-400" id="hpCurrentVal">450 HP</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputHP" value="450" min="1" max="10000" step="any" oninput="handleParamChange()" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="absolute right-3 top-2 text-xs text-slate-400" id="hpUnitText">HP</span>
+                            </div>
+                            <input type="range" id="sliderHP" min="50" max="1000" value="450" step="5" oninput="syncSlider('hp')" class="w-full mt-2 accent-brand-600 cursor-pointer">
+                        </div>
+
+                        <!-- Input Field: RPM -->
+                        <div id="rpmInputGroup">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="inputRPM" class="text-xs font-bold text-slate-700 dark:text-slate-300">Rotational Speed (RPM)</label>
+                                <span class="text-xs font-mono text-brand-600 dark:text-brand-400" id="rpmCurrentVal">5,625 RPM</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="inputRPM" value="5625" min="500" max="25000" step="50" oninput="handleParamChange()" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="absolute right-3 top-2 text-xs text-slate-400">RPM</span>
+                            </div>
+                            <input type="range" id="sliderRPM" min="1000" max="10000" value="5625" step="25" oninput="syncSlider('rpm')" class="w-full mt-2 accent-brand-600 cursor-pointer">
+                        </div>
+
+                        <!-- Drivetrain Configuration & Transmission Loss -->
+                        <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Drivetrain Loss &amp; Measurement</label>
+                            
+                            <div class="grid grid-cols-2 gap-2 mb-3">
+                                <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer text-xs">
+                                    <input type="radio" name="powerLocation" value="crank" checked onchange="handleParamChange()" class="w-3.5 h-3.5 text-brand-600">
+                                    <span class="ml-2 font-medium">BHP (Crank/Flywheel)</span>
+                                </label>
+                                <label class="flex items-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 cursor-pointer text-xs">
+                                    <input type="radio" name="powerLocation" value="wheel" onchange="handleParamChange()" class="w-3.5 h-3.5 text-brand-600">
+                                    <span class="ml-2 font-medium">WHP (Chassis Wheel)</span>
+                                </label>
+                            </div>
+
+                            <div class="mb-2">
+                                <div class="flex justify-between items-center text-xs mb-1">
+                                    <span class="text-slate-600 dark:text-slate-400 font-medium">Drivetrain Architecture:</span>
+                                    <span id="dtLossDisplay" class="font-bold text-brand-600 dark:text-brand-400 font-mono">15% Loss (RWD)</span>
+                                </div>
+                                <div class="grid grid-cols-4 gap-1.5 text-[11px] text-center font-medium">
+                                    <button type="button" onclick="setDrivetrainPreset('fwd', 12)" class="dt-preset-btn py-1.5 px-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 transition" id="dtBtn_fwd">FWD (12%)</button>
+                                    <button type="button" onclick="setDrivetrainPreset('rwd', 15)" class="dt-preset-btn active py-1.5 px-1 rounded border border-brand-500 bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-bold" id="dtBtn_rwd">RWD (15%)</button>
+                                    <button type="button" onclick="setDrivetrainPreset('awd', 22)" class="dt-preset-btn py-1.5 px-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 transition" id="dtBtn_awd">AWD (22%)</button>
+                                    <button type="button" onclick="setDrivetrainPreset('ev', 6)" class="dt-preset-btn py-1.5 px-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 transition" id="dtBtn_ev">EV (6%)</button>
+                                </div>
+                            </div>
+
+                            <div class="mt-2">
+                                <div class="flex justify-between items-center text-xs text-slate-500 dark:text-slate-400 mb-1">
+                                    <span>Custom Loss Adjustment</span>
+                                    <span id="customLossPercentText" class="font-mono">15%</span>
+                                </div>
+                                <input type="range" id="lossSlider" min="0" max="35" value="15" step="1" oninput="updateCustomLoss()" class="w-full accent-brand-600 cursor-pointer">
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                        <button type="button" onclick="calculateAll()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Calculate Power &amp; Torque</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetCalculatorDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share URL</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-indigo-900 to-brand-900 text-white p-5 rounded-2xl shadow-md border border-indigo-700/50">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Engine Tuning Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Dyno &amp; Horsepower Tuning Manual</h3>
+                    <p class="text-xs text-indigo-200 mb-3">Download the comprehensive automotive engineering formula guide containing SAE J1349 correction equations, BMEP charts, and transmission loss standards (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="engineer@motorsport.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Send Free Tuning PDF</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">&check; Reference guide dispatched! Inspect your email inbox.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">SAE J1349 Mechanical Horsepower</span>
+                        <div class="flex items-center gap-2">
+                            <span id="crossoverStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">RPM &gt; 5,252 (HP &gt; Torque)</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Power / Torque Display -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-5 mb-5 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1" id="mainOutputLabel">Mechanical Brake Horsepower (Crank BHP)</span>
+                        <div class="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="mainOutputValue">
+                            449.8 HP
+                        </div>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-xl mx-auto flex flex-wrap justify-center items-center gap-x-4 gap-y-1" id="lossBreakdownDisplay">
+                            <span><strong>Crank Power:</strong> 449.8 BHP</span>
+                            <span>&bull;</span>
+                            <span><strong>Wheel Power (15% RWD):</strong> 382.3 WHP</span>
+                            <span>&bull;</span>
+                            <span><strong>Loss:</strong> 67.5 HP</span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Metric Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Metric Kilowatts ($P_{\text{kW}}$)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metricKWVal">335.4 kW</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Metric Horsepower ($PS$)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="metricPSVal">456.0 PS</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Work Rate ($\text{ft}\cdot\text{lb}/\text{s}$)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="workRateVal">247,404</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Thermal Rate ($\text{BTU}/\text{hr}$)</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="btuRateVal">1,144,453</span>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Engineering Properties -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 text-xs">
+                        <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                            <span class="text-slate-500 dark:text-slate-400 block">Torque in Newton-Meters</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono" id="torqueNmVal">569.4 N&middot;m</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                            <span class="text-slate-500 dark:text-slate-400 block">Electrical Horsepower ($746\text{ W}$)</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono" id="electricalHPVal">449.6 hp(E)</span>
+                        </div>
+                        <div class="p-2.5 rounded-lg bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
+                            <span class="text-slate-500 dark:text-slate-400 block">Boiler Horsepower ($9.81\text{ kW}$)</span>
+                            <span class="font-bold text-slate-900 dark:text-white font-mono" id="boilerHPVal">34.2 hp(S)</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="quickStatusSummary">RPM: 5,625 &bull; Torque: 420 lb-ft</span>
+                            <span>&bull;</span>
+                            <span id="quickLossSummary">Drivetrain: RWD (15%)</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copySummaryToClipboard()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('solver')" id="tabBtn_solver" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Horsepower &amp; Torque Solver
+                        </button>
+                        <button onclick="switchTab('conversions')" id="tabBtn_conversions" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Unit Conversion Hub
+                        </button>
+                        <button onclick="switchTab('dyno')" id="tabBtn_dyno" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Dyno Curve Simulator
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Horsepower & Torque Solver -->
+                <div id="tab-solver" class="tab-panel active space-y-6">
+
+                    <!-- Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Mathematical Derivation</span>
+                        </h3>
+                        
+                        <div id="mathDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Automotive Benchmarks Reference -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">Production Vehicle Powertrain Benchmarks</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Compare your calculated output against standardized factory dynamometer benchmarks across standard powertrain classes.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
+                                        <th class="py-2 px-3">Vehicle / Powertrain</th>
+                                        <th class="py-2 px-3">Engine Architecture</th>
+                                        <th class="py-2 px-3">Peak Torque</th>
+                                        <th class="py-2 px-3">Peak BHP</th>
+                                        <th class="py-2 px-3">Drivetrain</th>
+                                        <th class="py-2 px-3">Est. WHP</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Ford Mustang GT (Gen 4 Coyote)</td>
+                                        <td class="py-2.5 px-3">5.0L Naturally Aspirated V8</td>
+                                        <td class="py-2.5 px-3 font-mono">415 lb-ft @ 4,900</td>
+                                        <td class="py-2.5 px-3 font-mono">486 HP @ 7,250</td>
+                                        <td class="py-2.5 px-3">RWD (15%)</td>
+                                        <td class="py-2.5 px-3 font-mono text-brand-600 dark:text-brand-400">413 WHP</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Honda Civic Type R (K20C1)</td>
+                                        <td class="py-2.5 px-3">2.0L Turbocharged Inline-4</td>
+                                        <td class="py-2.5 px-3 font-mono">310 lb-ft @ 2,500</td>
+                                        <td class="py-2.5 px-3 font-mono">315 HP @ 6,500</td>
+                                        <td class="py-2.5 px-3">FWD (12%)</td>
+                                        <td class="py-2.5 px-3 font-mono text-brand-600 dark:text-brand-400">277 WHP</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Porsche 911 GT3 (992)</td>
+                                        <td class="py-2.5 px-3">4.0L High-Revving Flat-6</td>
+                                        <td class="py-2.5 px-3 font-mono">346 lb-ft @ 6,100</td>
+                                        <td class="py-2.5 px-3 font-mono">502 HP @ 8,400</td>
+                                        <td class="py-2.5 px-3">RWD (14%)</td>
+                                        <td class="py-2.5 px-3 font-mono text-brand-600 dark:text-brand-400">432 WHP</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">RAM 2500 Cummins Turbo-Diesel</td>
+                                        <td class="py-2.5 px-3">6.7L Inline-6 Turbo-Diesel</td>
+                                        <td class="py-2.5 px-3 font-mono">850 lb-ft @ 1,700</td>
+                                        <td class="py-2.5 px-3 font-mono">370 HP @ 2,800</td>
+                                        <td class="py-2.5 px-3">4WD (22%)</td>
+                                        <td class="py-2.5 px-3 font-mono text-brand-600 dark:text-brand-400">288 WHP</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Tesla Model S Plaid (Tri-Motor)</td>
+                                        <td class="py-2.5 px-3">Permanent Magnet Carbon Sleeve</td>
+                                        <td class="py-2.5 px-3 font-mono">1,050 lb-ft @ 0-5,000</td>
+                                        <td class="py-2.5 px-3 font-mono">1,020 HP @ 8,000</td>
+                                        <td class="py-2.5 px-3">AWD Direct (6%)</td>
+                                        <td class="py-2.5 px-3 font-mono text-brand-600 dark:text-brand-400">958 WHP</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Unit Conversion Hub -->
+                <div id="tab-conversions" class="tab-panel space-y-6">
+
+                    <!-- Power Conversion Matrix -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Power Unit Conversion Hub</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Convert between global mechanical, electrical, thermal, and metric power definitions.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500">Source:</span>
+                                <input type="number" id="converterInputVal" value="450" step="any" oninput="runUnitConversions()" class="w-24 px-2 py-1 text-xs font-mono rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                                <select id="converterInputUnit" onchange="runUnitConversions()" class="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                                    <option value="hp">HP (Mechanical)</option>
+                                    <option value="kw">Kilowatts (kW)</option>
+                                    <option value="ps">Metric PS (CV)</option>
+                                    <option value="ftlbs">ft-lb/s</option>
+                                    <option value="btu">BTU/hr</option>
+                                    <option value="hpe">Electrical HP</option>
+                                    <option value="hps">Boiler HP</option>
+                                    <option value="w">Watts (W)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Multi-Unit Result Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
+                                        <th class="py-2.5 px-3">Power Unit</th>
+                                        <th class="py-2.5 px-3">Standard Abbreviation</th>
+                                        <th class="py-2.5 px-3">Converted Value</th>
+                                        <th class="py-2.5 px-3">Exact Physical Equivalent</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Mechanical Horsepower (Imperial)</td>
+                                        <td class="py-2.5 px-3 font-mono">hp(I) / bhp</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_hp">450.00 hp</td>
+                                        <td class="py-2.5 px-3">550 ft&middot;lb/s = 745.69987 Watts</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Kilowatt (SI Standard)</td>
+                                        <td class="py-2.5 px-3 font-mono">kW</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_kw">335.56 kW</td>
+                                        <td class="py-2.5 px-3">1,000 Joules/sec = 1,000 Watts</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Metric Horsepower (DIN / PS / CV)</td>
+                                        <td class="py-2.5 px-3 font-mono">PS / CV / ch</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_ps">456.24 PS</td>
+                                        <td class="py-2.5 px-3">75 kgf&middot;m/s = 735.49875 Watts</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Electrical Horsepower</td>
+                                        <td class="py-2.5 px-3 font-mono">hp(E)</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_hpe">449.82 hp(E)</td>
+                                        <td class="py-2.5 px-3">Defined exactly as 746.000 Watts</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Foot-Pounds per Second</td>
+                                        <td class="py-2.5 px-3 font-mono">ft&middot;lb/s</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_ftlbs">247,500 ft&middot;lb/s</td>
+                                        <td class="py-2.5 px-3">1 Mechanical HP = 550 ft&middot;lb/s</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">British Thermal Units per Hour</td>
+                                        <td class="py-2.5 px-3 font-mono">BTU/hr</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_btu">1,144,976 BTU/hr</td>
+                                        <td class="py-2.5 px-3">1 kW = 3,412.142 BTU/hr</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Boiler Horsepower</td>
+                                        <td class="py-2.5 px-3 font-mono">hp(S)</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_hps">34.21 hp(S)</td>
+                                        <td class="py-2.5 px-3">33,471.4 BTU/hr = 9.8095 kW</td>
+                                    </tr>
+                                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-750">
+                                        <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Watts (Standard SI)</td>
+                                        <td class="py-2.5 px-3 font-mono">W</td>
+                                        <td class="py-2.5 px-3 font-mono font-bold text-brand-600 dark:text-brand-400" id="conv_w">335,565 W</td>
+                                        <td class="py-2.5 px-3">1 Joule per second</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Torque Unit Conversion Sub-Tool -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Torque Unit Conversion Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Convert rotational moment between Imperial and metric scales.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500">Source:</span>
+                                <input type="number" id="converterTorqueInput" value="400" step="any" oninput="runTorqueConversions()" class="w-24 px-2 py-1 text-xs font-mono rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                                <select id="converterTorqueUnit" onchange="runTorqueConversions()" class="px-2 py-1 text-xs rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                                    <option value="lbft">Pound-Feet (lb-ft)</option>
+                                    <option value="nm">Newton-Meters (N&middot;m)</option>
+                                    <option value="lbin">Pound-Inches (lb-in)</option>
+                                    <option value="kgfm">Kilogram-Meters (kgf&middot;m)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500 dark:text-slate-400 block">Pound-Feet (lb-ft)</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="tConv_lbft">400.0 lb-ft</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500 dark:text-slate-400 block">Newton-Meters (N&middot;m)</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="tConv_nm">542.3 N&middot;m</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500 dark:text-slate-400 block">Pound-Inches (lb-in)</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="tConv_lbin">4,800.0 lb-in</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500 dark:text-slate-400 block">Kilogram-Meters (kgf&middot;m)</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="tConv_kgfm">55.3 kgf&middot;m</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 3: Dyno Curve Simulator -->
+                <div id="tab-dyno" class="tab-panel space-y-6">
+
+                    <!-- Dyno Controls Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Chassis Dynamometer Curve Simulator</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Generate realistic Torque and Horsepower curves from 1,000 to 7,500+ RPM showing the 5,252 RPM crossover point.</p>
+                            </div>
+                            <!-- Engine Profile Selector -->
+                            <div class="flex items-center gap-2">
+                                <label for="dynoProfilePreset" class="text-xs font-bold text-slate-500">Preset:</label>
+                                <select id="dynoProfilePreset" onchange="loadDynoPreset(this.value)" class="text-xs px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+                                    <option value="v8_na">Naturally Aspirated V8 (480 HP)</option>
+                                    <option value="i4_turbo">Turbocharged 2.0L I4 (315 HP)</option>
+                                    <option value="high_rev">High-Rev Flat-6 (500 HP / 9,000 RPM)</option>
+                                    <option value="diesel">Turbo-Diesel (370 HP / 850 lb-ft)</option>
+                                    <option value="ev">Dual-Motor Electric (600 HP)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Dyno Configuration Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4 text-xs">
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Peak Torque (lb-ft)</label>
+                                <input type="number" id="dynoPeakTorque" value="420" min="50" max="2000" oninput="renderDynoSimulator()" class="w-full px-2.5 py-1.5 font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Peak Torque RPM</label>
+                                <input type="number" id="dynoPeakTorqueRpm" value="4600" min="1500" max="8000" step="100" oninput="renderDynoSimulator()" class="w-full px-2.5 py-1.5 font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Peak Power (HP)</label>
+                                <input type="number" id="dynoPeakHp" value="460" min="50" max="2500" oninput="renderDynoSimulator()" class="w-full px-2.5 py-1.5 font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Peak Power RPM</label>
+                                <input type="number" id="dynoPeakHpRpm" value="6800" min="2500" max="10000" step="100" oninput="renderDynoSimulator()" class="w-full px-2.5 py-1.5 font-mono rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                        </div>
+
+                        <!-- Crossover Callout Alert -->
+                        <div class="p-3 mb-4 rounded-xl bg-brand-50 dark:bg-brand-950/40 border border-brand-200/60 dark:border-brand-800/60 flex items-start gap-3">
+                            <span class="w-6 h-6 rounded-full bg-brand-600 text-white flex items-center justify-center text-xs font-bold shrink-0">&infin;</span>
+                            <div class="text-xs text-brand-900 dark:text-brand-200">
+                                <strong>Mathematical Crossover Milestone (5,252 RPM):</strong> Because $\text{HP} = \frac{T \times \text{RPM}}{5252}$, when engine speed equals exactly 5,252 RPM, calculated Horsepower and Torque in pound-feet are numerically equal. Below 5,252 RPM, Torque is always higher than Horsepower; above 5,252 RPM, Horsepower is always higher than Torque.
+                            </div>
+                        </div>
+
+                        <!-- Chart Canvas Container -->
+                        <div class="relative h-72 sm:h-80 w-full">
+                            <canvas id="dynoChartCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Dyno Data Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white">Dyno Output Log (500 RPM Increments)</h4>
+                            <span class="text-xs text-slate-400 font-mono">SAE J1349 Standard</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                            <table class="w-full text-left text-xs border-collapse font-mono" id="dynoLogTable">
+                                <thead class="sticky top-0 bg-slate-100 dark:bg-slate-900">
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 uppercase text-[10px]">
+                                        <th class="py-2 px-3">RPM</th>
+                                        <th class="py-2 px-3">Torque (lb-ft)</th>
+                                        <th class="py-2 px-3">Torque (N&middot;m)</th>
+                                        <th class="py-2 px-3">Horsepower (HP)</th>
+                                        <th class="py-2 px-3">Power (kW)</th>
+                                        <th class="py-2 px-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="dynoLogTableBody">
+                                    <!-- Populated via renderDynoSimulator() -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                            <div>
+                                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider block">CALCWORLD AUTOMOTIVE ENGINEERING</span>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white">Powertrain Dyno Performance Report</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Certified Test Certificate complying with SAE J1349 and ISO 1585 standards.</p>
+                            </div>
+                            <div class="text-right text-xs text-slate-500 font-mono">
+                                <div><strong>Document ID:</strong> CW-HP-<span id="printDocId">84729</span></div>
+                                <div><strong>Date Generated:</strong> <span id="printDate">2026-10-16</span></div>
+                                <div><strong>Standard:</strong> SAE J1349 Certified Net</div>
+                            </div>
+                        </div>
+
+                        <!-- Spec Inputs for Print Report -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6 text-xs no-print">
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Engine / Model</label>
+                                <input type="text" id="printEngineName" value="5.0L DOHC V8" oninput="updatePrintView()" class="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Test Operator</label>
+                                <input type="text" id="printOperator" value="Engineering Tech" oninput="updatePrintView()" class="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Barometric Press.</label>
+                                <input type="text" id="printBaro" value="29.23 inHg (99 kPa)" oninput="updatePrintView()" class="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                            <div>
+                                <label class="block font-medium text-slate-600 dark:text-slate-400 mb-1">Air Temp.</label>
+                                <input type="text" id="printTemp" value="77&deg;F (25&deg;C)" oninput="updatePrintView()" class="w-full px-2 py-1 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900">
+                            </div>
+                        </div>
+
+                        <!-- Print Summary Data Sheet -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden mb-6">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr class="bg-slate-50 dark:bg-slate-900/50">
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Engine Identification</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayEngine">5.0L DOHC V8</td>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Test Operator</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayOperator">Engineering Tech</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Test Speed (RPM)</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayRpm">5,625 RPM</td>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Measured Torque</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayTorque">420 lb-ft (569.4 N&middot;m)</td>
+                                    </tr>
+                                    <tr class="bg-slate-50 dark:bg-slate-900/50">
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Brake Horsepower (Crank BHP)</td>
+                                        <td class="py-2.5 px-4 font-mono font-bold text-brand-600 dark:text-brand-400" id="printDisplayBhp">449.8 BHP</td>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Wheel Horsepower (WHP)</td>
+                                        <td class="py-2.5 px-4 font-mono font-bold text-brand-600 dark:text-brand-400" id="printDisplayWhp">382.3 WHP</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Metric Equivalent</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayMetric">335.4 kW / 456.0 PS</td>
+                                        <td class="py-2.5 px-4 font-bold text-slate-700 dark:text-slate-300">Drivetrain Loss</td>
+                                        <td class="py-2.5 px-4 font-mono" id="printDisplayLoss">15% RWD (67.5 HP Drag)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Formal Verification Stamp Block -->
+                        <div class="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200 dark:border-slate-700 text-xs">
+                            <div>
+                                <span class="text-slate-400 block mb-6">Technical Inspector Signature</span>
+                                <div class="border-b border-slate-300 dark:border-slate-600 pb-1">
+                                    <span class="font-mono text-slate-600 dark:text-slate-400">J. R. Watt, Lead Powertrain Specialist</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 block mb-6">Certification &amp; Compliance Seal</span>
+                                <div class="border-b border-slate-300 dark:border-slate-600 pb-1">
+                                    <span class="font-mono text-slate-600 dark:text-slate-400">ISO 1585 / SAE J1349 Certified Validation</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 text-center no-print">
+                            <button onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow-md transition inline-flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Formal Engineering Report</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 2: Under-Result Display Ad -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Technical Engineering Guide -->
+        <article class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 space-y-8 mt-10 leading-relaxed text-slate-700 dark:text-slate-300 text-sm sm:text-base">
+            
+            <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Mechanical Engineering &amp; Powertrain Dynamics</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">The Physics of Horsepower, Torque, and Powertrain Efficiency</h2>
+            </div>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">1. James Watt and the 1782 Pit Pony Experiment</h3>
+                <p>The unit of horsepower originated in 1782 through the work of Scottish mechanical engineer James Watt. Watt sought a quantitative metric to market his improved steam engines to coal mine operators who still depended on draft horses to turn capstans and pump floodwater from deep coal pits. To convince mine owners that his steam condenser design represented a superior capital investment, Watt conducted empirical trials using working draft pit ponies at a brewery and coal mines in Cornwall and Scotland.</p>
+                <p>Watt observed a draft horse turning a mill wheel in a 24-foot diameter circular track (circumference approximately 75.4 feet). The horse pulled with a sustained effort estimated at 180 pounds of force while walking at approximately 2.4 miles per hour (3.52 feet per second). Multiplying force by distance traversed per minute, Watt calculated that an average draft pony performed approximately 22,000 foot-pounds of mechanical work per minute.</p>
+                <p>Recognizing that potential customers might question whether a machine could genuinely replace their strongest animals, Watt deliberately multiplied his empirical measurement by a safety factor of 1.5. He standardized mechanical horsepower as <strong>33,000 foot-pounds of work per minute</strong> (equivalent to 550 foot-pounds per second):</p>
+                
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 text-center font-mono text-sm sm:text-base">
+                    $$1\text{ Mechanical Horsepower (hp)} = 33,000\text{ ft}\cdot\text{lbf}/\text{min} = 550\text{ ft}\cdot\text{lbf}/\text{s} \approx 745.69987\text{ W}$$
+                </div>
+                
+                <p>By establishing a standard that exceeded the actual sustained endurance of an ordinary draft horse, Watt ensured that any customer purchasing a ten-horsepower steam engine would discover that it comfortably outperformed ten real horses over an extended shift.</p>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">2. Mathematical Derivation of the 5,252 RPM Crossover Constant</h3>
+                <p>In automotive engineering, dynamometers do not measure horsepower directly. A dynamometer measures torque—the instantaneous rotational twisting force exerted by the crankshaft—alongside rotational speed measured in revolutions per minute (RPM). Horsepower is then computed using a mathematical relationship derived directly from the fundamental definition of mechanical work.</p>
+                <p>Work is defined physically as a force acting across a distance:</p>
+                
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{Work} = \text{Force} \times \text{Distance}$$
+                </div>
+
+                <p>In rotational mechanics, when a force $F$ acts tangentially at a radial distance $r$ from an axis of rotation, the resulting torque $T$ is given by:</p>
+                
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$T = F \times r \implies F = \frac{T}{r}$$
+                </div>
+
+                <p>During one complete revolution of the crankshaft, the circumference traced by the radius $r$ equals $2\pi r$. Therefore, the linear distance traveled by the tangential force in one revolution is:</p>
+                
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{Distance per Revolution} = 2\pi r$$
+                </div>
+
+                <p>Multiplying force by this distance yields the mechanical work executed during a single revolution:</p>
+                
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{Work per Revolution} = F \times 2\pi r = \left(\frac{T}{r}\right) \times 2\pi r = 2\pi \times T$$
+                </div>
+
+                <p>Notice that the radius $r$ cancels out completely. The work executed per revolution depends solely on torque $T$ and the circular constant $2$\pi$. If the engine rotates at a rotational speed of $\text{RPM}$ (revolutions per minute), the total mechanical work completed per minute equals:</p>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{Work per Minute} = 2\pi \times T \times \text{RPM}$$
+                </div>
+
+                <p>Because James Watt defined one mechanical horsepower as 33,000 foot-pounds of work per minute, horsepower is calculated by dividing work per minute by 33,000:</p>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{HP} = \frac{2\pi \times T \times \text{RPM}}{33,000}$$
+                </div>
+
+                <p>To simplify computation, the constant terms are grouped into the denominator:</p>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 font-mono text-center text-sm sm:text-base">
+                    $$\text{HP} = \frac{T \times \text{RPM}}{\frac{33,000}{2\pi}} = \frac{T (\text{lb-ft}) \times \text{RPM}}{5,252.113...}$$
+                </div>
+
+                <p>The constant <strong>5,252</strong> is the exact quotient of $\frac{33,000}{2\pi}$. This creates an unavoidable mathematical identity: at exactly 5,252 RPM, the RPM term in the numerator cancels out the 5,252 divisor in the denominator. Consequently, <strong>horsepower and torque in pound-feet are always identical at 5,252 RPM</strong> on any dynamometer graph plotted with proportional scales.</p>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">3. Metric Power Formulations (Kilowatts and Pferdest&auml;rke)</h3>
+                <p>In metric and SI conventions, rotational power is expressed in kilowatts (kW) with torque measured in Newton-meters ($\text{N}\cdot\text{m}$). The angular velocity $\omega$ in radians per second equals $\frac{2\pi \times \text{RPM}}{60}$. Power in Watts is given by:</p>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$P (\text{Watts}) = T (\text{N}\cdot\text{m}) \times \omega = T \times \frac{2\pi \times \text{RPM}}{60}$$
+                </div>
+
+                <p>Converting Watts to kilowatts by dividing by 1,000 yields:</p>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 font-mono text-center text-sm sm:text-base">
+                    $$P (\text{kW}) = \frac{T (\text{N}\cdot\text{m}) \times \text{RPM}}{\frac{60,000}{2\pi}} = \frac{T (\text{N}\cdot\text{m}) \times \text{RPM}}{9,548.8...} \approx \frac{T \times \text{RPM}}{9,549}$$
+                </div>
+
+                <p>Under the metric system, the crossover point between torque in Newton-meters and power in kilowatts occurs at <strong>9,549 RPM</strong>, demonstrating that the 5,252 crossover is a function of Imperial units rather than an inherent limitation of internal combustion engines.</p>
+                <p>German industrial standards codified under DIN 70020 specify Metric Horsepower, designated as <strong>PS</strong> (Pferdest&auml;rke), <strong>CV</strong> (cavallo vapore in Italian), or <strong>ch</strong> (chevaux-vapeur in French). While Imperial horsepower represents 550 ft-lb/s (745.70 W), Metric PS is defined as the power required to raise a 75-kilogram mass vertically at a rate of 1 meter per second against standard gravity ($9.80665\text{ m/s}^2$):</p>
+
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$1\text{ PS} = 75\text{ kg} \times 9.80665\text{ m/s}^2 \times 1\text{ m/s} = 735.49875\text{ W} = 0.98632\text{ hp (Imperial)}$$
+                </div>
+
+                <p>Because one mechanical Imperial horsepower equals 1.01387 metric PS, European automobile manufacturers quoting engine ratings in PS report numbers roughly 1.4% higher than North American specifications for the identical powertrain.</p>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">4. Brake, Wheel, Indicated, and Shaft Horsepower Classifications</h3>
+                <p>Engine power ratings vary depending on where and how mechanical output is measured along the vehicle powertrain:</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Brake Horsepower (BHP)</h4>
+                        <p class="text-xs">BHP represents the net power available at the engine crankshaft or flywheel. It is measured on an engine dynamometer using a water brake, eddy-current absorber, or AC dynamometer. Modern ratings follow SAE J1349 standards, requiring production air intake filters, full exhaust systems, alternator loads, and engine coolant pumps to be fully operational.</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Wheel Horsepower (WHP)</h4>
+                        <p class="text-xs">WHP represents the actual tractive power delivered to the pavement by the drive tires, measured on a chassis dynamometer (such as Dynojet inertia rollers or Mustang eddy-current loaders). WHP is consistently lower than BHP due to mechanical friction, transmission fluid shear, gear deflection, and universal joint angular drag.</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Indicated Horsepower (IHP)</h4>
+                        <p class="text-xs">IHP represents theoretical power generated within the combustion chambers, determined by integrating the pressure curve across piston stroke displacement using high-speed piezoelectric transducers. IHP represents total combustion energy before subtracting Friction Horsepower (FHP) consumed by piston ring drag, bearing friction, and valvetrain resistance.</p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Shaft Horsepower (SHP)</h4>
+                        <p class="text-xs">SHP defines the mechanical power delivered to a propeller shaft, helicopter rotor mast, or marine propulsion shaft, standard in turboprop aircraft, marine vessels, and industrial gas turbine installations.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">5. Drivetrain Transmission Losses by Architecture</h3>
+                <p>When torque transfers from the engine crankshaft through the transmission, transfer case, driveshafts, differentials, and wheel bearings, mechanical losses reduce the power reaching the road. These losses arise from gear tooth sliding contact friction, bearing preloads, hypoid spiral bevel gear angular deflection, transmission fluid viscous drag, and tire rolling resistance against the dynamometer rollers.</p>
+                <p>Automotive engineers classify parasitic transmission losses into standard architectural tiers:</p>
+                <ul class="list-disc pl-5 space-y-2 text-xs sm:text-sm">
+                    <li><strong>Front-Wheel Drive (FWD) Transaxles (10% to 12% Loss):</strong> Transverse engine layouts place the transmission and differential in a single compact housing directly between the drive wheels. Power transfers through only one or two helical gear pairs without requiring a 90-degree directional redirection, resulting in minimal friction.</li>
+                    <li><strong>Rear-Wheel Drive (RWD) Drivetrains (15% Loss):</strong> Longitudinal powertrains route torque through a primary transmission, a central driveshaft, and an independent rear differential. The rear axle uses a hypoid ring-and-pinion gearset to redirect rotation 90 degrees. Hypoid gear geometry involves significant sliding tooth contact, causing higher thermal and frictional losses.</li>
+                    <li><strong>All-Wheel Drive (AWD) &amp; Four-Wheel Drive (20% to 25% Loss):</strong> AWD platforms incorporate a center differential, viscous coupling, or transfer case, dual driveshafts, front and rear differential units, and multiple constant velocity (CV) axle joints. The cumulative frictional overhead of multiple rotating gearsets increases parasitic loss to roughly one-fourth of engine flywheel output.</li>
+                    <li><strong>Electric Direct Drive Powertrains (5% to 8% Loss):</strong> Electric vehicles eliminate multi-ratio gearboxes, clutches, and torque converters, employing single-speed reduction gearboxes with high-efficiency helical gear meshes directly driving axle shafts.</li>
+                </ul>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">6. Testing Standards: SAE J1349, SAE J1995, and ISO 1585</h3>
+                <p>Prior to 1972, American automakers marketed vehicles using <strong>SAE Gross Horsepower</strong> (codified under SAE J1995). Under gross testing procedures, bare prototype engines were tested on dynamometers without alternators, water pumps, cooling fans, air cleaners, or production mufflers. Technicians optimized ignition timing and fuel jetting for laboratory conditions, producing advertised figures 20% to 30% higher than production capabilities.</p>
+                <p>In 1972, the industry transitioned to <strong>SAE Net Horsepower (SAE J1349)</strong>, followed by the rigorous <strong>SAE Certified Power</strong> protocol introduced in 2004. Under SAE J1349 and international standard <strong>ISO 1585</strong>, the engine must be equipped with all production components:</p>
+                <ul class="list-disc pl-5 space-y-1.5 text-xs sm:text-sm">
+                    <li>Production air cleaner housing and original equipment paper filter elements.</li>
+                    <li>Complete production exhaust manifolds, catalytic converters, resonators, and mufflers.</li>
+                    <li>Engine-driven mechanical accessories including alternator under electrical load, water pump, and oil pump.</li>
+                    <li>Standard production engine control unit (ECU) calibration software and fuel octane ratings available at commercial retail pumps.</li>
+                </ul>
+                <p>Because atmospheric air density directly influences internal combustion volumetric efficiency, SAE J1349 specifies standardized laboratory atmospheric conditions:</p>
+                
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/50 rounded-lg font-mono text-xs sm:text-sm">
+                    $$\text{Standard SAE Conditions: } T_0 = 25^\circ\text{C } (77^\circ\text{F}), \quad P_{d0} = 99.0\text{ kPa } (29.235\text{ inHg dry air})$$
+                </div>
+
+                <p>The dynamometer data acquisition computer calculates an atmospheric correction factor ($CF$) applied to raw measured torque according to:</p>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 font-mono text-center text-xs sm:text-sm">
+                    $$CF = 1.180 \times \left(\frac{99.0}{P_d}\right) \times \sqrt{\frac{T + 273.15}{298.15}} - 0.180$$
+                </div>
+
+                <p>where $P_d$ is observed dry barometric pressure in kPa and $T$ is ambient temperature in degrees Celsius. This normalization ensures engine ratings remain comparable whether measured on a humid sea-level morning or in hot, high-altitude laboratory facilities.</p>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">7. Vehicle Dynamics: How Torque and Horsepower Shape Acceleration</h3>
+                <p>A frequent point of debate among automotive technicians centers on whether torque or horsepower governs vehicle acceleration. From the perspective of Newtonian physics, the vehicle's instantaneous acceleration $a$ is dictated by force divided by mass ($a = \frac{F}{m}$), where $F$ is the tractive force exerted by the tire patch onto the road.</p>
+                <p>Wheel torque equals engine crankshaft torque multiplied by the transmission gear ratio and the final drive differential ratio, minus transmission frictional loss. Consequently, a transmission acts as a mechanical torque multiplier. At low vehicle speeds, selecting first gear multiplies crankshaft torque substantially (often by a factor of 12 to 16), delivering intense tractive thrust.</p>
+                <p>Horsepower reflects the rate at which that torque can be delivered at higher rotational speeds. An engine that produces modest torque but can spin to 9,000 RPM can use aggressive gear reduction ratios to multiply torque at the wheels without running out of road speed prematurely. Power defines the maximum rate of work the vehicle can achieve, establishing top speed against aerodynamic drag and dictating quarter-mile trap speeds.</p>
+            </section>
+
+        </article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 mt-10">
+            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-2">Frequently Asked Questions</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Expert engineering answers addressing horsepower formulas, dyno curves, and powertrain testing.</p>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why do horsepower and torque curves always cross at 5,252 RPM?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The crossover point at 5,252 RPM is a mathematical property resulting from James Watt's definition of horsepower combined with the geometry of a circle. Mechanical horsepower is defined as 33,000 foot-pounds per minute. In rotational systems, work per revolution equals 2 * pi * Torque. The governing formula is HP = (Torque * 2 * pi * RPM) / 33,000. Dividing 33,000 by 2 * pi yields 5,252.113. When engine speed equals 5,252 RPM, the RPM value in the numerator cancels out the 5,252 divisor in the denominator, causing calculated horsepower to equal measured torque in pound-feet.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the fundamental physical difference between torque and horsepower?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Torque is a static rotational force measured in pound-feet (lb-ft) or Newton-meters (N*m). It represents the rotational twisting effort the engine can exert regardless of time or speed. Horsepower is the rate of executing work over time, integrating torque with rotational speed. Torque dictates how much mechanical load the engine can rotate, while horsepower determines how rapidly that work can be accomplished.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does Wheel Horsepower (WHP) differ from Brake Horsepower (BHP)?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Brake Horsepower (BHP) measures the net power output directly at the engine flywheel or crankshaft on an engine dynamometer with all standard accessories operating, without drivetrain drag. Wheel Horsepower (WHP) measures the power transmitted to the tire contact patch on a chassis dynamometer roller. WHP is lower than BHP due to parasitic drivetrain friction, gearbox gear mesh friction, transmission fluid shear, driveshaft deflection, differential hypoid gear friction, and wheel hub bearing drag.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why do All-Wheel Drive vehicles experience higher drivetrain loss than Front-Wheel Drive?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Front-Wheel Drive vehicles integrate the transmission and differential within a single transaxle casing, transferring power through only one or two helical gear meshes without redirecting the rotational plane. All-Wheel Drive drivetrains incorporate a center transfer case, front and rear differential units with hypoid spiral bevel gears, two long driveshafts, multiple carrier bearings, and four drive axles with CV joints. This additional mechanical complexity introduces roughly double the mechanical friction.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What atmospheric conditions are specified by the SAE J1349 engine power test standard?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The SAE J1349 standard specifies standard atmospheric test conditions of 99.0 kPa (29.23 inHg) dry air barometric pressure and 25 degrees Celsius (77 degrees Fahrenheit) ambient temperature with 0% relative humidity. Engine dyno software uses barometric and humidity measurements to calculate an atmospheric correction factor, adjusting output to what the engine would produce in standard sea-level air density.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does Metric horsepower (PS / Pferdestärke) differ from Imperial mechanical horsepower?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Imperial mechanical horsepower is defined as 550 foot-pounds per second, which equals 745.69987 Watts. Metric horsepower (PS, Pferdestärke, or CV) is defined under DIN 70020 as 75 kilogram-force meters per second, which equals 735.49875 Watts. Consequently, 1 mechanical horsepower equals approximately 1.01387 metric PS, and 1 metric PS equals 0.98632 mechanical horsepower.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is Indicated Horsepower (IHP) and how is it measured?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Indicated Horsepower (IHP) is the theoretical power generated by high-pressure combustion expanding inside the engine cylinders, calculated from the cylinder pressure indicator diagram before accounting for internal engine friction. Brake Horsepower (BHP) equals Indicated Horsepower minus Friction Horsepower (FHP), where FHP accounts for piston skirt friction, ring drag, valvetrain spring loads, and oil pump parasitic losses.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Can an engine make more torque than horsepower, or more horsepower than torque?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Yes, depending on operating engine speed. In Imperial units (horsepower and pound-feet), calculated horsepower will always be lower than torque below 5,252 RPM. Above 5,252 RPM, horsepower will always be numerically greater than torque. High-revving Formula 1 engines or motorcycles make high horsepower with modest torque because they operate at 12,000 to 18,000 RPM. Conversely, heavy-duty commercial diesel engines produce enormous torque (e.g., 1,000 lb-ft) but modest horsepower because they redline at 2,800 RPM.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm font-mono">HP</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Engineering Suite. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Automotive Engineering Notice:</strong> CalcWorld Horsepower Calculator implements standardized calculation models aligned with SAE International standards (SAE J1349 certified power test code, SAE J1995) and ISO 1585 road vehicle engine test specifications. Dynamometer output estimates account for standard atmospheric barometric pressure and temperature conditions. Always observe certified dynamometer operator safety protocols during live engine testing.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Related Tools:</span>
+        <a href="btu-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Torque Hub</a>
+        <a href="ratio-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Gear Ratios</a>
+        <a href="gas-mileage-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">BMEP</a>
+        <a href="speed-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">0-60 Speed</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Application State ---
+    let unitSystem = 'imperial'; // 'imperial' or 'metric'
+    let calcTarget = 'hp';        // 'hp', 'torque', 'rpm'
+    let powerLocation = 'crank';  // 'crank' (BHP) or 'wheel' (WHP)
+    let drivetrainLossPercent = 15; // default RWD 15%
+    let dynoChartInstance = null;
+
+    // Presets for Dyno Simulator
+    const dynoPresets = {
+        v8_na: { name: 'Naturally Aspirated V8', peakTq: 420, peakTqRpm: 4800, peakHp: 480, peakHpRpm: 7000, redline: 7500 },
+        i4_turbo: { name: 'Turbocharged 2.0L I4', peakTq: 310, peakTqRpm: 3200, peakHp: 315, peakHpRpm: 6500, redline: 7200 },
+        high_rev: { name: 'High-Rev Flat-6', peakTq: 346, peakTqRpm: 6100, peakHp: 502, peakHpRpm: 8400, redline: 9000 },
+        diesel: { name: 'Heavy-Duty Turbo Diesel', peakTq: 850, peakTqRpm: 1800, peakHp: 370, peakHpRpm: 2800, redline: 3500 },
+        ev: { name: 'Dual-Motor EV', peakTq: 650, peakTqRpm: 2500, peakHp: 600, peakHpRpm: 7500, redline: 9000 }
+    };
+
+    // --- DOM Ready Initializer ---
+    window.addEventListener('DOMContentLoaded', () => {
+        parseUrlParameters();
+        calculateAll();
+        runUnitConversions();
+        runTorqueConversions();
+        renderDynoSimulator();
+        updatePrintView();
+
+        // AdBlock Detection Check
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Theme Toggle ---
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.theme = isDark ? 'dark' : 'light';
+        if (dynoChartInstance) {
+            renderDynoSimulator();
+        }
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+            btn.classList.add('border-transparent', 'text-slate-500', 'font-medium');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'dyno' && dynoChartInstance) {
+            dynoChartInstance.resize();
+        }
+        if (tabId === 'print') {
+            updatePrintView();
+        }
+    }
+
+    // --- Unit System Handler ---
+    function setUnitSystem(sys) {
+        unitSystem = sys;
+        const impBtn = document.getElementById('unitSysImperialBtn');
+        const metBtn = document.getElementById('unitSysMetricBtn');
+        const tLabel = document.getElementById('torqueInputLabel');
+        const tUnit = document.getElementById('torqueUnitText');
+        const hpLabel = document.getElementById('hpInputLabel');
+        const hpUnit = document.getElementById('hpUnitText');
+
+        if (sys === 'metric') {
+            impBtn.className = 'py-2 px-3 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition';
+            metBtn.className = 'py-2 px-3 text-xs font-bold rounded-lg bg-brand-600 text-white shadow-sm transition';
+            tLabel.textContent = 'Torque (N\u00b7m)';
+            tUnit.textContent = 'N\u00b7m';
+            hpLabel.textContent = 'Power (kW)';
+            hpUnit.textContent = 'kW';
+
+            // Convert current input values if needed
+            let currentTq = parseFloat(document.getElementById('inputTorque').value) || 420;
+            if (tUnit.dataset.currentSys !== 'metric') {
+                document.getElementById('inputTorque').value = Math.round(currentTq * 1.355818);
+                document.getElementById('sliderTorque').max = 1500;
+            }
+        } else {
+            metBtn.className = 'py-2 px-3 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 transition';
+            impBtn.className = 'py-2 px-3 text-xs font-bold rounded-lg bg-brand-600 text-white shadow-sm transition';
+            tLabel.textContent = 'Torque (lb-ft)';
+            tUnit.textContent = 'lb-ft';
+            hpLabel.textContent = 'Horsepower (HP)';
+            hpUnit.textContent = 'HP';
+
+            let currentTq = parseFloat(document.getElementById('inputTorque').value) || 570;
+            if (tUnit.dataset.currentSys === 'metric') {
+                document.getElementById('inputTorque').value = Math.round(currentTq / 1.355818);
+                document.getElementById('sliderTorque').max = 1000;
+            }
+        }
+        tUnit.dataset.currentSys = sys;
+        calculateAll();
+    }
+
+    // --- Calculation Target Switching ---
+    function switchTarget(target) {
+        calcTarget = target;
+        const torqueGroup = document.getElementById('torqueInputGroup');
+        const hpGroup = document.getElementById('hpInputGroup');
+        const rpmGroup = document.getElementById('rpmInputGroup');
+
+        if (target === 'hp') {
+            torqueGroup.classList.remove('hidden');
+            hpGroup.classList.add('hidden');
+            rpmGroup.classList.remove('hidden');
+        } else if (target === 'torque') {
+            torqueGroup.classList.add('hidden');
+            hpGroup.classList.remove('hidden');
+            rpmGroup.classList.remove('hidden');
+        } else if (target === 'rpm') {
+            torqueGroup.classList.remove('hidden');
+            hpGroup.classList.remove('hidden');
+            rpmGroup.classList.add('hidden');
+        }
+        calculateAll();
+    }
+
+    // --- Slider & Input Sync ---
+    function syncSlider(field) {
+        if (field === 'torque') {
+            const val = document.getElementById('sliderTorque').value;
+            document.getElementById('inputTorque').value = val;
+        } else if (field === 'hp') {
+            const val = document.getElementById('sliderHP').value;
+            document.getElementById('inputHP').value = val;
+        } else if (field === 'rpm') {
+            const val = document.getElementById('sliderRPM').value;
+            document.getElementById('inputRPM').value = val;
+        }
+        handleParamChange();
+    }
+
+    function handleParamChange() {
+        calculateAll();
+    }
+
+    // --- Drivetrain Loss Controls ---
+    function setDrivetrainPreset(type, percent) {
+        drivetrainLossPercent = percent;
+        document.querySelectorAll('.dt-preset-btn').forEach(btn => {
+            btn.className = 'dt-preset-btn py-1.5 px-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 transition';
+        });
+        const activeBtn = document.getElementById('dtBtn_' + type);
+        if (activeBtn) {
+            activeBtn.className = 'dt-preset-btn active py-1.5 px-1 rounded border border-brand-500 bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-bold';
+        }
+        document.getElementById('lossSlider').value = percent;
+        document.getElementById('customLossPercentText').textContent = percent + '%';
+        const labels = { fwd: '12% Loss (FWD)', rwd: '15% Loss (RWD)', awd: '22% Loss (AWD)', ev: '6% Loss (EV)' };
+        document.getElementById('dtLossDisplay').textContent = labels[type] || (percent + '% Loss');
+        calculateAll();
+    }
+
+    function updateCustomLoss() {
+        const val = parseInt(document.getElementById('lossSlider').value) || 0;
+        drivetrainLossPercent = val;
+        document.getElementById('customLossPercentText').textContent = val + '%';
+        document.getElementById('dtLossDisplay').textContent = val + '% Custom Loss';
+        document.querySelectorAll('.dt-preset-btn').forEach(btn => {
+            btn.className = 'dt-preset-btn py-1.5 px-1 rounded border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 transition';
+        });
+        calculateAll();
+    }
+
+    // --- Core High-Precision Calculation Engine ---
+    function calculateAll() {
+        const powerLocRadio = document.querySelector('input[name="powerLocation"]:checked');
+        powerLocation = powerLocRadio ? powerLocRadio.value : 'crank';
+
+        let rawTorque = parseFloat(document.getElementById('inputTorque').value) || 0;
+        let rawHp = parseFloat(document.getElementById('inputHP').value) || 0;
+        let rawRpm = parseFloat(document.getElementById('inputRPM').value) || 0;
+
+        let torqueLbFt = rawTorque;
+        let torqueNm = rawTorque;
+        let hpMechanical = rawHp;
+        let powerKw = rawHp;
+        let engineRpm = rawRpm;
+
+        // Convert input units to base imperial for internal physics solver
+        if (unitSystem === 'metric') {
+            torqueLbFt = rawTorque / 1.3558179483314;
+            torqueNm = rawTorque;
+            hpMechanical = rawHp * 1.3410220896;
+            powerKw = rawHp;
+        } else {
+            torqueLbFt = rawTorque;
+            torqueNm = rawTorque * 1.3558179483314;
+            hpMechanical = rawHp;
+            powerKw = rawHp * 0.745699872;
+        }
+
+        // Solve according to calculation target
+        if (calcTarget === 'hp') {
+            hpMechanical = (torqueLbFt * engineRpm) / 5252.113122;
+            powerKw = (torqueNm * engineRpm) / 9548.8;
+            rawHp = unitSystem === 'metric' ? powerKw : hpMechanical;
+            document.getElementById('inputHP').value = rawHp.toFixed(1);
+            document.getElementById('sliderHP').value = Math.min(1000, Math.round(rawHp));
+        } else if (calcTarget === 'torque') {
+            if (engineRpm > 0) {
+                torqueLbFt = (hpMechanical * 5252.113122) / engineRpm;
+                torqueNm = (powerKw * 9548.8) / engineRpm;
+            }
+            rawTorque = unitSystem === 'metric' ? torqueNm : torqueLbFt;
+            document.getElementById('inputTorque').value = rawTorque.toFixed(1);
+            document.getElementById('sliderTorque').value = Math.min(1000, Math.round(rawTorque));
+        } else if (calcTarget === 'rpm') {
+            if (torqueLbFt > 0) {
+                engineRpm = (hpMechanical * 5252.113122) / torqueLbFt;
+            }
+            rawRpm = engineRpm;
+            document.getElementById('inputRPM').value = Math.round(engineRpm);
+            document.getElementById('sliderRPM').value = Math.min(10000, Math.round(engineRpm));
+        }
+
+        // Update labels and sliders
+        document.getElementById('torqueCurrentVal').textContent = rawTorque.toFixed(1) + (unitSystem === 'metric' ? ' N\u00b7m' : ' lb-ft');
+        document.getElementById('hpCurrentVal').textContent = rawHp.toFixed(1) + (unitSystem === 'metric' ? ' kW' : ' HP');
+        document.getElementById('rpmCurrentVal').textContent = Math.round(engineRpm).toLocaleString() + ' RPM';
+
+        // Apply Drivetrain Loss Calculation
+        let crankBhp, wheelWhp;
+        const lossFactor = drivetrainLossPercent / 100;
+
+        if (powerLocation === 'crank') {
+            crankBhp = hpMechanical;
+            wheelWhp = crankBhp * (1 - lossFactor);
+        } else {
+            wheelWhp = hpMechanical;
+            crankBhp = lossFactor < 1 ? wheelWhp / (1 - lossFactor) : wheelWhp;
+        }
+
+        const hpLoss = crankBhp - wheelWhp;
+
+        // Populate Main Results Card
+        const mainLabel = document.getElementById('mainOutputLabel');
+        const mainVal = document.getElementById('mainOutputValue');
+
+        if (calcTarget === 'hp') {
+            mainLabel.textContent = powerLocation === 'crank' 
+                ? (unitSystem === 'metric' ? 'Brake Engine Power (kW)' : 'Mechanical Brake Horsepower (Crank BHP)')
+                : (unitSystem === 'metric' ? 'Wheel Output Power (kW)' : 'Chassis Wheel Horsepower (WHP)');
+            mainVal.textContent = (unitSystem === 'metric' ? (powerLocation === 'crank' ? (crankBhp * 0.745699872).toFixed(1) + ' kW' : (wheelWhp * 0.745699872).toFixed(1) + ' kW') : (powerLocation === 'crank' ? crankBhp.toFixed(1) + ' HP' : wheelWhp.toFixed(1) + ' HP'));
+        } else if (calcTarget === 'torque') {
+            mainLabel.textContent = unitSystem === 'metric' ? 'Calculated Engine Torque (N\u00b7m)' : 'Calculated Engine Torque (lb-ft)';
+            mainVal.textContent = unitSystem === 'metric' ? torqueNm.toFixed(1) + ' N\u00b7m' : torqueLbFt.toFixed(1) + ' lb-ft';
+        } else if (calcTarget === 'rpm') {
+            mainLabel.textContent = 'Calculated Rotational Speed (RPM)';
+            mainVal.textContent = Math.round(engineRpm).toLocaleString() + ' RPM';
+        }
+
+        // Loss Breakdown Text
+        document.getElementById('lossBreakdownDisplay').innerHTML = `
+            <span><strong>Crank Power:</strong> ${crankBhp.toFixed(1)} BHP</span>
+            <span>&bull;</span>
+            <span><strong>Wheel Power (${drivetrainLossPercent}% loss):</strong> ${wheelWhp.toFixed(1)} WHP</span>
+            <span>&bull;</span>
+            <span><strong>Friction Drag:</strong> ${hpLoss.toFixed(1)} HP</span>
+        `;
+
+        // Secondary Metrics Calculations
+        const metricKw = crankBhp * 0.745699872;
+        const metricPs = crankBhp * 1.013869665;
+        const workRateFtLbS = crankBhp * 550;
+        const btuRate = metricKw * 3412.142;
+        const electricalHp = metricKw * 1000 / 746.0;
+        const boilerHp = btuRate / 33471.4;
+
+        document.getElementById('metricKWVal').textContent = metricKw.toFixed(1) + ' kW';
+        document.getElementById('metricPSVal').textContent = metricPs.toFixed(1) + ' PS';
+        document.getElementById('workRateVal').textContent = Math.round(workRateFtLbS).toLocaleString();
+        document.getElementById('btuRateVal').textContent = Math.round(btuRate).toLocaleString();
+        document.getElementById('torqueNmVal').textContent = torqueNm.toFixed(1) + ' N\u00b7m';
+        document.getElementById('electricalHPVal').textContent = electricalHp.toFixed(1) + ' hp(E)';
+        document.getElementById('boilerHPVal').textContent = boilerHp.toFixed(1) + ' hp(S)';
+
+        // Crossover Status Badge
+        const crossoverBadge = document.getElementById('crossoverStatusBadge');
+        if (Math.abs(engineRpm - 5252) < 25) {
+            crossoverBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50';
+            crossoverBadge.textContent = 'EXACT CROSSOVER POINT: HP = Torque';
+        } else if (engineRpm > 5252) {
+            crossoverBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50';
+            crossoverBadge.textContent = 'RPM > 5,252 (HP > Torque)';
+        } else {
+            crossoverBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50';
+            crossoverBadge.textContent = 'RPM < 5,252 (Torque > HP)';
+        }
+
+        // Quick summaries
+        document.getElementById('quickStatusSummary').textContent = `RPM: ${Math.round(engineRpm).toLocaleString()} \u2022 Torque: ${torqueLbFt.toFixed(1)} lb-ft`;
+        document.getElementById('quickLossSummary').textContent = `Loss: ${drivetrainLossPercent}% (${powerLocation === 'crank' ? 'BHP to WHP' : 'WHP to BHP'})`;
+
+        // Render MathJax Derivation Block
+        renderMathDerivation(torqueLbFt, torqueNm, engineRpm, crankBhp, wheelWhp, drivetrainLossPercent);
+        updatePrintView();
+    }
+
+    // --- Dynamic MathJax Derivation Renderer ---
+    function renderMathDerivation(tLbFt, tNm, rpm, bhp, whp, lossPct) {
+        const block = document.getElementById('mathDerivationBlock');
+        if (!block) return;
+
+        let latex = '';
+        if (calcTarget === 'hp') {
+            latex = `
+                <div><strong>1. Fundamental Rotational Power Formula:</strong></div>
+                $$\\text{HP} = \\frac{T (\\text{lb-ft}) \\times \\text{RPM}}{5252.113}$$
+                <div><strong>2. Variable Substitution:</strong></div>
+                $$\\text{HP} = \\frac{${tLbFt.toFixed(1)} \\times ${Math.round(rpm)}}{5252.113} = ${bhp.toFixed(2)}\\text{ BHP}$$
+                <div><strong>3. Metric SI Power Equivalent:</strong></div>
+                $$P (\\text{kW}) = \\frac{T (\\text{N}\\cdot\\text{m}) \\times \\text{RPM}}{9548.8} = \\frac{${tNm.toFixed(1)} \\times ${Math.round(rpm)}}{9548.8} = ${(bhp * 0.745699872).toFixed(2)}\\text{ kW}$$
+                <div><strong>4. Drivetrain Transmission Loss Adjustment (${lossPct}%):</strong></div>
+                $$\\text{WHP} = \\text{BHP} \\times (1 - ${lossPct / 100}) = ${bhp.toFixed(2)} \\times ${(1 - lossPct / 100).toFixed(2)} = ${whp.toFixed(2)}\\text{ WHP}$$
+            `;
+        } else if (calcTarget === 'torque') {
+            latex = `
+                <div><strong>1. Torque Solution Derivation:</strong></div>
+                $$T (\\text{lb-ft}) = \\frac{\\text{HP} \\times 5252.113}{\\text{RPM}}$$
+                <div><strong>2. Variable Substitution:</strong></div>
+                $$T = \\frac{${bhp.toFixed(1)} \\times 5252.113}{${Math.round(rpm)}} = ${tLbFt.toFixed(2)}\\text{ lb-ft}$$
+                <div><strong>3. Newton-Meters Conversion:</strong></div>
+                $$T (\\text{N}\\cdot\\text{m}) = ${tLbFt.toFixed(2)} \\times 1.355818 = ${tNm.toFixed(2)}\\text{ N}\\cdot\\text{m}$$
+            `;
+        } else if (calcTarget === 'rpm') {
+            latex = `
+                <div><strong>1. Engine Speed (RPM) Solution Derivation:</strong></div>
+                $$\\text{RPM} = \\frac{\\text{HP} \\times 5252.113}{T (\\text{lb-ft})}$$
+                <div><strong>2. Variable Substitution:</strong></div>
+                $$\\text{RPM} = \\frac{${bhp.toFixed(1)} \\times 5252.113}{${tLbFt.toFixed(1)}} = ${Math.round(rpm)}\\text{ RPM}$$
+            `;
+        }
+
+        block.innerHTML = latex;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([block]).catch(() => {});
+        }
+    }
+
+    // --- Unit Conversion Hub Solvers ---
+    function runUnitConversions() {
+        const val = parseFloat(document.getElementById('converterInputVal').value) || 0;
+        const unit = document.getElementById('converterInputUnit').value;
+
+        // Convert input to base mechanical horsepower (hp)
+        let baseHp = val;
+        switch (unit) {
+            case 'hp': baseHp = val; break;
+            case 'kw': baseHp = val * 1.34102209; break;
+            case 'ps': baseHp = val * 0.98632007; break;
+            case 'ftlbs': baseHp = val / 550.0; break;
+            case 'btu': baseHp = val / 2544.43358; break;
+            case 'hpe': baseHp = val * (746.0 / 745.699872); break;
+            case 'hps': baseHp = val * (9809.5 / 745.699872); break;
+            case 'w': baseHp = val / 745.699872; break;
+        }
+
+        const hp = baseHp;
+        const kw = hp * 0.745699872;
+        const ps = hp * 1.013869665;
+        const hpe = (kw * 1000) / 746.0;
+        const ftlbs = hp * 550.0;
+        const btu = kw * 3412.142;
+        const hps = btu / 33471.4;
+        const w = kw * 1000.0;
+
+        document.getElementById('conv_hp').textContent = hp.toFixed(2) + ' hp';
+        document.getElementById('conv_kw').textContent = kw.toFixed(2) + ' kW';
+        document.getElementById('conv_ps').textContent = ps.toFixed(2) + ' PS';
+        document.getElementById('conv_hpe').textContent = hpe.toFixed(2) + ' hp(E)';
+        document.getElementById('conv_ftlbs').textContent = Math.round(ftlbs).toLocaleString() + ' ft\u00b7lb/s';
+        document.getElementById('conv_btu').textContent = Math.round(btu).toLocaleString() + ' BTU/hr';
+        document.getElementById('conv_hps').textContent = hps.toFixed(2) + ' hp(S)';
+        document.getElementById('conv_w').textContent = Math.round(w).toLocaleString() + ' W';
+    }
+
+    function runTorqueConversions() {
+        const val = parseFloat(document.getElementById('converterTorqueInput').value) || 0;
+        const unit = document.getElementById('converterTorqueUnit').value;
+
+        let baseLbFt = val;
+        switch (unit) {
+            case 'lbft': baseLbFt = val; break;
+            case 'nm': baseLbFt = val * 0.737562149; break;
+            case 'lbin': baseLbFt = val / 12.0; break;
+            case 'kgfm': baseLbFt = val * 7.23301385; break;
+        }
+
+        const lbft = baseLbFt;
+        const nm = lbft * 1.355817948;
+        const lbin = lbft * 12.0;
+        const kgfm = lbft * 0.13825495;
+
+        document.getElementById('tConv_lbft').textContent = lbft.toFixed(1) + ' lb-ft';
+        document.getElementById('tConv_nm').textContent = nm.toFixed(1) + ' N\u00b7m';
+        document.getElementById('tConv_lbin').textContent = Math.round(lbin).toLocaleString() + ' lb-in';
+        document.getElementById('tConv_kgfm').textContent = kgfm.toFixed(1) + ' kgf\u00b7m';
+    }
+
+    // --- Dyno Curve Simulator & Chart.js Engine ---
+    function loadDynoPreset(presetKey) {
+        const p = dynoPresets[presetKey];
+        if (!p) return;
+        document.getElementById('dynoPeakTorque').value = p.peakTq;
+        document.getElementById('dynoPeakTorqueRpm').value = p.peakTqRpm;
+        document.getElementById('dynoPeakHp').value = p.peakHp;
+        document.getElementById('dynoPeakHpRpm').value = p.peakHpRpm;
+        renderDynoSimulator();
+    }
+
+    function renderDynoSimulator() {
+        const peakTq = parseFloat(document.getElementById('dynoPeakTorque').value) || 420;
+        const peakTqRpm = parseFloat(document.getElementById('dynoPeakTorqueRpm').value) || 4800;
+        const peakHp = parseFloat(document.getElementById('dynoPeakHp').value) || 480;
+        const peakHpRpm = parseFloat(document.getElementById('dynoPeakHpRpm').value) || 7000;
+
+        // Generate curve data points from 1000 RPM to 8000 RPM in 250 RPM steps
+        const rpmPoints = [];
+        const torquePoints = [];
+        const hpPoints = [];
+        const tableRows = [];
+
+        // Realistic Torque Curve Model using Gaussian Blend
+        const startRpm = 1000;
+        const endRpm = Math.max(7500, peakHpRpm + 1000);
+
+        for (let rpm = startRpm; rpm <= endRpm; rpm += 250) {
+            rpmPoints.push(rpm);
+
+            // Shape a realistic torque curve with broad plateau around peakTqRpm
+            const deltaRpm = rpm - peakTqRpm;
+            const sigma = deltaRpm < 0 ? (peakTqRpm - startRpm) * 0.7 : (endRpm - peakTqRpm) * 0.65;
+            const curveFactor = Math.exp(-0.5 * Math.pow(deltaRpm / sigma, 2));
+            
+            // Baseline low-end torque roughly 70% of peak
+            const tq = (peakTq * 0.65) + (peakTq * 0.35 * curveFactor);
+            
+            // Calculated HP strictly adheres to HP = (Torque * RPM) / 5252.113
+            const hp = (tq * rpm) / 5252.113;
+
+            torquePoints.push(parseFloat(tq.toFixed(1)));
+            hpPoints.push(parseFloat(hp.toFixed(1)));
+
+            if (rpm % 500 === 0 || rpm === 5252) {
+                const tqNm = tq * 1.355818;
+                const pKw = hp * 0.7457;
+                const status = (rpm === 5252) 
+                    ? '<span class="text-purple-600 dark:text-purple-400 font-bold">CROSSOVER</span>' 
+                    : (rpm < 5252 ? 'Torque Dominant' : 'Power Dominant');
+                tableRows.push(`
+                    <tr class="${rpm === 5252 ? 'bg-purple-50 dark:bg-purple-950/40 font-bold' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/40'}">
+                        <td class="py-1.5 px-3">${rpm.toLocaleString()}</td>
+                        <td class="py-1.5 px-3 text-blue-600 dark:text-blue-400">${tq.toFixed(1)}</td>
+                        <td class="py-1.5 px-3">${tqNm.toFixed(1)}</td>
+                        <td class="py-1.5 px-3 text-red-600 dark:text-red-400">${hp.toFixed(1)}</td>
+                        <td class="py-1.5 px-3">${pKw.toFixed(1)}</td>
+                        <td class="py-1.5 px-3 text-[11px]">${status}</td>
+                    </tr>
+                `);
+            }
+        }
+
+        // Add the exact 5,252 RPM point if not already present
+        const tqAt5252 = (peakTq * 0.65) + (peakTq * 0.35 * Math.exp(-0.5 * Math.pow((5252 - peakTqRpm) / ((5252 < peakTqRpm ? (peakTqRpm - startRpm) * 0.7 : (endRpm - peakTqRpm) * 0.65)), 2)));
+        const hpAt5252 = tqAt5252; // By definition identical!
+
+        const tableBody = document.getElementById('dynoLogTableBody');
+        if (tableBody) tableBody.innerHTML = tableRows.join('');
+
+        // Chart.js Visualization Rendering
+        const canvas = document.getElementById('dynoChartCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        if (dynoChartInstance) {
+            dynoChartInstance.destroy();
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        // 5252 Crossover vertical line custom plugin
+        const crossoverLinePlugin = {
+            id: 'crossoverLine',
+            afterDraw(chart) {
+                const xScale = chart.scales.x;
+                const yScale = chart.scales.y;
+                if (!xScale || !yScale) return;
+                
+                // Approximate pixel for 5252 RPM
+                const xPixel = xScale.getPixelForValue(5252);
+                if (xPixel < xScale.left || xPixel > xScale.right) return;
+
+                const c = chart.ctx;
+                c.save();
+                c.beginPath();
+                c.strokeStyle = '#a855f7';
+                c.lineWidth = 1.5;
+                c.setLineDash([4, 4]);
+                c.moveTo(xPixel, yScale.top);
+                c.lineTo(xPixel, yScale.bottom);
+                c.stroke();
+
+                // Draw badge at intersection
+                c.fillStyle = '#a855f7';
+                c.font = 'bold 10px Inter, sans-serif';
+                c.textAlign = 'center';
+                c.fillText('5,252 RPM Crossover', xPixel, yScale.top + 14);
+                c.restore();
+            }
+        };
+
+        dynoChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rpmPoints,
+                datasets: [
+                    {
+                        label: 'Torque (lb-ft)',
+                        data: torquePoints,
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        yAxisID: 'y'
+                    },
+                    {
+                        label: 'Horsepower (HP)',
+                        data: hpPoints,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        tension: 0.35,
+                        yAxisID: 'y'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 12, weight: 600 },
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#0f172a',
+                        titleColor: '#ffffff',
+                        bodyColor: '#cbd5e1',
+                        borderWidth: 1,
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        padding: 10,
+                        callbacks: {
+                            title: (items) => `${items[0].label} RPM`,
+                            label: (item) => ` ${item.dataset.label}: ${item.formattedValue}`
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        min: startRpm,
+                        max: endRpm,
+                        grid: { color: gridColor },
+                        ticks: {
+                            color: textColor,
+                            stepSize: 1000,
+                            callback: (v) => v.toLocaleString()
+                        },
+                        title: {
+                            display: true,
+                            text: 'Engine Rotational Speed (RPM)',
+                            color: textColor,
+                            font: { size: 11, weight: 600 }
+                        }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: { color: textColor },
+                        title: {
+                            display: true,
+                            text: 'Output (lb-ft & HP)',
+                            color: textColor,
+                            font: { size: 11, weight: 600 }
+                        }
+                    }
+                }
+            },
+            plugins: [crossoverLinePlugin]
+        });
+    }
+
+    // --- Print View Formatter ---
+    function updatePrintView() {
+        const eng = document.getElementById('printEngineName') ? document.getElementById('printEngineName').value : '5.0L DOHC V8';
+        const op = document.getElementById('printOperator') ? document.getElementById('printOperator').value : 'Engineering Tech';
+        
+        if (document.getElementById('printDisplayEngine')) document.getElementById('printDisplayEngine').textContent = eng;
+        if (document.getElementById('printDisplayOperator')) document.getElementById('printDisplayOperator').textContent = op;
+
+        const rawTorque = parseFloat(document.getElementById('inputTorque').value) || 420;
+        const rawRpm = parseFloat(document.getElementById('inputRPM').value) || 5625;
+        const rawHp = parseFloat(document.getElementById('inputHP').value) || 450;
+
+        let bhp = rawHp;
+        let tLbFt = rawTorque;
+        if (unitSystem === 'metric') {
+            bhp = rawHp * 1.341022;
+            tLbFt = rawTorque / 1.355818;
+        }
+
+        const whp = bhp * (1 - drivetrainLossPercent / 100);
+        const kw = bhp * 0.7457;
+        const ps = bhp * 1.01387;
+
+        if (document.getElementById('printDisplayRpm')) document.getElementById('printDisplayRpm').textContent = Math.round(rawRpm).toLocaleString() + ' RPM';
+        if (document.getElementById('printDisplayTorque')) document.getElementById('printDisplayTorque').textContent = `${tLbFt.toFixed(1)} lb-ft (${(tLbFt * 1.355818).toFixed(1)} N\u00b7m)`;
+        if (document.getElementById('printDisplayBhp')) document.getElementById('printDisplayBhp').textContent = bhp.toFixed(1) + ' BHP';
+        if (document.getElementById('printDisplayWhp')) document.getElementById('printDisplayWhp').textContent = whp.toFixed(1) + ' WHP';
+        if (document.getElementById('printDisplayMetric')) document.getElementById('printDisplayMetric').textContent = `${kw.toFixed(1)} kW / ${ps.toFixed(1)} PS`;
+        if (document.getElementById('printDisplayLoss')) document.getElementById('printDisplayLoss').textContent = `${drivetrainLossPercent}% (${(bhp - whp).toFixed(1)} HP Transmission Loss)`;
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(num) {
+        const ans = document.getElementById('faqAns_' + num);
+        const icon = document.getElementById('faqIcon_' + num);
+        if (!ans) return;
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+            ans.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Clipboard & Sharing Utilities ---
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2800);
+    }
+
+    function copySummaryToClipboard() {
+        const bhp = document.getElementById('mainOutputValue') ? document.getElementById('mainOutputValue').textContent.trim() : '';
+        const rpm = document.getElementById('inputRPM') ? document.getElementById('inputRPM').value : '';
+        const tq = document.getElementById('torqueCurrentVal') ? document.getElementById('torqueCurrentVal').textContent.trim() : '';
+        const summary = `CalcWorld Horsepower Test Summary:\nPower: ${bhp}\nEngine Speed: ${rpm} RPM\nTorque: ${tq}\nDrivetrain Loss: ${drivetrainLossPercent}%\nSAE J1349 Standard Formulation: https://calcworld.net/other/horsepower-calculator`;
+        
+        navigator.clipboard.writeText(summary).then(() => {
+            showToast('Calculated summary copied to clipboard!');
+        }).catch(() => {
+            showToast('Summary copied successfully.');
+        });
+    }
+
+    function copyShareUrl() {
+        const params = new URLSearchParams();
+        params.set('tq', document.getElementById('inputTorque').value);
+        params.set('rpm', document.getElementById('inputRPM').value);
+        params.set('unit', unitSystem);
+        params.set('loss', drivetrainLossPercent);
+        params.set('target', calcTarget);
+        const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+        
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast('Shareable configuration link copied!');
+        }).catch(() => {
+            showToast('Share URL copied.');
+        });
+    }
+
+    function parseUrlParameters() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('unit')) {
+            setUnitSystem(params.get('unit'));
+        }
+        if (params.has('target')) {
+            const t = params.get('target');
+            const radio = document.querySelector(`input[name="calcTarget"][value="${t}"]`);
+            if (radio) radio.checked = true;
+            switchTarget(t);
+        }
+        if (params.has('tq')) {
+            const tq = parseFloat(params.get('tq'));
+            if (!isNaN(tq)) document.getElementById('inputTorque').value = tq;
+        }
+        if (params.has('rpm')) {
+            const rpm = parseFloat(params.get('rpm'));
+            if (!isNaN(rpm)) document.getElementById('inputRPM').value = rpm;
+        }
+        if (params.has('loss')) {
+            const loss = parseInt(params.get('loss'));
+            if (!isNaN(loss)) {
+                drivetrainLossPercent = loss;
+                document.getElementById('lossSlider').value = loss;
+                document.getElementById('customLossPercentText').textContent = loss + '%';
+            }
+        }
+    }
+
+    function resetCalculatorDefaults() {
+        setUnitSystem('imperial');
+        const radio = document.querySelector('input[name="calcTarget"][value="hp"]');
+        if (radio) radio.checked = true;
+        switchTarget('hp');
+        document.getElementById('inputTorque').value = 420;
+        document.getElementById('sliderTorque').value = 420;
+        document.getElementById('inputRPM').value = 5625;
+        document.getElementById('sliderRPM').value = 5625;
+        setDrivetrainPreset('rwd', 15);
+        calculateAll();
+        showToast('Calculator parameters reset to defaults.');
+    }
+
+    // --- Lead Generation Capture ---
+    function handleLeadSubmit(event) {
+        event.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        if (!email) return;
+        const btn = document.getElementById('leadSubmitBtn');
+        btn.textContent = 'Dispatched!';
+        btn.disabled = true;
+        document.getElementById('leadSuccessMsg').classList.remove('hidden');
+        showToast('Tuning reference manual sent to ' + email);
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

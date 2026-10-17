@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Handicap Calculator | USGA &amp; R&amp;A World Handicap System (WHS 2024)</title>
+    <meta name="description" content="Official World Handicap System (WHS 2024 Revision) calculator. Calculate Score Differentials, 20-round Handicap Index with best 8 emerald highlighting, Soft &amp; Hard Caps, Course Handicap, Playing Handicap, and Net Double Bogey.">
+    <link rel="canonical" href="https://calcworld.net/calculators/golf-handicap-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical & Handicap Formula Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(5, 150, 105, 0.08) 20%,
+                rgba(5, 150, 105, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            z-index: 50;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+        }
+
+        /* Best 8 Rounds Emerald Highlighting */
+        .counted-round-row {
+            background-color: rgba(16, 185, 129, 0.08) !important;
+            border-left: 4px solid #10b981 !important;
+        }
+        .dark .counted-round-row {
+            background-color: rgba(16, 185, 129, 0.15) !important;
+            border-left: 4px solid #34d399 !important;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Golf Handicap Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Golf Handicap Calculator",
+          "url": "https://calcworld.net/other/golf-handicap-calculator",
+          "applicationCategory": "SportsApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Official USGA and The R&A World Handicap System (WHS 2024 Revision) calculator. Calculate 18-hole Score Differentials, 20-round Handicap Index with emerald highlighting for best 8 scores, Soft and Hard Caps, Course Handicap, and Playing Handicap."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How is a Score Differential calculated under the World Handicap System?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A Score Differential is calculated using the formula: Differential = (113 / Slope Rating) * (Adjusted Gross Score - Course Rating - PCC). The result is rounded to the nearest tenth (0.1). 113 represents the standard slope rating of relative difficulty."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is a golf Handicap Index calculated from 20 rounds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "When a scoring record contains 20 rounds, the Handicap Index is calculated by taking the arithmetic average of the lowest 8 Score Differentials out of the most recent 20 rounds, rounded to the nearest tenth. Maximum Handicap Index is 54.0."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is a Handicap Index calculated for players with fewer than 20 rounds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The WHS Rule 5.2a sliding scale table applies: 3 rounds uses lowest 1 differential minus 2.0; 4 rounds uses lowest 1 minus 1.0; 5 rounds uses lowest 1; 6 rounds uses average of lowest 2 minus 1.0; 7 to 8 rounds uses lowest 2; 9 to 11 rounds uses lowest 3; 12 to 14 rounds uses lowest 4; 15 to 16 rounds uses lowest 5; 17 to 18 rounds uses lowest 6; 19 rounds uses lowest 7; and 20 rounds uses lowest 8."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between Course Rating and Slope Rating?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Course Rating indicates the expected score for a scratch golfer (0.0 Handicap Index) under normal conditions. Slope Rating measures the relative difficulty of the course for a bogey golfer compared to a scratch golfer. Standard slope difficulty is 113, with values ranging from 55 to 155."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the Soft Cap and Hard Cap limits in the World Handicap System?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Caps prevent excessive upward inflation of a Handicap Index following a temporary loss of form. The Soft Cap triggers when a new index rises more than 3.0 strokes above the player's Low Handicap Index (lowest index in the preceding 365 days), reducing upward movement above 3.0 by 50%. The Hard Cap establishes an absolute ceiling limiting upward movement to no more than 5.0 strokes above the Low Handicap Index."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the Net Double Bogey rule?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Net Double Bogey is the maximum score a player can post on any individual hole for handicap calculation purposes. Formula: Net Double Bogey = Par + 2 + Handicap Strokes allocated on that hole based on stroke index. This prevents a single catastrophic blowout hole from distorting a player's handicap."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is Course Handicap calculated under the WHS 2024 revision?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Course Handicap (CH) is calculated as: CH = Handicap Index * (Slope Rating / 113) + (Course Rating - Par), rounded to the nearest integer. The (Course Rating - Par) adjustment aligns playing standards and ensures a player's target score to play to handicap equals Par + Course Handicap."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is an Exceptional Score Reduction (ESR)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An Exceptional Score Reduction (Rule 5.9) is applied when a player posts a Score Differential that is 7.0 or more strokes lower than their Handicap Index at the time of the round. If the differential is 7.0 to 9.9 strokes lower, a -1.0 adjustment is applied to the previous 20 score differentials. If 10.0 or more strokes lower, a -2.0 adjustment is applied."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Golf Handicap Calculator | USGA &amp; R&amp;A World Handicap System (WHS 2024)">
+    <meta property="og:description" content="Official World Handicap System (WHS 2024 Revision) calculator. Calculate Score Differentials, 20-round Handicap Index with best 8 emerald highlighting, Soft &amp; Hard Caps, Course Handicap, Playing Handicap, and Net Double Bogey.">
+    <meta property="og:url" content="https://calcworld.net/calculators/golf-handicap-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Golf Handicap Calculator | USGA &amp; R&amp;A World Handicap System (WHS 2024)">
+    <meta name="twitter:description" content="Official World Handicap System (WHS 2024 Revision) calculator. Calculate Score Differentials, 20-round Handicap Index with best 8 emerald highlighting, Soft &amp; Hard Caps, Course Handicap, Playing Handicap, and Net Double Bogey.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Golf Software:</strong> CalcWorld provides peer-reviewed World Handicap System (WHS 2024) calculation tools 100% free with zero registration. Please safelist our domain to support continuous golf software development.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Golf Handicap Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Golf Handicap Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Official USGA / The R&amp;A World Handicap System (WHS 2024 Revision) suite. Calculate 18-hole score differentials, track your 20-round scoring ledger with automatic emerald green highlighting of your best 8 counted rounds, determine Course &amp; Playing Handicaps with competition allowances, and monitor Soft &amp; Hard Cap safeguards.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                
+                <!-- Quick Solver / Golfer Setup Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Golfer &amp; Round Setup</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">WHS 2024</span>
+                    </h2>
+
+                    <!-- Golfer Profile Presets -->
+                    <div class="mb-5">
+                        <label for="golferPresetSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Golfer Profiles &amp; Ledger Presets</label>
+                        <select id="golferPresetSelect" onchange="loadGolferPreset()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Select Golfer Profile --</option>
+                            <option value="preset_mid" selected>Mid-Handicap Golfer (14.2 Index, 84 Score, Slope 128)</option>
+                            <option value="preset_scratch">Scratch Golfer (0.8 Index, 72 Score, Slope 135)</option>
+                            <option value="preset_single">Single-Digit Golfer (5.4 Index, 77 Score, Slope 130)</option>
+                            <option value="preset_high">High-Handicap Golfer (26.8 Index, 98 Score, Slope 120)</option>
+                            <option value="preset_softcap">Soft-Capped Golfer (Demonstrates 50% Upward Suppression)</option>
+                            <option value="preset_esr">Breakthrough Golfer (Features -1.0 Exceptional Score Reduction)</option>
+                        </select>
+                    </div>
+
+                    <!-- Golfer Details -->
+                    <div class="space-y-4 mb-5 pb-4 border-b border-slate-200 dark:border-slate-700">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="golferNameInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Golfer Name</label>
+                                <input type="text" id="golferNameInput" value="Alex Morgan" oninput="updatePrintCertificate()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <label for="homeClubInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Home Club</label>
+                                <input type="text" id="homeClubInput" value="Pine Valley Golf Club" oninput="updatePrintCertificate()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="lowIndexInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Low Handicap Index (Past 365 Days)</label>
+                                <span class="text-[11px] text-slate-400">Anchor for Caps</span>
+                            </div>
+                            <input type="number" id="lowIndexInput" step="0.1" min="-5.0" max="54.0" value="13.5" oninput="calculateWHS()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block">Soft Cap triggers at Low HI + 3.0 (<span id="softCapThresholdDisplay">16.5</span>); Hard Cap at Low HI + 5.0 (<span id="hardCapThresholdDisplay">18.5</span>)</span>
+                        </div>
+                    </div>
+
+                    <!-- Single Round / Course Parameters -->
+                    <div class="space-y-4 mb-5">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Current Round / Course Inputs</span>
+
+                        <!-- Adjusted Gross Score -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="scoreInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Adjusted Gross Score</label>
+                                <span class="text-[11px] text-brand-600 dark:text-brand-400">Net Double Bogey Max</span>
+                            </div>
+                            <input type="number" id="scoreInput" step="1" min="45" max="180" value="84" oninput="calculateWHS()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block">Total 18-hole score after hole adjustments per Rule 3.1b</span>
+                        </div>
+
+                        <!-- Course Rating & Slope Rating -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="ratingInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course Rating</label>
+                                <input type="number" id="ratingInput" step="0.1" min="50.0" max="85.0" value="71.4" oninput="calculateWHS()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Scratch expected score</span>
+                            </div>
+                            <div>
+                                <label for="slopeInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Slope Rating (55-155)</label>
+                                <input type="number" id="slopeInput" step="1" min="55" max="155" value="128" oninput="calculateWHS()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">113 = Standard</span>
+                            </div>
+                        </div>
+
+                        <!-- Par & Playing Conditions Calculation (PCC) -->
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="parInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Course Par</label>
+                                <input type="number" id="parInput" step="1" min="60" max="74" value="72" oninput="calculateWHS()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            </div>
+                            <div>
+                                <label for="pccSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">PCC Adjustment</label>
+                                <select id="pccSelect" onchange="calculateWHS()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                    <option value="-1.0">-1.0 (Easier Conditions)</option>
+                                    <option value="0.0" selected>0.0 (Standard Conditions)</option>
+                                    <option value="1.0">+1.0 (Moderate Weather)</option>
+                                    <option value="2.0">+2.0 (High Wind / Heavy Rain)</option>
+                                    <option value="3.0">+3.0 (Severe Conditions)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Handicap Allowance Selection -->
+                        <div>
+                            <label for="allowanceSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Competition Format &amp; Handicap Allowance</label>
+                            <select id="allowanceSelect" onchange="calculateWHS()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="0.95" selected>Individual Stroke Play / Medal (95%)</option>
+                                <option value="0.95">Individual Stableford (95%)</option>
+                                <option value="1.00">Individual Match Play (100%)</option>
+                                <option value="0.85">Four-Ball Stroke Play / Better Ball (85%)</option>
+                                <option value="0.90">Four-Ball Match Play (90%)</option>
+                                <option value="0.50">Foursomes / Alternate Shot (50% Combined)</option>
+                                <option value="0.20">4-Player Scramble (20% Team)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                        <button type="button" onclick="calculateWHS()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Calculate WHS Handicap &amp; Index</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetWHSDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share Setup</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-slate-900 to-emerald-950 text-white p-5 rounded-2xl shadow-md border border-emerald-900/50">
+                    <div class="flex items-center gap-2 mb-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Official WHS Handbook</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">World Handicap System 2024 Player Rules Guide</h3>
+                    <p class="text-xs text-emerald-200 mb-3">Download our technical player handbook covering Net Double Bogey tables, Soft/Hard Cap suppression curves, and 9-hole expected score formulas (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="golfer@club.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-emerald-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg transition shadow">Download Free Player PDF</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">&check; Handbook confirmed. The PDF guide has been dispatched to your email.</div>
+                </div>
+
+                <!-- Quick Slope Benchmark Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 text-xs space-y-2.5">
+                    <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">WHS Benchmark Standards</h4>
+                    <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
+                        <span>Standard Slope Difficulty:</span>
+                        <span class="font-mono font-bold text-brand-600 dark:text-brand-400">113</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
+                        <span>Slope Rating Range:</span>
+                        <span class="font-mono text-slate-900 dark:text-white">55 to 155</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-700/60 text-slate-600 dark:text-slate-300">
+                        <span>Maximum Handicap Index:</span>
+                        <span class="font-mono text-slate-900 dark:text-white">54.0</span>
+                    </div>
+                    <div class="flex justify-between py-1 text-slate-600 dark:text-slate-300">
+                        <span>Counted Differentials:</span>
+                        <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">Lowest 8 of 20</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Official WHS Handicap Index</span>
+                        <div class="flex items-center gap-2">
+                            <span id="capStatusBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">Normal (Uncapped)</span>
+                            <span id="esrStatusBadge" class="hidden inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50">ESR -1.0 Applied</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary Hero Index Display -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Handicap Index (WHS)</span>
+                            <div class="text-4xl sm:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="heroHandicapIndexDisplay">
+                                14.2
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="indexDerivationSummary">Average of Lowest 8 of 20 Rounds: 14.22</span>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Course Handicap (CH)</span>
+                            <div class="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono" id="heroCourseHandicapDisplay">
+                                16
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="heroCourseCalcSummary">Slope 128 &bull; Rating 71.4 &bull; Par 72</span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Quick Key Metric Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Score Differential</span>
+                            <span class="text-lg font-bold text-brand-600 dark:text-brand-400 font-mono" id="heroDifferentialDisplay">11.1</span>
+                            <span class="text-[10px] text-slate-400 block">For 84 Score</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Playing Handicap</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="heroPlayingHandicapDisplay">15</span>
+                            <span class="text-[10px] text-slate-400 block">95% Allowance</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Target Score</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="heroTargetScoreDisplay">88</span>
+                            <span class="text-[10px] text-slate-400 block">Par + Course Hcp</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Net Score</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="heroNetScoreDisplay">69</span>
+                            <span class="text-[10px] text-slate-400 block">Gross - Playing Hcp</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-2 text-slate-500 dark:text-slate-400">
+                            <span id="countedRoundsSummaryText" class="font-medium">8 of 20 rounds counted in emerald green</span>
+                            <span>&bull;</span>
+                            <span id="lowHiSummaryText">Low HI: 13.5</span>
+                        </div>
+                        <div class="flex items-center gap-2 quick-action-btns">
+                            <button onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Certificate</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 2: Between Header Card & Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Content Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('solver')" id="tabBtn_solver" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Score Differential &amp; Course Handicap Solver
+                        </button>
+                        <button onclick="switchTab('ledger')" id="tabBtn_ledger" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-1.5">
+                            <span>20-Round WHS Scorecard Ledger</span>
+                            <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-bold">Best 8</span>
+                        </button>
+                        <button onclick="switchTab('rules')" id="tabBtn_rules" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Rules of the World Handicap System Guide
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Score Differential & Course Handicap Solver -->
+                <div id="tab-solver" class="tab-panel active space-y-6">
+                    
+                    <!-- Step-by-Step Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step WHS Mathematical Derivations</span>
+                        </h3>
+                        
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-4 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <!-- Populated dynamically by calculateWHS() -->
+                            <div class="text-center py-2 text-slate-400">Computing official WHS differential equations...</div>
+                        </div>
+                    </div>
+
+                    <!-- Net Double Bogey Interactive Solver Widget -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                                <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Net Double Bogey Maximum Hole Score Calculator (Rule 3.1b)</span>
+                            </h3>
+                            <span class="text-xs text-brand-600 dark:text-brand-400 font-semibold">Max Score For Posting</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Under WHS Rule 3.1b, your maximum score for handicap posting on any hole is Net Double Bogey: \(\text{Par} + 2 + \text{Handicap Strokes Allocated}\). Test any hole on the course below:</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200/60 dark:border-slate-700/60 mb-4">
+                            <div>
+                                <label for="ndbHolePar" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Hole Par</label>
+                                <select id="ndbHolePar" onchange="updateNetDoubleBogeyWidget()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                    <option value="3">Par 3</option>
+                                    <option value="4" selected>Par 4</option>
+                                    <option value="5">Par 5</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="ndbStrokeIndex" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Hole Stroke Index (1-18)</label>
+                                <input type="number" id="ndbStrokeIndex" min="1" max="18" value="7" oninput="updateNetDoubleBogeyWidget()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                            </div>
+
+                            <div class="text-center sm:text-right flex flex-col justify-center">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">Maximum Hole Score:</span>
+                                <span class="text-2xl font-extrabold text-brand-600 dark:text-brand-400 font-mono" id="ndbResultDisplay">7 (Max 7)</span>
+                                <span class="text-[10px] text-slate-400" id="ndbStrokesAllocatedDisplay">Par 4 + 2 + 1 stroke allocated</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Course Handicap Matrix across Slope Ratings Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">Course Handicap Conversion Across Slope Ratings</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Look up your Course Handicap and Target Score at various course slopes for your active Handicap Index (<span class="font-bold text-brand-600 dark:text-brand-400 font-mono" id="matrixActiveHi">14.2</span>).</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Slope Rating</th>
+                                        <th class="px-3 py-2.5">Relative Difficulty</th>
+                                        <th class="px-3 py-2.5">Course Handicap</th>
+                                        <th class="px-3 py-2.5">Playing Hcp (95%)</th>
+                                        <th class="px-3 py-2.5">Target Score (Par 72)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="slopeMatrixBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: 20-Round WHS Scorecard Ledger -->
+                <div id="tab-ledger" class="tab-panel space-y-6">
+                    
+                    <!-- Scoring Ledger Summary & Controls -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white flex items-center gap-2">
+                                    <span>20-Round Scoring Ledger</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">Best 8 Counted in Emerald</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Review, add, or edit your 20 most recent 18-hole rounds. Under the World Handicap System, your lowest 8 differentials are highlighted in emerald green and averaged to compute your Handicap Index.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="toggleAddRoundForm()" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-medium text-xs shadow transition flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                    <span>Add Round</span>
+                                </button>
+                                <button type="button" onclick="exportLedgerCsv()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs font-medium transition flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    <span>Export CSV</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Expandable Inline Add Round Form -->
+                        <div id="addRoundFormContainer" class="hidden mb-6 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">Add New 18-Hole Round to Ledger</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-6 gap-3 mb-3">
+                                <div class="col-span-2">
+                                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Course &amp; Tees</label>
+                                    <input type="text" id="newRoundCourse" value="Pine Valley (Blue Tees)" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Date</label>
+                                    <input type="date" id="newRoundDate" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Adjusted Score</label>
+                                    <input type="number" id="newRoundScore" value="83" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Course Rating</label>
+                                    <input type="number" step="0.1" id="newRoundRating" value="71.2" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-[11px] font-medium text-slate-600 dark:text-slate-400 mb-1">Slope Rating</label>
+                                    <input type="number" id="newRoundSlope" value="126" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-2">
+                                <button type="button" onclick="toggleAddRoundForm()" class="px-3 py-1.5 text-xs font-medium rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition">Cancel</button>
+                                <button type="button" onclick="submitNewRound()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-brand-600 hover:bg-brand-700 text-white transition">Save Round to Ledger</button>
+                            </div>
+                        </div>
+
+                        <!-- 20-Round Interactive Table -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-900 uppercase font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-3 w-10 text-center">#</th>
+                                        <th class="px-3 py-3">Date</th>
+                                        <th class="px-3 py-3">Course &amp; Tees</th>
+                                        <th class="px-3 py-3 text-center">Gross Score</th>
+                                        <th class="px-3 py-3 text-center">CR / Slope</th>
+                                        <th class="px-3 py-3 text-center">PCC</th>
+                                        <th class="px-3 py-3 text-center">Differential</th>
+                                        <th class="px-3 py-3 text-center">Status</th>
+                                        <th class="px-3 py-3 text-center w-16">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ledgerTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by renderLedger() -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Ledger Footer Stats -->
+                        <div class="mt-4 pt-3 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between text-xs text-slate-500 dark:text-slate-400 gap-2">
+                            <div>
+                                <span class="font-bold text-slate-700 dark:text-slate-300">Rounds in File:</span>
+                                <span id="ledgerRoundCountDisplay" class="font-mono ml-1">20</span> &bull; 
+                                <span class="font-bold text-slate-700 dark:text-slate-300 ml-2">Counted:</span>
+                                <span id="ledgerCountedDisplay" class="font-mono text-emerald-600 dark:text-emerald-400 font-bold ml-1">8</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="loadDefaultLedger()" class="hover:text-brand-600 transition underline text-[11px]">Restore Default 20 Rounds</button>
+                                <span>&bull;</span>
+                                <button type="button" onclick="clearLedger()" class="text-rose-500 hover:text-rose-600 transition text-[11px]">Clear All</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Visual Charts Grid: Trajectory Line Chart & Differential Distribution Bar Chart -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        
+                        <!-- Trajectory Line Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Handicap Index Trajectory</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Progression over your 20 recorded rounds</p>
+                                </div>
+                                <span class="text-xs font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2 py-0.5 rounded border border-brand-200/50">Current: <span id="chartCurrentHi">14.2</span></span>
+                            </div>
+                            <div class="relative h-60 w-full">
+                                <canvas id="trajectoryChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Differential Distribution Bar Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-3">
+                                <div>
+                                    <h4 class="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Differential Distribution</h4>
+                                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Green = Best 8 Counted | Slate = Uncounted</p>
+                                </div>
+                                <span class="text-xs font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded border border-emerald-200/50">Avg Best 8: <span id="chartAvgBest8">14.2</span></span>
+                            </div>
+                            <div class="relative h-60 w-full">
+                                <canvas id="distributionChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB 3: Rules of the World Handicap System Guide -->
+                <div id="tab-rules" class="tab-panel space-y-6">
+                    
+                    <!-- WHS Rule 5.2a Sliding Scale Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="mb-4">
+                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Rule 5.2a Official Table</span>
+                            <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-0.5">WHS Sliding Scale Calculation Table (3 to 20 Rounds)</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">If a player has submitted fewer than 20 acceptable score differentials, the Handicap Index is calculated using the sliding scale below with specific downward adjustments for limited scoring records.</p>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                            <table class="w-full text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-900 uppercase font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Number of Differentials</th>
+                                        <th class="px-3 py-2.5">Differentials Used</th>
+                                        <th class="px-3 py-2.5">Adjustment</th>
+                                        <th class="px-3 py-2.5">Active Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <tr id="scaleRow_3" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">3</td><td class="px-3 py-2">Lowest 1</td><td class="px-3 py-2 text-rose-500">-2.0</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_4" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">4</td><td class="px-3 py-2">Lowest 1</td><td class="px-3 py-2 text-rose-500">-1.0</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_5" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">5</td><td class="px-3 py-2">Lowest 1</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_6" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">6</td><td class="px-3 py-2">Lowest 2 average</td><td class="px-3 py-2 text-rose-500">-1.0</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_7" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">7 to 8</td><td class="px-3 py-2">Lowest 2 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_9" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">9 to 11</td><td class="px-3 py-2">Lowest 3 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_12" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">12 to 14</td><td class="px-3 py-2">Lowest 4 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_15" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">15 to 16</td><td class="px-3 py-2">Lowest 5 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_17" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">17 to 18</td><td class="px-3 py-2">Lowest 6 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_19" class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2">19</td><td class="px-3 py-2">Lowest 7 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-slate-400">-</td></tr>
+                                    <tr id="scaleRow_20" class="counted-round-row font-bold"><td class="px-3 py-2">20</td><td class="px-3 py-2 text-emerald-600 dark:text-emerald-400">Lowest 8 average</td><td class="px-3 py-2">None</td><td class="px-3 py-2 text-[11px] status-col text-emerald-600 dark:text-emerald-400">&check; Current Active (20 Rounds)</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Soft Cap & Hard Cap Mechanics Guide -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="mb-3">
+                            <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Rule 5.7 Safeguards</span>
+                            <h3 class="font-bold text-lg text-slate-900 dark:text-white mt-0.5">Soft Cap &amp; Hard Cap Anti-Inflation Mechanics</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">To prevent temporary loss of form or injury from rapidly inflating a player's handicap index beyond demonstrated capability, the WHS anchors upward movement to the player's Low Handicap Index (Low HI) over the past 365 days.</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                            <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20">
+                                <div class="flex items-center gap-2 font-bold text-amber-800 dark:text-amber-300 text-sm mb-1">
+                                    <svg class="w-4 h-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/></svg>
+                                    <span>Soft Cap (+3.0 Strokes)</span>
+                                </div>
+                                <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">Triggers when the newly calculated index exceeds Low HI by more than 3.0 strokes. Upward movement beyond 3.0 is dampened by 50%:</p>
+                                <div class="p-2 bg-white dark:bg-slate-900 rounded font-mono text-[11px] border border-amber-200 dark:border-amber-800/50">
+                                    $$\text{Capped Index} = \text{Low HI} + 3.0 + 0.5 \times (\text{Uncapped} - (\text{Low HI} + 3.0))$$
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-800/60 bg-rose-50/40 dark:bg-rose-950/20">
+                                <div class="flex items-center gap-2 font-bold text-rose-800 dark:text-rose-300 text-sm mb-1">
+                                    <svg class="w-4 h-4 text-rose-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                                    <span>Hard Cap (+5.0 Strokes Absolute)</span>
+                                </div>
+                                <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-2">Establishes a strict upper bound. A player's Handicap Index can never rise more than 5.0 strokes above their Low HI over the 365-day rolling period:</p>
+                                <div class="p-2 bg-white dark:bg-slate-900 rounded font-mono text-[11px] border border-rose-200 dark:border-rose-800/50">
+                                    $$\text{Hard Cap Ceiling} = \text{Low HI} + 5.0$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tournament Handicap Allowances Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-2">USGA / The R&amp;A Tournament Handicap Allowances</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Official allowances recommended under the Rules of Handicapping (Appendix C) to ensure equitable net play across various match formats.</p>
+
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                            <table class="w-full text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-900 uppercase font-semibold text-slate-700 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Format of Play</th>
+                                        <th class="px-3 py-2.5">Handicap Allowance</th>
+                                        <th class="px-3 py-2.5">Application Rule</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Individual Stroke Play (Medal)</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">95%</td><td class="px-3 py-2">Applied directly to Course Handicap</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Individual Stableford</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">95%</td><td class="px-3 py-2">Applied directly to Course Handicap</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Individual Match Play</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">100%</td><td class="px-3 py-2">Difference between Course Handicaps</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Four-Ball Stroke Play (Better Ball)</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">85%</td><td class="px-3 py-2">Applied to each player's Course Handicap</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Four-Ball Match Play</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">90%</td><td class="px-3 py-2">Strokes taken from lowest handicap player</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Foursomes (Alternate Shot)</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">50% Combined</td><td class="px-3 py-2">50% of combined team Course Handicap</td></tr>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="px-3 py-2 font-medium">Scramble (4 Players)</td><td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">25%/20%/15%/10%</td><td class="px-3 py-2">From lowest to highest Course Handicap</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    
+                    <!-- Official Handicap Certificate Card (Print Optimized) -->
+                    <div class="bg-white text-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-300 relative print:border-none print:shadow-none print:p-0">
+                        
+                        <!-- Certificate Header -->
+                        <div class="border-b-2 border-emerald-600 pb-4 mb-6 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <span class="text-xs uppercase tracking-widest text-emerald-700 font-bold block">Official Handicap Scoring Record</span>
+                                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900">World Handicap System Certificate</h2>
+                                <span class="text-xs text-slate-500">Governed by the USGA &amp; The R&amp;A &bull; WHS 2024 Revision</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs text-slate-500 block">Date of Verification</span>
+                                <span class="text-sm font-bold font-mono" id="certDateDisplay">October 16, 2026</span>
+                            </div>
+                        </div>
+
+                        <!-- Golfer & Core Rating Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50 rounded-xl border border-slate-200 mb-6">
+                            <div>
+                                <span class="text-[11px] uppercase tracking-wider text-slate-500 block">Golfer Name</span>
+                                <span class="text-base font-bold text-slate-900" id="certGolferName">Alex Morgan</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] uppercase tracking-wider text-slate-500 block">Home Club</span>
+                                <span class="text-base font-bold text-slate-900" id="certHomeClub">Pine Valley Golf Club</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] uppercase tracking-wider text-slate-500 block">Official Handicap Index</span>
+                                <span class="text-2xl font-extrabold text-emerald-700 font-mono" id="certHandicapIndex">14.2</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] uppercase tracking-wider text-slate-500 block">Low HI (365 Days)</span>
+                                <span class="text-base font-bold text-slate-900 font-mono" id="certLowHi">13.5</span>
+                            </div>
+                        </div>
+
+                        <!-- 20-Round Ledger Certificate Table -->
+                        <div class="mb-6">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 mb-2">20-Round Scoring Ledger &bull; Highlighted Rounds Counted Toward Index</h4>
+                            <div class="overflow-x-auto border border-slate-200 rounded-lg text-[11px]">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="bg-slate-100 uppercase font-semibold text-slate-700 border-b border-slate-200">
+                                        <tr>
+                                            <th class="px-2.5 py-1.5 w-8">#</th>
+                                            <th class="px-2.5 py-1.5">Date</th>
+                                            <th class="px-2.5 py-1.5">Course Name &amp; Tees</th>
+                                            <th class="px-2.5 py-1.5 text-center">Score</th>
+                                            <th class="px-2.5 py-1.5 text-center">CR</th>
+                                            <th class="px-2.5 py-1.5 text-center">Slope</th>
+                                            <th class="px-2.5 py-1.5 text-center">PCC</th>
+                                            <th class="px-2.5 py-1.5 text-center">Diff</th>
+                                            <th class="px-2.5 py-1.5 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="certTableBody" class="divide-y divide-slate-200 font-mono">
+                                        <!-- Populated dynamically -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Course Handicap Conversion Reference Table -->
+                        <div class="mb-6">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 mb-2">Course Handicap Lookup for Index <span id="certLookupHi">14.2</span> (Par 72)</h4>
+                            <div class="grid grid-cols-4 sm:grid-cols-8 gap-2 text-center text-xs font-mono" id="certSlopeGrid">
+                                <!-- Populated dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Sign-off & Legal Footnote -->
+                        <div class="pt-4 border-t border-slate-200 flex flex-wrap justify-between items-end text-xs text-slate-500 gap-4">
+                            <div>
+                                <p class="text-[10px] leading-relaxed max-w-lg">
+                                    This handicap certificate is calculated in strict compliance with the Rules of Handicapping as jointly established by the United States Golf Association (USGA) and The R&amp;A. Score Differentials are computed using standard relative slope 113.
+                                </p>
+                            </div>
+                            <div class="text-right border-t border-slate-300 pt-2 w-48">
+                                <span class="text-[10px] block">Club Handicap Committee Attestation</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Print Button Bar (no-print) -->
+                    <div class="no-print flex justify-end gap-3">
+                        <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm shadow transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Print / Save PDF Certificate</span>
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 4: Content Middle Slot -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Content Slot 4</span>
+        </div>
+
+        <!-- Authoritative 1200+ Word WHS Technical Guide -->
+        <article class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 leading-relaxed no-print" id="whs-guide-article">
+            
+            <header class="mb-8 border-b border-slate-200 dark:border-slate-700 pb-6">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Authoritative Technical Reference</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">The Complete Rules and Mathematics of the World Handicap System (WHS 2024 Revision)</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">A technical analysis of the unified global handicap rules established by the USGA and The R&amp;A, exploring Course Rating, Slope Rating, Net Double Bogey, Soft and Hard Caps, and tournament allowances.</p>
+            </header>
+
+            <!-- Section 1 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">1.</span>
+                    <span>The Historical Unification: Harmonizing Six Global Golf Handicap Authorities</span>
+                </h3>
+                <p>In 2020, the sport of golf achieved its most comprehensive administrative unification in modern history with the global implementation of the World Handicap System (WHS). Prior to this milestone, amateur golf was governed by six separate and mathematically distinct handicap authorities across the world:</p>
+                <ul class="list-disc pl-6 space-y-1.5 text-sm">
+                    <li><strong>United States Golf Association (USGA):</strong> Operating across North America, using the USGA Course Rating and Slope System with the best 10 of 20 score differentials multiplied by a 0.96 bonus for excellence factor.</li>
+                    <li><strong>European Golf Association (EGA):</strong> Governing Continental Europe, operating on an incremental handicap adjustment model with stableford buffer zones.</li>
+                    <li><strong>Council of National Golf Unions (CONGU):</strong> Administering handicaps across Great Britain and Ireland, using competition play scratch scores (CSS) and incremental category-based buffer zones.</li>
+                    <li><strong>Golf Australia:</strong> Administering handicaps using a daily scratch rating (DSR) and the best 8 of 20 differentials multiplied by 0.93.</li>
+                    <li><strong>South African Golf Association (SAGA):</strong> using the best 10 of 20 differentials without a bonus multiplier.</li>
+                    <li><strong>Asociaci&oacute;n Argentina de Golf (AAG):</strong> Operating across South America with distinct regional rating standards.</li>
+                </ul>
+                <p>Because each of these six jurisdictions used different algorithms, calculations, and qualification standards, a 10.0 handicap index in the United States represented a fundamentally different skill tier than an exact handicap of 10.0 in Scotland, Australia, or Germany. International amateur competitions, corporate invitationals, and traveling golfers faced persistent discrepancies when attempting to establish equitable match play strokes.</p>
+                <p>To resolve this fragmentation, the USGA and The R&amp;A, in collaboration with the six existing handicap bodies and the International Golf Federation (IGF), created a single, unified global handicap algorithm. The WHS was engineered to accomplish three foundational objectives: allow golfers of diverse capabilities to compete equitably on any course worldwide, establish a portable handicap index recognized across every national golf federation, and accurately reflect demonstrated scoring potential rather than simple historical average score.</p>
+                <p>The 2024 WHS revision refined several elements of the initial 2020 framework. Notably, the 2024 updates introduced expected score modeling for unplayed holes and 9-hole rounds, lowered the minimum course yardage eligibility down to 1,500 yards for 18 holes (allowing par-3 and executive layouts to be formally rated), and modernized the Course Handicap calculation to ensure exact consistency across all formats.</p>
+            </section>
+
+            <!-- Section 2 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">2.</span>
+                    <span>Course Rating and Slope Rating Explained</span>
+                </h3>
+                <p>The foundation of the World Handicap System rests on the USGA Course Rating System, which evaluates the physical difficulty of a golf course under normal course and weather conditions. Evaluating course difficulty requires two complementary metrics: Course Rating and Slope Rating.</p>
+                <p><strong>Course Rating:</strong> An evaluation of the playing difficulty of a golf course for a scratch golfer (a player with a 0.0 Handicap Index). Expressed in strokes to one decimal place (e.g., 71.4), Course Rating measures the effective playing length of the course plus obstacle factors. Effective playing length adjusts measured scorecard yardage for roll, elevation change, doglegs, prevailing wind, and altitude above sea level. Obstacle evaluations grade ten specific course features on every hole: topography, fairway width, green target size, recoverability from rough, bunker placement and depth, out-of-bounds boundaries, water hazards, trees, green speed, and psychological difficulty.</p>
+                <p><strong>Bogey Rating:</strong> Evaluates the identical course playing length and obstacle factors for a hypothetical bogey golfer. Under WHS specifications, a male bogey golfer hits tee shots approximately 200 yards and reaches a 370-yard hole in two shots, carrying a Handicap Index of approximately 20.0 to 24.0 (for female golfers, reaching a 280-yard hole in two shots with a Handicap Index of approximately 24.0 to 28.0).</p>
+                <p><strong>Slope Rating:</strong> A mathematical measurement of the relative difficulty of a golf course for players who are not scratch golfers, compared to the difficulty for a scratch golfer. Because obstacles and distance punish a bogey golfer more severely than a scratch golfer, the score difference between the two player types widens on more difficult layouts. Slope Rating scales this rate of score divergence and is calculated as:</p>
+                <div class="my-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Slope Rating} = (\text{Bogey Rating} - \text{Course Rating}) \times 5.381 \quad (\text{Men})$$
+                </div>
+                <div class="my-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Slope Rating} = (\text{Bogey Rating} - \text{Course Rating}) \times 4.240 \quad (\text{Women})$$
+                </div>
+                <p>A golf course of standard relative difficulty has a Slope Rating of exactly <strong>113</strong>. Slope Ratings range from a minimum of <strong>55</strong> (an exceptionally flat course with wide fairways and zero hazards) to a maximum of <strong>155</strong> (an exceptionally punishing championship test with narrow landing areas, deep bunkers, and thick rough).</p>
+            </section>
+
+            <!-- Section 3 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">3.</span>
+                    <span>The Mathematics of Score Differentials and PCC</span>
+                </h3>
+                <p>The fundamental unit of measurement in the World Handicap System is not the gross score itself, but the <strong>Score Differential</strong>. A gross score of 82 shot on a short, flat course with a Course Rating of 68.5 and Slope of 110 represents a vastly inferior performance to an 82 shot on a demanding championship course with a Course Rating of 74.2 and Slope of 142. The Score Differential standardizes every performance to a neutral baseline:</p>
+                <div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Score Differential} = \left(\frac{113}{\text{Slope Rating}}\right) \times (\text{Adjusted Gross Score} - \text{Course Rating} - \text{PCC})$$
+                </div>
+                <p>In this equation:</p>
+                <ul class="list-disc pl-6 space-y-1 text-sm">
+                    <li><strong>Adjusted Gross Score:</strong> The golfer's total strokes taken, adjusted downward for any hole scores exceeding the Net Double Bogey limit (Rule 3.1b).</li>
+                    <li><strong>Course Rating:</strong> The scratch calibration for the specific set of tees played.</li>
+                    <li><strong>Slope Rating:</strong> The relative difficulty rating of the tees played.</li>
+                    <li><strong>113:</strong> The universal standard slope difficulty constant.</li>
+                    <li><strong>PCC (Playing Conditions Calculation):</strong> A daily statistical adjustment for abnormal weather or course setup.</li>
+                </ul>
+                <p>Every calculated Score Differential is rounded to the nearest tenth of a stroke ($0.1$).</p>
+                <p><strong>Playing Conditions Calculation (PCC):</strong> Weather conditions (such as sustained 35 mph winds, torrential rain, or freezing temperatures) or abnormal course setups (unusually high rough, extreme pin placements) can cause course conditions to deviate significantly from standard baseline ratings. The WHS incorporates an automated statistical calculation known as PCC. Computed at midnight local time after daily scores are submitted, the PCC algorithm compares all scores posted at a facility on that date against the expected scoring distribution of the participating golfers. If the field scores deviate significantly from expectation, an integer adjustment between <strong>-1.0</strong> (unusually easy conditions) and <strong>+3.0</strong> (exceptionally difficult conditions) is applied to all differentials from that day. Standard conditions result in a PCC of <strong>0.0</strong>.</p>
+            </section>
+
+            <!-- Section 4 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">4.</span>
+                    <span>The 20-Round Scoring Ledger: The 8 of 20 Principle and Sliding Scale Adjustments</span>
+                </h3>
+                <p>A central design philosophy of the World Handicap System is that a Handicap Index measures a player's <em>demonstrated scoring potential</em> rather than their simple scoring average. Golfers do not play to their handicap on every round; empirical testing across tens of millions of posted scores indicates that a typical golfer plays to or better than their Handicap Index on only 20% to 25% of rounds.</p>
+                <p>To capture potential while accommodating natural scoring volatility, the WHS calculates a player's Handicap Index by taking the <strong>arithmetic average of the lowest 8 Score Differentials out of their 20 most recent acceptable scores</strong>. This 8-of-20 ratio (40% of posted rounds) provides an ideal balance between responsiveness to improving skill and resistance to occasional erratic rounds.</p>
+                <p>When a golfer begins building their scoring record and possesses fewer than 20 submitted scores, Rule 5.2a mandates a sliding scale calculation table. Because a smaller sample size has a higher probability of missing a player's true scoring potential, specific downward adjustments are applied to limited records:</p>
+                <ul class="list-disc pl-6 space-y-1.5 text-sm">
+                    <li><strong>3 rounds:</strong> Lowest 1 differential minus 2.0 adjustment.</li>
+                    <li><strong>4 rounds:</strong> Lowest 1 differential minus 1.0 adjustment.</li>
+                    <li><strong>5 rounds:</strong> Lowest 1 differential (no adjustment).</li>
+                    <li><strong>6 rounds:</strong> Average of lowest 2 differentials minus 1.0 adjustment.</li>
+                    <li><strong>7 to 8 rounds:</strong> Average of lowest 2 differentials (no adjustment).</li>
+                    <li><strong>9 to 11 rounds:</strong> Average of lowest 3 differentials (no adjustment).</li>
+                    <li><strong>12 to 14 rounds:</strong> Average of lowest 4 differentials (no adjustment).</li>
+                    <li><strong>15 to 16 rounds:</strong> Average of lowest 5 differentials (no adjustment).</li>
+                    <li><strong>17 to 18 rounds:</strong> Average of lowest 6 differentials (no adjustment).</li>
+                    <li><strong>19 rounds:</strong> Average of lowest 7 differentials (no adjustment).</li>
+                    <li><strong>20 rounds:</strong> Average of lowest 8 differentials (no adjustment).</li>
+                </ul>
+                <p>The minimum number of scores required to establish an official Handicap Index is <strong>3</strong> (equivalent to 54 holes). The maximum allowable Handicap Index under the WHS is <strong>54.0</strong> for both male and female golfers, ensuring access for beginner and developing players.</p>
+            </section>
+
+            <!-- Section 5 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">5.</span>
+                    <span>Soft Cap and Hard Cap Limits: Preventing Rapid Index Inflation</span>
+                </h3>
+                <p>To protect the integrity of competitions and handicap allowances, the World Handicap System incorporates automated safeguards against rapid, artificial handicap inflation. A temporary slump in ball striking, recovering from injury, or posting consecutive unrepresentative scores could cause an uncapped index to surge rapidly. Rule 5.7 establishes Cap procedures to prevent a player's index from rising excessively above their proven skill ceiling.</p>
+                <p>The reference benchmark for Cap evaluations is the <strong>Low Handicap Index (Low HI)</strong>. The Low HI represents the lowest Handicap Index achieved by the golfer during the 365-day period preceding the date of the latest score calculation. When a newly calculated average of differentials exceeds the Low HI by more than 3.0 strokes, the Cap mechanism triggers:</p>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl space-y-2 border border-slate-200/50 dark:border-slate-800 text-xs">
+                    <p><strong>Soft Cap Trigger:</strong> If $\text{Uncapped Index} &gt; (\text{Low HI} + 3.0)$, the upward movement beyond $3.0$ is dampened by 50%:</p>
+                    <div class="font-mono text-center">$$\text{Soft Capped Index} = \text{Low HI} + 3.0 + 0.5 \times (\text{Uncapped Index} - (\text{Low HI} + 3.0))$$</div>
+                </div>
+                <div class="p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl space-y-2 border border-slate-200/50 dark:border-slate-800 text-xs mt-3">
+                    <p><strong>Hard Cap Limit:</strong> A player's Handicap Index can never rise more than 5.0 strokes above their Low HI over the 365-day rolling period. If the Soft Capped Index exceeds this threshold, it is strictly capped:</p>
+                    <div class="font-mono text-center">$$\text{Hard Cap Ceiling} = \text{Low HI} + 5.0$$</div>
+                </div>
+                <p class="text-sm">For example, if a golfer's Low HI over the past year is <strong>10.0</strong>, the Soft Cap activates at <strong>13.0</strong> ($10.0 + 3.0$). If recent poor form yields an uncapped differential average of <strong>16.0</strong>, the excess above 13.0 is 3.0 strokes. Applying the 50% Soft Cap dampening adds $1.5$ strokes ($0.5 \times 3.0$), yielding a capped index of <strong>14.5</strong> rather than 16.0. The Hard Cap ensures the index can never exceed <strong>15.0</strong> ($10.0 + 5.0$).</p>
+                <p class="text-sm">Caps only apply to upward handicap increases; there is never any cap or restriction on rapid downward index improvement.</p>
+            </section>
+
+            <!-- Section 6 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">6.</span>
+                    <span>Exceptional Score Reductions (ESR): Safeguarding Field Equity</span>
+                </h3>
+                <p>While the Cap mechanism limits rapid upward inflation, the <strong>Exceptional Score Reduction (Rule 5.9)</strong> ensures that unexpected breakthrough performances are immediately and accurately reflected in a player's scoring record. When a golfer posts an exceptional score substantially lower than their established index, normal averaging over 20 rounds would take weeks to absorb the performance.</p>
+                <p>When a player submits an acceptable score, its Score Differential is compared against the player's Handicap Index in effect at the time the round was completed:</p>
+                <ul class="list-disc pl-6 space-y-1.5 text-sm">
+                    <li><strong>Differential 7.0 to 9.9 strokes lower than Handicap Index:</strong> An automatic <strong>-1.0 ESR adjustment</strong> is applied to the newly posted differential and to each of the previous 19 score differentials in the player's 20-round scoring record.</li>
+                    <li><strong>Differential 10.0 or more strokes lower than Handicap Index:</strong> An automatic <strong>-2.0 ESR adjustment</strong> is applied across all 20 score differentials in the scoring record.</li>
+                </ul>
+                <p>If a player posts multiple exceptional rounds, the ESR adjustments compound. For instance, posting two consecutive rounds that are 8 strokes lower than the player's index produces a cumulative -2.0 reduction across the entire 20-round ledger. As older rounds drop off the 20-round history, their associated ESR adjustments phase out naturally.</p>
+            </section>
+
+            <!-- Section 7 -->
+            <section class="space-y-4 mb-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">7.</span>
+                    <span>Net Double Bogey: The Universal Maximum Score Rule</span>
+                </h3>
+                <p>To eliminate the distorting impact of a single catastrophic hole (such as hitting multiple balls out of bounds and carding an 11 on a par 4) on an overall handicap record, WHS Rule 3.1b establishes the <strong>Net Double Bogey</strong> maximum hole score for handicap posting purposes.</p>
+                <p>Net Double Bogey represents the highest score a player can record on any individual hole for handicap calculation, calculated as:</p>
+                <div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Net Double Bogey} = \text{Par} + 2 + \text{Handicap Strokes Allocated to that hole}$$
+                </div>
+                <p>Handicap strokes are allocated across the 18 holes of a golf course according to the hole's <strong>Stroke Index (SI)</strong> (numbered 1 through 18 on the scorecard, with 1 being the hole where a high handicapper needs the most assistance) and the golfer's <strong>Course Handicap</strong>:</p>
+                <ul class="list-disc pl-6 space-y-1.5 text-sm">
+                    <li>If a player's Course Handicap is <strong>14</strong>, they receive 1 handicap stroke on holes with Stroke Index 1 through 14, and 0 strokes on holes with Stroke Index 15 through 18. On a Par 4 hole with Stroke Index 6, their maximum hole score is $4 + 2 + 1 = \mathbf{7}$. On a Par 4 with Stroke Index 16, their maximum score is $4 + 2 + 0 = \mathbf{6}$.</li>
+                    <li>If a player's Course Handicap is <strong>24</strong>, they receive 2 handicap strokes on holes with Stroke Index 1 through 6 ($24 - 18 = 6$), and 1 handicap stroke on holes with Stroke Index 7 through 18. On a Par 5 hole with Stroke Index 3, their maximum hole score is $5 + 2 + 2 = \mathbf{9}$.</li>
+                </ul>
+                <p>In tournament stroke play, players must complete every hole and record their actual gross score on the competition card; however, when submitting the score to the handicap computation system, any hole score exceeding Net Double Bogey is reduced to the Net Double Bogey limit to produce the <strong>Adjusted Gross Score</strong>.</p>
+            </section>
+
+            <!-- Section 8 -->
+            <section class="space-y-4 mb-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">8.</span>
+                    <span>Course Handicap vs. Playing Handicap: Applying Tournament Allowances</span>
+                </h3>
+                <p>A frequent point of confusion among golfers is the operational distinction between a player's <strong>Handicap Index</strong>, their <strong>Course Handicap</strong>, and their <strong>Playing Handicap</strong>.</p>
+                <p><strong>Handicap Index:</strong> A portable, decimal number (e.g., 14.2) that reflects a player's scoring potential on a course of standard relative difficulty (Slope 113).</p>
+                <p><strong>Course Handicap (CH):</strong> The number of handicap strokes a player receives from a specific set of tees on a specific golf course, calculated per Rule 6.1a as:</p>
+                <div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Course Handicap} = \text{Handicap Index} \times \left(\frac{\text{Slope Rating}}{113}\right) + (\text{Course Rating} - \text{Par})$$
+                </div>
+                <p>Course Handicap is rounded to the nearest whole integer ($0.5$ rounds upward). The inclusion of the <strong>$(\text{Course Rating} - \text{Par})$</strong> adjustment in the WHS 2024 formula ensures that a player's target score to play to their handicap is always equal to <strong>$\text{Par} + \text{Course Handicap}$</strong>, regardless of the tees selected. It also allows men and women playing from different tees in the same competition to compete without separate manual course rating adjustments.</p>
+                <p><strong>Playing Handicap (PH):</strong> The actual number of strokes given or received in a specific competition format, adjusting the Course Handicap by the official tournament <strong>Handicap Allowance percentage</strong>:</p>
+                <div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                    $$\text{Playing Handicap} = \text{Course Handicap} \times \text{Handicap Allowance \%}$$
+                </div>
+                <p>Handicap allowances (such as 95% for individual stroke play or 85% for four-ball stroke play) are derived from statistical modeling of field equity. In multi-ball formats like four-ball, teams with higher handicaps possess an inherent mathematical advantage because partners can alternate making net birdies. Reducing allowances to 85% restores mathematical balance, ensuring equitable competition across all playing abilities.</p>
+            </section>
+
+        </article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print" id="faq-section">
+            <div class="mb-8">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Expert Rules Insights</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Authoritative answers to common questions regarding World Handicap System calculations, Course and Slope Ratings, Cap limits, and Net Double Bogey.</p>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is a Score Differential calculated under the World Handicap System?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        A Score Differential is calculated using the formula: \(\text{Differential} = \frac{113}{\text{Slope Rating}} \times (\text{Adjusted Gross Score} - \text{Course Rating} - \text{PCC})\). The result is rounded to the nearest tenth of a stroke. 113 represents the standard slope rating of relative difficulty.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is a Handicap Index calculated from 20 rounds?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        When a scoring record contains 20 rounds, the Handicap Index is calculated by taking the average of the lowest 8 Score Differentials out of the most recent 20 rounds, rounded to the nearest tenth. The maximum Handicap Index allowed is 54.0.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between Course Rating and Slope Rating?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Course Rating indicates the expected score for a scratch golfer (0.0 Handicap Index) under normal conditions. Slope Rating measures the relative difficulty of the course for a bogey golfer compared to a scratch golfer. Standard slope difficulty is 113, with values ranging from 55 to 155.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How do the Soft Cap and Hard Cap limits work?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Caps prevent excessive upward inflation of a Handicap Index. The Soft Cap triggers when a new index rises more than 3.0 strokes above the player's Low Handicap Index (lowest index in the preceding 365 days), reducing upward movement above 3.0 by 50%. The Hard Cap establishes an absolute ceiling limiting upward movement to no more than 5.0 strokes above the Low Handicap Index.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is Net Double Bogey and how is it applied?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Net Double Bogey is the maximum score allowed on any hole for handicap posting purposes, calculated as: \(\text{Par} + 2 + \text{Handicap Strokes allocated on that hole}\). For example, a player receiving 1 stroke on a Par 4 hole has a Net Double Bogey maximum of 7 ($4 + 2 + 1$). Any higher score is adjusted down to 7.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is Course Handicap calculated under the WHS 2024 revision?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Course Handicap (CH) is calculated as: \(\text{CH} = \text{Handicap Index} \times \left(\frac{\text{Slope Rating}}{113}\right) + (\text{Course Rating} - \text{Par})\), rounded to the nearest integer. The \((\text{Course Rating} - \text{Par})\) adjustment aligns playing standards so that a player's target score to play to handicap equals \(\text{Par} + \text{Course Handicap}\).
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is an Exceptional Score Reduction (ESR)?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        An Exceptional Score Reduction (Rule 5.9) is applied when a player posts a Score Differential that is 7.0 or more strokes lower than their Handicap Index at the time of the round. A differential 7.0 to 9.9 strokes lower triggers a -1.0 adjustment across all 20 differentials in the record; a differential 10.0+ strokes lower triggers a -2.0 adjustment.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the Playing Conditions Calculation (PCC)?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Playing Conditions Calculation (PCC) is an automated statistical adjustment computed at midnight that evaluates whether course setup or weather conditions significantly deviated from standard ratings. PCC ranges from -1.0 (easier conditions) to +3.0 (exceptionally difficult conditions), with 0.0 being standard.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">HC</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Sports Engineering. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Rules &amp; Governance Notice:</strong> The CalcWorld Golf Handicap Calculator calculates differentials, index scores, and course allowances in strict accordance with the Rules of Handicapping established jointly by the United States Golf Association (USGA) and The R&amp;A (WHS 2024 Revision). World Handicap System, WHS, and Course Rating are registered trademarks of the USGA and The R&amp;A. This calculator is provided for individual golfer verification, training, and competition preparation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">WHS Nav:</span>
+        <button onclick="switchTab('solver')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Differential Solver</button>
+        <button onclick="switchTab('ledger')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">20-Round Ledger</button>
+        <button onclick="switchTab('rules')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">WHS Rules Guide</button>
+        <button onclick="switchTab('print'); window.print();" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Print Record</button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Handicap summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global Application State ---
+    let currentGolferName = "Alex Morgan";
+    let currentHomeClub = "Pine Valley Golf Club";
+    let currentLowHi = 13.5;
+    let currentScore = 84;
+    let currentCourseRating = 71.4;
+    let currentSlope = 128;
+    let currentPar = 72;
+    let currentPcc = 0.0;
+    let currentAllowance = 0.95;
+
+    // 20-Round Ledger Array
+    let roundsLedger = [];
+
+    // Chart.js Instances
+    let trajectoryChart = null;
+    let distributionChart = null;
+
+    // Output Storage Object
+    let lastWHS = {};
+
+    // Standard 20-Round Realistic Default Dataset (Alex Morgan, Mid-Handicap ~14.2)
+    const DEFAULT_20_ROUNDS = [
+        { id: 1, date: "2026-10-12", course: "Pine Valley (Blue)", score: 84, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 2, date: "2026-10-05", course: "Merion East (White)", score: 86, rating: 72.1, slope: 132, pcc: 0.0 },
+        { id: 3, date: "2026-09-28", course: "Oakmont CC (Tee 2)", score: 88, rating: 73.0, slope: 136, pcc: 1.0 },
+        { id: 4, date: "2026-09-21", course: "Pine Valley (Blue)", score: 82, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 5, date: "2026-09-14", course: "Aronimink (Member)", score: 85, rating: 71.8, slope: 130, pcc: 0.0 },
+        { id: 6, date: "2026-09-07", course: "Baltusrol Lower", score: 91, rating: 73.4, slope: 135, pcc: 0.0 },
+        { id: 7, date: "2026-08-30", course: "Pine Valley (Blue)", score: 83, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 8, date: "2026-08-23", course: "Winged Foot West", score: 92, rating: 74.0, slope: 140, pcc: 1.0 },
+        { id: 9, date: "2026-08-16", course: "Plainfield CC", score: 84, rating: 71.5, slope: 127, pcc: 0.0 },
+        { id: 10, date: "2026-08-09", course: "Pine Valley (Blue)", score: 85, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 11, date: "2026-08-02", course: "Somerset Hills", score: 81, rating: 70.8, slope: 124, pcc: 0.0 },
+        { id: 12, date: "2026-07-26", course: "Ridgewood CC", score: 87, rating: 72.2, slope: 131, pcc: 0.0 },
+        { id: 13, date: "2026-07-19", course: "Pine Valley (Blue)", score: 89, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 14, date: "2026-07-12", course: "Baltusrol Upper", score: 86, rating: 72.0, slope: 129, pcc: 0.0 },
+        { id: 15, date: "2026-07-05", course: "Mountain Ridge", score: 83, rating: 71.0, slope: 126, pcc: 0.0 },
+        { id: 16, date: "2026-06-28", course: "Pine Valley (Blue)", score: 93, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 17, date: "2026-06-21", course: "Canoe Brook North", score: 86, rating: 71.6, slope: 128, pcc: 0.0 },
+        { id: 18, date: "2026-06-14", course: "Merion East (White)", score: 90, rating: 72.1, slope: 132, pcc: 0.0 },
+        { id: 19, date: "2026-06-07", course: "Pine Valley (Blue)", score: 84, rating: 71.4, slope: 128, pcc: 0.0 },
+        { id: 20, date: "2026-05-31", course: "Hollywood Golf Club", score: 88, rating: 71.9, slope: 130, pcc: 0.0 }
+    ];
+
+    // Document Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+        loadDefaultLedger();
+        parseUrlParams();
+        calculateWHS();
+
+        // Set default date in Add Round form to today
+        const today = new Date().toISOString().split('T')[0];
+        const dateInput = document.getElementById('newRoundDate');
+        if (dateInput) dateInput.value = today;
+
+        // AdBlock Detection Recovery
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Core Calculation Logic ---
+
+    // Calculate individual score differential
+    function computeDifferential(score, rating, slope, pcc = 0.0) {
+        if (!slope || slope <= 0) return 0.0;
+        const diff = (113.0 / slope) * (score - rating - pcc);
+        return Math.round(diff * 10) / 10;
+    }
+
+    // Determine how many differentials are used and any adjustments per WHS Rule 5.2a
+    function getSlidingScaleParameters(count) {
+        if (count < 3) return { used: 0, adjustment: 0 };
+        if (count === 3) return { used: 1, adjustment: -2.0, rowId: "scaleRow_3" };
+        if (count === 4) return { used: 1, adjustment: -1.0, rowId: "scaleRow_4" };
+        if (count === 5) return { used: 1, adjustment: 0.0, rowId: "scaleRow_5" };
+        if (count === 6) return { used: 2, adjustment: -1.0, rowId: "scaleRow_6" };
+        if (count <= 8) return { used: 2, adjustment: 0.0, rowId: "scaleRow_7" };
+        if (count <= 11) return { used: 3, adjustment: 0.0, rowId: "scaleRow_9" };
+        if (count <= 14) return { used: 4, adjustment: 0.0, rowId: "scaleRow_12" };
+        if (count <= 16) return { used: 5, adjustment: 0.0, rowId: "scaleRow_15" };
+        if (count <= 18) return { used: 6, adjustment: 0.0, rowId: "scaleRow_17" };
+        if (count === 19) return { used: 7, adjustment: 0.0, rowId: "scaleRow_19" };
+        return { used: 8, adjustment: 0.0, rowId: "scaleRow_20" };
+    }
+
+    // Main Calculation Routine
+    function calculateWHS() {
+        // Read input values
+        currentScore = parseFloat(document.getElementById('scoreInput').value) || 84;
+        currentCourseRating = parseFloat(document.getElementById('ratingInput').value) || 71.4;
+        currentSlope = parseFloat(document.getElementById('slopeInput').value) || 128;
+        currentPar = parseFloat(document.getElementById('parInput').value) || 72;
+        currentPcc = parseFloat(document.getElementById('pccSelect').value) || 0.0;
+        currentAllowance = parseFloat(document.getElementById('allowanceSelect').value) || 0.95;
+        currentLowHi = parseFloat(document.getElementById('lowIndexInput').value) || 13.5;
+        currentGolferName = document.getElementById('golferNameInput').value.trim() || "Alex Morgan";
+        currentHomeClub = document.getElementById('homeClubInput').value.trim() || "Pine Valley Golf Club";
+
+        // Update Cap threshold indicators in sidebar
+        const softCapThresh = (currentLowHi + 3.0).toFixed(1);
+        const hardCapThresh = (currentLowHi + 5.0).toFixed(1);
+        document.getElementById('softCapThresholdDisplay').textContent = softCapThresh;
+        document.getElementById('hardCapThresholdDisplay').textContent = hardCapThresh;
+
+        // 1. Calculate Single Round Differential
+        const singleDifferential = computeDifferential(currentScore, currentCourseRating, currentSlope, currentPcc);
+
+        // 2. Process Ledger Rounds & Identify Best Counted Rounds
+        const ledgerWithDiffs = roundsLedger.map((r, index) => {
+            const diff = computeDifferential(r.score, r.rating, r.slope, r.pcc || 0.0);
+            return { ...r, index, differential: diff };
+        });
+
+        const totalRounds = ledgerWithDiffs.length;
+        const scaleParams = getSlidingScaleParameters(totalRounds);
+        const usedCount = scaleParams.used;
+        const adjustment = scaleParams.adjustment;
+
+        // Sort by lowest differential to find best rounds
+        const sortedRounds = [...ledgerWithDiffs].sort((a, b) => a.differential - b.differential);
+        const countedIndices = new Set();
+        let sumCounted = 0;
+
+        for (let i = 0; i < usedCount && i < sortedRounds.length; i++) {
+            countedIndices.add(sortedRounds[i].index);
+            sumCounted += sortedRounds[i].differential;
+        }
+
+        // Calculate uncapped Handicap Index
+        let uncappedIndex = 0.0;
+        let avgCounted = 0.0;
+        if (usedCount > 0) {
+            avgCounted = sumCounted / usedCount;
+            uncappedIndex = avgCounted + adjustment;
+            uncappedIndex = Math.round(uncappedIndex * 10) / 10;
+        } else {
+            uncappedIndex = singleDifferential;
+        }
+
+        // 3. Apply Soft Cap & Hard Cap Limits (Rule 5.7)
+        let cappedIndex = uncappedIndex;
+        let capStatus = "Normal (Uncapped)";
+        let capBadgeClass = "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-200/50";
+
+        if (totalRounds >= 20 && currentLowHi !== null && !isNaN(currentLowHi)) {
+            const softThreshold = currentLowHi + 3.0;
+            const hardThreshold = currentLowHi + 5.0;
+
+            if (uncappedIndex > softThreshold) {
+                const excess = uncappedIndex - softThreshold;
+                const softCappedVal = softThreshold + (0.5 * excess);
+
+                if (softCappedVal > hardThreshold) {
+                    cappedIndex = Math.round(hardThreshold * 10) / 10;
+                    capStatus = `Hard Capped at ${cappedIndex.toFixed(1)} (+5.0 ceiling)`;
+                    capBadgeClass = "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border-rose-200/50";
+                } else {
+                    cappedIndex = Math.round(softCappedVal * 10) / 10;
+                    const strokesSaved = (uncappedIndex - cappedIndex).toFixed(1);
+                    capStatus = `Soft Capped: ${cappedIndex.toFixed(1)} (-${strokesSaved} dampening)`;
+                    capBadgeClass = "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border-amber-200/50";
+                }
+            }
+        }
+
+        // Minimum index is plus-handicap (can be negative), max is 54.0
+        cappedIndex = Math.min(54.0, cappedIndex);
+
+        // 4. Calculate Course Handicap (Rule 6.1a)
+        // CH = Handicap Index * (Slope / 113) + (Course Rating - Par)
+        const unroundedCourseHcp = (cappedIndex * (currentSlope / 113.0)) + (currentCourseRating - currentPar);
+        const courseHandicap = Math.round(unroundedCourseHcp);
+
+        // 5. Calculate Playing Handicap (Rule 6.2a)
+        // PH = Course Handicap * Allowance %
+        const unroundedPlayingHcp = courseHandicap * currentAllowance;
+        const playingHandicap = Math.round(unroundedPlayingHcp);
+
+        // 6. Target Score and Net Score
+        const targetScore = currentPar + courseHandicap;
+        const netScore = currentScore - playingHandicap;
+
+        // Store into global lastWHS state
+        lastWHS = {
+            handicapIndex: cappedIndex,
+            uncappedIndex: uncappedIndex,
+            avgCounted: avgCounted,
+            usedCount: usedCount,
+            totalRounds: totalRounds,
+            adjustment: adjustment,
+            capStatus: capStatus,
+            singleDifferential: singleDifferential,
+            courseHandicap: courseHandicap,
+            unroundedCourseHcp: unroundedCourseHcp,
+            playingHandicap: playingHandicap,
+            targetScore: targetScore,
+            netScore: netScore,
+            countedIndices: countedIndices,
+            ledgerWithDiffs: ledgerWithDiffs
+        };
+
+        // Update DOM Displays
+        updateHeroDisplays(capBadgeClass);
+        renderMathJaxDerivation();
+        updateNetDoubleBogeyWidget();
+        renderSlopeMatrixTable();
+        renderLedgerTable();
+        updateCharts();
+        updateRulesSlidingTable(totalRounds);
+        updatePrintCertificate();
+    }
+
+    // Update Hero Results Display
+    function updateHeroDisplays(capBadgeClass) {
+        document.getElementById('heroHandicapIndexDisplay').textContent = lastWHS.handicapIndex.toFixed(1);
+        document.getElementById('heroCourseHandicapDisplay').textContent = lastWHS.courseHandicap;
+        document.getElementById('heroDifferentialDisplay').textContent = lastWHS.singleDifferential.toFixed(1);
+        document.getElementById('heroPlayingHandicapDisplay').textContent = lastWHS.playingHandicap;
+        document.getElementById('heroTargetScoreDisplay').textContent = lastWHS.targetScore;
+        document.getElementById('heroNetScoreDisplay').textContent = lastWHS.netScore;
+
+        const badge = document.getElementById('capStatusBadge');
+        badge.textContent = lastWHS.capStatus;
+        badge.className = `inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold border ${capBadgeClass}`;
+
+        document.getElementById('indexDerivationSummary').textContent = 
+            `Average of Lowest ${lastWHS.usedCount} of ${lastWHS.totalRounds} Rounds: ${lastWHS.avgCounted.toFixed(2)}`;
+        
+        document.getElementById('heroCourseCalcSummary').textContent = 
+            `Slope ${currentSlope} \u2022 Rating ${currentCourseRating.toFixed(1)} \u2022 Par ${currentPar}`;
+
+        document.getElementById('countedRoundsSummaryText').textContent = 
+            `${lastWHS.usedCount} of ${lastWHS.totalRounds} rounds counted in emerald green`;
+        document.getElementById('lowHiSummaryText').textContent = `Low HI: ${currentLowHi.toFixed(1)}`;
+    }
+
+    // Render Step-by-Step Mathematical Derivation using MathJax
+    function renderMathJaxDerivation() {
+        const container = document.getElementById('mathJaxDerivationBlock');
+        if (!container) return;
+
+        const slopeRatio = (113.0 / currentSlope).toFixed(4);
+        const scoreDiffInside = (currentScore - currentCourseRating - currentPcc).toFixed(1);
+        const unroundedDiff = ((113.0 / currentSlope) * (currentScore - currentCourseRating - currentPcc)).toFixed(3);
+
+        const slopeMultiplier = (currentSlope / 113.0).toFixed(4);
+        const crMinusPar = (currentCourseRating - currentPar).toFixed(1);
+        const allowancePct = Math.round(currentAllowance * 100);
+
+        const html = `
+            <div class="space-y-4">
+                <div>
+                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400 block mb-1">1. Score Differential Formula (Rule 5.1a):</span>
+                    <div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 text-center">
+                        $$\\text{Differential} = \\frac{113}{\\text{Slope}} \\times (\\text{Adjusted Score} - \\text{Course Rating} - \\text{PCC})$$
+                        $$\\text{Differential} = \\frac{113}{${currentSlope}} \\times (${currentScore} - ${currentCourseRating.toFixed(1)} - ${currentPcc.toFixed(1)}) = ${slopeRatio} \\times ${scoreDiffInside} = ${unroundedDiff} \\to \\mathbf{${lastWHS.singleDifferential.toFixed(1)}}$$
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400 block mb-1">2. Handicap Index Calculation (Rule 5.2a):</span>
+                    <div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 text-center">
+                        $$\\text{Handicap Index} = \\frac{\\sum \\text{Lowest ${lastWHS.usedCount} Differentials}}{${lastWHS.usedCount}} = \\frac{${(lastWHS.avgCounted * lastWHS.usedCount).toFixed(1)}}{${lastWHS.usedCount}} = ${lastWHS.avgCounted.toFixed(2)} \\to \\mathbf{${lastWHS.uncappedIndex.toFixed(1)}}$$
+                        ${lastWHS.uncappedIndex !== lastWHS.handicapIndex ? `$$\\text{After Cap Safeguards (Low HI = ${currentLowHi.toFixed(1)}): } \\mathbf{${lastWHS.handicapIndex.toFixed(1)}}$$` : ''}
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400 block mb-1">3. Course Handicap Calculation (Rule 6.1a):</span>
+                    <div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 text-center">
+                        $$\\text{Course Handicap} = \\text{Handicap Index} \\times \\left(\\frac{\\text{Slope}}{113}\\right) + (\\text{Course Rating} - \\text{Par})$$
+                        $$\\text{Course Handicap} = ${lastWHS.handicapIndex.toFixed(1)} \\times \\left(\\frac{${currentSlope}}{113}\\right) + (${currentCourseRating.toFixed(1)} - ${currentPar}) = (${lastWHS.handicapIndex.toFixed(1)} \\times ${slopeMultiplier}) + (${crMinusPar}) = ${lastWHS.unroundedCourseHcp.toFixed(2)} \\to \\mathbf{${lastWHS.courseHandicap}}$$
+                    </div>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold text-brand-600 dark:text-brand-400 block mb-1">4. Playing Handicap Calculation (Rule 6.2a):</span>
+                    <div class="p-2 bg-white dark:bg-slate-900 rounded border border-slate-200 dark:border-slate-800 text-center">
+                        $$\\text{Playing Handicap} = \\text{Course Handicap} \\times \\text{Allowance} = ${lastWHS.courseHandicap} \\times ${allowancePct}\\% = ${(lastWHS.courseHandicap * currentAllowance).toFixed(2)} \\to \\mathbf{${lastWHS.playingHandicap}}$$
+                    </div>
+                </div>
+            </div>
+        `;
+
+        container.innerHTML = html;
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise([container]).catch(err => console.log('MathJax typeset error:', err));
+        }
+    }
+
+    // Net Double Bogey Interactive Solver
+    function updateNetDoubleBogeyWidget() {
+        const par = parseInt(document.getElementById('ndbHolePar').value) || 4;
+        const strokeIndex = parseInt(document.getElementById('ndbStrokeIndex').value) || 7;
+        const ch = lastWHS.courseHandicap !== undefined ? lastWHS.courseHandicap : 16;
+
+        // Calculate strokes received on this hole
+        let strokesReceived = 0;
+        if (ch > 0) {
+            strokesReceived = Math.floor(ch / 18);
+            const remainder = ch % 18;
+            if (strokeIndex <= remainder) {
+                strokesReceived += 1;
+            }
+        } else if (ch < 0) {
+            // Plus handicap gives strokes back on hardest holes
+            const plusCh = Math.abs(ch);
+            const giveBackRemainder = plusCh % 18;
+            if (strokeIndex > (18 - giveBackRemainder)) {
+                strokesReceived -= 1;
+            }
+        }
+
+        const maxScore = par + 2 + strokesReceived;
+        document.getElementById('ndbResultDisplay').textContent = `${maxScore} Strokes`;
+        
+        const strokeWord = strokesReceived === 1 ? "stroke" : "strokes";
+        document.getElementById('ndbStrokesAllocatedDisplay').textContent = 
+            `Par ${par} + 2 (double bogey) + ${strokesReceived} ${strokeWord} allocated (CH: ${ch}, SI: ${strokeIndex})`;
+    }
+
+    // Render Course Handicap Matrix across Slopes
+    function renderSlopeMatrixTable() {
+        const tbody = document.getElementById('slopeMatrixBody');
+        if (!tbody) return;
+
+        const slopes = [110, 113, 118, 122, 125, 128, 132, 135, 140, 145, 150];
+        document.getElementById('matrixActiveHi').textContent = lastWHS.handicapIndex.toFixed(1);
+
+        let rowsHtml = '';
+        slopes.forEach(s => {
+            const isCurrent = (s === currentSlope);
+            const chExact = (lastWHS.handicapIndex * (s / 113.0)) + (currentCourseRating - currentPar);
+            const ch = Math.round(chExact);
+            const ph = Math.round(ch * currentAllowance);
+            const target = currentPar + ch;
+
+            let difficultyLabel = "Moderate";
+            if (s <= 113) difficultyLabel = "Standard / Moderate";
+            else if (s <= 125) difficultyLabel = "Challenging";
+            else if (s <= 135) difficultyLabel = "Difficult";
+            else difficultyLabel = "Championship";
+
+            const rowClass = isCurrent 
+                ? "bg-brand-50/80 dark:bg-brand-950/40 font-bold border-l-4 border-brand-500" 
+                : "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+
+            rowsHtml += `
+                <tr class="${rowClass}">
+                    <td class="px-3 py-2.5">${s} ${isCurrent ? '<span class="text-[10px] text-brand-600 dark:text-brand-400 font-bold">(Active)</span>' : ''}</td>
+                    <td class="px-3 py-2.5 text-slate-500 dark:text-slate-400">${difficultyLabel}</td>
+                    <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">${ch}</td>
+                    <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-bold">${ph}</td>
+                    <td class="px-3 py-2.5">${target}</td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rowsHtml;
+    }
+
+    // Render 20-Round Ledger Table with Emerald Highlighting for Best 8 Rounds
+    function renderLedgerTable() {
+        const tbody = document.getElementById('ledgerTableBody');
+        if (!tbody) return;
+
+        let rowsHtml = '';
+        lastWHS.ledgerWithDiffs.forEach((r, idx) => {
+            const isCounted = lastWHS.countedIndices.has(idx);
+            const rowClass = isCounted 
+                ? "counted-round-row font-semibold text-emerald-950 dark:text-emerald-100" 
+                : "hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-700 dark:text-slate-300";
+
+            const badgeHtml = isCounted
+                ? `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-600 text-white shadow-sm">&check; Counted</span>`
+                : `<span class="text-[10px] text-slate-400">Uncounted</span>`;
+
+            rowsHtml += `
+                <tr class="${rowClass}">
+                    <td class="px-3 py-2.5 text-center font-bold">${idx + 1}</td>
+                    <td class="px-3 py-2.5 whitespace-nowrap text-xs">${r.date}</td>
+                    <td class="px-3 py-2.5 font-sans font-medium text-xs">${r.course}</td>
+                    <td class="px-3 py-2.5 text-center font-bold text-xs">${r.score}</td>
+                    <td class="px-3 py-2.5 text-center text-xs text-slate-500 dark:text-slate-400">${r.rating.toFixed(1)} / ${r.slope}</td>
+                    <td class="px-3 py-2.5 text-center text-xs">${r.pcc > 0 ? '+' + r.pcc.toFixed(1) : (r.pcc || 0.0).toFixed(1)}</td>
+                    <td class="px-3 py-2.5 text-center font-bold text-sm ${isCounted ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}">${r.differential.toFixed(1)}</td>
+                    <td class="px-3 py-2.5 text-center">${badgeHtml}</td>
+                    <td class="px-3 py-2.5 text-center">
+                        <button type="button" onclick="deleteRound(${idx})" class="text-rose-500 hover:text-rose-700 text-xs font-bold transition" title="Delete Round">&times;</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        tbody.innerHTML = rowsHtml;
+        document.getElementById('ledgerRoundCountDisplay').textContent = lastWHS.totalRounds;
+        document.getElementById('ledgerCountedDisplay').textContent = lastWHS.usedCount;
+    }
+
+    // Chart.js Visualizations
+    function updateCharts() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        // 1. Trajectory Line Chart (Rolling Index progression over the 20 rounds)
+        const trajectoryCtx = document.getElementById('trajectoryChart');
+        if (trajectoryCtx) {
+            const labels = [];
+            const dataIndex = [];
+            const dataLowHi = [];
+
+            // Compute rolling index up to each round
+            for (let i = 0; i < lastWHS.ledgerWithDiffs.length; i++) {
+                labels.push(`R${i + 1}`);
+                const slice = lastWHS.ledgerWithDiffs.slice(0, i + 1);
+                const params = getSlidingScaleParameters(slice.length);
+                const sorted = [...slice].sort((a, b) => a.differential - b.differential);
+                let sum = 0;
+                for (let k = 0; k < params.used && k < sorted.length; k++) {
+                    sum += sorted[k].differential;
+                }
+                const rolling = params.used > 0 ? (sum / params.used) + params.adjustment : 14.2;
+                dataIndex.push(Math.round(rolling * 10) / 10);
+                dataLowHi.push(currentLowHi);
+            }
+
+            document.getElementById('chartCurrentHi').textContent = lastWHS.handicapIndex.toFixed(1);
+
+            if (trajectoryChart) trajectoryChart.destroy();
+            trajectoryChart = new Chart(trajectoryCtx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Handicap Index',
+                            data: dataIndex,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.3,
+                            pointBackgroundColor: '#10b981',
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Low HI (Anchor)',
+                            data: dataLowHi,
+                            borderColor: '#f59e0b',
+                            borderWidth: 1.5,
+                            borderDash: [4, 4],
+                            fill: false,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: textColor, font: { size: 10, family: 'Inter' } } }
+                    },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // 2. Differential Distribution Bar Chart
+        const distCtx = document.getElementById('distributionChart');
+        if (distCtx) {
+            const barLabels = [];
+            const barData = [];
+            const barColors = [];
+
+            lastWHS.ledgerWithDiffs.forEach((r, idx) => {
+                barLabels.push(`R${idx + 1}`);
+                barData.push(r.differential);
+                const isCounted = lastWHS.countedIndices.has(idx);
+                barColors.push(isCounted ? '#10b981' : (isDark ? '#475569' : '#cbd5e1'));
+            });
+
+            document.getElementById('chartAvgBest8').textContent = lastWHS.avgCounted.toFixed(1);
+
+            if (distributionChart) distributionChart.destroy();
+            distributionChart = new Chart(distCtx, {
+                type: 'bar',
+                data: {
+                    labels: barLabels,
+                    datasets: [
+                        {
+                            label: 'Score Differential',
+                            data: barData,
+                            backgroundColor: barColors,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { color: textColor, font: { size: 9 } } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+    }
+
+    // Highlight active row in WHS Sliding Scale Table
+    function updateRulesSlidingTable(totalRounds) {
+        // Clear all highlighted rows
+        for (let i = 3; i <= 20; i++) {
+            const row = document.getElementById('scaleRow_' + i);
+            if (row) {
+                row.className = "hover:bg-slate-50 dark:hover:bg-slate-800/50";
+                const statusCol = row.querySelector('.status-col');
+                if (statusCol) {
+                    statusCol.textContent = "-";
+                    statusCol.className = "px-3 py-2 text-[11px] status-col text-slate-400";
+                }
+            }
+        }
+
+        const params = getSlidingScaleParameters(totalRounds);
+        if (params.rowId) {
+            const activeRow = document.getElementById(params.rowId);
+            if (activeRow) {
+                activeRow.className = "counted-round-row font-bold";
+                const statusCol = activeRow.querySelector('.status-col');
+                if (statusCol) {
+                    statusCol.textContent = `\u2713 Current Active (${totalRounds} Rounds)`;
+                    statusCol.className = "px-3 py-2 text-[11px] status-col text-emerald-600 dark:text-emerald-400 font-bold";
+                }
+            }
+        }
+    }
+
+    // Update Printable Certificate
+    function updatePrintCertificate() {
+        document.getElementById('certGolferName').textContent = currentGolferName;
+        document.getElementById('certHomeClub').textContent = currentHomeClub;
+        document.getElementById('certHandicapIndex').textContent = lastWHS.handicapIndex !== undefined ? lastWHS.handicapIndex.toFixed(1) : "14.2";
+        document.getElementById('certLowHi').textContent = currentLowHi.toFixed(1);
+        document.getElementById('certLookupHi').textContent = lastWHS.handicapIndex !== undefined ? lastWHS.handicapIndex.toFixed(1) : "14.2";
+
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('certDateDisplay').textContent = today;
+
+        // Render Certificate Table
+        const certTbody = document.getElementById('certTableBody');
+        if (certTbody && lastWHS.ledgerWithDiffs) {
+            let html = '';
+            lastWHS.ledgerWithDiffs.forEach((r, idx) => {
+                const isCounted = lastWHS.countedIndices.has(idx);
+                html += `
+                    <tr class="${isCounted ? 'bg-emerald-50/70 font-semibold' : ''}">
+                        <td class="px-2.5 py-1 text-center font-bold">${idx + 1}</td>
+                        <td class="px-2.5 py-1">${r.date}</td>
+                        <td class="px-2.5 py-1 font-sans">${r.course}</td>
+                        <td class="px-2.5 py-1 text-center font-bold">${r.score}</td>
+                        <td class="px-2.5 py-1 text-center">${r.rating.toFixed(1)}</td>
+                        <td class="px-2.5 py-1 text-center">${r.slope}</td>
+                        <td class="px-2.5 py-1 text-center">${r.pcc || 0.0}</td>
+                        <td class="px-2.5 py-1 text-center font-bold ${isCounted ? 'text-emerald-700' : ''}">${r.differential.toFixed(1)}</td>
+                        <td class="px-2.5 py-1 text-center">${isCounted ? '<span class="text-emerald-700 font-bold">\u2713 Counted</span>' : 'Uncounted'}</td>
+                    </tr>
+                `;
+            });
+            certTbody.innerHTML = html;
+        }
+
+        // Render Certificate Slope Grid
+        const slopeGrid = document.getElementById('certSlopeGrid');
+        if (slopeGrid) {
+            const certSlopes = [110, 113, 118, 122, 128, 133, 138, 142];
+            let gridHtml = '';
+            certSlopes.forEach(s => {
+                const ch = Math.round((lastWHS.handicapIndex * (s / 113.0)) + (currentCourseRating - currentPar));
+                gridHtml += `
+                    <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                        <span class="text-[10px] text-slate-500 block">Slope ${s}</span>
+                        <span class="text-base font-bold text-emerald-800">CH ${ch}</span>
+                    </div>
+                `;
+            });
+            slopeGrid.innerHTML = gridHtml;
+        }
+    }
+
+    // --- Ledger CRUD Controls ---
+    function toggleAddRoundForm() {
+        const form = document.getElementById('addRoundFormContainer');
+        form.classList.toggle('hidden');
+    }
+
+    function submitNewRound() {
+        const course = document.getElementById('newRoundCourse').value.trim() || "Pine Valley (Blue)";
+        const date = document.getElementById('newRoundDate').value || new Date().toISOString().split('T')[0];
+        const score = parseFloat(document.getElementById('newRoundScore').value) || 84;
+        const rating = parseFloat(document.getElementById('newRoundRating').value) || 71.4;
+        const slope = parseFloat(document.getElementById('newRoundSlope').value) || 128;
+
+        const newRound = {
+            id: Date.now(),
+            date: date,
+            course: course,
+            score: score,
+            rating: rating,
+            slope: slope,
+            pcc: 0.0
+        };
+
+        // Add to beginning of ledger (latest round first)
+        roundsLedger.unshift(newRound);
+        // Maintain maximum 20 rounds
+        if (roundsLedger.length > 20) {
+            roundsLedger.pop();
+        }
+
+        toggleAddRoundForm();
+        calculateWHS();
+        showToast("New round recorded! Ledger updated.");
+    }
+
+    function deleteRound(index) {
+        if (roundsLedger.length <= 3) {
+            showToast("Minimum 3 rounds required for a World Handicap Index.");
+            return;
+        }
+        roundsLedger.splice(index, 1);
+        calculateWHS();
+        showToast("Round deleted.");
+    }
+
+    function clearLedger() {
+        if (confirm("Clear all rounds from the ledger? (A minimum of 3 rounds is required to compute a handicap)")) {
+            roundsLedger = [
+                { id: 1, date: "2026-10-12", course: "Pine Valley (Blue)", score: 84, rating: 71.4, slope: 128, pcc: 0.0 },
+                { id: 2, date: "2026-10-05", course: "Merion East (White)", score: 86, rating: 72.1, slope: 132, pcc: 0.0 },
+                { id: 3, date: "2026-09-28", course: "Oakmont CC (Tee 2)", score: 88, rating: 73.0, slope: 136, pcc: 0.0 }
+            ];
+            calculateWHS();
+            showToast("Ledger reset to minimum 3 rounds.");
+        }
+    }
+
+    function loadDefaultLedger() {
+        roundsLedger = JSON.parse(JSON.stringify(DEFAULT_20_ROUNDS));
+    }
+
+    // Export Ledger to CSV
+    function exportLedgerCsv() {
+        let csv = "Round,Date,Course,Gross Score,Course Rating,Slope Rating,PCC,Differential,Status\n";
+        lastWHS.ledgerWithDiffs.forEach((r, idx) => {
+            const isCounted = lastWHS.countedIndices.has(idx) ? "Counted" : "Uncounted";
+            csv += `${idx + 1},"${r.date}","${r.course.replace(/"/g, '""')}",${r.score},${r.rating},${r.slope},${r.pcc || 0.0},${r.differential},${isCounted}\n`;
+        });
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `WHS_Scorecard_Ledger_${currentGolferName.replace(/\s+/g, '_')}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("Scoring ledger exported to CSV!");
+    }
+
+    // Golfer Preset Configurations
+    function loadGolferPreset() {
+        const val = document.getElementById('golferPresetSelect').value;
+        if (val === 'custom') return;
+
+        if (val === 'preset_scratch') {
+            document.getElementById('golferNameInput').value = "Jordan Spieth";
+            document.getElementById('homeClubInput').value = "Dallas National GC";
+            document.getElementById('lowIndexInput').value = "0.2";
+            document.getElementById('scoreInput').value = "72";
+            document.getElementById('ratingInput').value = "72.4";
+            document.getElementById('slopeInput').value = "135";
+            document.getElementById('parInput').value = "72";
+            // Populate scratch rounds
+            roundsLedger = DEFAULT_20_ROUNDS.map(r => ({
+                ...r,
+                score: Math.round(70 + Math.random() * 4),
+                rating: 72.0,
+                slope: 135
+            }));
+        } else if (val === 'preset_single') {
+            document.getElementById('golferNameInput').value = "Chris Evans";
+            document.getElementById('homeClubInput').value = "Olympic Club";
+            document.getElementById('lowIndexInput').value = "4.8";
+            document.getElementById('scoreInput').value = "77";
+            document.getElementById('ratingInput').value = "71.8";
+            document.getElementById('slopeInput').value = "130";
+            document.getElementById('parInput').value = "72";
+            roundsLedger = DEFAULT_20_ROUNDS.map(r => ({
+                ...r,
+                score: Math.round(75 + Math.random() * 6),
+                rating: 71.8,
+                slope: 130
+            }));
+        } else if (val === 'preset_mid') {
+            document.getElementById('golferNameInput').value = "Alex Morgan";
+            document.getElementById('homeClubInput').value = "Pine Valley Golf Club";
+            document.getElementById('lowIndexInput').value = "13.5";
+            document.getElementById('scoreInput').value = "84";
+            document.getElementById('ratingInput').value = "71.4";
+            document.getElementById('slopeInput').value = "128";
+            document.getElementById('parInput').value = "72";
+            loadDefaultLedger();
+        } else if (val === 'preset_high') {
+            document.getElementById('golferNameInput').value = "David Miller";
+            document.getElementById('homeClubInput').value = "Torrey Pines South";
+            document.getElementById('lowIndexInput').value = "25.0";
+            document.getElementById('scoreInput').value = "98";
+            document.getElementById('ratingInput').value = "70.5";
+            document.getElementById('slopeInput').value = "120";
+            document.getElementById('parInput').value = "72";
+            roundsLedger = DEFAULT_20_ROUNDS.map(r => ({
+                ...r,
+                score: Math.round(96 + Math.random() * 8),
+                rating: 70.5,
+                slope: 120
+            }));
+        } else if (val === 'preset_softcap') {
+            // Demonstrate Soft Cap: Low HI = 10.0, recent rounds inflate average to 16.0
+            document.getElementById('golferNameInput').value = "Marcus Vance";
+            document.getElementById('homeClubInput').value = "Oakmont CC";
+            document.getElementById('lowIndexInput').value = "10.0";
+            document.getElementById('scoreInput').value = "89";
+            document.getElementById('ratingInput').value = "71.0";
+            document.getElementById('slopeInput').value = "125";
+            document.getElementById('parInput').value = "72";
+            // High differentials around 16.0
+            roundsLedger = DEFAULT_20_ROUNDS.map(r => ({
+                ...r,
+                score: Math.round(88 + Math.random() * 5),
+                rating: 71.0,
+                slope: 125
+            }));
+        } else if (val === 'preset_esr') {
+            // Exceptional Score breakthrough: Mid handicapper posts a 74
+            document.getElementById('golferNameInput').value = "Sam Taylor";
+            document.getElementById('homeClubInput').value = "Merion Golf Club";
+            document.getElementById('lowIndexInput').value = "12.0";
+            document.getElementById('scoreInput').value = "74";
+            document.getElementById('ratingInput').value = "71.4";
+            document.getElementById('slopeInput').value = "128";
+            document.getElementById('parInput').value = "72";
+            loadDefaultLedger();
+            // Inject breakthrough score in position 1
+            roundsLedger[0] = { id: 1, date: "2026-10-15", course: "Pine Valley (Blue)", score: 74, rating: 71.4, slope: 128, pcc: 0.0 };
+        }
+
+        calculateWHS();
+        showToast("Profile loaded successfully.");
+    }
+
+    function resetWHSDefaults() {
+        document.getElementById('golferPresetSelect').value = 'preset_mid';
+        loadGolferPreset();
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabKey) {
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(p => p.classList.remove('active'));
+
+        const targetPanel = document.getElementById('tab-' + tabKey);
+        if (targetPanel) targetPanel.classList.add('active');
+
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activeBtn = document.getElementById('tabBtn_' + tabKey);
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabKey === 'ledger') {
+            setTimeout(() => updateCharts(), 150);
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!ans) return;
+
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            if (icon) icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.classList.remove('rotate-180');
+        }
+    }
+
+    // --- Lead Generation Box ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        const btn = document.getElementById('leadSubmitBtn');
+        const msg = document.getElementById('leadSuccessMsg');
+        btn.disabled = true;
+        btn.textContent = "Dispatched...";
+        setTimeout(() => {
+            msg.classList.remove('hidden');
+            btn.textContent = "Handbook Downloaded";
+        }, 600);
+    }
+
+    // --- Copy & Share Helpers ---
+    function copyFormattedSummary() {
+        const text = `CalcWorld Official WHS Handicap Summary:
+Golfer: ${currentGolferName} (${currentHomeClub})
+Official Handicap Index: ${lastWHS.handicapIndex.toFixed(1)} (${lastWHS.capStatus})
+Course Handicap: ${lastWHS.courseHandicap} (Slope ${currentSlope}, Rating ${currentCourseRating.toFixed(1)}, Par ${currentPar})
+Playing Handicap (95%): ${lastWHS.playingHandicap}
+Single Round Differential: ${lastWHS.singleDifferential.toFixed(1)} (Score: ${currentScore})
+20-Round Ledger: Lowest 8 Counted Average = ${lastWHS.avgCounted.toFixed(2)}
+Calculated via CalcWorld Golf Handicap Calculator: https://calcworld.net/other/golf-handicap-calculator`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Handicap summary copied to clipboard!");
+        }).catch(err => {
+            console.error('Copy failed', err);
+        });
+    }
+
+    function copyShareUrl() {
+        const params = new URLSearchParams();
+        params.set('score', currentScore);
+        params.set('rating', currentCourseRating);
+        params.set('slope', currentSlope);
+        params.set('par', currentPar);
+        params.set('lowhi', currentLowHi);
+        params.set('golfer', currentGolferName);
+
+        const shareUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast("Share link copied to clipboard!");
+        }).catch(() => {
+            showToast("Failed to copy share link.");
+        });
+    }
+
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('score')) document.getElementById('scoreInput').value = params.get('score');
+        if (params.has('rating')) document.getElementById('ratingInput').value = params.get('rating');
+        if (params.has('slope')) document.getElementById('slopeInput').value = params.get('slope');
+        if (params.has('par')) document.getElementById('parInput').value = params.get('par');
+        if (params.has('lowhi')) document.getElementById('lowIndexInput').value = params.get('lowhi');
+        if (params.has('golfer')) document.getElementById('golferNameInput').value = params.get('golfer');
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    // --- Dark Mode Switcher ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        updateCharts();
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

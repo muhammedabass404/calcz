@@ -1,0 +1,2537 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Zone Calculator &amp; Global Meeting Planner | CalcWorld</title>
+    <meta name="description" content="Free scientific time zone calculator and multi-city meeting planner. Convert time across 50+ world cities with dynamic DST awareness, interactive 24-hour horizontal scrubber bar, overlapping business hours matrix, and calendar invites.">
+    <link rel="canonical" href="https://calcworld.net/calculators/time-zone-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax CDN for Mathematical & Horological Formulations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Timeline Scrubber Styling */
+        .scrubber-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 12px;
+            border-radius: 6px;
+            background: linear-gradient(to right,
+                #1e1b4b 0%, #1e293b 20%,
+                #d97706 25%, #f59e0b 35%,
+                #38bdf8 45%, #60a5fa 65%,
+                #d97706 75%, #a855f7 85%,
+                #1e1b4b 100%
+            );
+            outline: none;
+            cursor: pointer;
+            position: relative;
+            z-index: 10;
+        }
+        .scrubber-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #6366f1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+            cursor: grab;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .scrubber-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 6px 14px rgba(99, 102, 241, 0.5);
+        }
+        .scrubber-slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.22);
+        }
+        .scrubber-slider::-moz-range-thumb {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 3px solid #6366f1;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+            cursor: grab;
+        }
+
+        /* Toast notification */
+        .toast-notify {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+            border: 1px solid #334155;
+            display: flex;
+            items-center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            transform: translateY(150%);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-out;
+            pointer-events: none;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Pulse animation for live clock */
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+        .live-dot {
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Time Zone Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Time Zone Calculator & Multi-City Meeting Planner",
+          "url": "https://calcworld.net/other/time-zone-calculator",
+          "applicationCategory": "ProductivityApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate time conversions across 50+ world cities with dynamic DST adaptation, 24-hour visual scrubber bar, overlapping business hours matrix, and calendar event generator."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the difference between Universal Coordinated Time (UTC) and Greenwich Mean Time (GMT)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Greenwich Mean Time (GMT) is an astronomical time standard based on the mean solar time observed at the Royal Observatory in Greenwich, London. Universal Coordinated Time (UTC) is a high-precision atomic time standard computed by the Bureau International des Poids et Mesures (BIPM) using hundreds of primary atomic clocks worldwide. UTC serves as the civil time basis for all modern time zones, while GMT is legally an identical time zone offset (UTC+00:00) during winter in the UK."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the Prime Meridian define world time zones?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Prime Meridian at 0 degrees longitude, established at the 1884 International Meridian Conference in Washington D.C., serves as the reference origin for all terrestrial longitudes and time zones. Because Earth completes a 360-degree rotation in 24 hours, each 15 degrees of longitude east or west corresponds to a standard time difference of exactly one hour."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does the International Date Line (IDL) deviate from the 180th meridian?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The International Date Line lies approximately along the 180-degree meridian in the Pacific Ocean, where crossing west advances the calendar by one day and crossing east moves it back one day. It zig-zags around territorial borders—such as the eastern Aleutian Islands in Alaska and the Line Islands in Kiribati—to allow sovereign island nations to share the same calendar day with their main political and trade partners."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the calculator dynamically handle Daylight Saving Time (DST)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The calculator accesses the official IANA Time Zone Database embedded in modern browser runtimes via the Intl.DateTimeFormat API. It evaluates the exact geographical jurisdiction and calendar date selected, automatically determining whether daylight saving time or standard time applies, and adjusting UTC offsets by plus or minus one hour accordingly."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Who was Sir Sandford Fleming, and how did he invent standard time?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Sir Sandford Fleming was a Canadian railway engineer and inventor who proposed a worldwide system of 24 standard time zones in 1879 after missing a train due to confusing local solar time tables. His advocacy directly led to the convening of the 1884 International Meridian Conference, establishing the modern global timekeeping framework."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are normal working hours and shoulder hours in global meeting planning?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In international business scheduling, normal working hours are defined as 9:00 AM to 5:00 PM (09:00 - 17:00 local time). Shoulder hours represent acceptable early morning (7:00 AM to 9:00 AM) or early evening (5:00 PM to 8:00 PM) windows for urgent cross-timezone alignment. Hours between 8:00 PM and 7:00 AM are classified as night sleep hours and should be avoided."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why do some territories observe fractional 30-minute and 45-minute offsets?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Several countries established non-hourly offsets to align civil time more accurately with solar noon across their landmass or for regional identity. Examples include India (UTC+05:30), Iran (UTC+03:30), Afghanistan (UTC+04:30), Myanmar (UTC+06:30), South Australia (UTC+09:30/10:30), Newfoundland (UTC-03:30/02:30), and Nepal (UTC+05:45)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the role of leap seconds and atomic timekeeping at the BIPM and USNO?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Bureau International des Poids et Mesures (BIPM) coordinates International Atomic Time (TAI) from over 400 atomic clocks worldwide. Universal Coordinated Time (UTC) balances this uniform atomic standard with Earth's irregular astronomical rotation (UT1). The International Earth Rotation and Reference Systems Service (IERS) inserts occasional leap seconds to keep UTC within 0.9 seconds of UT1, monitored by the US Naval Observatory (USNO) and NIST."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Time Zone Calculator &amp; Global Meeting Planner | CalcWorld">
+    <meta property="og:description" content="Free scientific time zone calculator and multi-city meeting planner. Convert time across 50+ world cities with dynamic DST awareness, interactive 24-hour horizontal scrubber bar, overlapping business hours matrix, and calendar invites.">
+    <meta property="og:url" content="https://calcworld.net/calculators/time-zone-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Time Zone Calculator &amp; Global Meeting Planner | CalcWorld">
+    <meta name="twitter:description" content="Free scientific time zone calculator and multi-city meeting planner. Convert time across 50+ world cities with dynamic DST awareness, interactive 24-hour horizontal scrubber bar, overlapping business hours matrix, and calendar invites.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Horological Engine:</strong> CalcWorld provides scientific time conversion and meeting scheduling tools 100% free with zero login. Please consider safelisting our domain to support continuous tool maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Time Zone Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Time Zone Calculator &amp; Meeting Planner</h1>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300/40">DST Dynamic</span>
+            </div>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-4xl">Convert local time across 50+ global hubs, track Daylight Saving Time adjustments dynamically, and discover optimal business meeting windows across international distributed teams.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Master Controller & Visual Scrubber Hero Panel -->
+        <div id="heroScrubberCard" class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 mb-8 no-print">
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1.5 bg-brand-50 dark:bg-brand-950/70 border border-brand-200 dark:border-brand-800/60 px-3 py-1.5 rounded-xl text-brand-700 dark:text-brand-300 text-xs font-bold">
+                        <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Base Reference City:</span>
+                        <select id="baseCitySelect" onchange="changeBaseCity(this.value)" class="bg-white dark:bg-slate-900 border border-brand-300 dark:border-brand-700 rounded-lg px-2 py-0.5 text-xs font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Date & Time Inputs -->
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="baseDateInput" onchange="onBaseDateChange(this.value)" class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-brand-500">
+                        <input type="time" id="baseTimeInput" onchange="onBaseTimeChange(this.value)" class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono focus:ring-1 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <!-- Toggles & Quick Actions -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <!-- Live Ticking Clock Toggle -->
+                    <button type="button" id="liveToggleBtn" onclick="toggleLiveClock()" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500 transition flex items-center gap-1.5">
+                        <span id="liveDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                        <span id="liveToggleText">Live Clock</span>
+                    </button>
+
+                    <!-- 12h / 24h Toggle -->
+                    <button type="button" id="timeFormatBtn" onclick="toggleTimeFormat()" class="px-3 py-1.5 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500 transition">
+                        Format: <span id="timeFormatLabel" class="font-bold text-brand-600 dark:text-brand-400">12-Hour</span>
+                    </button>
+
+                    <!-- Quick Shift Buttons -->
+                    <div class="inline-flex rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden text-xs">
+                        <button type="button" onclick="shiftTime(-60)" class="px-2 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 transition" title="Minus 1 Hour">-1h</button>
+                        <button type="button" onclick="shiftTime(60)" class="px-2 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-l border-slate-200 dark:border-slate-700 transition" title="Plus 1 Hour">+1h</button>
+                        <button type="button" onclick="shiftDays(-1)" class="px-2 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-l border-slate-200 dark:border-slate-700 transition" title="Previous Day">-1d</button>
+                        <button type="button" onclick="shiftDays(1)" class="px-2 py-1.5 bg-white dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border-l border-slate-200 dark:border-slate-700 transition" title="Next Day">+1d</button>
+                        <button type="button" onclick="resetToNow()" class="px-2.5 py-1.5 bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-400 font-bold border-l border-slate-200 dark:border-slate-700 hover:bg-brand-100 dark:hover:bg-brand-900 transition">Now</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 24-Hour Visual Horizontal Scrubber Track -->
+            <div class="pt-5">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                    <span class="flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-brand-500" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z"/></svg>
+                        <span>Interactive 24-Hour Timeline Scrubber:</span>
+                    </span>
+                    <span id="scrubberReadout" class="font-mono text-sm font-bold text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950/80 px-2.5 py-0.5 rounded-md border border-brand-200 dark:border-brand-800">
+                        12:00 PM (12:00)
+                    </span>
+                </div>
+
+                <div class="relative py-1">
+                    <input type="range" id="timeScrubber" min="0" max="1439" step="5" value="720" oninput="onScrubberInput(this.value)" class="scrubber-slider">
+                </div>
+
+                <!-- Hour Marks Grid -->
+                <div class="flex justify-between text-[11px] text-slate-400 dark:text-slate-500 font-mono mt-1 select-none">
+                    <span>00:00 (12 AM)</span>
+                    <span class="hidden sm:inline">03:00 (3 AM)</span>
+                    <span>06:00 (6 AM)</span>
+                    <span class="hidden sm:inline">09:00 (9 AM)</span>
+                    <span>12:00 (Noon)</span>
+                    <span class="hidden sm:inline">15:00 (3 PM)</span>
+                    <span>18:00 (6 PM)</span>
+                    <span class="hidden sm:inline">21:00 (9 PM)</span>
+                    <span>24:00 (Midnight)</span>
+                </div>
+
+                <!-- Daylight Legend Bar -->
+                <div class="flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-800 dark:bg-slate-700"></span> Night (00:00 - 06:00)</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Morning / Shoulder (06:00 - 09:00)</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Core Business (09:00 - 17:00)</span>
+                        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Evening / Shoulder (17:00 - 20:00)</span>
+                    </div>
+                    <span class="hidden md:inline font-mono text-[10px] text-slate-400">Drag scrubber slider to sync all clocks instantly</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Navigation Bar -->
+        <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 mb-6 no-print" id="tabButtons">
+            <nav class="flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('converter')" id="tabBtn_converter" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Multi-City Time Converter</span>
+                </button>
+                <button onclick="switchTab('scheduler')" id="tabBtn_scheduler" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <span>Global Meeting Scheduler</span>
+                </button>
+                <button onclick="switchTab('offsets')" id="tabBtn_offsets" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>World Time Zone Map &amp; Offsets</span>
+                </button>
+                <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Report &amp; Agenda</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- TAB 1: Multi-City Time Converter -->
+        <div id="tab-converter" class="tab-panel active space-y-6">
+            
+            <!-- City Search & Hubs Quick Bar -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+                    <div class="relative flex-grow max-w-xl">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                        </div>
+                        <input type="text" id="citySearchInput" oninput="onSearchCities(this.value)" placeholder="Search city or country (e.g. Tokyo, Berlin, Sydney, Singapore)..." class="w-full pl-9 pr-4 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        <div id="searchResultsDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-30 max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Populated on search -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Hubs Pills -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 text-xs">
+                        <span class="text-slate-400 text-[11px] whitespace-nowrap">Add Quick Hub:</span>
+                        <button type="button" onclick="addCityById('lon')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ London</button>
+                        <button type="button" onclick="addCityById('tok')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ Tokyo</button>
+                        <button type="button" onclick="addCityById('dxb')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ Dubai</button>
+                        <button type="button" onclick="addCityById('sin')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ Singapore</button>
+                        <button type="button" onclick="addCityById('syd')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ Sydney</button>
+                        <button type="button" onclick="addCityById('sfo')" class="px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-700 dark:text-slate-300 transition text-[11px] font-medium">+ San Francisco</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic City Cards Grid -->
+            <div id="cityCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                <!-- Rendered dynamically by JavaScript -->
+            </div>
+
+            <!-- Action Bar -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 text-xs text-slate-500 dark:text-slate-400">
+                <span id="activeCitiesCount">Comparing 6 Global Hubs</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="resetDefaultCities()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 transition">Reset Cities</button>
+                    <button type="button" onclick="copyShareUrl()" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold transition flex items-center gap-1.5 shadow">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        <span>Share Configuration</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Global Meeting Scheduler -->
+        <div id="tab-scheduler" class="tab-panel space-y-6">
+            
+            <!-- Meeting Planner Configuration Bar -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>Cross-Border Meeting Synchronization</span>
+                            <span class="text-xs font-normal px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200">Business Hours Overlap</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Identify optimal overlap windows where all participants fall within standard working or shoulder hours.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-3 text-xs">
+                        <div class="flex items-center gap-1.5">
+                            <label for="meetingTitleInput" class="text-slate-500 font-medium">Title:</label>
+                            <input type="text" id="meetingTitleInput" value="Global Team Sync &amp; Strategic Review" class="px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <label for="meetingDurationSelect" class="text-slate-500 font-medium">Duration:</label>
+                            <select id="meetingDurationSelect" onchange="updateScheduler()" class="px-2 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                <option value="30">30 Minutes</option>
+                                <option value="45">45 Minutes</option>
+                                <option value="60" selected>1 Hour</option>
+                                <option value="90">1.5 Hours</option>
+                                <option value="120">2 Hours</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top 3 Recommended Meeting Slots Grid -->
+                <div class="mb-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-2.5">Top Recommended Meeting Windows:</span>
+                    <div id="recommendedSlotsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
+                <!-- Visual 24-Hour Overlapping Matrix -->
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        <span>Multi-City 24-Hour Timeline Matrix:</span>
+                        <div class="flex items-center gap-3 text-[11px]">
+                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500"></span> Working Hours (9-17)</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400"></span> Shoulder Hours (7-9, 17-20)</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-rose-500"></span> Sleep / Night (20-7)</span>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto pb-2">
+                        <div id="timelineMatrixContainer" class="min-w-[760px] space-y-2">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart.js Working Hours Span Visualizer -->
+                <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Working Hours Overlap Density Chart</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Comparing 09:00 - 17:00 local business hours mapped to base reference time.</p>
+                        </div>
+                    </div>
+                    <div class="relative h-56 w-full">
+                        <canvas id="businessHoursChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Meeting Invite Export & Calendar Actions -->
+                <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="copyMeetingInvite()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            <span>Copy Meeting Summary</span>
+                        </button>
+                        <button type="button" onclick="downloadIcsFile()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Download .ICS Calendar Event</span>
+                        </button>
+                    </div>
+                    <button type="button" onclick="switchTab('print'); window.print();" class="text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Executive Agenda</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TAB 3: World Time Zone Map & UTC Offsets Reference -->
+        <div id="tab-offsets" class="tab-panel space-y-6">
+            
+            <!-- Visual Time Zone Map Container -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="mb-4">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Earth's 24 Standard Longitudinal Zones</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Terrestrial time zones are organized around 15&deg; longitudinal increments relative to the Royal Observatory Greenwich Prime Meridian (0&deg;).</p>
+                </div>
+
+                <!-- SVG Visual Reference of Longitude Zones -->
+                <div class="bg-slate-900 rounded-xl p-4 text-white overflow-hidden shadow-inner">
+                    <svg viewBox="0 0 960 280" class="w-full h-auto" preserveAspectRatio="xMidYMid meet">
+                        <defs>
+                            <linearGradient id="meridianGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.2"/>
+                                <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.8"/>
+                                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.2"/>
+                            </linearGradient>
+                        </defs>
+                        <!-- Background Grid -->
+                        <rect x="0" y="0" width="960" height="280" fill="#0f172a"/>
+                        <!-- Equator -->
+                        <line x1="0" y1="140" x2="960" y2="140" stroke="#334155" stroke-width="1" stroke-dasharray="4,4"/>
+                        <text x="10" y="135" fill="#64748b" font-size="10" font-family="Inter, sans-serif">Equator (0° Latitude)</text>
+
+                        <!-- Prime Meridian (0°) at x=480 -->
+                        <line x1="480" y1="20" x2="480" y2="260" stroke="#6366f1" stroke-width="2.5"/>
+                        <rect x="445" y="6" width="70" height="18" rx="4" fill="#6366f1"/>
+                        <text x="480" y="18" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle" font-family="Inter, sans-serif">PRIME MERIDIAN (0°)</text>
+
+                        <!-- International Date Line (180° W / 180° E) at x=40 and x=920 -->
+                        <line x1="40" y1="20" x2="40" y2="260" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3"/>
+                        <line x1="920" y1="20" x2="920" y2="260" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,3"/>
+                        <text x="40" y="18" fill="#ef4444" font-size="9" font-weight="bold" text-anchor="middle" font-family="Inter, sans-serif">IDL (180° W)</text>
+                        <text x="920" y="18" fill="#ef4444" font-size="9" font-weight="bold" text-anchor="middle" font-family="Inter, sans-serif">IDL (180° E)</text>
+
+                        <!-- Standard 15° Interval Lines & Hub Labels -->
+                        <!-- UTC-8 (PST, 120° W): x = 480 - 8*(440/12) = 480 - 293.3 = 186.7 -->
+                        <line x1="187" y1="30" x2="187" y2="250" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="187" cy="110" r="4" fill="#38bdf8"/>
+                        <text x="187" y="100" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Los Angeles (UTC-8)</text>
+
+                        <!-- UTC-5 (EST, 75° W): x = 480 - 5*(440/12) = 480 - 183.3 = 296.7 -->
+                        <line x1="297" y1="30" x2="297" y2="250" stroke="#1e293b" stroke-width="1"/>
+                        <circle cx="297" cy="105" r="4" fill="#38bdf8"/>
+                        <text x="297" y="95" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">New York (UTC-5)</text>
+
+                        <!-- UTC+0 (London, 0°): x = 480 -->
+                        <circle cx="480" cy="90" r="5" fill="#6366f1"/>
+                        <text x="480" y="80" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle" font-family="Inter, sans-serif">London (UTC+0)</text>
+
+                        <!-- UTC+1 (Paris/Berlin, 15° E): x = 480 + 36.7 = 516.7 -->
+                        <circle cx="517" cy="92" r="4" fill="#38bdf8"/>
+                        <text x="517" y="108" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Paris/Berlin (UTC+1)</text>
+
+                        <!-- UTC+4 (Dubai, 60° E): x = 480 + 4*36.7 = 626.7 -->
+                        <circle cx="627" cy="130" r="4" fill="#38bdf8"/>
+                        <text x="627" y="122" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Dubai (UTC+4)</text>
+
+                        <!-- UTC+8 (Singapore/HK/Beijing, 120° E): x = 480 + 8*36.7 = 773.3 -->
+                        <circle cx="773" cy="135" r="4" fill="#38bdf8"/>
+                        <text x="773" y="125" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Singapore/HK (UTC+8)</text>
+
+                        <!-- UTC+9 (Tokyo, 135° E): x = 480 + 9*36.7 = 810 -->
+                        <circle cx="810" cy="105" r="4" fill="#38bdf8"/>
+                        <text x="810" y="95" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Tokyo (UTC+9)</text>
+
+                        <!-- UTC+10 (Sydney, 150° E): x = 480 + 10*36.7 = 846.7 -->
+                        <circle cx="847" cy="180" r="4" fill="#38bdf8"/>
+                        <text x="847" y="172" fill="#cbd5e1" font-size="9" text-anchor="middle" font-family="Inter, sans-serif">Sydney (UTC+10)</text>
+
+                        <!-- Bottom Axis: UTC Offset scale -->
+                        <line x1="40" y1="245" x2="920" y2="245" stroke="#475569" stroke-width="1.5"/>
+                        <text x="40" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-12</text>
+                        <text x="113" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-10</text>
+                        <text x="187" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-8</text>
+                        <text x="260" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-6</text>
+                        <text x="333" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-4</text>
+                        <text x="407" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">-2</text>
+                        <text x="480" y="260" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle" font-family="monospace">UTC&plusmn;0</text>
+                        <text x="553" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+2</text>
+                        <text x="627" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+4</text>
+                        <text x="700" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+6</text>
+                        <text x="773" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+8</text>
+                        <text x="847" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+10</text>
+                        <text x="920" y="260" fill="#94a3b8" font-size="9" text-anchor="middle" font-family="monospace">+12</text>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Master Searchable Reference Table of UTC Offsets -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white">Master UTC Offset Reference Table (UTC-12 to UTC+14)</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Complete catalog of global civil time zones, military nautical designations, and daylight saving status.</p>
+                    </div>
+                    <div class="w-full sm:w-64">
+                        <input type="text" id="offsetFilterInput" oninput="filterOffsetTable(this.value)" placeholder="Filter by offset, city, or name..." class="w-full px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto max-h-[500px]">
+                    <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                        <thead class="bg-slate-50 dark:bg-slate-900/90 sticky top-0 font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                            <tr>
+                                <th class="px-3 py-2.5">UTC Offset</th>
+                                <th class="px-3 py-2.5">Standard Abbr &amp; Zone Name</th>
+                                <th class="px-3 py-2.5">Nautical Letter</th>
+                                <th class="px-3 py-2.5">Representative Global Cities</th>
+                                <th class="px-3 py-2.5">DST Practice</th>
+                            </tr>
+                        </thead>
+                        <tbody id="offsetTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TAB 4: Print Report -->
+        <div id="tab-print" class="tab-panel space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="border-b-2 border-brand-600 pb-4 mb-6 flex justify-between items-start">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">CalcWorld Enterprise Horological Audit</div>
+                        <h2 class="text-2xl font-black text-slate-900 dark:text-white mt-1">International Meeting &amp; Time Synchronization Itinerary</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="printReportTimestamp">Generated October 16, 2026 &bull; Universal Coordinated Time (UTC) Standard</p>
+                    </div>
+                    <div class="text-right no-print">
+                        <button type="button" onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-bold text-xs shadow flex items-center gap-1.5 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Print or Export PDF</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-xs">
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="text-slate-400 font-medium block">Event Session Title:</span>
+                        <span id="printMeetingTitle" class="font-bold text-slate-900 dark:text-white text-sm">Global Team Sync</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="text-slate-400 font-medium block">Reference Base Time:</span>
+                        <span id="printBaseTime" class="font-bold text-brand-600 dark:text-brand-400 text-sm font-mono">12:00 PM EST</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="text-slate-400 font-medium block">Session Duration:</span>
+                        <span id="printDuration" class="font-bold text-slate-900 dark:text-white text-sm">60 Minutes</span>
+                    </div>
+                </div>
+
+                <!-- Printable Table -->
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                        <thead class="bg-slate-100 dark:bg-slate-900 font-semibold text-slate-700 dark:text-slate-300">
+                            <tr>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">City / Jurisdiction</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Country</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Local Start Time</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Relative Day</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">UTC Offset</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">DST Status</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Working Period</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printTableBody" class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 space-y-2">
+                    <h4 class="font-bold text-slate-900 dark:text-white text-sm">Organizer Protocol Notice</h4>
+                    <p>All participants should join 5 minutes prior to scheduled start time using their respective local civil times listed above. When Daylight Saving Time changes occur between scheduling and meeting execution, offsets will dynamically update in accordance with official IANA time zone rules.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 2: Under-Converter Banner -->
+        <div class="ad-slot no-print mt-8" id="ad-slot-2">
+            <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+        </div>
+
+        <!-- Sidebar / Intermediate 2-Column Section for Slot 3 & Lead Box -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 my-8 no-print items-start">
+            <div class="lg:col-span-7 space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Cross-Meridian Synchronization Principles</h3>
+                    <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">Modern global coordination requires precise accounting for terrestrial geometry. As Earth rotates 360 degrees on its axis once every 24 hours, solar noon progresses across meridians at an exact rate of 15 degrees per hour, or 1 degree every 4 minutes. Standard time zones harmonize civil affairs across these geographical spans, while international standards from the BIPM ensure digital clocks remain synchronized to atomic precision.</p>
+                </div>
+            </div>
+
+            <div class="lg:col-span-5 space-y-4">
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot my-0" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box -->
+                <div class="lead-box bg-gradient-to-br from-indigo-900 to-brand-900 text-white p-5 rounded-2xl shadow-md border border-indigo-700/50">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Global Horology Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">World Time Zone &amp; Meeting Cheat Sheet</h3>
+                    <p class="text-xs text-indigo-200 mb-3">Download our complete PDF reference with global UTC offsets, DST schedules, military time conversion tables, and distributed team meeting frameworks.</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="name@company.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-indigo-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Send Free PDF Guide</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">&check; Check your inbox! Your horological reference guide is on the way.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide (Strictly Clean & Authoritative) -->
+        <article class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose prose-slate dark:prose-invert max-w-none">
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Technical Reference &amp; Historical Horology</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Terrestrial Chronometry: The Science of Global Time Zones</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">A comprehensive treatise on astronomical solar time, atomic synchronization, cross-meridian mathematics, and international standards.</p>
+            </div>
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">1. Standardized Horology and the Mechanics of Terrestrial Chronometry</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Before the late nineteenth century, timekeeping was entirely local. Every municipality, town, and hamlet set its clocks according to the local solar noon—the exact instant when the sun crossed the local celestial meridian and cast its shortest shadow. While sundials and local astronomical observations sufficed for agrarian societies, the rapid expansion of industrial telecommunications and transcontinental railway networks in the mid-1800s revealed the logistical instability of localized solar time.</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In North America alone, railroads operated across more than three hundred distinct local station times. A traveler departing Boston for Washington had to reset their pocket watch repeatedly across dozens of arbitrary municipal offsets. This temporal fragmentation produced catastrophic train collisions, misaligned freight schedules, and widespread telegraphic confusion. Modern standardized horology emerged as an engineering necessity: replacing thousands of idiosyncratic solar offsets with a unified, mathematically coordinated global grid.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">2. Universal Coordinated Time (UTC) vs. Greenwich Mean Time (GMT): Fundamental Physical and Astronomical Distinctions</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The terms Greenwich Mean Time (GMT) and Universal Coordinated Time (UTC) are frequently used interchangeably in informal discourse, yet in metrology and international law, they represent distinct physical frameworks:</p>
+            
+            <div class="overflow-x-auto my-4">
+                <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <thead class="bg-slate-100 dark:bg-slate-900 font-semibold text-slate-800 dark:text-slate-200">
+                        <tr>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Metrological Dimension</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Greenwich Mean Time (GMT)</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Universal Coordinated Time (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Primary Basis</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Astronomical observation of solar transit at Greenwich</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">SI second definitions via caesium-133 atomic hyperfine transitions</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Governing Body</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Historically the Royal Observatory Greenwich (UK)</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Bureau International des Poids et Mesures (BIPM) &amp; IERS</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Uniformity &amp; Drift</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Irregular; subject to Earth's rotational deceleration and axial wobble</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Absolute atomic stability (1 second error per tens of millions of years)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Adjustment Mechanism</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Continuous solar angle averaging</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Periodic leap seconds to maintain $|\text{UTC} - \text{UT1}| < 0.9\text{ s}$</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Modern Legal Status</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">Civil time zone name in the UK, Ireland, and West Africa (UTC&plusmn;0)</td>
+                            <td class="p-3 text-slate-600 dark:text-slate-300">The international standard reference for all world civil time</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">GMT was instituted for maritime navigation in 1847 and adopted by British railways in 1848. It tracked solar time at the Royal Observatory in Greenwich, London. Because Earth's axial rotation is decelerating due to lunar tidal friction and subject to unpredictable geophysical perturbations, astronomical time is not uniform. In 1960, the International Radio Consultative Committee formalized UTC, which took full effect in 1972. UTC anchors civil chronometry to atomic clocks while maintaining alignment with planetary rotation through coordinated leap adjustments.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">3. The Prime Meridian (0&deg; Longitude) and the 1884 International Meridian Conference</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Global time coordination required international agreement on a single geographical starting line: a Prime Meridian of zero degrees longitude. Before 1884, maritime powers published navigational charts based on disparate national references: France referenced Paris, Spain referenced Cadiz, and Britain referenced Greenwich.</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In October 1884, at the invitation of President Chester A. Arthur, representatives from twenty-five nations convened in Washington D.C. for the **International Meridian Conference**. The conference adopted seven core resolutions that established modern geography:</p>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>Resolution II:</strong> Established the transit instrument at the Royal Observatory in Greenwich as the initial meridian for longitude.</li>
+                <li><strong>Resolution III:</strong> Specified that longitude must be counted from this meridian in two directions up to 180 degrees, east longitude being plus and west longitude minus.</li>
+                <li><strong>Resolution IV:</strong> Proposed the adoption of a universal day for all purposes for which it may be found convenient, to begin at Greenwich midnight.</li>
+            </ul>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The selection of Greenwich reflected practical maritime economics: over 72 percent of global commercial shipping tonnage already relied on nautical charts calculated from Greenwich.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">4. Sir Sandford Fleming and the Standardization of 24 Worldwide Time Zones</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The principal theoretical architect of standardized world time was **Sir Sandford Fleming** (1827&ndash;1915), Chief Engineer of the Canadian Pacific Railway. In 1876, Fleming missed a scheduled railway connection in Bandoran, Ireland, because a published timetable listed an departure at 5:35 p.m. instead of 5:35 a.m. This incident prompted Fleming to devise a comprehensive system of universal terrestrial time.</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In an 1879 paper presented to the Canadian Institute in Toronto, Fleming proposed dividing the entire globe into twenty-four equal standard hourly meridians, each spaced fifteen degrees apart. Each zone was assigned a letter designation, with the zero meridian passing through Greenwich. Fleming traveled extensively to scientific congresses in London, Venice, and Washington, organizing diplomatic support. His persistence culminated in the 1884 conference and the subsequent global adoption of the standard time zone framework.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">5. The International Date Line (180&deg; Longitude) and Calendar Discontinuities</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Directly opposite the Prime Meridian on the globe lies the **International Date Line (IDL)**, situated along the 180th meridian in the Pacific Ocean. Because local civil time advances by one hour for every fifteen degrees traveled eastward, completing a full circuit of Earth would accumulate twenty-four hours (an entire calendar day). The International Date Line resolves this mathematical paradox by serving as the official line of calendar demarcation:</p>
+            <ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li>Crossing the IDL traveling <strong>westward</strong> (from the Americas toward Asia or Oceania) advances the calendar by one full day (+24 hours).</li>
+                <li>Crossing the IDL traveling <strong>eastward</strong> (from Asia toward the Americas) turns the calendar back by one full day (&minus;24 hours).</li>
+            </ul>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Unlike the Prime Meridian, the International Date Line has no formal status in treaty law. It is defined by the sovereign declarations of neighboring nations. As a consequence, the line zig-zags to accommodate regional political and economic ties:</p>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>The Aleutian Islands:</strong> The line swerves westward around Alaska's westernmost islands so that all of Alaska shares the same calendar date.</li>
+                <li><strong>The Republic of Kiribati:</strong> In 1995, Kiribati moved the date line thousands of kilometers eastward around its Line Islands (including Kiritimati, now UTC+14:00). Previously, the nation was split across the date line, meaning government offices on opposing islands could only conduct joint business four days per week.</li>
+                <li><strong>Samoa:</strong> At the end of December 29, 2011, Samoa skipped December 30 entirely, shifting from UTC&minus;11:00 to UTC+13:00 to synchronize commercial trade cycles with its primary economic partners, Australia and New Zealand.</li>
+            </ul>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">6. Mathematical Geodesy: Solar Mean Time, Longitude, and the 15-Degree Hour Rule</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The mathematical relationship between longitude and time derives directly from celestial mechanics. Earth completes a full axial rotation of $360^\circ$ relative to the mean sun in one mean solar day ($24\text{ hours} = 1{,}440\text{ minutes} = 86{,}400\text{ seconds}$):</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\frac{360^\circ}{24\text{ hours}} = 15^\circ\text{ per hour}$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Dividing fifteen degrees into sixty minutes of time yields the precise rate of angular progression:</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\frac{60\text{ minutes}}{15^\circ} = 4\text{ minutes of time per } 1^\circ\text{ of longitude}$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">To calculate the local mean solar time ($T_{\text{solar}}$) at any point on Earth with longitude $\lambda$ (where east longitude is positive and west longitude is negative), relative to Greenwich Mean Time ($T_{\text{GMT}}$):</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$T_{\text{solar}} = T_{\text{GMT}} + \left(\lambda \times 4\text{ minutes}\right)$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">For example, New York City is centered at approximately $74.0^\circ\text{ W}$ ($-74.0^\circ$). The solar time offset is:</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$-74.0^\circ \times 4\text{ min/deg} = -296\text{ minutes} = -4\text{ hours and } 56\text{ minutes}$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When civil standard time was adopted, New York aligned with the 75th meridian west ($75.0^\circ\text{ W}$), producing an exact integer offset of $-5\text{ hours}$ (Eastern Standard Time, UTC&minus;5:00), smoothing away four minutes of discrepancy for civil convenience.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">7. Daylight Saving Time (DST): History, Photoperiodism, Economic Impact, and Legislative Trends</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Daylight Saving Time (DST) involves advancing civil clocks by one hour during warmer months to extend evening daylight and shift human activity patterns closer to the natural photoperiod. The concept was first proposed by New Zealand entomologist George Vernon Hudson in 1895, who wanted additional daylight hours after his shift work to collect insects. In 1907, English builder William Willett independently advocated for seasonal clock adjustments in his pamphlet *"The Waste of Daylight"*.</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The German Empire was the first nation to enact DST into statutory law on April 30, 1916, during World War I, aiming to conserve coal for the war effort. The United Kingdom and the United States followed shortly thereafter. In the United States, standardized seasonal switching was codified by the **Uniform Time Act of 1966**, subsequently amended by the **Energy Policy Act of 2005**, which established the current schedule (advancing the second Sunday in March and reverting the first Sunday in November).</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In recent years, legislative bodies have increasingly questioned the utility of bi-annual clock shifts. Medical researchers and chronobiologists have documented acute increases in cardiovascular events, workplace accidents, and sleep disturbances following the spring transition. Consequently, several nations—including Brazil, Turkey, Mexico, and Jordan—have abolished seasonal shifts in favor of permanent year-round standard or daylight time, while discussions continue within the European Union and the United States Congress.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">8. Metrological Governance: The BIPM, Leap Seconds, and Atomic Timekeeping Standards (USNO &amp; NIST)</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The ultimate governance of global time rests with the **Bureau International des Poids et Mesures (BIPM)** in S&egrave;vres, France. The BIPM computes International Atomic Time (TAI, *Temps Atomique International*) by combining data from over 450 primary caesium atomic clocks and hydrogen masers operated by approximately eighty national metrology institutes worldwide.</p>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In the United States, standard time generation is divided between two primary scientific agencies:</p>
+            <ul class="list-disc pl-5 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>The National Institute of Standards and Technology (NIST):</strong> Operates atomic fountain standards in Boulder, Colorado, providing UTC(NIST) for commercial, telecommunications, and industrial infrastructure.</li>
+                <li><strong>The United States Naval Observatory (USNO):</strong> Maintains the Master Clock in Washington D.C., generating UTC(USNO), the operational reference for the Global Positioning System (GPS).</li>
+            </ul>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Because Earth's astronomical rotation angle (UT1) drifts relative to steady atomic time (TAI), the **International Earth Rotation and Reference Systems Service (IERS)** monitors astronomical fluctuations using Very Long Baseline Interferometry (VLBI) and satellite laser ranging. Whenever $|\text{UTC} - \text{UT1}|$ approaches $0.9\text{ seconds}$, a leap second is scheduled. However, at the 27th General Conference on Weights and Measures (CGPM) in November 2022, member states resolved to eliminate or revise the leap second threshold by 2035, preventing digital synchronization disruptions across modern distributed computer systems.</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">9. Cross-Meridian Time Conversion Algorithms and Matrix Arithmetic</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Converting time between two geographical points involves modular arithmetic anchored to UTC. Let $T_A$ represent local civil time in city $A$ with active offset $\Delta_A$, and $T_B$ represent local civil time in city $B$ with active offset $\Delta_B$. The conversion proceeds through a two-step normalization:</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$T_{\text{UTC}} = T_A - \Delta_A$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$T_B = T_{\text{UTC}} + \Delta_B = T_A + \left(\Delta_B - \Delta_A\right)$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When calendar dates are tracked across the day boundary, calculations use the modulo 24 operator ($T \pmod{24}$), with day shifts defined as:</p>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Day Shift} = \left\lfloor \frac{T_A + (\Delta_B - \Delta_A)}{24} \right\rfloor$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">If the resulting quantity is $+1$, city $B$ is in the subsequent calendar day (tomorrow); if $-1$, city $B$ is in the preceding calendar day (yesterday).</p>
+
+            <hr class="my-6 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">10. Protocols for Cross-Border Meeting Coordination and Distributed Remote Work</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">As enterprise organizations distribute teams across multiple continents, cross-meridian coordination requires disciplined scheduling strategies:</p>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>Tri-Zone Golden Hours:</strong> When coordinating teams across North America, Europe, and East Asia, full three-region business overlap is mathematically impossible without placing at least one team in night sleep hours. The standard operational protocol divides work into overlapping regional pairs (US-Europe and Europe-Asia), using asynchronous handoffs to bridge the US-Asia span.</li>
+                <li><strong>Rotational Inconvenience:</strong> When regular cross-meridian meetings require shoulder hours, teams should rotate meeting times monthly so that the burden of early-morning or late-evening participation does not fall permanently on a single geographic hub.</li>
+                <li><strong>DST Shift Asynchrony:</strong> Because jurisdictions switch into and out of Daylight Saving Time on different calendar dates (for example, the United States switches weeks earlier than Europe in the spring and reverts later in autumn), the offset difference between New York and London changes from five hours to four hours for multiple weeks each year. Digital calendar tools with IANA database support are essential to prevent missed appointments during these transition windows.</li>
+            </ul>
+        </article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print" id="faq-section">
+            <div class="mb-8">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Expert Clarifications</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Answers to common inquiries regarding time standards, astronomical coordinates, and cross-border meeting logistics.</p>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between Universal Coordinated Time (UTC) and Greenwich Mean Time (GMT)?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Greenwich Mean Time (GMT) is an astronomical time standard based on the mean solar time observed at the Royal Observatory in Greenwich, London. Universal Coordinated Time (UTC) is a high-precision atomic time standard computed by the Bureau International des Poids et Mesures (BIPM) using hundreds of primary atomic clocks worldwide. UTC serves as the civil time basis for all modern time zones, while GMT is legally an identical time zone offset (UTC+00:00) during winter in the UK.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does the Prime Meridian define world time zones?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Prime Meridian at 0 degrees longitude, established at the 1884 International Meridian Conference in Washington D.C., serves as the reference origin for all terrestrial longitudes and time zones. Because Earth completes a 360-degree rotation in 24 hours, each 15 degrees of longitude east or west corresponds to a standard time difference of exactly one hour.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why does the International Date Line (IDL) deviate from the 180th meridian?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The International Date Line lies approximately along the 180-degree meridian in the Pacific Ocean, where crossing west advances the calendar by one day and crossing east moves it back one day. It zig-zags around territorial borders—such as the eastern Aleutian Islands in Alaska and the Line Islands in Kiribati—to allow sovereign island nations to share the same calendar day with their main political and trade partners.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does the calculator dynamically handle Daylight Saving Time (DST)?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The calculator accesses the official IANA Time Zone Database embedded in modern browser runtimes via the Intl.DateTimeFormat API. It evaluates the exact geographical jurisdiction and calendar date selected, automatically determining whether daylight saving time or standard time applies, and adjusting UTC offsets by plus or minus one hour accordingly.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Who was Sir Sandford Fleming, and how did he invent standard time?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Sir Sandford Fleming was a Canadian railway engineer and inventor who proposed a worldwide system of 24 standard time zones in 1879 after missing a train due to confusing local solar time tables. His advocacy directly led to the convening of the 1884 International Meridian Conference, establishing the modern global timekeeping framework.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What are normal working hours and shoulder hours in global meeting planning?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        In international business scheduling, normal working hours are defined as 9:00 AM to 5:00 PM (09:00 - 17:00 local time). Shoulder hours represent acceptable early morning (7:00 AM to 9:00 AM) or early evening (5:00 PM to 8:00 PM) windows for urgent cross-timezone alignment. Hours between 8:00 PM and 7:00 AM are classified as night sleep hours and should be avoided.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why do some territories observe fractional 30-minute and 45-minute offsets?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Several countries established non-hourly offsets to align civil time more accurately with solar noon across their landmass or for regional identity. Examples include India (UTC+05:30), Iran (UTC+03:30), Afghanistan (UTC+04:30), Myanmar (UTC+06:30), South Australia (UTC+09:30/10:30), Newfoundland (UTC-03:30/02:30), and Nepal (UTC+05:45).
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the role of leap seconds and atomic timekeeping at the BIPM and USNO?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Bureau International des Poids et Mesures (BIPM) coordinates International Atomic Time (TAI) from over 400 atomic clocks worldwide. Universal Coordinated Time (UTC) balances this uniform atomic standard with Earth's irregular astronomical rotation (UT1). The International Earth Rotation and Reference Systems Service (IERS) inserts occasional leap seconds to keep UTC within 0.9 seconds of UT1, monitored by the US Naval Observatory (USNO) and NIST.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">TZ</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Enterprise Network. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Metrological &amp; Operational Notice:</strong> CalcWorld Time Zone Calculator uses standard IANA Time Zone Database algorithms conforming to recommendations from the Bureau International des Poids et Mesures (BIPM), the International Earth Rotation and Reference Systems Service (IERS), and national metrology standards from NIST and the US Naval Observatory (USNO). This tool is provided for scheduling, logistical, and computational analysis. Always confirm statutory Daylight Saving Time boundaries when conducting mission-critical operations.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Related Tools:</span>
+        <a href="date-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Date Calc</a>
+        <a href="day-counter.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Days Between</a>
+        <a href="time-duration-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Duration</a>
+        <a href="time-card-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Work Hours</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Action completed successfully!</span>
+    </div>
+
+<script>
+    // --- Master World Cities Database (70 Global Hubs) ---
+    const WORLD_CITIES = [
+        { id: 'nyc', name: 'New York', country: 'United States', flag: '🇺🇸', tz: 'America/New_York', continent: 'North America', region: 'NA' },
+        { id: 'lon', name: 'London', country: 'United Kingdom', flag: '🇬🇧', tz: 'Europe/London', continent: 'Europe', region: 'EU' },
+        { id: 'par', name: 'Paris', country: 'France', flag: '🇫🇷', tz: 'Europe/Paris', continent: 'Europe', region: 'EU' },
+        { id: 'tok', name: 'Tokyo', country: 'Japan', flag: '🇯🇵', tz: 'Asia/Tokyo', continent: 'Asia', region: 'AS' },
+        { id: 'dxb', name: 'Dubai', country: 'United Arab Emirates', flag: '🇦🇪', tz: 'Asia/Dubai', continent: 'Middle East', region: 'ME' },
+        { id: 'syd', name: 'Sydney', country: 'Australia', flag: '🇦🇺', tz: 'Australia/Sydney', continent: 'Oceania', region: 'OC' },
+        { id: 'lax', name: 'Los Angeles', country: 'United States', flag: '🇺🇸', tz: 'America/Los_Angeles', continent: 'North America', region: 'NA' },
+        { id: 'hkg', name: 'Hong Kong', country: 'China', flag: '🇭🇰', tz: 'Asia/Hong_Kong', continent: 'Asia', region: 'AS' },
+        { id: 'sin', name: 'Singapore', country: 'Singapore', flag: '🇸🇬', tz: 'Asia/Singapore', continent: 'Asia', region: 'AS' },
+        { id: 'cai', name: 'Cairo', country: 'Egypt', flag: '🇪🇬', tz: 'Africa/Cairo', continent: 'Africa', region: 'AF' },
+        { id: 'chi', name: 'Chicago', country: 'United States', flag: '🇺🇸', tz: 'America/Chicago', continent: 'North America', region: 'NA' },
+        { id: 'tor', name: 'Toronto', country: 'Canada', flag: '🇨🇦', tz: 'America/Toronto', continent: 'North America', region: 'NA' },
+        { id: 'sfo', name: 'San Francisco', country: 'United States', flag: '🇺🇸', tz: 'America/Los_Angeles', continent: 'North America', region: 'NA' },
+        { id: 'ber', name: 'Berlin', country: 'Germany', flag: '🇩🇪', tz: 'Europe/Berlin', continent: 'Europe', region: 'EU' },
+        { id: 'rom', name: 'Rome', country: 'Italy', flag: '🇮🇹', tz: 'Europe/Rome', continent: 'Europe', region: 'EU' },
+        { id: 'mad', name: 'Madrid', country: 'Spain', flag: '🇪🇸', tz: 'Europe/Madrid', continent: 'Europe', region: 'EU' },
+        { id: 'mow', name: 'Moscow', country: 'Russia', flag: '🇷🇺', tz: 'Europe/Moscow', continent: 'Europe', region: 'EU' },
+        { id: 'bom', name: 'Mumbai', country: 'India', flag: '🇮🇳', tz: 'Asia/Kolkata', continent: 'Asia', region: 'AS' },
+        { id: 'sha', name: 'Shanghai', country: 'China', flag: '🇨🇳', tz: 'Asia/Shanghai', continent: 'Asia', region: 'AS' },
+        { id: 'sel', name: 'Seoul', country: 'South Korea', flag: '🇰🇷', tz: 'Asia/Seoul', continent: 'Asia', region: 'AS' },
+        { id: 'bkk', name: 'Bangkok', country: 'Thailand', flag: '🇹🇭', tz: 'Asia/Bangkok', continent: 'Asia', region: 'AS' },
+        { id: 'jkt', name: 'Jakarta', country: 'Indonesia', flag: '🇮🇩', tz: 'Asia/Jakarta', continent: 'Asia', region: 'AS' },
+        { id: 'akl', name: 'Auckland', country: 'New Zealand', flag: '🇳🇿', tz: 'Pacific/Auckland', continent: 'Oceania', region: 'OC' },
+        { id: 'sao', name: 'São Paulo', country: 'Brazil', flag: '🇧🇷', tz: 'America/Sao_Paulo', continent: 'South America', region: 'SA' },
+        { id: 'mex', name: 'Mexico City', country: 'Mexico', flag: '🇲🇽', tz: 'America/Mexico_City', continent: 'North America', region: 'NA' },
+        { id: 'bue', name: 'Buenos Aires', country: 'Argentina', flag: '🇦🇷', tz: 'America/Argentina/Buenos_Aires', continent: 'South America', region: 'SA' },
+        { id: 'jnb', name: 'Johannesburg', country: 'South Africa', flag: '🇿🇦', tz: 'Africa/Johannesburg', continent: 'Africa', region: 'AF' },
+        { id: 'ist', name: 'Istanbul', country: 'Turkey', flag: '🇹🇷', tz: 'Europe/Istanbul', continent: 'Europe', region: 'EU' },
+        { id: 'ruh', name: 'Riyadh', country: 'Saudi Arabia', flag: '🇸🇦', tz: 'Asia/Riyadh', continent: 'Middle East', region: 'ME' },
+        { id: 'zrh', name: 'Zurich', country: 'Switzerland', flag: '🇨🇭', tz: 'Europe/Zurich', continent: 'Europe', region: 'EU' },
+        { id: 'ams', name: 'Amsterdam', country: 'Netherlands', flag: '🇳🇱', tz: 'Europe/Amsterdam', continent: 'Europe', region: 'EU' },
+        { id: 'hnl', name: 'Honolulu', country: 'United States', flag: '🇺🇸', tz: 'Pacific/Honolulu', continent: 'Oceania', region: 'OC' },
+        { id: 'anc', name: 'Anchorage', country: 'United States', flag: '🇺🇸', tz: 'America/Anchorage', continent: 'North America', region: 'NA' },
+        { id: 'den', name: 'Denver', country: 'United States', flag: '🇺🇸', tz: 'America/Denver', continent: 'North America', region: 'NA' },
+        { id: 'yvr', name: 'Vancouver', country: 'Canada', flag: '🇨🇦', tz: 'America/Vancouver', continent: 'North America', region: 'NA' },
+        { id: 'bog', name: 'Bogotá', country: 'Colombia', flag: '🇨🇴', tz: 'America/Bogota', continent: 'South America', region: 'SA' },
+        { id: 'lim', name: 'Lima', country: 'Peru', flag: '🇵🇪', tz: 'America/Lima', continent: 'South America', region: 'SA' },
+        { id: 'scl', name: 'Santiago', country: 'Chile', flag: '🇨🇱', tz: 'America/Santiago', continent: 'South America', region: 'SA' },
+        { id: 'los', name: 'Lagos', country: 'Nigeria', flag: '🇳🇬', tz: 'Africa/Lagos', continent: 'Africa', region: 'AF' },
+        { id: 'nbo', name: 'Nairobi', country: 'Kenya', flag: '🇰🇪', tz: 'Africa/Nairobi', continent: 'Africa', region: 'AF' },
+        { id: 'cpt', name: 'Cape Town', country: 'South Africa', flag: '🇿🇦', tz: 'Africa/Johannesburg', continent: 'Africa', region: 'AF' },
+        { id: 'ath', name: 'Athens', country: 'Greece', flag: '🇬🇷', tz: 'Europe/Athens', continent: 'Europe', region: 'EU' },
+        { id: 'waw', name: 'Warsaw', country: 'Poland', flag: '🇵🇱', tz: 'Europe/Warsaw', continent: 'Europe', region: 'EU' },
+        { id: 'sto', name: 'Stockholm', country: 'Sweden', flag: '🇸🇪', tz: 'Europe/Stockholm', continent: 'Europe', region: 'EU' },
+        { id: 'dub', name: 'Dublin', country: 'Ireland', flag: '🇮🇪', tz: 'Europe/Dublin', continent: 'Europe', region: 'EU' },
+        { id: 'lis', name: 'Lisbon', country: 'Portugal', flag: '🇵🇹', tz: 'Europe/Lisbon', continent: 'Europe', region: 'EU' },
+        { id: 'hel', name: 'Helsinki', country: 'Finland', flag: '🇫🇮', tz: 'Europe/Helsinki', continent: 'Europe', region: 'EU' },
+        { id: 'vie', name: 'Vienna', country: 'Austria', flag: '🇦🇹', tz: 'Europe/Vienna', continent: 'Europe', region: 'EU' },
+        { id: 'mnl', name: 'Manila', country: 'Philippines', flag: '🇵🇭', tz: 'Asia/Manila', continent: 'Asia', region: 'AS' },
+        { id: 'tpe', name: 'Taipei', country: 'Taiwan', flag: '🇹🇼', tz: 'Asia/Taipei', continent: 'Asia', region: 'AS' },
+        { id: 'doh', name: 'Doha', country: 'Qatar', flag: '🇶🇦', tz: 'Asia/Qatar', continent: 'Middle East', region: 'ME' },
+        { id: 'khi', name: 'Karachi', country: 'Pakistan', flag: '🇵🇰', tz: 'Asia/Karachi', continent: 'Asia', region: 'AS' },
+        { id: 'dac', name: 'Dhaka', country: 'Bangladesh', flag: '🇧🇩', tz: 'Asia/Dhaka', continent: 'Asia', region: 'AS' },
+        { id: 'kul', name: 'Kuala Lumpur', country: 'Malaysia', flag: '🇲🇾', tz: 'Asia/Kuala_Lumpur', continent: 'Asia', region: 'AS' },
+        { id: 'tlv', name: 'Tel Aviv', country: 'Israel', flag: '🇮🇱', tz: 'Asia/Jerusalem', continent: 'Middle East', region: 'ME' },
+        { id: 'bru', name: 'Brussels', country: 'Belgium', flag: '🇧🇪', tz: 'Europe/Brussels', continent: 'Europe', region: 'EU' },
+        { id: 'cph', name: 'Copenhagen', country: 'Denmark', flag: '🇩🇰', tz: 'Europe/Copenhagen', continent: 'Europe', region: 'EU' },
+        { id: 'osl', name: 'Oslo', country: 'Norway', flag: '🇳🇴', tz: 'Europe/Oslo', continent: 'Europe', region: 'EU' },
+        { id: 'prg', name: 'Prague', country: 'Czech Republic', flag: '🇨🇿', tz: 'Europe/Prague', continent: 'Europe', region: 'EU' },
+        { id: 'bud', name: 'Budapest', country: 'Hungary', flag: '🇭🇺', tz: 'Europe/Budapest', continent: 'Europe', region: 'EU' },
+        { id: 'phx', name: 'Phoenix', country: 'United States', flag: '🇺🇸', tz: 'America/Phoenix', continent: 'North America', region: 'NA' },
+        { id: 'per', name: 'Perth', country: 'Australia', flag: '🇦🇺', tz: 'Australia/Perth', continent: 'Oceania', region: 'OC' },
+        { id: 'bne', name: 'Brisbane', country: 'Australia', flag: '🇦🇺', tz: 'Australia/Brisbane', continent: 'Oceania', region: 'OC' },
+        { id: 'mel', name: 'Melbourne', country: 'Australia', flag: '🇦🇺', tz: 'Australia/Melbourne', continent: 'Oceania', region: 'OC' },
+        { id: 'adl', name: 'Adelaide', country: 'Australia', flag: '🇦🇺', tz: 'Australia/Adelaide', continent: 'Oceania', region: 'OC' },
+        { id: 'ktm', name: 'Kathmandu', country: 'Nepal', flag: '🇳🇵', tz: 'Asia/Kathmandu', continent: 'Asia', region: 'AS' },
+        { id: 'rgn', name: 'Yangon', country: 'Myanmar', flag: '🇲🇲', tz: 'Asia/Yangon', continent: 'Asia', region: 'AS' },
+        { id: 'yyt', name: "St. John's", country: 'Canada', flag: '🇨🇦', tz: 'America/St_Johns', continent: 'North America', region: 'NA' },
+        { id: 'cas', name: 'Casablanca', country: 'Morocco', flag: '🇲🇦', tz: 'Africa/Casablanca', continent: 'Africa', region: 'AF' },
+        { id: 'rek', name: 'Reykjavik', country: 'Iceland', flag: '🇮🇸', tz: 'Atlantic/Reykjavik', continent: 'Europe', region: 'EU' }
+    ];
+
+    // --- Master UTC Offsets Database for Reference Table ---
+    const UTC_OFFSETS_DATA = [
+        { offset: 'UTC-12:00', name: 'Baker Island Time (BIT)', letter: 'Y (Yankee)', cities: 'Baker Island, Howland Island', dst: 'No DST' },
+        { offset: 'UTC-11:00', name: 'Samoa Standard Time (SST)', letter: 'X (X-ray)', cities: 'Pago Pago, Midway Atoll, Niue', dst: 'No DST' },
+        { offset: 'UTC-10:00', name: 'Hawaii-Aleutian Standard Time (HAST)', letter: 'W (Whiskey)', cities: 'Honolulu, Papeete, Rarotonga', dst: 'Seasonal (Aleutians only)' },
+        { offset: 'UTC-09:30', name: 'Marquesas Islands Time (MART)', letter: 'V†', cities: 'Taiohae, Marquesas Islands', dst: 'No DST' },
+        { offset: 'UTC-09:00', name: 'Alaska Standard Time (AKST)', letter: 'V (Victor)', cities: 'Anchorage, Juneau, Fairbanks', dst: 'Observes DST (AKDT = UTC-8)' },
+        { offset: 'UTC-08:00', name: 'Pacific Standard Time (PST)', letter: 'U (Uniform)', cities: 'Los Angeles, San Francisco, Vancouver, Tijuana', dst: 'Observes DST (PDT = UTC-7)' },
+        { offset: 'UTC-07:00', name: 'Mountain Standard Time (MST)', letter: 'T (Tango)', cities: 'Denver, Phoenix, Salt Lake City, Calgary', dst: 'Observes DST (Except Arizona/Sonora)' },
+        { offset: 'UTC-06:00', name: 'Central Standard Time (CST)', letter: 'S (Sierra)', cities: 'Chicago, Mexico City, Dallas, Winnipeg', dst: 'Observes DST (US/Canada only)' },
+        { offset: 'UTC-05:00', name: 'Eastern Standard Time (EST)', letter: 'R (Romeo)', cities: 'New York, Toronto, Miami, Bogota, Lima', dst: 'Observes DST (EDT = UTC-4 in US/Canada)' },
+        { offset: 'UTC-04:00', name: 'Atlantic Standard Time (AST)', letter: 'Q (Quebec)', cities: 'Halifax, Santiago, Caracas, San Juan', dst: 'Observes DST (Canada/Chile)' },
+        { offset: 'UTC-03:30', name: 'Newfoundland Standard Time (NST)', letter: 'P†', cities: "St. John's, Newfoundland", dst: 'Observes DST (NDT = UTC-2:30)' },
+        { offset: 'UTC-03:00', name: 'Brasilia / Argentina Time (ART/BRT)', letter: 'P (Papa)', cities: 'Buenos Aires, São Paulo, Montevideo', dst: 'No DST currently' },
+        { offset: 'UTC-02:00', name: 'Fernando de Noronha Time (FNT)', letter: 'O (Oscar)', cities: 'Noronha, South Georgia Islands', dst: 'No DST' },
+        { offset: 'UTC-01:00', name: 'Azores / Cape Verde Time (AZOT/CVT)', letter: 'N (November)', cities: 'Ponta Delgada, Praia (Cape Verde)', dst: 'Observes DST (Azores only)' },
+        { offset: 'UTC±00:00', name: 'Greenwich Mean Time (GMT) / UTC', letter: 'Z (Zulu)', cities: 'London, Dublin, Lisbon, Reykjavik, Accra, Casablanca', dst: 'Observes DST (BST/IST = UTC+1 in Europe)' },
+        { offset: 'UTC+01:00', name: 'Central European Time (CET)', letter: 'A (Alpha)', cities: 'Paris, Berlin, Rome, Madrid, Amsterdam, Lagos', dst: 'Observes DST (CEST = UTC+2 in Europe)' },
+        { offset: 'UTC+02:00', name: 'Eastern European / Central Africa Time', letter: 'B (Bravo)', cities: 'Cairo, Athens, Helsinki, Johannesburg, Jerusalem', dst: 'Observes DST (EEST = UTC+3 in EU/Israel/Egypt)' },
+        { offset: 'UTC+03:00', name: 'Moscow / Arabia Standard Time (MSK/AST)', letter: 'C (Charlie)', cities: 'Moscow, Istanbul, Riyadh, Doha, Nairobi', dst: 'No DST (Permanent UTC+3)' },
+        { offset: 'UTC+03:30', name: 'Iran Standard Time (IRST)', letter: 'C†', cities: 'Tehran, Isfahan', dst: 'No DST (Abolished 2022)' },
+        { offset: 'UTC+04:00', name: 'Gulf Standard Time (GST)', letter: 'D (Delta)', cities: 'Dubai, Abu Dhabi, Baku, Tbilisi, Muscat', dst: 'No DST' },
+        { offset: 'UTC+04:30', name: 'Afghanistan Time (AFT)', letter: 'D†', cities: 'Kabul, Kandahar', dst: 'No DST' },
+        { offset: 'UTC+05:00', name: 'Pakistan Standard Time (PKT)', letter: 'E (Echo)', cities: 'Karachi, Islamabad, Tashkent, Yekaterinburg', dst: 'No DST' },
+        { offset: 'UTC+05:30', name: 'Indian Standard Time (IST)', letter: 'E†', cities: 'Mumbai, New Delhi, Bengaluru, Colombo', dst: 'No DST (Single national offset)' },
+        { offset: 'UTC+05:45', name: 'Nepal Time (NPT)', letter: 'E‡', cities: 'Kathmandu, Pokhara', dst: 'No DST (Aligned to Gauri Sankar meridian)' },
+        { offset: 'UTC+06:00', name: 'Bangladesh Standard Time (BST)', letter: 'F (Foxtrot)', cities: 'Dhaka, Almaty, Omsk', dst: 'No DST' },
+        { offset: 'UTC+06:30', name: 'Myanmar Standard Time (MMT)', letter: 'F†', cities: 'Yangon, Mandalay, Cocos Islands', dst: 'No DST' },
+        { offset: 'UTC+07:00', name: 'Indochina Time (ICT)', letter: 'G (Golf)', cities: 'Bangkok, Jakarta, Ho Chi Minh City, Krasnoyarsk', dst: 'No DST' },
+        { offset: 'UTC+08:00', name: 'China / Singapore / Australian Western', letter: 'H (Hotel)', cities: 'Beijing, Shanghai, Hong Kong, Singapore, Perth, Taipei', dst: 'No DST' },
+        { offset: 'UTC+08:45', name: 'Australian Central Western Time (ACWST)', letter: 'H†', cities: 'Eucla, Border Village (Australia)', dst: 'No DST (Unofficial local)' },
+        { offset: 'UTC+09:00', name: 'Japan / Korea Standard Time (JST/KST)', letter: 'I (India)', cities: 'Tokyo, Seoul, Pyongyang, Irkutsk', dst: 'No DST' },
+        { offset: 'UTC+09:30', name: 'Australian Central Standard Time (ACST)', letter: 'I†', cities: 'Adelaide, Darwin', dst: 'Observes DST (South Australia only)' },
+        { offset: 'UTC+10:00', name: 'Australian Eastern Standard Time (AEST)', letter: 'K (Kilo)', cities: 'Sydney, Melbourne, Brisbane, Vladivostok, Guam', dst: 'Observes DST (NSW/Victoria/Tasmania only)' },
+        { offset: 'UTC+10:30', name: 'Lord Howe Standard Time (LHST)', letter: 'K†', cities: 'Lord Howe Island', dst: 'Observes DST (+30 min to UTC+11:00)' },
+        { offset: 'UTC+11:00', name: 'Solomon Islands Time (SBT)', letter: 'L (Lima)', cities: 'Noumea, Honiara, Magadan, Port Vila', dst: 'No DST' },
+        { offset: 'UTC+12:00', name: 'New Zealand Standard Time (NZST)', letter: 'M (Mike)', cities: 'Auckland, Wellington, Suva (Fiji)', dst: 'Observes DST (NZDT = UTC+13)' },
+        { offset: 'UTC+12:45', name: 'Chatham Standard Time (CHAST)', letter: 'M†', cities: 'Waitangi, Chatham Islands', dst: 'Observes DST (CHADT = UTC+13:45)' },
+        { offset: 'UTC+13:00', name: 'Tonga / Samoa / Phoenix Islands Time', letter: 'M‡', cities: "Nuku'alofa, Apia, Tokelau", dst: 'No DST currently' },
+        { offset: 'UTC+14:00', name: 'Line Islands Time (LINT)', letter: 'M§', cities: 'Kiritimati (Christmas Island), Kiribati', dst: 'No DST (First place to see new calendar day)' }
+    ];
+
+    // --- State Variables ---
+    let baseCityId = 'nyc';
+    let activeCityIds = ['nyc', 'lon', 'par', 'tok', 'dxb', 'syd'];
+    let is24Hour = false;
+    let isLiveClock = false;
+    let liveTimerInterval = null;
+    let currentUtcTimestamp = Date.now();
+    let currentTab = 'converter';
+    let hoursChart = null;
+
+    // --- Initialization on DOM Load ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initBaseCityDropdown();
+        parseUrlParams();
+        syncFromSystemClock();
+        renderOffsetTable('');
+        updateAllViews();
+        initBusinessHoursChart();
+
+        // AdBlock Detection Notice
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Base City Dropdown Populator ---
+    function initBaseCityDropdown() {
+        const select = document.getElementById('baseCitySelect');
+        if (!select) return;
+        select.innerHTML = '';
+        WORLD_CITIES.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.textContent = `${c.flag} ${c.name} (${c.country})`;
+            if (c.id === baseCityId) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    // --- Parse URL Parameters ---
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        const cities = params.get('cities');
+        const base = params.get('base');
+        const fmt = params.get('format');
+        const time = params.get('time');
+        const date = params.get('date');
+
+        if (cities) {
+            const list = cities.split(',').filter(id => WORLD_CITIES.some(c => c.id === id));
+            if (list.length > 0) activeCityIds = list;
+        }
+        if (base && WORLD_CITIES.some(c => c.id === base)) {
+            baseCityId = base;
+            if (!activeCityIds.includes(base)) activeCityIds.unshift(base);
+        }
+        if (fmt === '24') is24Hour = true;
+
+        if (date && time) {
+            const parsed = new Date(`${date}T${time}:00`);
+            if (!isNaN(parsed.getTime())) {
+                const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+                const parts = getTzParts(parsed, 'UTC');
+                currentUtcTimestamp = parsed.getTime();
+            }
+        }
+    }
+
+    // --- Horological Math Engine ---
+    function getTzParts(dateObj, tz) {
+        try {
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: tz,
+                year: 'numeric', month: 'numeric', day: 'numeric',
+                hour: 'numeric', minute: 'numeric', second: 'numeric',
+                hourCycle: 'h23'
+            });
+            const parts = formatter.formatToParts(dateObj);
+            const map = {};
+            parts.forEach(p => map[p.type] = p.value);
+            return {
+                year: parseInt(map.year, 10),
+                month: parseInt(map.month, 10),
+                day: parseInt(map.day, 10),
+                hour: parseInt(map.hour, 10),
+                minute: parseInt(map.minute, 10),
+                second: parseInt(map.second, 10)
+            };
+        } catch (e) {
+            return {
+                year: dateObj.getUTCFullYear(),
+                month: dateObj.getUTCMonth() + 1,
+                day: dateObj.getUTCDate(),
+                hour: dateObj.getUTCHours(),
+                minute: dateObj.getUTCMinutes(),
+                second: dateObj.getUTCSeconds()
+            };
+        }
+    }
+
+    function getTzOffsetMinutes(tz, dateObj) {
+        const parts = getTzParts(dateObj, tz);
+        const localUtcMs = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+        return Math.round((localUtcMs - dateObj.getTime()) / 60000);
+    }
+
+    function checkDst(tz, dateObj) {
+        const y = dateObj.getUTCFullYear();
+        const janDate = new Date(Date.UTC(y, 0, 15, 12, 0, 0));
+        const julDate = new Date(Date.UTC(y, 6, 15, 12, 0, 0));
+        const janOff = getTzOffsetMinutes(tz, janDate);
+        const julOff = getTzOffsetMinutes(tz, julDate);
+        const curOff = getTzOffsetMinutes(tz, dateObj);
+
+        const observesDst = janOff !== julOff;
+        const isDst = observesDst && curOff > Math.min(janOff, julOff);
+
+        // Compute offset string (e.g. UTC-04:00, UTC+09:30)
+        const sign = curOff >= 0 ? '+' : '-';
+        const absM = Math.abs(curOff);
+        const h = String(Math.floor(absM / 60)).padStart(2, '0');
+        const m = String(absM % 60).padStart(2, '0');
+        const offsetStr = `UTC${sign}${h}:${m}`;
+
+        // Get abbreviation using Intl
+        let abbr = '';
+        try {
+            const shortFormatter = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'short' });
+            const p = shortFormatter.formatToParts(dateObj).find(x => x.type === 'timeZoneName');
+            abbr = p ? p.value : '';
+        } catch (e) {
+            abbr = offsetStr;
+        }
+
+        return { observesDst, isDst, offsetMinutes: curOff, offsetStr, abbr };
+    }
+
+    function formatTime(hour, minute, is24) {
+        const mm = String(minute).padStart(2, '0');
+        if (is24) {
+            return `${String(hour).padStart(2, '0')}:${mm}`;
+        }
+        const period = hour >= 12 ? 'PM' : 'AM';
+        let h12 = hour % 12;
+        if (h12 === 0) h12 = 12;
+        return `${h12}:${mm} ${period}`;
+    }
+
+    function getRelativeDayTag(baseParts, targetParts) {
+        const bDate = new Date(baseParts.year, baseParts.month - 1, baseParts.day);
+        const tDate = new Date(targetParts.year, targetParts.month - 1, targetParts.day);
+        const diffDays = Math.round((tDate - bDate) / (1000 * 60 * 60 * 24));
+        if (diffDays > 0) return { label: `+${diffDays} Day (Tomorrow)`, color: 'emerald' };
+        if (diffDays < 0) return { label: `${diffDays} Day (Yesterday)`, color: 'amber' };
+        return { label: 'Same Day', color: 'slate' };
+    }
+
+    function getWorkingStatus(hour) {
+        if (hour >= 9 && hour < 17) {
+            return { label: 'Core Business (9 AM - 5 PM)', status: 'work', color: 'emerald', dot: 'bg-emerald-500' };
+        }
+        if ((hour >= 7 && hour < 9) || (hour >= 17 && hour < 20)) {
+            return { label: 'Shoulder Hours', status: 'shoulder', color: 'amber', dot: 'bg-amber-400' };
+        }
+        return { label: 'Sleep / Off-Hours', status: 'sleep', color: 'rose', dot: 'bg-rose-500' };
+    }
+
+    // --- State Synchronization ---
+    function syncFromSystemClock() {
+        currentUtcTimestamp = Date.now();
+        updateControllerInputs();
+    }
+
+    function updateControllerInputs() {
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const parts = getTzParts(baseDateObj, baseCity.tz);
+
+        const yyyy = parts.year;
+        const mm = String(parts.month).padStart(2, '0');
+        const dd = String(parts.day).padStart(2, '0');
+        const hh = String(parts.hour).padStart(2, '0');
+        const min = String(parts.minute).padStart(2, '0');
+
+        const dateInput = document.getElementById('baseDateInput');
+        const timeInput = document.getElementById('baseTimeInput');
+        const scrubber = document.getElementById('timeScrubber');
+        const readout = document.getElementById('scrubberReadout');
+
+        if (dateInput) dateInput.value = `${yyyy}-${mm}-${dd}`;
+        if (timeInput) timeInput.value = `${hh}:${min}`;
+
+        const totalMinutes = parts.hour * 60 + parts.minute;
+        if (scrubber) scrubber.value = totalMinutes;
+        if (readout) readout.textContent = formatTime(parts.hour, parts.minute, is24Hour) + ` (${hh}:${min})`;
+    }
+
+    // --- Event Handlers for Controls ---
+    function onScrubberInput(totalMinutes) {
+        pauseLiveClock();
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const parts = getTzParts(baseDateObj, baseCity.tz);
+
+        const newHour = Math.floor(totalMinutes / 60);
+        const newMinute = totalMinutes % 60;
+
+        // Construct new UTC timestamp for this local hour and minute in baseCity
+        const localTargetMs = Date.UTC(parts.year, parts.month - 1, parts.day, newHour, newMinute, 0);
+        const currentOffsetMin = getTzOffsetMinutes(baseCity.tz, new Date(localTargetMs));
+        currentUtcTimestamp = localTargetMs - (currentOffsetMin * 60000);
+
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function onBaseDateChange(dateVal) {
+        if (!dateVal) return;
+        pauseLiveClock();
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const parts = getTzParts(new Date(currentUtcTimestamp), baseCity.tz);
+        const [y, m, d] = dateVal.split('-').map(x => parseInt(x, 10));
+
+        const localTargetMs = Date.UTC(y, m - 1, d, parts.hour, parts.minute, 0);
+        const currentOffsetMin = getTzOffsetMinutes(baseCity.tz, new Date(localTargetMs));
+        currentUtcTimestamp = localTargetMs - (currentOffsetMin * 60000);
+
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function onBaseTimeChange(timeVal) {
+        if (!timeVal) return;
+        pauseLiveClock();
+        const [h, m] = timeVal.split(':').map(x => parseInt(x, 10));
+        const totalMin = h * 60 + m;
+        onScrubberInput(totalMin);
+    }
+
+    function changeBaseCity(newCityId) {
+        baseCityId = newCityId;
+        if (!activeCityIds.includes(newCityId)) {
+            activeCityIds.unshift(newCityId);
+        }
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function shiftTime(deltaMin) {
+        pauseLiveClock();
+        currentUtcTimestamp += deltaMin * 60000;
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function shiftDays(deltaDays) {
+        pauseLiveClock();
+        currentUtcTimestamp += deltaDays * 86400000;
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function resetToNow() {
+        syncFromSystemClock();
+        updateAllViews();
+        showToast('Reset to live current time');
+    }
+
+    function toggleTimeFormat() {
+        is24Hour = !is24Hour;
+        const lbl = document.getElementById('timeFormatLabel');
+        if (lbl) lbl.textContent = is24Hour ? '24-Hour' : '12-Hour';
+        updateControllerInputs();
+        updateAllViews();
+    }
+
+    function toggleLiveClock() {
+        if (isLiveClock) {
+            pauseLiveClock();
+            showToast('Live clock paused');
+        } else {
+            startLiveClock();
+            showToast('Live clock active');
+        }
+    }
+
+    function startLiveClock() {
+        isLiveClock = true;
+        const btn = document.getElementById('liveToggleBtn');
+        const dot = document.getElementById('liveDot');
+        const txt = document.getElementById('liveToggleText');
+        if (btn) btn.classList.add('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-950/60');
+        if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 live-dot shrink-0';
+        if (txt) txt.textContent = 'Live Active';
+
+        if (liveTimerInterval) clearInterval(liveTimerInterval);
+        liveTimerInterval = setInterval(() => {
+            currentUtcTimestamp = Date.now();
+            updateControllerInputs();
+            updateAllViews();
+        }, 1000);
+    }
+
+    function pauseLiveClock() {
+        if (!isLiveClock) return;
+        isLiveClock = false;
+        if (liveTimerInterval) clearInterval(liveTimerInterval);
+        const btn = document.getElementById('liveToggleBtn');
+        const dot = document.getElementById('liveDot');
+        const txt = document.getElementById('liveToggleText');
+        if (btn) btn.classList.remove('border-emerald-500', 'bg-emerald-50', 'dark:bg-emerald-950/60');
+        if (dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0';
+        if (txt) txt.textContent = 'Live Clock';
+    }
+
+    // --- City Management ---
+    function addCityById(cityId) {
+        if (!activeCityIds.includes(cityId)) {
+            activeCityIds.push(cityId);
+            updateAllViews();
+            showToast(`Added ${cityId.toUpperCase()}`);
+        } else {
+            showToast('City is already active');
+        }
+    }
+
+    function removeCityById(cityId) {
+        if (activeCityIds.length <= 1) {
+            showToast('At least one city must remain');
+            return;
+        }
+        activeCityIds = activeCityIds.filter(id => id !== cityId);
+        if (baseCityId === cityId) {
+            baseCityId = activeCityIds[0];
+            const sel = document.getElementById('baseCitySelect');
+            if (sel) sel.value = baseCityId;
+        }
+        updateAllViews();
+        showToast('City removed');
+    }
+
+    function pinAsBaseCity(cityId) {
+        baseCityId = cityId;
+        const sel = document.getElementById('baseCitySelect');
+        if (sel) sel.value = cityId;
+        updateControllerInputs();
+        updateAllViews();
+        showToast(`Pinned as Base Reference City`);
+    }
+
+    function resetDefaultCities() {
+        activeCityIds = ['nyc', 'lon', 'par', 'tok', 'dxb', 'syd'];
+        baseCityId = 'nyc';
+        initBaseCityDropdown();
+        updateControllerInputs();
+        updateAllViews();
+        showToast('Reset to default global hubs');
+    }
+
+    // --- Search Cities ---
+    function onSearchCities(query) {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        if (!dropdown) return;
+        const q = query.trim().toLowerCase();
+        if (!q) {
+            dropdown.classList.add('hidden');
+            dropdown.innerHTML = '';
+            return;
+        }
+
+        const matches = WORLD_CITIES.filter(c =>
+            c.name.toLowerCase().includes(q) ||
+            c.country.toLowerCase().includes(q) ||
+            c.id.toLowerCase().includes(q)
+        ).slice(0, 8);
+
+        if (matches.length === 0) {
+            dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400 text-center">No matching cities found</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        dropdown.innerHTML = '';
+        matches.forEach(c => {
+            const isAdded = activeCityIds.includes(c.id);
+            const dstInfo = checkDst(c.tz, new Date(currentUtcTimestamp));
+            const item = document.createElement('div');
+            item.className = 'p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-between cursor-pointer transition text-xs';
+            item.innerHTML = `
+                <div class="flex items-center gap-2">
+                    <span class="text-base">${c.flag}</span>
+                    <div>
+                        <span class="font-bold text-slate-900 dark:text-white">${c.name}</span>
+                        <span class="text-slate-400 text-[11px] block">${c.country} &bull; ${dstInfo.offsetStr}</span>
+                    </div>
+                </div>
+                <button type="button" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg ${isAdded ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-default' : 'bg-brand-600 text-white hover:bg-brand-700'} transition">
+                    ${isAdded ? 'Active' : '+ Add'}
+                </button>
+            `;
+            item.onclick = () => {
+                if (!isAdded) addCityById(c.id);
+                document.getElementById('citySearchInput').value = '';
+                dropdown.classList.add('hidden');
+            };
+            dropdown.appendChild(item);
+        });
+        dropdown.classList.remove('hidden');
+    }
+
+    // Close search dropdown on click outside
+    document.addEventListener('click', (e) => {
+        const dropdown = document.getElementById('searchResultsDropdown');
+        const input = document.getElementById('citySearchInput');
+        if (dropdown && input && !dropdown.contains(e.target) && !input.contains(e.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    // --- Tab Switcher ---
+    function switchTab(tabId) {
+        currentTab = tabId;
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById(`tab-${tabId}`);
+        const activeBtn = document.getElementById(`tabBtn_${tabId}`);
+
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'scheduler') {
+            updateScheduler();
+            if (hoursChart) hoursChart.resize();
+        } else if (tabId === 'print') {
+            renderPrintReport();
+        }
+    }
+
+    // --- Master View Updater ---
+    function updateAllViews() {
+        renderConverterView();
+        if (currentTab === 'scheduler') updateScheduler();
+        if (currentTab === 'print') renderPrintReport();
+    }
+
+    // --- TAB 1: Render Converter View ---
+    function renderConverterView() {
+        const grid = document.getElementById('cityCardsGrid');
+        const countLbl = document.getElementById('activeCitiesCount');
+        if (!grid) return;
+
+        if (countLbl) countLbl.textContent = `Comparing ${activeCityIds.length} Global Hubs (${activeCityIds.length > 1 ? 'Multi-Clock View' : 'Single City'})`;
+
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseParts = getTzParts(baseDateObj, baseCity.tz);
+
+        grid.innerHTML = '';
+
+        activeCityIds.forEach(cityId => {
+            const city = WORLD_CITIES.find(c => c.id === cityId);
+            if (!city) return;
+
+            const targetParts = getTzParts(baseDateObj, city.tz);
+            const dstInfo = checkDst(city.tz, baseDateObj);
+            const workInfo = getWorkingStatus(targetParts.hour);
+            const dayTag = getRelativeDayTag(baseParts, targetParts);
+            const isBase = city.id === baseCityId;
+
+            // Compute month name & day
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+            const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const localDate = new Date(targetParts.year, targetParts.month - 1, targetParts.day);
+            const dayStr = `${dayNames[localDate.getDay()]}, ${monthNames[targetParts.month - 1]} ${targetParts.day}, ${targetParts.year}`;
+
+            // Mini 24h scrubber progress indicator
+            const hourPercent = ((targetParts.hour * 60 + targetParts.minute) / 1440) * 100;
+
+            const card = document.createElement('div');
+            card.className = `bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border transition relative ${isBase ? 'ring-2 ring-brand-500/80 border-brand-500/80' : 'border-slate-200 dark:border-slate-700'}`;
+
+            card.innerHTML = `
+                <!-- Card Header -->
+                <div class="flex items-start justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2.5">
+                        <span class="text-2xl">${city.flag}</span>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <h3 class="font-extrabold text-slate-900 dark:text-white text-base">${city.name}</h3>
+                                ${isBase ? '<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-brand-100 text-brand-800 dark:bg-brand-950 dark:text-brand-300 uppercase">Base</span>' : ''}
+                            </div>
+                            <span class="text-slate-400 text-xs block">${city.country}</span>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center gap-1">
+                        ${!isBase ? `
+                            <button type="button" onclick="pinAsBaseCity('${city.id}')" title="Set as Base Reference City" class="p-1.5 rounded-lg text-slate-400 hover:text-brand-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"/></svg>
+                            </button>
+                        ` : ''}
+                        <button type="button" onclick="removeCityById('${city.id}')" title="Remove City" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Big Clock Display -->
+                <div class="mb-3">
+                    <div class="text-3xl sm:text-4xl font-black font-mono tracking-tight text-slate-900 dark:text-white">
+                        ${formatTime(targetParts.hour, targetParts.minute, is24Hour)}
+                    </div>
+                    <div class="flex flex-wrap items-center gap-1.5 mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+                        <span>${dayStr}</span>
+                        <span>&bull;</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${dayTag.color === 'emerald' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300' : (dayTag.color === 'amber' ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/70 dark:text-amber-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300')}">
+                            ${dayTag.label}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Offsets & Badges -->
+                <div class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 text-xs">
+                    <div class="flex items-center justify-between">
+                        <span class="font-mono text-slate-600 dark:text-slate-300 font-semibold">${dstInfo.offsetStr} (${dstInfo.abbr})</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${dstInfo.isDst ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'}">
+                            ${dstInfo.isDst ? 'DST Active (+1h)' : (dstInfo.observesDst ? 'Standard Time' : 'No DST Shift')}
+                        </span>
+                    </div>
+
+                    <!-- Work Status -->
+                    <div class="flex items-center gap-1.5 text-[11px] font-medium text-slate-600 dark:text-slate-300">
+                        <span class="w-2 h-2 rounded-full ${workInfo.dot}"></span>
+                        <span>${workInfo.label}</span>
+                    </div>
+                </div>
+
+                <!-- Mini 24h Visual Strip -->
+                <div class="mt-4 pt-2">
+                    <div class="relative h-2 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                        <!-- Hour Marker -->
+                        <div class="absolute top-0 bottom-0 w-1.5 bg-brand-600 dark:bg-brand-400 rounded-full" style="left: ${hourPercent}%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[9px] text-slate-400 mt-1 font-mono">
+                        <span>00:00</span>
+                        <span>09:00</span>
+                        <span>17:00</span>
+                        <span>24:00</span>
+                    </div>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // --- TAB 2: Global Meeting Scheduler Logic ---
+    function updateScheduler() {
+        const matrixContainer = document.getElementById('timelineMatrixContainer');
+        const recContainer = document.getElementById('recommendedSlotsContainer');
+        if (!matrixContainer) return;
+
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseParts = getTzParts(baseDateObj, baseCity.tz);
+
+        // Evaluate overlap score for each of the 24 hours of the base reference day
+        const hourlyScores = [];
+
+        for (let h = 0; h < 24; h++) {
+            const slotTargetMs = Date.UTC(baseParts.year, baseParts.month - 1, baseParts.day, h, 0, 0);
+            const slotOffsetMin = getTzOffsetMinutes(baseCity.tz, new Date(slotTargetMs));
+            const slotUtcTimestamp = slotTargetMs - (slotOffsetMin * 60000);
+            const slotDate = new Date(slotUtcTimestamp);
+
+            let workingCount = 0;
+            let shoulderCount = 0;
+            let sleepCount = 0;
+
+            activeCityIds.forEach(cityId => {
+                const c = WORLD_CITIES.find(x => x.id === cityId);
+                if (!c) return;
+                const p = getTzParts(slotDate, c.tz);
+                const status = getWorkingStatus(p.hour).status;
+                if (status === 'work') workingCount++;
+                else if (status === 'shoulder') shoulderCount++;
+                else sleepCount++;
+            });
+
+            const total = activeCityIds.length;
+            // Weighted score: 100 per work, 50 per shoulder, 0 per sleep
+            const scorePercent = Math.round(((workingCount * 100) + (shoulderCount * 50)) / (total * 100) * 100);
+
+            hourlyScores.push({
+                hour: h,
+                utcTimestamp: slotUtcTimestamp,
+                score: scorePercent,
+                workingCount,
+                shoulderCount,
+                sleepCount,
+                total
+            });
+        }
+
+        // Top 3 Recommended Slots
+        const sortedSlots = [...hourlyScores].sort((a, b) => b.score - a.score || b.workingCount - a.workingCount).slice(0, 3);
+
+        if (recContainer) {
+            recContainer.innerHTML = '';
+            sortedSlots.forEach((slot, idx) => {
+                const baseTimeFormatted = formatTime(slot.hour, 0, is24Hour);
+                const scoreColor = slot.score >= 80 ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200' : (slot.score >= 50 ? 'text-amber-600 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-400 border-amber-200' : 'text-slate-600 bg-slate-50 dark:bg-slate-900 border-slate-200');
+
+                const card = document.createElement('div');
+                card.className = 'p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/70 dark:bg-slate-900/40 hover:border-brand-500 cursor-pointer transition';
+                card.onclick = () => {
+                    onScrubberInput(slot.hour * 60);
+                    showToast(`Selected meeting time: ${baseTimeFormatted}`);
+                };
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Option #${idx + 1}</span>
+                        <span class="px-2 py-0.5 rounded text-[11px] font-bold border ${scoreColor}">${slot.score}% Overlap</span>
+                    </div>
+                    <div class="text-base font-black text-slate-900 dark:text-white font-mono">${baseTimeFormatted} (${baseCity.name})</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        ${slot.workingCount} in business hours &bull; ${slot.shoulderCount} shoulder &bull; ${slot.sleepCount} off-hours
+                    </div>
+                `;
+                recContainer.appendChild(card);
+            });
+        }
+
+        // Render 24-Hour Visual Overlapping Ribbon Matrix
+        matrixContainer.innerHTML = '';
+
+        // Header Row: Hours (00 to 23)
+        const headerRow = document.createElement('div');
+        headerRow.className = 'flex items-center text-[10px] font-mono text-slate-400 border-b border-slate-200 dark:border-slate-700 pb-1';
+        headerRow.innerHTML = '<div class="w-44 shrink-0 font-sans font-bold text-slate-500">City / Hour (Base)</div>';
+        const hoursGrid = document.createElement('div');
+        hoursGrid.className = 'flex-grow grid grid-cols-24 gap-1 text-center';
+        for (let i = 0; i < 24; i++) {
+            const hDiv = document.createElement('div');
+            hDiv.className = `py-0.5 font-bold ${i === baseParts.hour ? 'text-brand-600 dark:text-brand-400' : ''}`;
+            hDiv.textContent = String(i).padStart(2, '0');
+            hoursGrid.appendChild(hDiv);
+        }
+        headerRow.appendChild(hoursGrid);
+        matrixContainer.appendChild(headerRow);
+
+        // Rows for each city
+        activeCityIds.forEach(cityId => {
+            const city = WORLD_CITIES.find(c => c.id === cityId);
+            if (!city) return;
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center text-xs py-1 hover:bg-slate-50 dark:hover:bg-slate-800/40 rounded-lg transition';
+
+            const cityLabel = document.createElement('div');
+            cityLabel.className = 'w-44 shrink-0 font-semibold text-slate-800 dark:text-slate-200 truncate pr-2 flex items-center gap-1.5';
+            cityLabel.innerHTML = `<span>${city.flag}</span> <span class="truncate">${city.name}</span>`;
+            row.appendChild(cityLabel);
+
+            const cellsContainer = document.createElement('div');
+            cellsContainer.className = 'flex-grow grid grid-cols-24 gap-1';
+
+            for (let h = 0; h < 24; h++) {
+                const slotTargetMs = Date.UTC(baseParts.year, baseParts.month - 1, baseParts.day, h, 0, 0);
+                const slotOffsetMin = getTzOffsetMinutes(baseCity.tz, new Date(slotTargetMs));
+                const slotUtcTimestamp = slotTargetMs - (slotOffsetMin * 60000);
+                const localParts = getTzParts(new Date(slotUtcTimestamp), city.tz);
+
+                const status = getWorkingStatus(localParts.hour).status;
+                const isSelected = h === baseParts.hour;
+
+                let cellColor = 'bg-rose-500/20 text-rose-700 dark:text-rose-300 border-rose-500/30';
+                if (status === 'work') cellColor = 'bg-emerald-500/30 text-emerald-800 dark:text-emerald-200 border-emerald-500/40 font-bold';
+                else if (status === 'shoulder') cellColor = 'bg-amber-400/30 text-amber-800 dark:text-amber-200 border-amber-400/40';
+
+                const cell = document.createElement('div');
+                cell.className = `h-7 rounded flex items-center justify-center font-mono text-[10px] cursor-pointer transition border ${cellColor} ${isSelected ? 'ring-2 ring-brand-500 shadow-md font-black scale-105 z-10' : 'hover:scale-105'}`;
+                cell.textContent = localParts.hour;
+                cell.title = `${city.name}: ${formatTime(localParts.hour, 0, is24Hour)} (Base: ${formatTime(h, 0, is24Hour)})`;
+                cell.onclick = () => {
+                    onScrubberInput(h * 60);
+                };
+                cellsContainer.appendChild(cell);
+            }
+
+            row.appendChild(cellsContainer);
+            matrixContainer.appendChild(row);
+        });
+
+        updateChartData();
+    }
+
+    // --- Chart.js Business Hours Visualizer ---
+    function initBusinessHoursChart() {
+        const ctx = document.getElementById('businessHoursChart');
+        if (!ctx) return;
+
+        hoursChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'Core Working Hours (09:00 - 17:00 Local)',
+                        data: [],
+                        backgroundColor: '#10b981',
+                        borderRadius: 6,
+                        borderSkipped: false
+                    }
+                ]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        min: 0,
+                        max: 24,
+                        title: {
+                            display: true,
+                            text: 'Hour of Day in Reference Base City',
+                            font: { family: 'Inter', size: 11 }
+                        },
+                        ticks: {
+                            stepSize: 2,
+                            callback: (v) => `${v}:00`
+                        },
+                        grid: { color: 'rgba(148, 163, 184, 0.15)' }
+                    },
+                    y: {
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter', weight: 'bold' } }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: (ctx) => {
+                                const [start, end] = ctx.raw;
+                                return `Working window: ${start}:00 to ${end}:00`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        updateChartData();
+    }
+
+    function updateChartData() {
+        if (!hoursChart) return;
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseOffsetMin = getTzOffsetMinutes(baseCity.tz, baseDateObj);
+
+        const labels = [];
+        const spans = [];
+
+        activeCityIds.forEach(cityId => {
+            const city = WORLD_CITIES.find(c => c.id === cityId);
+            if (!city) return;
+            labels.push(`${city.flag} ${city.name}`);
+
+            const cityOffsetMin = getTzOffsetMinutes(city.tz, baseDateObj);
+            const diffHours = (cityOffsetMin - baseOffsetMin) / 60;
+
+            // Local 09:00 - 17:00 mapped to base city time
+            let start = 9 - diffHours;
+            let end = 17 - diffHours;
+
+            // Keep within positive modulo span
+            start = ((start % 24) + 24) % 24;
+            end = ((end % 24) + 24) % 24;
+
+            if (start > end) {
+                // Splits over midnight, visualize main segment
+                spans.push([start, 24]);
+            } else {
+                spans.push([Math.round(start * 10) / 10, Math.round(end * 10) / 10]);
+            }
+        });
+
+        hoursChart.data.labels = labels;
+        hoursChart.data.datasets[0].data = spans;
+        hoursChart.update();
+    }
+
+    // --- TAB 3: Filter & Render Master Offsets Table ---
+    function filterOffsetTable(query) {
+        renderOffsetTable(query);
+    }
+
+    function renderOffsetTable(query) {
+        const tbody = document.getElementById('offsetTableBody');
+        if (!tbody) return;
+        const q = query.trim().toLowerCase();
+
+        const filtered = UTC_OFFSETS_DATA.filter(row =>
+            !q ||
+            row.offset.toLowerCase().includes(q) ||
+            row.name.toLowerCase().includes(q) ||
+            row.letter.toLowerCase().includes(q) ||
+            row.cities.toLowerCase().includes(q)
+        );
+
+        tbody.innerHTML = '';
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">No matching time zones found</td></tr>';
+            return;
+        }
+
+        filtered.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition';
+            tr.innerHTML = `
+                <td class="px-3 py-2.5 font-bold text-brand-600 dark:text-brand-400">${row.offset}</td>
+                <td class="px-3 py-2.5 font-semibold text-slate-900 dark:text-white">${row.name}</td>
+                <td class="px-3 py-2.5 text-slate-500">${row.letter}</td>
+                <td class="px-3 py-2.5 font-sans text-slate-700 dark:text-slate-300">${row.cities}</td>
+                <td class="px-3 py-2.5 text-[11px] font-sans text-slate-500">${row.dst}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- TAB 4: Print Report Generator ---
+    function renderPrintReport() {
+        const tbody = document.getElementById('printTableBody');
+        const titleEl = document.getElementById('printMeetingTitle');
+        const baseTimeEl = document.getElementById('printBaseTime');
+        const durEl = document.getElementById('printDuration');
+        const timeInput = document.getElementById('meetingTitleInput');
+        const durSelect = document.getElementById('meetingDurationSelect');
+
+        if (!tbody) return;
+
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseParts = getTzParts(baseDateObj, baseCity.tz);
+
+        if (titleEl && timeInput) titleEl.textContent = timeInput.value || 'Global Sync Meeting';
+        if (baseTimeEl) baseTimeEl.textContent = `${formatTime(baseParts.hour, baseParts.minute, is24Hour)} (${baseCity.name})`;
+        if (durEl && durSelect) durEl.textContent = `${durSelect.value} Minutes`;
+
+        tbody.innerHTML = '';
+        activeCityIds.forEach(cityId => {
+            const city = WORLD_CITIES.find(c => c.id === cityId);
+            if (!city) return;
+
+            const targetParts = getTzParts(baseDateObj, city.tz);
+            const dstInfo = checkDst(city.tz, baseDateObj);
+            const workInfo = getWorkingStatus(targetParts.hour);
+            const dayTag = getRelativeDayTag(baseParts, targetParts);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2.5 font-bold text-slate-900 dark:text-white">${city.flag} ${city.name}</td>
+                <td class="p-2.5 text-slate-600 dark:text-slate-400">${city.country}</td>
+                <td class="p-2.5 font-bold font-mono text-brand-600 dark:text-brand-400">${formatTime(targetParts.hour, targetParts.minute, is24Hour)}</td>
+                <td class="p-2.5">${dayTag.label}</td>
+                <td class="p-2.5 font-mono">${dstInfo.offsetStr}</td>
+                <td class="p-2.5">${dstInfo.isDst ? 'DST Active' : 'Standard'}</td>
+                <td class="p-2.5 font-medium ${workInfo.status === 'work' ? 'text-emerald-600 font-bold' : (workInfo.status === 'shoulder' ? 'text-amber-600' : 'text-rose-600')}">${workInfo.label}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- Export / Sharing Utilities ---
+    function copyShareUrl() {
+        const baseCity = baseCityId;
+        const cities = activeCityIds.join(',');
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseParts = getTzParts(baseDateObj, (WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0]).tz);
+
+        const yyyy = baseParts.year;
+        const mm = String(baseParts.month).padStart(2, '0');
+        const dd = String(baseParts.day).padStart(2, '0');
+        const hh = String(baseParts.hour).padStart(2, '0');
+        const min = String(baseParts.minute).padStart(2, '0');
+
+        const url = `${window.location.origin}${window.location.pathname}?cities=${cities}&base=${baseCity}&date=${yyyy}-${mm}-${dd}&time=${hh}:${min}&format=${is24Hour ? '24' : '12'}`;
+        navigator.clipboard.writeText(url).then(() => {
+            showToast('Shareable link copied to clipboard!');
+        });
+    }
+
+    function copyMeetingInvite() {
+        const titleInput = document.getElementById('meetingTitleInput');
+        const durSelect = document.getElementById('meetingDurationSelect');
+        const title = titleInput ? titleInput.value : 'Global Team Meeting';
+        const duration = durSelect ? durSelect.value : '60';
+
+        const baseCity = WORLD_CITIES.find(c => c.id === baseCityId) || WORLD_CITIES[0];
+        const baseDateObj = new Date(currentUtcTimestamp);
+        const baseParts = getTzParts(baseDateObj, baseCity.tz);
+
+        let lines = [];
+        lines.push(`📅 MEETING INVITATION: ${title}`);
+        lines.push(`⏱ Duration: ${duration} minutes`);
+        lines.push(`🌐 Reference Base: ${baseCity.name} (${formatTime(baseParts.hour, baseParts.minute, is24Hour)})`);
+        lines.push('');
+        lines.push('--- LOCAL PARTICIPANT TIMES ---');
+
+        activeCityIds.forEach(cityId => {
+            const city = WORLD_CITIES.find(c => c.id === cityId);
+            if (!city) return;
+            const targetParts = getTzParts(baseDateObj, city.tz);
+            const dayTag = getRelativeDayTag(baseParts, targetParts);
+            const dstInfo = checkDst(city.tz, baseDateObj);
+            lines.push(`• ${city.name} (${city.country}): ${formatTime(targetParts.hour, targetParts.minute, is24Hour)} [${dayTag.label}] (${dstInfo.offsetStr})`);
+        });
+
+        lines.push('');
+        lines.push('Coordinated via CalcWorld Universal Time Zone Engine');
+
+        const fullText = lines.join('\n');
+        navigator.clipboard.writeText(fullText).then(() => {
+            showToast('Meeting summary copied to clipboard!');
+        });
+    }
+
+    function downloadIcsFile() {
+        const titleInput = document.getElementById('meetingTitleInput');
+        const durSelect = document.getElementById('meetingDurationSelect');
+        const title = titleInput ? titleInput.value : 'Global Team Meeting';
+        const durationMin = durSelect ? parseInt(durSelect.value, 10) : 60;
+
+        const startUtc = new Date(currentUtcTimestamp);
+        const endUtc = new Date(currentUtcTimestamp + durationMin * 60000);
+
+        function formatIcsDate(d) {
+            return d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        }
+
+        const icsContent = [
+            'BEGIN:VCALENDAR',
+            'VERSION:2.0',
+            'PRODID:-//CalcWorld//Time Zone Calculator & Meeting Planner//EN',
+            'CALSCALE:GREGORIAN',
+            'METHOD:PUBLISH',
+            'BEGIN:VEVENT',
+            `UID:${Date.now()}-calcworld@calcworld.net`,
+            `DTSTAMP:${formatIcsDate(new Date())}`,
+            `DTSTART:${formatIcsDate(startUtc)}`,
+            `DTEND:${formatIcsDate(endUtc)}`,
+            `SUMMARY:${title}`,
+            `DESCRIPTION:International meeting across multiple time zones scheduled via CalcWorld Time Zone Planner.`,
+            'STATUS:CONFIRMED',
+            'END:VEVENT',
+            'END:VCALENDAR'
+        ].join('\r\n');
+
+        const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `${title.toLowerCase().replace(/[^a-z0-9]/g, '-')}.ics`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast('Downloaded .ICS calendar file');
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const msg = document.getElementById('leadSuccessMsg');
+        const btn = document.getElementById('leadSubmitBtn');
+        if (input && input.value) {
+            if (btn) btn.disabled = true;
+            if (msg) msg.classList.remove('hidden');
+            showToast('Reference guide dispatched!');
+        }
+    }
+
+    function toggleFaq(id) {
+        const ans = document.getElementById(`faqAns_${id}`);
+        const icon = document.getElementById(`faqIcon_${id}`);
+        if (!ans || !icon) return;
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+            ans.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.theme = isDark ? 'dark' : 'light';
+        if (hoursChart) {
+            hoursChart.update();
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast) return;
+        if (toastMsg) toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2800);
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

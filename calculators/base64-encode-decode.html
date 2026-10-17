@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Encode &amp; Decode | Developer Radix-64, URL-Safe &amp; Data URL Suite</title>
+    <meta name="description" content="Production-grade Base64 encoder, decoder, URL-safe converter, and Data URI generator. Features full UTF-8 unicode support, RFC 4648 compliance, drag-and-drop file/image conversion, bitwise padding breakdown, and reverse binary file downloads.">
+    <link rel="canonical" href="https://calcworld.net/calculators/base64-encode-decode.html">
+
+    <!-- Anti-FOUC Script -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+                    },
+                    colors: {
+                        canvas: { light: '#F8FAFC', dark: '#0B0F19' },
+                        card: { light: '#FFFFFF', dark: '#111827' },
+                        text: { light: '#0F172A', dark: '#F9FAFB' },
+                        sub: { light: '#64748B', dark: '#9CA3AF' },
+                        border: { light: '#E2E8F0', dark: '#1F2937' },
+                        accent: { DEFAULT: '#2563EB', hover: '#1D4ED8' }
+                    },
+                    animation: {
+                        'shimmer': 'shimmer 1.5s infinite linear'
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax CDN -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono-code { font-family: 'JetBrains Mono', monospace; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .checkerboard-bg {
+            background-image: linear-gradient(45deg, #e2e8f0 25%, transparent 25%),
+                              linear-gradient(-45deg, #e2e8f0 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #e2e8f0 75%),
+                              linear-gradient(-45deg, transparent 75%, #e2e8f0 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+        .dark .checkerboard-bg {
+            background-image: linear-gradient(45deg, #1e293b 25%, transparent 25%),
+                              linear-gradient(-45deg, #1e293b 25%, transparent 25%),
+                              linear-gradient(45deg, transparent 75%, #1e293b 75%),
+                              linear-gradient(-45deg, transparent 75%, #1e293b 75%);
+            background-size: 16px 16px;
+            background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+        }
+
+        .ad-slot-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            color: #64748b;
+            font-size: 0.8125rem;
+            transition: all 0.2s ease;
+        }
+        .dark .ad-slot-box {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #94a3b8;
+        }
+
+        /* FAQ Accordion */
+        .faq-item .faq-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0, 1, 0, 1), padding 0.35s ease;
+        }
+        .faq-item.active .faq-content {
+            max-height: 1200px;
+            transition: max-height 0.4s cubic-bezier(1, 0, 1, 0), padding 0.4s ease;
+        }
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Toast notification */
+        .toast {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: visibility 0s 0.2s, opacity 0.2s linear, transform 0.2s ease;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.2s linear, transform 0.2s ease;
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+        .print-only { display: none; }
+    </style>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "CalcWorld Base64 Encode & Decode Suite",
+          "url": "https://calcworld.net/other/base64-encode-decode",
+          "description": "Production Base64 encoder, decoder, URL-safe base64url transformer, and file Data URL generator with complete UTF-8 Unicode support, bitwise padding analysis, and binary file reconstruction.",
+          "applicationCategory": "DeveloperApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Base64 Encode Decode",
+              "item": "https://calcworld.net/other/base64-encode-decode"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How does Base64 encoding handle multi-byte UTF-8 characters without corruption?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Standard browser window.btoa accepts only Latin-1 characters (code points 0-255). Multi-byte UTF-8 sequences such as Arabic, Chinese, and emojis span two to four octets. By transforming text via the W3C TextEncoder API into an unsigned 8-bit array (Uint8Array), each code point decomposes into its precise byte sequences before mapping into the 64-character radix alphabet, preventing URIError and character truncation."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does Base64 encoding cause a 33.33% payload expansion?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Computers process data in 8-bit octets. Base64 partitions binary streams into 6-bit sextets (2^6 = 64 indices). Because the lowest common multiple of 8 and 6 is 24 bits, three 8-bit bytes (24 bits total) expand into four 6-bit Base64 characters (24 bits total). The resulting ratio of output characters to input bytes is 4/3, creating an exact 33.33% volumetric expansion before optional transport line breaks."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the structural difference between standard Base64 and URL-Safe Base64 (base64url)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Standard Base64 (RFC 4648 Section 4) employs '+' (index 62) and '/' (index 63), with '=' reserved for padding. In HTTP URL query strings and URI path segments, '+' denotes a space, and '/' acts as a path separator. RFC 4648 Section 5 defines base64url by replacing '+' with '-' (hyphen) and '/' with '_' (highlight), while omitting trailing '=' padding to prevent URI parsing conflicts."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "When should inline Data URIs be used instead of external asset files?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Data URIs (RFC 2397) embed assets directly into HTML or CSS, eliminating extra HTTP connection handshakes. They are suitable for sub-2KB icons, splash screen assets, critical rendering path backgrounds, and self-contained email newsletters. For larger assets, the 33.33% size expansion and lack of independent browser cacheability make external file requests more efficient."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does Base64 padding operate when input byte length is not divisible by 3?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Base64 encodes 24-bit blocks. When the final block contains only 1 byte (8 bits), four zero bits are appended to form two 6-bit characters, followed by two '=' padding characters. When the final block contains 2 bytes (16 bits), two zero bits are appended to form three 6-bit characters, followed by one '=' padding character. When divisible by 3, zero padding characters are required."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why do JSON Web Tokens (JWT) require unpadded Base64URL?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "RFC 7519 specifies that JSON Web Tokens transmit headers, payloads, and signatures concatenated by dots (header.payload.signature) in HTTP Authorization headers, query parameters, or cookies. Base64URL prevents character percent-encoding, and stripping padding '=' removes trailing non-alphanumeric symbols that interfere with web servers and regex parsers."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does HTTP Basic Authentication use Base64?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under RFC 7617, HTTP Basic Authentication combines the username and password with a colon separator (username:password), encodes the resulting byte string into standard Base64, and transmits it in the HTTP Authorization header prefixed by 'Basic '. Base64 provides character set normalization across network boundaries rather than encryption."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Base64 Encode &amp; Decode | Developer Radix-64, URL-Safe &amp; Data URL Suite">
+    <meta property="og:description" content="Production-grade Base64 encoder, decoder, URL-safe converter, and Data URI generator. Features full UTF-8 unicode support, RFC 4648 compliance, drag-and-drop file/image conversion, bitwise padding breakdown, and reverse binary file downloads.">
+    <meta property="og:url" content="https://calcworld.net/calculators/base64-encode-decode.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Base64 Encode &amp; Decode | Developer Radix-64, URL-Safe &amp; Data URL Suite">
+    <meta name="twitter:description" content="Production-grade Base64 encoder, decoder, URL-safe converter, and Data URI generator. Features full UTF-8 unicode support, RFC 4648 compliance, drag-and-drop file/image conversion, bitwise padding breakdown, and reverse binary file downloads.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Top Navigation Header -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast fixed top-5 right-5 bg-emerald-600 text-white font-medium px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toastMessage">Copied to clipboard!</span>
+    </div>
+
+    <!-- AdBlock Recovery Banner -->
+    <div id="adblock-recovery" class="hidden no-print fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:max-w-md bg-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xl z-50 border border-amber-300">
+        <div class="flex items-start justify-between">
+            <div class="flex space-x-3">
+                <svg class="w-6 h-6 text-slate-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="text-xs">
+                    <p class="font-bold">Ad Blocker Detected</p>
+                    <p class="mt-0.5 text-slate-900">CalcWorld provides free developer utilities supported by unobtrusive advertisements. Please consider whitelisting our website to support ongoing tool enhancements.</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('adblock-recovery').remove()" class="text-slate-900 hover:text-black font-bold p-1 ml-2" aria-label="Dismiss">✕</button>
+        </div>
+    </div>
+
+    <!-- AdSense Slot 1: Top Responsive Leaderboard -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full no-print">
+        <div id="ad-slot-1" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="1">
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Top Leaderboard</span>
+            <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                AdSense Placement (728x90 Responsive Banner)
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full space-y-8 pb-24 sm:pb-16">
+
+        <!-- Tool Hero Intro -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-accent text-xs font-semibold mb-3">
+                    <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                    Radix-64 Binary Serialization &amp; RFC 4648 Utility
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">Base64 Encode &amp; Decode</h1>
+                <p class="text-sub-light dark:text-sub-dark text-sm max-w-3xl leading-relaxed">
+                    Encode and decode standard or URL-safe Base64 strings, convert images and binary documents into RFC 2397 Data URLs, inspect bitwise octet-to-sextet alignments, and download decoded binary payloads.
+                </p>
+            </div>
+
+            <!-- Tab Buttons Container -->
+            <div class="tabs-header-nav flex items-center bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-1.5 shadow-sm overflow-x-auto self-start md:self-auto">
+                <button type="button" id="tabBtn_text" onclick="switchTab('text')" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 border-accent text-accent bg-accent/10 whitespace-nowrap">
+                    🔤 Text Encoder / Decoder
+                </button>
+                <button type="button" id="tabBtn_file" onclick="switchTab('file')" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 border-transparent text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark whitespace-nowrap">
+                    🖼️ File &amp; Data URL
+                </button>
+                <button type="button" id="tabBtn_bitwise" onclick="switchTab('bitwise')" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 border-transparent text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark whitespace-nowrap">
+                    ⚙️ Bitwise Padding Breakdown
+                </button>
+                <button type="button" id="tabBtn_print" onclick="switchTab('print')" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl transition-all border-b-2 border-transparent text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark whitespace-nowrap">
+                    📄 Print Report
+                </button>
+            </div>
+        </div>
+
+        <!-- TAB 1: TEXT ENCODER / DECODER -->
+        <div id="tab-text" class="tab-panel active space-y-6">
+
+            <!-- Presets Bar -->
+            <div class="no-print bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm" id="preset-buttons">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <span class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark">
+                        Developer Test Presets
+                    </span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">
+                        Click any sample below to load and process instantly
+                    </span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+                    <button type="button" onclick="loadTextPreset('unicode')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        🌐 UTF-8 &amp; Emojis
+                    </button>
+                    <button type="button" onclick="loadTextPreset('jwt')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        🔑 JWT Token
+                    </button>
+                    <button type="button" onclick="loadTextPreset('basic_auth')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        🛡️ Basic Auth
+                    </button>
+                    <button type="button" onclick="loadTextPreset('json')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        📦 JSON Payload
+                    </button>
+                    <button type="button" onclick="loadTextPreset('url_safe')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        🔗 URL-Safe Query
+                    </button>
+                    <button type="button" onclick="loadTextPreset('svg')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left truncate">
+                        🎨 SVG Vector
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transformation Controls Toolbar -->
+            <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm flex flex-wrap items-center justify-between gap-4">
+                <!-- Direction Toggle -->
+                <div class="flex items-center gap-1 bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-xl p-1">
+                    <button type="button" id="btnModeEncode" onclick="setTextMode('encode')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white shadow-xs transition-all">
+                        Encode Text &rarr; Base64
+                    </button>
+                    <button type="button" id="btnModeDecode" onclick="setTextMode('decode')" class="px-3.5 py-1.5 text-xs font-bold rounded-lg text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all">
+                        Decode Base64 &rarr; Text
+                    </button>
+                </div>
+
+                <!-- Modifiers Toggles -->
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <label class="flex items-center gap-2 cursor-pointer font-medium">
+                        <input type="checkbox" id="toggleUrlSafe" onchange="processText()" class="w-4 h-4 text-accent rounded border-border-light dark:border-border-dark focus:ring-accent">
+                        <span>URL-Safe (RFC 4648 &sect;5: <code>-</code> and <code>_</code>)</span>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer font-medium">
+                        <input type="checkbox" id="toggleStripPadding" onchange="processText()" class="w-4 h-4 text-accent rounded border-border-light dark:border-border-dark focus:ring-accent">
+                        <span>Omit Trailing Padding (<code>=</code>)</span>
+                    </label>
+
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-sub-light dark:text-sub-dark font-medium">Line Break:</span>
+                        <select id="selectLineWrap" onchange="processText()" class="bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-lg px-2.5 py-1 text-xs font-medium focus:ring-1 focus:ring-accent">
+                            <option value="none">No Wrap</option>
+                            <option value="64">MIME 64 Chars</option>
+                            <option value="76">MIME 76 Chars</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Action Tools -->
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="swapInputOutput()" class="p-2 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent text-sub-light dark:text-sub-dark hover:text-accent transition-colors" title="Swap Input and Output">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                    </button>
+                    <button type="button" onclick="clearTextAreas()" class="px-3 py-1.5 text-xs font-semibold rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:text-rose-500 transition-colors">
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <!-- Two-Column Textarea Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                <!-- Input Column -->
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm flex flex-col space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                            <span id="inputLabelText" class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                                Raw Input Text (UTF-8 Unicode)
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] font-mono text-sub-light dark:text-sub-dark">
+                            <span id="inputCharCount">0 chars</span>
+                            <span>&bull;</span>
+                            <span id="inputByteCount">0 bytes</span>
+                        </div>
+                    </div>
+
+                    <textarea id="inputTextarea" oninput="processText()" placeholder="Type, paste UTF-8 text, unicode symbols, or emojis here..." rows="12" class="w-full p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono-code text-sm focus:ring-2 focus:ring-accent focus:border-accent outline-none resize-y transition-colors custom-scrollbar leading-relaxed"></textarea>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[11px] text-sub-light dark:text-sub-dark">
+                            UTF-8 byte sequence automatically calculated
+                        </span>
+                        <button type="button" onclick="copyInputText()" class="text-xs text-sub-light dark:text-sub-dark hover:text-accent font-medium flex items-center gap-1 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copy Input
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Output Column -->
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm flex flex-col space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                            <span id="outputLabelText" class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                                Base64 Output Payload
+                            </span>
+                        </div>
+                        <div class="flex items-center gap-2 text-[11px] font-mono text-sub-light dark:text-sub-dark">
+                            <span id="outputCharCount">0 chars</span>
+                            <span>&bull;</span>
+                            <span id="outputByteCount">0 bytes</span>
+                        </div>
+                    </div>
+
+                    <textarea id="outputTextarea" readonly placeholder="Base64 output appears here dynamically..." rows="12" class="w-full p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono-code text-sm focus:ring-2 focus:ring-accent focus:border-accent outline-none resize-y transition-colors custom-scrollbar leading-relaxed"></textarea>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <div id="statusBadge" class="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            <span>Syntactically Valid</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="downloadOutputText()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent transition-colors flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Download .txt
+                            </button>
+                            <button type="button" onclick="copyOutputText()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent hover:bg-accent-hover text-white transition-all flex items-center gap-1 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                Copy Result
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Metrics Dashboard -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                        Raw Input Size
+                    </span>
+                    <span id="metricInputBytes" class="text-xl font-extrabold font-mono text-text-light dark:text-text-dark">
+                        0 B
+                    </span>
+                    <span id="metricInputChars" class="text-[11px] text-sub-light dark:text-sub-dark block mt-0.5">
+                        0 UTF-8 Code Units
+                    </span>
+                </div>
+
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                        Encoded Output Size
+                    </span>
+                    <span id="metricOutputBytes" class="text-xl font-extrabold font-mono text-accent">
+                        0 B
+                    </span>
+                    <span id="metricOutputChars" class="text-[11px] text-sub-light dark:text-sub-dark block mt-0.5">
+                        0 Radix-64 Octets
+                    </span>
+                </div>
+
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                        Overhead Factor
+                    </span>
+                    <span id="metricExpansionRatio" class="text-xl font-extrabold font-mono text-amber-500">
+                        +33.33%
+                    </span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark block mt-0.5">
+                        Theoretical 4:3 Ratio
+                    </span>
+                </div>
+
+                <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm">
+                    <span class="text-[11px] font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                        Modulo &amp; Padding
+                    </span>
+                    <span id="metricPaddingChar" class="text-xl font-extrabold font-mono text-emerald-500">
+                        0 pad (=)
+                    </span>
+                    <span id="metricModulo3" class="text-[11px] text-sub-light dark:text-sub-dark block mt-0.5">
+                        Length mod 3 = 0
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: IMAGE & FILE DATA URL GENERATOR -->
+        <div id="tab-file" class="tab-panel space-y-6">
+
+            <!-- File Upload & Conversion Container -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                <!-- Left 5 Columns: Dropzone and Controls -->
+                <div class="lg:col-span-5 space-y-5">
+                    <!-- Dropzone Box -->
+                    <div id="dropzone" class="border-2 border-dashed border-border-light dark:border-border-dark hover:border-accent dark:hover:border-accent rounded-3xl p-8 text-center bg-card-light dark:bg-card-dark transition-all cursor-pointer group flex flex-col items-center justify-center min-h-[260px]">
+                        <input type="file" id="fileInput" class="hidden" onchange="handleFileSelect(event)">
+                        <div class="w-16 h-16 rounded-2xl bg-blue-500/10 text-accent flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        </div>
+                        <h3 class="text-base font-bold text-text-light dark:text-text-dark mb-1">
+                            Drag &amp; Drop Any File Here
+                        </h3>
+                        <p class="text-xs text-sub-light dark:text-sub-dark max-w-xs mb-4">
+                            Images (PNG, JPEG, WebP, SVG, GIF), PDF documents, fonts, or arbitrary binary payloads.
+                        </p>
+                        <button type="button" onclick="document.getElementById('fileInput').click()" class="px-4 py-2 text-xs font-bold rounded-xl bg-accent hover:bg-accent-hover text-white shadow-sm transition-all">
+                            Browse Local Files
+                        </button>
+                    </div>
+
+                    <!-- Sample Files Loader -->
+                    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-4 shadow-sm">
+                        <span class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-2">
+                            Load Demo File Samples
+                        </span>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="loadSampleFile('svg')" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-center">
+                                🎨 SVG Logo
+                            </button>
+                            <button type="button" onclick="loadSampleFile('png')" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-center">
+                                🖼️ 1x1 PNG Dot
+                            </button>
+                            <button type="button" onclick="loadSampleFile('json')" class="px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-center">
+                                📄 JSON Config
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Base64 to Binary File Download Box -->
+                    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                                Decode Base64 to Downloadable Binary File
+                            </h3>
+                        </div>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">
+                            Paste any raw Base64 string or RFC 2397 Data URL to decode and download as a local binary file.
+                        </p>
+                        <textarea id="base64DownloadInput" rows="3" placeholder="Paste Base64 string or data:image/...;base64,... here" class="w-full p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono-code text-xs outline-none focus:ring-1 focus:ring-accent resize-none"></textarea>
+                        
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="downloadFilename" value="decoded-asset" placeholder="Filename without extension" class="flex-1 px-3 py-2 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark text-xs font-mono outline-none">
+                            <select id="downloadMimeSelect" class="bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-xl px-2.5 py-2 text-xs font-medium outline-none">
+                                <option value="auto">Auto Detect</option>
+                                <option value="image/png">.png</option>
+                                <option value="image/jpeg">.jpg</option>
+                                <option value="image/svg+xml">.svg</option>
+                                <option value="application/pdf">.pdf</option>
+                                <option value="text/plain">.txt</option>
+                                <option value="application/json">.json</option>
+                                <option value="application/octet-stream">.bin</option>
+                            </select>
+                        </div>
+
+                        <button type="button" onclick="downloadBase64AsBinary()" class="w-full py-2.5 px-4 text-xs font-bold rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center justify-center gap-1.5 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            Decode &amp; Download Binary File
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right 7 Columns: File Preview & 1-Click Code Snippets -->
+                <div class="lg:col-span-7 space-y-5">
+
+                    <!-- File Details & Visual Preview Box -->
+                    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                                    Loaded File Details &amp; Visual Canvas
+                                </h3>
+                            </div>
+                            <span id="activeFileTypeBadge" class="text-[11px] font-mono px-2 py-0.5 rounded-md bg-blue-500/10 text-accent font-semibold">
+                                image/png
+                            </span>
+                        </div>
+
+                        <!-- Preview Area -->
+                        <div class="w-full h-52 rounded-xl border border-border-light dark:border-border-dark flex items-center justify-center p-4 overflow-hidden relative checkerboard-bg">
+                            <img id="filePreviewImage" src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNTYzRUIiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNU0yIDEybDEwIDUgMTAtNSIvPjwvc3ZnPg==" alt="File Preview" class="max-h-full max-w-full object-contain drop-shadow">
+                            <div id="filePreviewGeneric" class="hidden flex flex-col items-center justify-center text-sub-light dark:text-sub-dark">
+                                <svg class="w-16 h-16 mb-2 text-sub-light dark:text-sub-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <span id="genericFileLabel" class="text-xs font-mono font-bold">document.pdf</span>
+                            </div>
+                        </div>
+
+                        <!-- Stats Row -->
+                        <div class="grid grid-cols-3 gap-3 text-center text-xs">
+                            <div class="p-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block">Original Binary</span>
+                                <span id="fileOrigSize" class="font-mono font-bold text-text-light dark:text-text-dark">214 B</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block">Data URL Size</span>
+                                <span id="fileDataUrlSize" class="font-mono font-bold text-accent">310 B</span>
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block">Payload Growth</span>
+                                <span id="fileGrowthPercent" class="font-mono font-bold text-amber-500">+44.8%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 1-Click Code Snippets Generator -->
+                    <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-5 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                                1-Click Code Snippets
+                            </h3>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark">
+                                Ready to paste into frontend code
+                            </span>
+                        </div>
+
+                        <!-- Snippet Tabs -->
+                        <div class="space-y-3">
+                            <!-- Snippet 1: HTML img tag -->
+                            <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-text-light dark:text-text-dark flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 rounded bg-blue-500/10 text-accent font-mono text-[10px]">HTML</span>
+                                        &lt;img&gt; Inline Tag
+                                    </span>
+                                    <button type="button" onclick="copySnippet('html')" class="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
+                                        Copy HTML
+                                    </button>
+                                </div>
+                                <div id="snippetHtml" class="font-mono text-xs text-sub-light dark:text-sub-dark truncate select-all">
+                                    &lt;img src="data:image/svg+xml;base64,PHN2..." alt="Asset" /&gt;
+                                </div>
+                            </div>
+
+                            <!-- Snippet 2: CSS background-image -->
+                            <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-text-light dark:text-text-dark flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 font-mono text-[10px]">CSS</span>
+                                        background-image url()
+                                    </span>
+                                    <button type="button" onclick="copySnippet('css')" class="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
+                                        Copy CSS
+                                    </button>
+                                </div>
+                                <div id="snippetCss" class="font-mono text-xs text-sub-light dark:text-sub-dark truncate select-all">
+                                    background-image: url('data:image/svg+xml;base64,PHN2...');
+                                </div>
+                            </div>
+
+                            <!-- Snippet 3: Full Data URL -->
+                            <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-text-light dark:text-text-dark flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-500 font-mono text-[10px]">URI</span>
+                                        Full RFC 2397 Data URL
+                                    </span>
+                                    <button type="button" onclick="copySnippet('dataurl')" class="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
+                                        Copy Data URL
+                                    </button>
+                                </div>
+                                <div id="snippetDataUrl" class="font-mono text-xs text-sub-light dark:text-sub-dark truncate select-all">
+                                    data:image/svg+xml;base64,PHN2ZyB4bWxucz0i...
+                                </div>
+                            </div>
+
+                            <!-- Snippet 4: Raw Base64 String -->
+                            <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-xs font-bold text-text-light dark:text-text-dark flex items-center gap-1.5">
+                                        <span class="px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 font-mono text-[10px]">RAW</span>
+                                        Raw Base64 Characters
+                                    </span>
+                                    <button type="button" onclick="copySnippet('raw')" class="text-xs text-accent hover:underline font-semibold flex items-center gap-1">
+                                        Copy Raw String
+                                    </button>
+                                </div>
+                                <div id="snippetRaw" class="font-mono text-xs text-sub-light dark:text-sub-dark truncate select-all">
+                                    PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcv...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: BINARY BITWISE & PADDING BREAKDOWN -->
+        <div id="tab-bitwise" class="tab-panel space-y-6">
+
+            <!-- Interactive Bit Visualizer -->
+            <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h2 class="text-lg font-bold text-text-light dark:text-text-dark">
+                            Interactive 24-Bit Octet-to-Sextet Transformer
+                        </h2>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">
+                            Type 1, 2, or 3 characters to inspect how 8-bit octets map into 6-bit Base64 sextets and where zero-padding occurs.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="bitwiseInput" class="text-xs font-bold uppercase text-sub-light dark:text-sub-dark">Test Sample:</label>
+                        <input type="text" id="bitwiseInput" value="Man" maxlength="6" oninput="renderBitwiseBreakdown()" class="px-3 py-1.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono font-bold text-sm w-28 text-center outline-none focus:ring-2 focus:ring-accent">
+                    </div>
+                </div>
+
+                <!-- Visual Step-by-Step Block -->
+                <div id="bitwiseVisualizationArea" class="space-y-5">
+                    <!-- Populated dynamically via renderBitwiseBreakdown() -->
+                </div>
+            </div>
+
+            <!-- Complete 64-Character RFC 4648 Reference Table -->
+            <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-bold text-text-light dark:text-text-dark">
+                            Radix-64 Symbol Lookup Table (RFC 4648 &sect;4 vs &sect;5)
+                        </h3>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">
+                            Complete index listing showing 6-bit binary, decimal index, Standard Base64 symbol, and URL-Safe variant.
+                        </p>
+                    </div>
+                    <input type="text" id="lookupSearch" oninput="filterLookupTable()" placeholder="Search index, char, or binary..." class="px-3 py-1.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark text-xs outline-none focus:ring-1 focus:ring-accent w-full sm:w-64">
+                </div>
+
+                <div class="max-h-96 overflow-y-auto custom-scrollbar border border-border-light dark:border-border-dark rounded-xl">
+                    <table class="w-full text-xs text-left" id="tableRadix64">
+                        <thead class="sticky top-0 bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark text-[10px] uppercase font-bold text-sub-light dark:text-sub-dark">
+                            <tr>
+                                <th class="p-2.5 text-center">Decimal</th>
+                                <th class="p-2.5 text-center">6-Bit Binary</th>
+                                <th class="p-2.5 text-center">Standard Char</th>
+                                <th class="p-2.5 text-center">URL-Safe Char</th>
+                                <th class="p-2.5">Category</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lookupTableBody" class="divide-y divide-border-light dark:divide-border-dark font-mono">
+                            <!-- Populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 4: PRINT REPORT -->
+        <div id="tab-print" class="tab-panel space-y-6">
+            <div class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-2xl p-6 sm:p-8 shadow-sm space-y-6">
+                <!-- Report Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-border-light dark:border-border-dark gap-4">
+                    <div>
+                        <span class="text-xs font-bold text-accent uppercase tracking-widest block mb-1">
+                            CalcWorld Serialization Audit
+                        </span>
+                        <h2 class="text-2xl font-extrabold text-text-light dark:text-text-dark">
+                            Base64 Transformation &amp; Payload Report
+                        </h2>
+                        <span class="text-xs text-sub-light dark:text-sub-dark mt-1 block">
+                            Document Generated: <span id="reportTimestamp" class="font-mono">--</span>
+                        </span>
+                    </div>
+                    <button type="button" onclick="window.print()" class="no-print px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-white text-xs font-bold flex items-center gap-2 self-start transition-all shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Print Full Dossier
+                    </button>
+                </div>
+
+                <!-- Parameters Summary -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block mb-1">Active Encoding</span>
+                        <span id="reportMode" class="font-bold font-mono">Standard RFC 4648</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block mb-1">Character Safe Mode</span>
+                        <span id="reportUrlSafe" class="font-bold font-mono">Disabled (+ and /)</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block mb-1">Padding Specification</span>
+                        <span id="reportPadding" class="font-bold font-mono">Strict RFC (=)</span>
+                    </div>
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block mb-1">Unicode Handling</span>
+                        <span class="font-bold font-mono text-emerald-600 dark:text-emerald-400">UTF-8 Octet Sequence</span>
+                    </div>
+                </div>
+
+                <!-- Payload Metrics Table -->
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark mb-3">
+                        Volumetric Analysis &amp; Expansion Metrics
+                    </h3>
+                    <div class="overflow-x-auto border border-border-light dark:border-border-dark rounded-xl">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark text-[10px] uppercase font-bold text-sub-light dark:text-sub-dark">
+                                <tr>
+                                    <th class="p-3">Metric Dimension</th>
+                                    <th class="p-3">Raw Input</th>
+                                    <th class="p-3">Encoded Output</th>
+                                    <th class="p-3">Expansion Delta</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-light dark:divide-border-dark font-mono">
+                                <tr>
+                                    <td class="p-3 font-semibold text-text-light dark:text-text-dark">Payload Byte Size</td>
+                                    <td class="p-3" id="reportMetricInputBytes">0 B</td>
+                                    <td class="p-3 text-accent font-bold" id="reportMetricOutputBytes">0 B</td>
+                                    <td class="p-3 text-amber-500 font-bold" id="reportMetricExpansion">+33.33%</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-text-light dark:text-text-dark">Character Count</td>
+                                    <td class="p-3" id="reportMetricInputChars">0</td>
+                                    <td class="p-3" id="reportMetricOutputChars">0</td>
+                                    <td class="p-3" id="reportMetricCharDelta">--</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-semibold text-text-light dark:text-text-dark">Octet Remainder (mod 3)</td>
+                                    <td class="p-3" id="reportMetricMod3">0</td>
+                                    <td class="p-3" id="reportMetricPadCount">0 '=' characters</td>
+                                    <td class="p-3 text-emerald-600 dark:text-emerald-400">Aligned</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Payload Content Inspection -->
+                <div class="space-y-4">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                            Input Payload Snapshot
+                        </span>
+                        <div id="reportInputPreview" class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-xs max-h-36 overflow-y-auto whitespace-pre-wrap break-all">
+                            --
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                            Output Payload Snapshot
+                        </span>
+                        <div id="reportOutputPreview" class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-xs max-h-36 overflow-y-auto whitespace-pre-wrap break-all text-accent">
+                            --
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 2: Mid-Page / Under-Results Unit -->
+        <div class="w-full no-print">
+            <div id="ad-slot-2" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="2">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Mid-Page Unit</span>
+                <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                    AdSense Placement (728x90 Responsive Banner)
+                </div>
+            </div>
+        </div>
+
+        <!-- PDF Lead Generation Box -->
+        <div class="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-blue-700 via-indigo-700 to-blue-800 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 no-print">
+            <div class="space-y-2 text-center md:text-left">
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 text-xs font-semibold tracking-wide">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <span>Developer Architecture Guide</span>
+                </div>
+                <h3 class="text-xl sm:text-2xl font-extrabold tracking-tight">
+                    Download the RFC 4648 Base64 &amp; Binary Encoding Reference
+                </h3>
+                <p class="text-xs sm:text-sm text-blue-100 max-w-xl">
+                    Get an exhaustive PDF reference guide covering 6-bit sextet partitioning, UTF-8 byte boundary handling, Data URI performance matrices, and JWT token serialization architectures.
+                </p>
+            </div>
+            <form class="flex flex-col sm:flex-row w-full md:w-auto gap-2" onsubmit="event.preventDefault(); showToast('Reference PDF guide dispatched to your inbox!');">
+                <input type="email" placeholder="engineer@organization.com" required class="px-4 py-2.5 rounded-xl text-slate-900 bg-white text-xs outline-none focus:ring-2 focus:ring-white w-full sm:w-64 font-medium">
+                <button type="submit" class="px-5 py-2.5 bg-slate-950 hover:bg-black text-white font-bold text-xs rounded-xl shadow transition-all shrink-0">
+                    Send Free PDF
+                </button>
+            </form>
+        </div>
+
+        <!-- AdSense Slot 3: Pre-Article Transition Banner -->
+        <div class="w-full my-6 no-print">
+            <div id="ad-slot-3" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="3">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Transition Banner</span>
+                <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                    AdSense Placement (728x90 Transition Banner)
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Technical & Engineering Guide -->
+        <article class="bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark rounded-3xl p-6 sm:p-10 shadow-sm space-y-10 leading-relaxed text-text-light dark:text-text-dark">
+
+            <!-- Section 1: Introduction and Mathematical Genesis -->
+            <section class="space-y-4">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-accent text-xs font-bold uppercase tracking-wider">
+                    Engineering Architecture
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight">
+                    Radix-64 Representation: Historical Origins &amp; Binary Channel Constraints
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Base64 represents a binary-to-text encoding scheme that translates arbitrary sequences of 8-bit octets into an alphabet comprising 64 printable US-ASCII characters. The system originated during the early development of packet-switched networking, notably within the ARPANET and early Simple Mail Transfer Protocol (SMTP, RFC 821) environments. Early electronic mail gateways operated exclusively over 7-bit transmission channels, frequently discarding the most significant bit (MSB) of raw binary files, stripping non-printable ASCII control characters (such as NUL, SOH, and EOT), or modifying newline sequences between CR, LF, and CRLF conventions.
+                </p>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    To transmit arbitrary binary payloads (executable binaries, compressed archives, audio files, and formatted documents) safely across legacy 7-bit channels, engineers formulated radix conversion schemes. Prior systems like Uuencode (Unix-to-Unix Encode) mapped 6-bit values to ASCII characters beginning at code 32 (space), which frequently caused whitespace truncation by intermediate line-wrapping software. The Internet Engineering Task Force (IETF) formalized Base64 in Privacy-Enhanced Mail (PEM, RFC 1421) and subsequent Multipurpose Internet Mail Extensions (MIME, RFC 2045), culminating in the definitive standard specification: <strong>IETF RFC 4648 (&ldquo;The Base16, Base32, and Base64 Data Encodings&rdquo;)</strong>.
+                </p>
+            </section>
+
+            <!-- Section 2: Mathematical Architecture -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Mathematical Architecture: The 6-Bit to 8-Bit Alignment Model
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Modern computing hardware organizes volatile memory and persistent storage in units of 8-bit bytes (octets). An 8-bit octet provides $2^8 = 256$ discrete binary permutations (from <code>0x00</code> to <code>0xFF</code>). Base64 uses an encoding base of 64 discrete symbols. Since $64 = 2^6$, each Base64 symbol represents exactly 6 bits of binary entropy, referred to as a <em>sextet</em>.
+                </p>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Encoding requires mapping stream octets into sextets. To establish an integral alignment where octets and sextets share a common bit boundary without fractional remainders, we determine the least common multiple (LCM) of the input bit depth and the output symbol bit depth:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$\text{LCM}(8, 6) = 24 \text{ bits}$$
+                </div>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    A 24-bit alignment block corresponds precisely to:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$\frac{24 \text{ bits}}{8 \text{ bits/byte}} = 3 \text{ bytes (input)} \quad \Longleftrightarrow \quad \frac{24 \text{ bits}}{6 \text{ bits/character}} = 4 \text{ characters (output)}$$
+                </div>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Consider an input string of three ASCII characters: <code>&quot;Man&quot;</code>. The character <code>&apos;M&apos;</code> has ASCII decimal code 77 (<code>01001101</code>), <code>&apos;a&apos;</code> has code 97 (<code>01100001</code>), and <code>&apos;n&apos;</code> has code 110 (<code>01101110</code>). Concatenating these three octets produces a continuous 24-bit bitstream:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-xs overflow-x-auto text-center space-y-1">
+                    <div>Input Octets: [01001101] [01100001] [01101110]</div>
+                    <div class="text-accent font-bold">&darr; Regrouped into 6-Bit Sextets &darr;</div>
+                    <div>Sextet 1: 010011 &rarr; Index 19 &rarr; &apos;T&apos;</div>
+                    <div>Sextet 2: 010110 &rarr; Index 22 &rarr; &apos;W&apos;</div>
+                    <div>Sextet 3: 000101 &rarr; Index 5  &rarr; &apos;F&apos;</div>
+                    <div>Sextet 4: 101110 &rarr; Index 46 &rarr; &apos;u&apos;</div>
+                    <div class="text-emerald-500 font-bold">&quot;Man&quot; encodes to &quot;TWFu&quot;</div>
+                </div>
+            </section>
+
+            <!-- Section 3: The 33.33% Expansion Factor -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Payload Expansion Factor: The 33.33% Mathematical Overhead
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    A frequent question in software engineering centers on why Base64 introduces a bandwidth and storage expansion factor of approximately $+33.33\%$. The mathematical derivation arises directly from the ratio between the input byte consumption and output character production:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$\text{Expansion Ratio} = \frac{\text{Output Length}}{\text{Input Length}} = \frac{4 \text{ symbols}}{3 \text{ bytes}} = 1.3333\dots$$
+                </div>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$\text{Overhead Percentage} = \left(\frac{4}{3} - 1\right) \times 100\% = 33.\overline{3}\%$$
+                </div>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Given an unpadded input binary buffer containing $N$ bytes, the total encoded character count $L$ equals:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$L = 4 \times \left\lceil \frac{N}{3} \right\rceil$$
+                </div>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    In network protocols such as MIME (RFC 2045), additional overhead occurs because lines are limited to a maximum length of 76 characters, terminated by carriage return and line feed (CRLF, <code>\r\n</code>, 2 bytes). For every 76 characters of Base64, 2 extra bytes are inserted:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm">
+                    $$\text{Total MIME Overhead} \approx \left(\frac{4}{3} \times \frac{78}{76}\right) - 1 \approx 1.3684 - 1 = +36.84\%$$
+                </div>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Consequently, transmitting binary assets over Base64 increases network transmission volume by roughly one-third. Where HTTP compression (such as Gzip or Brotli) is applied, Base64 strings compress with lower entropy reduction efficiency compared to original raw binary structures due to the higher dispersion of character values across the dictionary.
+                </p>
+            </section>
+
+            <!-- AdSense Slot 4: Mid-Article Responsive Unit -->
+            <div class="w-full my-6 no-print">
+                <div id="ad-slot-4" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="4">
+                    <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Mid-Article Unit</span>
+                    <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                        AdSense Placement (728x90 In-Article Banner)
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Padding Modulo Arithmetic -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Trailing Padding Mechanics: Modulo Arithmetic on Octet Streams
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Because real-world binary streams do not consistently possess a length divisible by 3, the final block of an input buffer contains either 1, 2, or 3 remaining bytes ($N \pmod 3$). RFC 4648 resolves this boundary condition through zero-bit bitwise padding and equal sign (<code>=</code>) sentinel characters:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs font-mono">
+                    <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-accent block">Case 1: Remainder 0 (N mod 3 == 0)</span>
+                        <p class="text-sub-light dark:text-sub-dark font-sans text-xs">
+                            The input bytes partition perfectly into 24-bit triples. All four 6-bit sextets are fully defined by real input data. Zero <code>=</code> characters are added.
+                        </p>
+                        <div class="text-emerald-500 font-bold">&quot;any&quot; &rarr; &quot;YW55&quot;</div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-amber-500 block">Case 2: Remainder 2 (N mod 3 == 2)</span>
+                        <p class="text-sub-light dark:text-sub-dark font-sans text-xs">
+                            Two octets remain (16 bits). Sextet 1 uses bits 1-6. Sextet 2 uses bits 7-12. Sextet 3 consumes bits 13-16 plus 2 appended zero bits (18 bits total). The fourth sextet is omitted and replaced by one <code>=</code>.
+                        </p>
+                        <div class="text-amber-500 font-bold">&quot;an&quot; &rarr; &quot;YW4=&quot;</div>
+                    </div>
+
+                    <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-rose-500 block">Case 3: Remainder 1 (N mod 3 == 1)</span>
+                        <p class="text-sub-light dark:text-sub-dark font-sans text-xs">
+                            One octet remains (8 bits). Sextet 1 uses bits 1-6. Sextet 2 uses bits 7-8 plus 4 appended zero bits (12 bits total). The third and fourth sextets are omitted and replaced by two <code>==</code> padding characters.
+                        </p>
+                        <div class="text-rose-500 font-bold">&quot;a&quot; &rarr; &quot;YQ==&quot;</div>
+                    </div>
+                </div>
+
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    The equal sign characters do not carry data; they indicate to downstream decoders how many zero-padded bits were appended to the final octet, allowing exact binary reconstruction without trailing garbage bytes.
+                </p>
+            </section>
+
+            <!-- Section 5: URL-Safe Base64 (base64url) -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    URL-Safe Base64 (base64url): RFC 4648 Section 5
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Standard Base64 (RFC 4648 &sect;4) uses the plus character <code>&apos;+&apos;</code> (index 62) and slash character <code>&apos;/&apos;</code> (index 63). When standard Base64 payloads are transmitted within Uniform Resource Identifiers (URIs), query strings, or HTML form post bodies, significant syntax collisions occur:
+                </p>
+                <ul class="list-disc list-inside space-y-2 text-xs sm:text-sm text-sub-light dark:text-sub-dark">
+                    <li><strong>Plus Sign (<code>+</code>):</strong> In URI query strings conforming to <code>application/x-www-form-urlencoded</code>, the <code>+</code> character represents an encoded space (ASCII 32). Web servers automatically decode <code>+</code> to space, altering index 62 and corrupting the payload.</li>
+                    <li><strong>Forward Slash (<code>/</code>):</strong> Within URI paths, <code>/</code> acts as a hierarchical directory delimiter. A Base64 string containing <code>/</code> causes HTTP web servers and proxies to interpret the string as nested path segments.</li>
+                    <li><strong>Padding Character (<code>=</code>):</strong> In query strings (<code>?key=value&amp;token=xyz==</code>), the equal sign demarcates parameter assignment, confusing parser state machines.</li>
+                </ul>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    To eliminate these conflicts without requiring inefficient percent-encoding (which transforms <code>+</code> into <code>%2B</code> and <code>/</code> into <code>%2F</code>, expanding each character from 1 byte to 3 bytes), RFC 4648 &sect;5 establishes <strong>base64url</strong>:
+                </p>
+                <div class="p-4 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-mono text-center text-sm space-y-1">
+                    <div>Standard Character <code>&apos;+&apos;</code> (62) &rarr; Replaced by Hyphen <code>&apos;-&apos;</code> (ASCII 45)</div>
+                    <div>Standard Character <code>&apos;/&apos;</code> (63) &rarr; Replaced by highlight <code>&apos;_&apos;</code> (ASCII 95)</div>
+                    <div>Trailing Padding <code>&apos;=&apos;</code> &rarr; Typically stripped in unpadded base64url profiles</div>
+                </div>
+            </section>
+
+            <!-- Section 6: Protocol Implementations -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Production Protocol Applications &amp; Case Studies
+                </h2>
+                <p class="text-sm leading-relaxed text-sub-light dark:text-sub-dark">
+                    Base64 and base64url serve foundational serialization roles across web, cloud, and security architectures:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div class="p-5 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-accent text-sm block">1. JSON Web Tokens (JWT, RFC 7519)</span>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            A compact JWT comprises three distinct JSON structures: Header, Payload, and Cryptographic Signature. Each element is serialized into UTF-8 JSON, encoded as unpadded base64url, and concatenated with dots:
+                        </p>
+                        <div class="font-mono p-2 rounded bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark break-all">
+                            eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-emerald-500 text-sm block">2. Inline Data URIs (RFC 2397)</span>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            Web browsers allow binary resources to be defined directly within HTML and CSS files using the syntax <code>data:[&lt;mediatype&gt;][;base64],&lt;data&gt;</code>. This eliminates network round trips for small icons, fonts, and critical path CSS graphics.
+                        </p>
+                        <div class="font-mono p-2 rounded bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark break-all">
+                            data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-amber-500 text-sm block">3. HTTP Basic Authentication (RFC 7617)</span>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            Clients transmit credentials by combining username and password with a colon delimiter, Base64-encoding the composite byte string, and transmitting it in the request header:
+                        </p>
+                        <div class="font-mono p-2 rounded bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark break-all">
+                            Authorization: Basic YWRtaW46c2VjcmV0cGFzc3dvcmQ=
+                        </div>
+                    </div>
+
+                    <div class="p-5 rounded-2xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark space-y-2">
+                        <span class="font-bold text-purple-500 text-sm block">4. Cryptographic PEM Key Formats (RFC 7468)</span>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            X.509 certificates and RSA/ECDSA private keys exist natively as binary Abstract Syntax Notation One (ASN.1) Distinguished Encoding Rules (DER). Privacy-Enhanced Mail (PEM) encapsulates DER structures in Base64 wrapped with header/footer guards.
+                        </p>
+                        <div class="font-mono p-2 rounded bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark break-all">
+                            -----BEGIN CERTIFICATE-----<br>
+                            MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8A...<br>
+                            -----END CERTIFICATE-----
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section 7: Formal Standards Table -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Formal IETF &amp; W3C Standard Specifications Matrix
+                </h2>
+                <div class="overflow-x-auto border border-border-light dark:border-border-dark rounded-xl">
+                    <table class="w-full text-xs text-left">
+                        <thead class="bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark text-[10px] uppercase font-bold text-sub-light dark:text-sub-dark">
+                            <tr>
+                                <th class="p-3">Specification</th>
+                                <th class="p-3">Issuing Body</th>
+                                <th class="p-3">Alphabet Symbols</th>
+                                <th class="p-3">Padding Rule</th>
+                                <th class="p-3">Primary Domain</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-border-light dark:divide-border-dark font-mono">
+                            <tr>
+                                <td class="p-3 font-bold text-text-light dark:text-text-dark">RFC 4648 &sect;4</td>
+                                <td class="p-3 font-sans">IETF</td>
+                                <td class="p-3"><code>A-Z, a-z, 0-9, +, /</code></td>
+                                <td class="p-3">Required (<code>=</code>)</td>
+                                <td class="p-3 font-sans">General Data Storage &amp; Cryptography</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-text-light dark:text-text-dark">RFC 4648 &sect;5</td>
+                                <td class="p-3 font-sans">IETF</td>
+                                <td class="p-3"><code>A-Z, a-z, 0-9, -, _</code></td>
+                                <td class="p-3">Optional / Stripped</td>
+                                <td class="p-3 font-sans">URIs, Web Tokens &amp; File Names</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-text-light dark:text-text-dark">RFC 2045</td>
+                                <td class="p-3 font-sans">IETF</td>
+                                <td class="p-3"><code>A-Z, a-z, 0-9, +, /</code></td>
+                                <td class="p-3">Required (<code>=</code>)</td>
+                                <td class="p-3 font-sans">MIME Email Body &amp; Attachments (76 col wrap)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-text-light dark:text-text-dark">RFC 2397</td>
+                                <td class="p-3 font-sans">IETF / W3C</td>
+                                <td class="p-3"><code>data:[&lt;mediatype&gt;][;base64],&lt;data&gt;</code></td>
+                                <td class="p-3">Permitted</td>
+                                <td class="p-3 font-sans">Inline HTML/CSS Media Embeds</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold text-text-light dark:text-text-dark">RFC 7515 / 7519</td>
+                                <td class="p-3 font-sans">IETF</td>
+                                <td class="p-3"><code>base64url</code> (unpadded)</td>
+                                <td class="p-3">Omitted</td>
+                                <td class="p-3 font-sans">JSON Web Signature (JWS) &amp; Tokens (JWT)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section 8: Frequently Asked Questions Accordion -->
+            <section class="space-y-4">
+                <h2 class="text-2xl font-bold tracking-tight">
+                    Frequently Asked Technical Questions (FAQ)
+                </h2>
+                <div class="space-y-3" id="faqAccordion">
+
+                    <!-- FAQ 1 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>How does Base64 encoding handle multi-byte UTF-8 characters without corruption?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                The native browser function <code>window.btoa()</code> accepts binary strings where each character code point must not exceed 255 (Latin-1). Unicode characters such as Arabic script, Chinese logographs, and emojis require two, three, or four octets in UTF-8 encoding. Passing them directly to <code>btoa()</code> triggers an <code>InvalidCharacterError</code>. This calculator applies the W3C <code>TextEncoder</code> interface to decompose arbitrary strings into unsigned 8-bit octet arrays (<code>Uint8Array</code>), then translates each raw byte sequence into binary strings before Base64 serialization, preserving multi-byte code points accurately.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 2 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>Why does Base64 introduce an exact 33.33% payload expansion?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                Base64 packs 24 bits into four 6-bit symbols ($4 \times 6 = 24$), whereas raw binary packs 24 bits into three 8-bit octets ($3 \times 8 = 24$). For every 3 bytes input, 4 characters output. The ratio $4/3 = 1.3333$ represents a $33.\overline{3}\%$ volumetric expansion. If line wrapping is introduced (e.g., MIME 76 characters per line plus CRLF), the overhead increases to approximately $36.8\%$.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 3 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>What distinguishes standard Base64 from URL-Safe Base64 (base64url)?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                Standard Base64 uses <code>&apos;+&apos;</code> (index 62) and <code>&apos;/&apos;</code> (index 63), with <code>&apos;=&apos;</code> for trailing padding. When used in URLs, <code>+</code> is interpreted as a space, <code>/</code> acts as a path delimiter, and <code>=</code> confuses query parameter assignment. RFC 4648 &sect;5 replaces <code>+</code> with <code>-</code> (hyphen) and <code>/</code> with <code>_</code> (highlight), while omitting trailing <code>=</code> characters.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 4 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>When is an inline Data URI advantageous over an external asset file?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                Inline Data URIs eliminate dedicated HTTP round-trip requests and TCP/TLS handshakes, proving beneficial for tiny SVG icons (&lt;2KB), critical rendering path CSS backgrounds, and standalone HTML reports. For large graphics or multi-page applications, external files are preferred because they benefit from independent browser caching and avoid the 33.33% payload expansion.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 5 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>How does Base64 determine whether to use one or two '=' padding characters?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                Padding depends on the input byte count modulo 3 ($N \pmod 3$). If the remainder is 0, all 24-bit blocks align with no padding. If the remainder is 2 (16 bits), two zero bits are appended to create three 6-bit symbols followed by one <code>=</code> character. If the remainder is 1 (8 bits), four zero bits are appended to form two 6-bit symbols followed by two <code>==</code> characters.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 6 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>Is Base64 an encryption algorithm?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                No. Base64 is an encoding format designed for data interchange and character set normalization, not confidentiality. It contains no cryptographic keys, initialization vectors, or cipher structures. Anyone who receives a Base64 string can decode it back to original binary data without authentication.
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FAQ 7 -->
+                    <div class="faq-item border border-border-light dark:border-border-dark rounded-2xl bg-canvas-light dark:bg-canvas-dark overflow-hidden transition-all">
+                        <button type="button" onclick="toggleFaq(this)" class="w-full p-4 text-left font-bold text-sm flex items-center justify-between gap-4">
+                            <span>How does this tool decode unpadded base64url strings?</span>
+                            <svg class="faq-arrow w-4 h-4 shrink-0 text-sub-light dark:text-sub-dark transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                            <div class="pb-4">
+                                When unpadded base64url strings are submitted, the parser substitutes <code>&apos;-&apos;</code> back to <code>&apos;+&apos;</code> and <code>&apos;_&apos;</code> back to <code>&apos;/&apos;</code>. It then computes $(4 - (\text{length} \pmod 4)) \pmod 4$ to calculate the missing trailing padding characters and restores the <code>=</code> signs before feeding the normalized stream into the binary decoding engine.
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </article>
+
+        <!-- AdSense Slot 5: Responsive Footer Leaderboard -->
+        <div class="w-full my-8 no-print">
+            <div id="ad-slot-5" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="5">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Footer Leaderboard</span>
+                <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                    AdSense Placement (728x90 Footer Banner)
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Floating Quick-Action Bar -->
+    <aside id="floating-bar" class="no-print fixed bottom-0 left-0 right-0 z-40 bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-md border-t border-border-light dark:border-border-dark shadow-2xl py-3 px-4 sm:px-8 transition-transform duration-300 translate-y-full">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 sm:space-x-8">
+                <div>
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">Mode</span>
+                    <span id="floatMode" class="text-xs sm:text-sm font-bold text-accent font-mono">Encode Text</span>
+                </div>
+                <div class="border-l border-border-light dark:border-border-dark pl-3 sm:pl-6">
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">Payload Size</span>
+                    <span id="floatPayloadSize" class="text-xs sm:text-sm font-bold text-text-light dark:text-text-dark font-mono">0 B &rarr; 0 B</span>
+                </div>
+                <div class="hidden md:block border-l border-border-light dark:border-border-dark pl-6">
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">Overhead</span>
+                    <span id="floatOverhead" class="text-xs sm:text-sm font-bold text-amber-500 font-mono">+33.3%</span>
+                </div>
+            </div>
+
+            <!-- Quick Action Links -->
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="copyOutputText()" class="px-3.5 py-1.5 text-xs font-semibold bg-accent hover:bg-accent-hover text-white rounded-xl transition-colors flex items-center gap-1.5 shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                    <span>Copy Output</span>
+                </button>
+                <button type="button" onclick="window.print()" class="px-3 py-1.5 text-xs font-semibold bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark rounded-xl hover:border-accent transition-colors">
+                    Print
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Footer -->
+    <footer class="border-t border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark py-8 text-xs text-sub-light dark:text-sub-dark transition-colors no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <p>&copy; 2026 CalcWorld Software Utilities. All rights reserved.</p>
+                <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">
+                    Conforms to IETF RFC 4648, RFC 2045, RFC 2397, and W3C Encoding Technical Specifications.
+                </p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/privacy-policy/" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/contact/" class="hover:text-accent transition-colors">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Core Interactive JavaScript Engine -->
+    <script>
+        // --- State Management ---
+        const state = {
+            activeTab: 'text',
+            textMode: 'encode', // 'encode' or 'decode'
+            urlSafe: false,
+            stripPadding: false,
+            lineWrap: 'none',
+            currentFile: {
+                name: 'sample-icon.svg',
+                mime: 'image/svg+xml',
+                origSize: 214,
+                b64Data: 'PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNTYzRUIiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNU0yIDEybDEwIDUgMTAtNSIvPjwvc3ZnPg==',
+                dataUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiMyNTYzRUIiIHN0cm9rZS13aWR0aD0iMiI+PHBhdGggZD0iTTEyIDJMMiA3bDEwIDUgMTAtNS0xMC01ek0yIDE3bDEwIDUgMTAtNU0yIDEybDEwIDUgMTAtNSIvPjwvc3ZnPg=='
+            }
+        };
+
+        const RADIX64_CHARS_STANDARD = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        const RADIX64_CHARS_URLSAFE  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+
+        // --- Tab Switching ---
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-accent', 'text-accent', 'bg-accent/10');
+                btn.classList.add('border-transparent', 'text-sub-light', 'dark:text-sub-dark');
+            });
+            document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+            const targetBtn = document.getElementById('tabBtn_' + tabId);
+            const targetPanel = document.getElementById('tab-' + tabId);
+
+            if (targetBtn && targetPanel) {
+                targetBtn.classList.add('border-accent', 'text-accent', 'bg-accent/10');
+                targetBtn.classList.remove('border-transparent', 'text-sub-light', 'dark:text-sub-dark');
+                targetPanel.classList.add('active');
+            }
+
+            if (tabId === 'bitwise') {
+                renderBitwiseBreakdown();
+            } else if (tabId === 'print') {
+                updatePrintReport();
+            }
+        }
+
+        // --- Dark Mode Switcher ---
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+
+        // --- Toast Helpers ---
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            if (toast && msgEl) {
+                msgEl.textContent = msg;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2400);
+            }
+        }
+
+        // --- UTF-8 Safe Base64 Core Algorithms ---
+        function utf8ToBase64(str, isUrlSafe = false, stripPadding = false, lineWrap = 'none') {
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(str);
+            let binary = '';
+            const len = bytes.byteLength;
+            const chunkSize = 0x8000;
+            for (let i = 0; i < len; i += chunkSize) {
+                binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i + chunkSize, len)));
+            }
+            let b64 = btoa(binary);
+
+            if (isUrlSafe) {
+                b64 = b64.replace(/\+/g, '-').replace(/\//g, '_');
+            }
+            if (stripPadding) {
+                b64 = b64.replace(/=+$/, '');
+            }
+
+            if (lineWrap === '64' || lineWrap === '76') {
+                const limit = parseInt(lineWrap, 10);
+                const chunks = [];
+                for (let i = 0; i < b64.length; i += limit) {
+                    chunks.push(b64.slice(i, i + limit));
+                }
+                b64 = chunks.join('\n');
+            }
+
+            return b64;
+        }
+
+        function base64ToUtf8(b64) {
+            // Remove whitespace and newlines
+            let normalized = b64.replace(/\s+/g, '');
+            // Convert url-safe chars
+            normalized = normalized.replace(/-/g, '+').replace(/_/g, '/');
+            // Re-pad if padding was stripped
+            const padRemainder = normalized.length % 4;
+            if (padRemainder === 2) normalized += '==';
+            else if (padRemainder === 3) normalized += '=';
+
+            const binary = atob(normalized);
+            const len = binary.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            const decoder = new TextDecoder('utf-8', { fatal: false });
+            return decoder.decode(bytes);
+        }
+
+        function formatByteSize(bytes) {
+            if (bytes === 0) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(2) + ' KB';
+            return (bytes / 1048576).toFixed(2) + ' MB';
+        }
+
+        // --- Text Processor Pipeline ---
+        function setTextMode(mode) {
+            state.textMode = mode;
+            const btnEnc = document.getElementById('btnModeEncode');
+            const btnDec = document.getElementById('btnModeDecode');
+            const inputLabel = document.getElementById('inputLabelText');
+            const outputLabel = document.getElementById('outputLabelText');
+            const floatMode = document.getElementById('floatMode');
+
+            if (mode === 'encode') {
+                btnEnc.className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white shadow-xs transition-all';
+                btnDec.className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all';
+                inputLabel.textContent = 'Raw Input Text (UTF-8 Unicode)';
+                outputLabel.textContent = 'Base64 Output Payload';
+                if (floatMode) floatMode.textContent = 'Encode Text';
+            } else {
+                btnDec.className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg bg-accent text-white shadow-xs transition-all';
+                btnEnc.className = 'px-3.5 py-1.5 text-xs font-bold rounded-lg text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all';
+                inputLabel.textContent = 'Base64 Input String';
+                outputLabel.textContent = 'Decoded Text (UTF-8 Unicode)';
+                if (floatMode) floatMode.textContent = 'Decode Base64';
+            }
+            processText();
+        }
+
+        function processText() {
+            const inputEl = document.getElementById('inputTextarea');
+            const outputEl = document.getElementById('outputTextarea');
+            const urlSafeCheck = document.getElementById('toggleUrlSafe').checked;
+            const stripPaddingCheck = document.getElementById('toggleStripPadding').checked;
+            const lineWrapVal = document.getElementById('selectLineWrap').value;
+            const statusBadge = document.getElementById('statusBadge');
+
+            const val = inputEl.value;
+
+            if (!val) {
+                outputEl.value = '';
+                updateMetrics(0, 0, 0, 0);
+                statusBadge.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Awaiting Input</span>`;
+                statusBadge.className = 'inline-flex items-center gap-1 text-[11px] font-medium text-sub-light dark:text-sub-dark';
+                return;
+            }
+
+            try {
+                if (state.textMode === 'encode') {
+                    const encoded = utf8ToBase64(val, urlSafeCheck, stripPaddingCheck, lineWrapVal);
+                    outputEl.value = encoded;
+
+                    const encoder = new TextEncoder();
+                    const inBytes = encoder.encode(val).length;
+                    const outBytes = new TextEncoder().encode(encoded).length;
+
+                    updateMetrics(val.length, inBytes, encoded.length, outBytes);
+
+                    statusBadge.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Encoded Successfully</span>`;
+                    statusBadge.className = 'inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400';
+                } else {
+                    const decoded = base64ToUtf8(val);
+                    outputEl.value = decoded;
+
+                    const inBytes = new TextEncoder().encode(val).length;
+                    const outBytes = new TextEncoder().encode(decoded).length;
+
+                    updateMetrics(val.length, inBytes, decoded.length, outBytes);
+
+                    statusBadge.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg><span>Decoded Successfully</span>`;
+                    statusBadge.className = 'inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400';
+                }
+            } catch (err) {
+                outputEl.value = '';
+                statusBadge.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Invalid Base64 Syntax</span>`;
+                statusBadge.className = 'inline-flex items-center gap-1 text-[11px] font-medium text-rose-500';
+            }
+        }
+
+        function updateMetrics(inChars, inBytes, outChars, outBytes) {
+            document.getElementById('inputCharCount').textContent = inChars + ' chars';
+            document.getElementById('inputByteCount').textContent = formatByteSize(inBytes);
+            document.getElementById('outputCharCount').textContent = outChars + ' chars';
+            document.getElementById('outputByteCount').textContent = formatByteSize(outBytes);
+
+            document.getElementById('metricInputBytes').textContent = formatByteSize(inBytes);
+            document.getElementById('metricInputChars').textContent = inChars + ' UTF-8 Code Units';
+            document.getElementById('metricOutputBytes').textContent = formatByteSize(outBytes);
+            document.getElementById('metricOutputChars').textContent = outChars + ' Radix-64 Octets';
+
+            let overhead = 0;
+            if (inBytes > 0) {
+                overhead = (((outBytes - inBytes) / inBytes) * 100).toFixed(1);
+            }
+            const sign = overhead >= 0 ? '+' : '';
+            document.getElementById('metricExpansionRatio').textContent = sign + overhead + '%';
+
+            const mod3 = inBytes % 3;
+            let padInfo = '0 pad (=)';
+            if (mod3 === 1) padInfo = '2 pad (==)';
+            else if (mod3 === 2) padInfo = '1 pad (=)';
+            document.getElementById('metricPaddingChar').textContent = padInfo;
+            document.getElementById('metricModulo3').textContent = `Length mod 3 = ${mod3}`;
+
+            const floatPayload = document.getElementById('floatPayloadSize');
+            if (floatPayload) floatPayload.textContent = `${formatByteSize(inBytes)} → ${formatByteSize(outBytes)}`;
+            const floatOver = document.getElementById('floatOverhead');
+            if (floatOver) floatOver.textContent = sign + overhead + '%';
+        }
+
+        function swapInputOutput() {
+            const inputEl = document.getElementById('inputTextarea');
+            const outputEl = document.getElementById('outputTextarea');
+            const temp = outputEl.value;
+            inputEl.value = temp;
+            setTextMode(state.textMode === 'encode' ? 'decode' : 'encode');
+        }
+
+        function clearTextAreas() {
+            document.getElementById('inputTextarea').value = '';
+            document.getElementById('outputTextarea').value = '';
+            processText();
+        }
+
+        function copyInputText() {
+            const text = document.getElementById('inputTextarea').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => showToast('Input text copied!'));
+        }
+
+        function copyOutputText() {
+            const text = document.getElementById('outputTextarea').value;
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(() => showToast('Output payload copied!'));
+        }
+
+        function downloadOutputText() {
+            const text = document.getElementById('outputTextarea').value;
+            if (!text) {
+                showToast('Nothing to download!');
+                return;
+            }
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = state.textMode === 'encode' ? 'encoded-base64.txt' : 'decoded-text.txt';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('File downloaded!');
+        }
+
+        // --- Text Presets ---
+        const PRESETS = {
+            unicode: "Hello World! 🌍 مرحبا بالعالم 👋 こんにちは • Mathematical Euler: e^(iπ) + 1 = 0",
+            jwt: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkFsZXggRGV2IiwiaWF0IjoxNTE2MjM5MDIyfQ",
+            basic_auth: "admin:SuperSecretP@ssw0rd!#2026",
+            json: JSON.stringify({ user_id: 1042, role: "system_architect", verified: true, tags: ["admin", "core"] }, null, 2),
+            url_safe: "token=sec_98453-ab_x9&redirect_uri=https://calcworld.net/other/base64-encode-decode",
+            svg: '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24"><path fill="#2563EB" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>'
+        };
+
+        function loadTextPreset(key) {
+            const val = PRESETS[key];
+            if (!val) return;
+            const inputEl = document.getElementById('inputTextarea');
+            inputEl.value = val;
+            if (key === 'jwt') {
+                setTextMode('decode');
+            } else {
+                setTextMode('encode');
+            }
+            processText();
+            showToast('Preset loaded!');
+        }
+
+        // --- File & Image Data URL Processor ---
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (!files || files.length === 0) return;
+            processFile(files[0]);
+        }
+
+        function processFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const dataUrl = event.target.result;
+                let b64 = '';
+                const commaIndex = dataUrl.indexOf(',');
+                if (commaIndex !== -1) {
+                    b64 = dataUrl.substring(commaIndex + 1);
+                }
+
+                state.currentFile = {
+                    name: file.name,
+                    mime: file.type || 'application/octet-stream',
+                    origSize: file.size,
+                    b64Data: b64,
+                    dataUrl: dataUrl
+                };
+
+                updateFileUi();
+                showToast(`Loaded ${file.name}!`);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function updateFileUi() {
+            const f = state.currentFile;
+            document.getElementById('activeFileTypeBadge').textContent = f.mime;
+            document.getElementById('fileOrigSize').textContent = formatByteSize(f.origSize);
+            document.getElementById('fileDataUrlSize').textContent = formatByteSize(f.dataUrl.length);
+
+            const growth = f.origSize > 0 ? (((f.dataUrl.length - f.origSize) / f.origSize) * 100).toFixed(1) : '33.3';
+            document.getElementById('fileGrowthPercent').textContent = '+' + growth + '%';
+
+            // Preview Check
+            const imgEl = document.getElementById('filePreviewImage');
+            const genericEl = document.getElementById('filePreviewGeneric');
+            const genericLabel = document.getElementById('genericFileLabel');
+
+            if (f.mime.startsWith('image/')) {
+                imgEl.src = f.dataUrl;
+                imgEl.classList.remove('hidden');
+                genericEl.classList.add('hidden');
+            } else {
+                imgEl.classList.add('hidden');
+                genericEl.classList.remove('hidden');
+                genericLabel.textContent = `${f.name} (${f.mime})`;
+            }
+
+            // Snippets
+            document.getElementById('snippetHtml').textContent = `<img src="${f.dataUrl.substring(0, 48)}..." alt="${f.name}" />`;
+            document.getElementById('snippetCss').textContent = `background-image: url('${f.dataUrl.substring(0, 48)}...');`;
+            document.getElementById('snippetDataUrl').textContent = `${f.dataUrl.substring(0, 60)}...`;
+            document.getElementById('snippetRaw').textContent = `${f.b64Data.substring(0, 60)}...`;
+        }
+
+        function copySnippet(type) {
+            const f = state.currentFile;
+            let text = '';
+            if (type === 'html') {
+                text = `<img src="${f.dataUrl}" alt="${f.name}" />`;
+            } else if (type === 'css') {
+                text = `background-image: url('${f.dataUrl}');`;
+            } else if (type === 'dataurl') {
+                text = f.dataUrl;
+            } else if (type === 'raw') {
+                text = f.b64Data;
+            }
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Snippet copied to clipboard!');
+            });
+        }
+
+        function loadSampleFile(sampleType) {
+            if (sampleType === 'svg') {
+                const svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#2563EB"/><path d="M12 6v6l4 2" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/></svg>`;
+                const b64 = btoa(svgContent);
+                state.currentFile = {
+                    name: 'sample-clock.svg',
+                    mime: 'image/svg+xml',
+                    origSize: svgContent.length,
+                    b64Data: b64,
+                    dataUrl: `data:image/svg+xml;base64,${b64}`
+                };
+            } else if (sampleType === 'png') {
+                // 1x1 transparent PNG
+                const pngB64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+                state.currentFile = {
+                    name: '1x1-pixel.png',
+                    mime: 'image/png',
+                    origSize: 68,
+                    b64Data: pngB64,
+                    dataUrl: `data:image/png;base64,${pngB64}`
+                };
+            } else if (sampleType === 'json') {
+                const jsonContent = JSON.stringify({ app: "CalcWorld", version: "2.4.0", status: "production" }, null, 2);
+                const b64 = btoa(jsonContent);
+                state.currentFile = {
+                    name: 'manifest.json',
+                    mime: 'application/json',
+                    origSize: jsonContent.length,
+                    b64Data: b64,
+                    dataUrl: `data:application/json;base64,${b64}`
+                };
+            }
+            updateFileUi();
+            showToast('Sample file loaded!');
+        }
+
+        // Drag & Drop Listeners
+        const dropzone = document.getElementById('dropzone');
+        ['dragenter', 'dragover'].forEach(name => {
+            dropzone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add('border-accent', 'bg-blue-500/5');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+            dropzone.addEventListener(name, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove('border-accent', 'bg-blue-500/5');
+            }, false);
+        });
+
+        dropzone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            if (files && files.length > 0) {
+                processFile(files[0]);
+            }
+        });
+
+        // --- Base64 to Binary File Download ---
+        function downloadBase64AsBinary() {
+            const inputVal = document.getElementById('base64DownloadInput').value.trim();
+            if (!inputVal) {
+                showToast('Please paste a Base64 string or Data URL!');
+                return;
+            }
+
+            let mime = 'application/octet-stream';
+            let pureB64 = inputVal;
+
+            if (inputVal.startsWith('data:')) {
+                const match = inputVal.match(/^data:([^;]+);base64,(.+)$/);
+                if (match) {
+                    mime = match[1];
+                    pureB64 = match[2];
+                }
+            }
+
+            const userMime = document.getElementById('downloadMimeSelect').value;
+            if (userMime !== 'auto') {
+                mime = userMime;
+            }
+
+            let filename = document.getElementById('downloadFilename').value.trim() || 'decoded-file';
+
+            try {
+                let cleanB64 = pureB64.replace(/\s+/g, '').replace(/-/g, '+').replace(/_/g, '/');
+                while (cleanB64.length % 4 !== 0) cleanB64 += '=';
+
+                const byteChars = atob(cleanB64);
+                const byteNumbers = new Array(byteChars.length);
+                for (let i = 0; i < byteChars.length; i++) {
+                    byteNumbers[i] = byteChars.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+
+                // Auto-extension resolution
+                if (!filename.includes('.')) {
+                    if (mime === 'image/png') filename += '.png';
+                    else if (mime === 'image/jpeg') filename += '.jpg';
+                    else if (mime === 'image/svg+xml') filename += '.svg';
+                    else if (mime === 'application/pdf') filename += '.pdf';
+                    else if (mime === 'text/plain') filename += '.txt';
+                    else if (mime === 'application/json') filename += '.json';
+                    else filename += '.bin';
+                }
+
+                const blob = new Blob([byteArray], { type: mime });
+                const blobUrl = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = blobUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(blobUrl);
+
+                showToast(`Downloaded ${filename} successfully!`);
+            } catch (err) {
+                showToast('Error: Invalid Base64 payload!');
+            }
+        }
+
+        // --- Bitwise Breakdown Visualizer ---
+        function renderBitwiseBreakdown() {
+            const container = document.getElementById('bitwiseVisualizationArea');
+            const inputStr = document.getElementById('bitwiseInput').value || 'M';
+
+            // Take first 3 characters for detailed 24-bit representation
+            const sampleChars = inputStr.slice(0, 3);
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(sampleChars);
+
+            let octetsHtml = '';
+            let bitArray = [];
+
+            for (let i = 0; i < bytes.length; i++) {
+                const b = bytes[i];
+                const bin = b.toString(2).padStart(8, '0');
+                for (let bit of bin) bitArray.push(parseInt(bit, 10));
+
+                octetsHtml += `
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark flex-1 text-center">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block font-semibold">Byte ${i + 1} (${sampleChars[i] || '?'})</span>
+                        <div class="font-mono text-sm font-bold text-accent">${b} (0x${b.toString(16).toUpperCase().padStart(2, '0')})</div>
+                        <div class="font-mono text-xs text-sub-light dark:text-sub-dark mt-1 tracking-widest">${bin}</div>
+                    </div>
+                `;
+            }
+
+            // Fill remainder to complete 24-bit alignment if < 3 bytes
+            const totalBits = bitArray.length;
+            const remainderBits = totalBits % 6;
+            let padZeroBits = 0;
+            if (remainderBits > 0) {
+                padZeroBits = 6 - remainderBits;
+                for (let k = 0; k < padZeroBits; k++) bitArray.push(0);
+            }
+
+            // Partition into 6-bit sextets
+            const sextets = [];
+            for (let i = 0; i < bitArray.length; i += 6) {
+                const chunk = bitArray.slice(i, i + 6);
+                const chunkStr = chunk.join('');
+                const decVal = parseInt(chunkStr, 2);
+                const charStd = RADIX64_CHARS_STANDARD[decVal];
+                const charUrl = RADIX64_CHARS_URLSAFE[decVal];
+                sextets.push({ bits: chunkStr, dec: decVal, charStd, charUrl });
+            }
+
+            let padCharsCount = 0;
+            if (bytes.length === 1) padCharsCount = 2;
+            else if (bytes.length === 2) padCharsCount = 1;
+
+            let sextetsHtml = '';
+            sextets.forEach((s, idx) => {
+                sextetsHtml += `
+                    <div class="p-3 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark flex-1 text-center">
+                        <span class="text-[10px] text-sub-light dark:text-sub-dark uppercase block font-semibold">Sextet ${idx + 1} (6-Bit)</span>
+                        <div class="font-mono text-sm font-bold text-emerald-500">${s.charStd} <span class="text-xs text-sub-light font-normal">(Index ${s.dec})</span></div>
+                        <div class="font-mono text-xs text-sub-light dark:text-sub-dark mt-1 tracking-widest">${s.bits}</div>
+                    </div>
+                `;
+            });
+
+            for (let p = 0; p < padCharsCount; p++) {
+                sextetsHtml += `
+                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-300 dark:border-amber-600/40 flex-1 text-center">
+                        <span class="text-[10px] text-amber-500 uppercase block font-semibold">Padding Slot ${p + 1}</span>
+                        <div class="font-mono text-sm font-bold text-amber-500">=</div>
+                        <div class="font-mono text-xs text-amber-500/80 mt-1">Zero Remainder</div>
+                    </div>
+                `;
+            }
+
+            const finalResult = sextets.map(s => s.charStd).join('') + '='.repeat(padCharsCount);
+
+            container.innerHTML = `
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-2">Step 1: Input 8-Bit Octets (${bytes.length} bytes = ${totalBits} bits)</span>
+                    <div class="flex flex-col sm:flex-row gap-3">${octetsHtml}</div>
+                </div>
+
+                <div class="flex items-center justify-center my-2 text-sub-light dark:text-sub-dark">
+                    <svg class="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                </div>
+
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-2">Step 2: Regrouped into 6-Bit Sextets (${padZeroBits > 0 ? padZeroBits + ' trailing zero bits appended' : 'clean alignment'})</span>
+                    <div class="flex flex-col sm:flex-row gap-3">${sextetsHtml}</div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-accent/10 border border-accent/20 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs font-bold text-accent uppercase tracking-wider block">Encoded Result</span>
+                        <span class="font-mono text-lg font-extrabold text-text-light dark:text-text-dark">&quot;${sampleChars}&quot; &rarr; <span class="text-accent">${finalResult}</span></span>
+                    </div>
+                    <span class="text-xs font-mono px-2.5 py-1 rounded-md bg-card-light dark:bg-card-dark font-semibold">
+                        ${padCharsCount > 0 ? `${padCharsCount} padding char (=)` : '0 padding characters'}
+                    </span>
+                </div>
+            `;
+        }
+
+        // --- Populate Radix-64 Table ---
+        function populateRadixTable() {
+            const tbody = document.getElementById('lookupTableBody');
+            let html = '';
+            for (let i = 0; i < 64; i++) {
+                const bin = i.toString(2).padStart(6, '0');
+                const charStd = RADIX64_CHARS_STANDARD[i];
+                const charUrl = RADIX64_CHARS_URLSAFE[i];
+                let cat = 'Uppercase Letter';
+                if (i >= 26 && i <= 51) cat = 'Lowercase Letter';
+                else if (i >= 52 && i <= 61) cat = 'Decimal Digit';
+                else if (i >= 62) cat = 'Special Symbol';
+
+                html += `
+                    <tr class="hover:bg-canvas-light dark:hover:bg-canvas-dark/60 transition-colors">
+                        <td class="p-2.5 text-center font-bold">${i}</td>
+                        <td class="p-2.5 text-center text-sub-light dark:text-sub-dark">${bin}</td>
+                        <td class="p-2.5 text-center font-bold text-accent text-sm">${charStd}</td>
+                        <td class="p-2.5 text-center font-bold text-emerald-500 text-sm">${charUrl}</td>
+                        <td class="p-2.5 font-sans text-sub-light dark:text-sub-dark">${cat}</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+        }
+
+        function filterLookupTable() {
+            const q = document.getElementById('lookupSearch').value.toLowerCase().trim();
+            const rows = document.querySelectorAll('#lookupTableBody tr');
+            rows.forEach(r => {
+                const text = r.textContent.toLowerCase();
+                r.style.display = text.includes(q) ? '' : 'none';
+            });
+        }
+
+        // --- Print Report Generator ---
+        function updatePrintReport() {
+            document.getElementById('reportTimestamp').textContent = new Date().toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+            });
+
+            const urlSafeCheck = document.getElementById('toggleUrlSafe').checked;
+            const stripPaddingCheck = document.getElementById('toggleStripPadding').checked;
+
+            document.getElementById('reportMode').textContent = state.textMode === 'encode' ? 'Encode (Text → Base64)' : 'Decode (Base64 → Text)';
+            document.getElementById('reportUrlSafe').textContent = urlSafeCheck ? 'URL-Safe Enabled (- and _)' : 'Standard RFC 4648 (+ and /)';
+            document.getElementById('reportPadding').textContent = stripPaddingCheck ? 'Unpadded (Stripped =)' : 'Standard Strict RFC (=)';
+
+            const inText = document.getElementById('inputTextarea').value || '--';
+            const outText = document.getElementById('outputTextarea').value || '--';
+
+            document.getElementById('reportInputPreview').textContent = inText;
+            document.getElementById('reportOutputPreview').textContent = outText;
+
+            const inBytes = inText !== '--' ? new TextEncoder().encode(inText).length : 0;
+            const outBytes = outText !== '--' ? new TextEncoder().encode(outText).length : 0;
+
+            document.getElementById('reportMetricInputBytes').textContent = formatByteSize(inBytes);
+            document.getElementById('reportMetricOutputBytes').textContent = formatByteSize(outBytes);
+
+            let overhead = inBytes > 0 ? (((outBytes - inBytes) / inBytes) * 100).toFixed(1) : '33.3';
+            document.getElementById('reportMetricExpansion').textContent = '+' + overhead + '%';
+
+            document.getElementById('reportMetricInputChars').textContent = inText !== '--' ? inText.length : 0;
+            document.getElementById('reportMetricOutputChars').textContent = outText !== '--' ? outText.length : 0;
+            document.getElementById('reportMetricCharDelta').textContent = (outText.length - inText.length) + ' chars';
+
+            const mod3 = inBytes % 3;
+            document.getElementById('reportMetricMod3').textContent = mod3;
+            let padText = '0';
+            if (mod3 === 1) padText = "2 (==)";
+            else if (mod3 === 2) padText = "1 (=)";
+            document.getElementById('reportMetricPadCount').textContent = padText;
+        }
+
+        // --- FAQ Accordion Toggle ---
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            if (item) {
+                item.classList.toggle('active');
+            }
+        }
+
+        // --- Floating Bar Scroll Trigger & AdBlock Recovery Detection ---
+        window.addEventListener('scroll', () => {
+            const bar = document.getElementById('floating-bar');
+            if (!bar) return;
+            if (window.scrollY > 300) {
+                bar.classList.remove('translate-y-full');
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+        });
+
+        window.addEventListener('load', () => {
+            // Check AdBlock
+            setTimeout(() => {
+                const slot1 = document.getElementById('ad-slot-1');
+                const adblockBanner = document.getElementById('adblock-recovery');
+                if (slot1 && (slot1.offsetHeight === 0 || slot1.clientHeight === 0)) {
+                    if (adblockBanner) adblockBanner.classList.remove('hidden');
+                }
+            }, 1000);
+
+            // Populate table and init
+            populateRadixTable();
+            loadTextPreset('unicode');
+            updateFileUi();
+        });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

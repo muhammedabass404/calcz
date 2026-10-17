@@ -1,0 +1,2251 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Loan Calculator | Estimate Payments, APR & Origination Fees</title>
+    <meta name="description" content="Calculate monthly personal loan payments, total interest, origination fees, and net loan proceeds. Compare payoff schedules, extra payments, and true APR under TILA regulations.">
+    <link rel="canonical" href="https://calcworld.net/calculators/personal-loan-calculator.html">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: {
+                            light: '#F8FAFC',
+                            dark: '#0B0F19'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#111827'
+                        },
+                        txt: {
+                            light: '#0F172A',
+                            dark: '#F9FAFB'
+                        },
+                        sub: {
+                            light: '#64748B',
+                            dark: '#9CA3AF'
+                        },
+                        brd: {
+                            light: '#E2E8F0',
+                            dark: '#1F2937'
+                        },
+                        accent: {
+                            DEFAULT: '#2563EB',
+                            hover: '#1D4ED8',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        // FOUC prevention script
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .dark body {
+            background-color: #0B0F19;
+            color: #F9FAFB;
+        }
+        .card-panel {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dark .card-panel {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .input-field {
+            width: 100%;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: #0F172A;
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+        .dark .input-field {
+            background-color: #0B0F19;
+            border-color: #1F2937;
+            color: #F9FAFB;
+        }
+        .input-field:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+        }
+        .btn-primary {
+            background-color: #2563EB;
+            color: #FFFFFF;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary:hover {
+            background-color: #1D4ED8;
+        }
+        .btn-secondary {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: inherit;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+        .dark .btn-secondary {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .btn-secondary:hover {
+            background-color: #F8FAFC;
+        }
+        .dark .btn-secondary:hover {
+            background-color: #0B0F19;
+        }
+        
+        .accordion-content {
+            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.25s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 800px;
+            opacity: 1;
+            transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in;
+        }
+
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar for Schedules */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 3px;
+        }
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+            background: #374151;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Personal Loan Calculator",
+      "url": "https://calcworld.net/calculators/personal-loan-calculator.html",
+      "applicationCategory": "FinancialApplication",
+      "operatingSystem": "All",
+      "description": "Calculate personal loan monthly payments, total interest, origination fees, net disbursements, and accelerated payoff schedules."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Financial Calculators",
+          "item": "https://calcworld.net/financial-calculators"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Personal Loan Calculator",
+          "item": "https://calcworld.net/calculators/personal-loan-calculator.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an unsecured personal loan and how does it work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An unsecured personal loan is a fixed-rate installment credit product disbursed in a single upfront lump sum without requiring physical collateral like a house or vehicle. Borrowers repay the principal balance plus accrued interest in equal monthly installments over terms typically spanning 12 to 84 months."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a personal loan origination fee and how does it reduce loan proceeds?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An origination fee is an upfront administrative cost charged by lenders to process and underwrite your loan, typically ranging from 1% to 8% of the loan amount. Most lenders deduct this fee directly from your disbursed proceeds. For example, borrowing $10,000 with a 5% ($500) origination fee yields $9,500 in net cash, while your monthly payment is calculated on the full $10,000 principal."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the Truth in Lending Act (TILA) define APR versus interest rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Truth in Lending Act (Regulation Z) requires lenders to disclose the Annual Percentage Rate (APR), which reflects the true annual cost of credit including both the nominal interest rate and mandatory finance fees like origination charges. The APR is calculated against net loan proceeds, making it a reliable benchmark for comparing loans."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is a personal loan better than using credit cards for debt consolidation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Personal loans generally offer lower, fixed interest rates compared to credit cards, which feature variable rates compounding daily. According to Federal Reserve consumer credit data, personal loans carry significantly lower average interest rates than revolving credit cards, while establishing a definite debt-free date."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I pay off my personal loan early without penalties?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most major personal loan lenders do not charge prepayment penalties. Making additional principal payments reduces outstanding balance faster, which shortens your payoff term and lowers total interest charges."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What credit score do I need to qualify for a personal loan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "While borrowers with credit scores of 580 to 669 can qualify with specialized lenders, borrowers with scores of 740 and above secure the lowest interest rates and minimal origination fees. Lenders also review income stability and debt-to-income (DTI) ratios."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Personal Loan Calculator | Estimate Payments, APR & Origination Fees">
+    <meta property="og:description" content="Calculate monthly personal loan payments, total interest, origination fees, and net loan proceeds. Compare payoff schedules, extra payments, and true APR under TILA regulations.">
+    <meta property="og:url" content="https://calcworld.net/calculators/personal-loan-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Personal Loan Calculator | Estimate Payments, APR & Origination Fees">
+    <meta name="twitter:description" content="Calculate monthly personal loan payments, total interest, origination fees, and net loan proceeds. Compare payoff schedules, extra payments, and true APR under TILA regulations.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-sm text-sub-light dark:text-sub-dark mb-4" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <span class="text-txt-light dark:text-txt-dark font-medium">Personal Loan Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Tool Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Personal Loan Calculator</h1>
+            <p class="text-sub-light dark:text-sub-dark text-base md:text-lg max-w-3xl">
+                Estimate monthly installment payments, total interest expenses, origination fees, and net cash proceeds. Model extra principal payments to uncover accelerated debt payoff milestones and true borrowing costs.
+            </p>
+        </div>
+
+        <!-- Presets Row -->
+        <div id="presets-container" class="mb-6 card-panel p-3 flex flex-wrap items-center gap-2 text-sm bg-card-light dark:bg-card-dark">
+            <span class="text-xs font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark mr-2 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Presets:
+            </span>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="debt">
+                Debt Consolidation ($15k)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="emergency">
+                Emergency Expense ($5k)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="home">
+                Home Improvement ($25k)
+            </button>
+        </div>
+
+        <!-- Main Calculator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="card-panel p-6">
+                    <div class="flex items-center justify-between mb-5 border-b border-brd-light dark:border-brd-dark pb-3">
+                        <h2 class="text-lg font-bold flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Loan Parameters
+                        </h2>
+                        <span class="text-xs font-medium text-sub-light dark:text-sub-dark">Instant calculation</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Loan Amount -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-amount" class="text-sm font-semibold">Loan Amount</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium">Principal borrowed</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold cur-symbol">$</span>
+                                <input type="number" id="in-amount" value="15000" min="500" max="100000" step="500" class="input-field pl-8 font-bold text-lg" placeholder="15000">
+                            </div>
+                            <input type="range" id="range-amount" min="1000" max="100000" step="500" value="15000" class="w-full h-1.5 bg-brd-light dark:bg-brd-dark rounded-lg appearance-none cursor-pointer mt-2 accent-accent">
+                        </div>
+
+                        <!-- Interest Rate (% APR) -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-rate" class="text-sm font-semibold">Interest Rate (% APR)</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium">Fixed contract rate</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="in-rate" value="11.5" min="2.0" max="36.0" step="0.1" class="input-field pr-8 font-bold text-lg" placeholder="11.5">
+                                <span class="absolute right-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold">%</span>
+                            </div>
+                            <input type="range" id="range-rate" min="3.0" max="36.0" step="0.1" value="11.5" class="w-full h-1.5 bg-brd-light dark:bg-brd-dark rounded-lg appearance-none cursor-pointer mt-2 accent-accent">
+                        </div>
+
+                        <!-- Loan Term (1 to 7 Years) -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-term" class="text-sm font-semibold">Loan Term</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium" id="term-months-label">36 months</span>
+                            </div>
+                            <select id="in-term" class="input-field font-semibold text-base">
+                                <option value="1">1 Year (12 Months)</option>
+                                <option value="2">2 Years (24 Months)</option>
+                                <option value="3" selected>3 Years (36 Months)</option>
+                                <option value="4">4 Years (48 Months)</option>
+                                <option value="5">5 Years (60 Months)</option>
+                                <option value="6">6 Years (72 Months)</option>
+                                <option value="7">7 Years (84 Months)</option>
+                            </select>
+                        </div>
+
+                        <!-- Origination Fee -->
+                        <div class="p-3.5 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase tracking-wider text-txt-light dark:text-txt-dark flex items-center">
+                                    <svg class="w-4 h-4 mr-1 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Origination Fee (0% to 8%)
+                                </label>
+                                <div class="inline-flex rounded-md p-0.5 bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark text-[11px] font-semibold">
+                                    <button type="button" id="fee-type-pct" class="px-2 py-0.5 rounded bg-accent text-white shadow-xs">Percent (%)</button>
+                                    <button type="button" id="fee-type-fixed" class="px-2 py-0.5 rounded text-sub-light dark:text-sub-dark hover:text-txt-light">Amount (<span class="cur-symbol">$</span>)</button>
+                                </div>
+                            </div>
+
+                            <div class="relative">
+                                <span id="fee-symbol-prefix" class="hidden absolute left-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold cur-symbol">$</span>
+                                <input type="number" id="in-fee" value="4.0" min="0" max="8.0" step="0.25" class="input-field font-semibold pr-8" placeholder="4.0">
+                                <span id="fee-symbol-suffix" class="absolute right-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold">%</span>
+                            </div>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark">
+                                Deducted upfront from proceeds. Typical online lender fees range from 1% to 8%.
+                            </p>
+                        </div>
+
+                        <!-- Extra Monthly Payment -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-extra" class="text-sm font-semibold">Extra Monthly Payment</label>
+                                <span class="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Accelerate payoff</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold cur-symbol">$</span>
+                                <input type="number" id="in-extra" value="0" min="0" max="5000" step="25" class="input-field pl-8 font-semibold text-base" placeholder="0">
+                            </div>
+                            <div class="flex gap-1.5 mt-2">
+                                <button type="button" class="extra-chip px-2.5 py-1 text-xs rounded border border-brd-light dark:border-brd-dark hover:border-accent bg-card-light dark:bg-card-dark font-medium" data-val="25">+$25</button>
+                                <button type="button" class="extra-chip px-2.5 py-1 text-xs rounded border border-brd-light dark:border-brd-dark hover:border-accent bg-card-light dark:bg-card-dark font-medium" data-val="50">+$50</button>
+                                <button type="button" class="extra-chip px-2.5 py-1 text-xs rounded border border-brd-light dark:border-brd-dark hover:border-accent bg-card-light dark:bg-card-dark font-medium" data-val="100">+$100</button>
+                                <button type="button" class="extra-chip px-2.5 py-1 text-xs rounded border border-brd-light dark:border-brd-dark hover:border-accent bg-card-light dark:bg-card-dark font-medium" data-val="0">Reset</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 1: Sticky Desktop Sidebar (300x600) with AdBlock Fallback -->
+                <div class="hidden lg:block ad-slot-container">
+                    <div class="w-full h-[600px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-between p-4 relative overflow-hidden">
+                        <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark">Sponsored Advertisement (300x600)</div>
+                        <div class="ad-content flex flex-col items-center justify-center text-center my-auto">
+                            <span class="text-sub-light dark:text-sub-dark text-xs font-medium opacity-60">Google AdSense Display Unit</span>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Sticky High-Viewability Slot</span>
+                        </div>
+                        <!-- AdBlock Recovery Notice -->
+                        <div class="ad-fallback p-4 rounded-lg bg-accent/5 border border-accent/20 text-center">
+                            <p class="text-xs font-bold text-accent mb-1">Check Personal Loan Pre-Approvals</p>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark mb-2">Compare rates without impacting your credit score. Zero prepayment fees.</p>
+                            <a href="#guide-section" class="inline-block text-xs font-semibold text-accent hover:underline">Read Lending Comparison Guide &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Outputs & Visuals -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Primary Metric Highlight Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Monthly Payment Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Monthly Payment</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-accent mb-1 flex items-baseline" id="out-monthly-pmt">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span id="num-monthly">494.87</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-extra-summary">Fixed monthly installment</p>
+                    </div>
+
+                    <!-- Total Repayment Amount Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Total Repayment Amount</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-txt-light dark:text-txt-dark mb-1 flex items-baseline" id="out-total-repayment">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span id="num-total-repayment">17,815.32</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">Principal + Total Interest</p>
+                    </div>
+
+                    <!-- Total Interest Paid Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Total Interest Paid</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-amber-600 dark:text-amber-400 mb-1 flex items-baseline" id="out-total-interest">
+                            <span class="cur-symbol text-xl mr-1">$</span><span id="num-interest">2,815.32</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-interest-ratio">18.8% of loan principal</p>
+                    </div>
+
+                    <!-- Net Loan Proceeds Received Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-950/25 dark:to-green-900/15 border-green-200 dark:border-green-800/40">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity text-green-600">
+                            <svg class="w-14 h-14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2H4zm3 5a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1zm0 3a1 1 0 011-1h4a1 1 0 110 2H8a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-green-700 dark:text-green-400 mb-1">Net Proceeds Disbursed</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-green-600 dark:text-green-400 mb-1 flex items-baseline" id="out-net-proceeds">
+                            <span class="cur-symbol text-xl mr-1">$</span><span id="num-net-proceeds">14,400.00</span>
+                        </p>
+                        <p class="text-xs text-green-700/80 dark:text-green-400/80 font-medium" id="out-fee-deduction">
+                            Less <span class="cur-symbol">$</span><span id="num-fee-amount">600.00</span> origination fee
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Secondary Payoff Highlight Bar -->
+                <div class="card-panel p-4 bg-canvas-light/60 dark:bg-canvas-dark/60 border border-brd-light dark:border-brd-dark grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Origination Fee:</span>
+                        <span class="font-bold text-sm"><span class="cur-symbol">$</span><span id="metric-fee-sub">600.00</span> (<span id="metric-fee-rate">4.0%</span>)</span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Estimated Payoff Date:</span>
+                        <span class="font-bold text-sm text-accent" id="metric-payoff-date">Nov 2029</span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Effective APR (TILA):</span>
+                        <span class="font-bold text-sm text-purple-600 dark:text-purple-400" id="metric-effective-apr">14.38%</span>
+                    </div>
+                </div>
+
+                <!-- Tabbed Results Area -->
+                <div class="card-panel overflow-hidden">
+                    <div class="tab-btn-row flex border-b border-brd-light dark:border-brd-dark bg-canvas-light/50 dark:bg-canvas-dark/50 overflow-x-auto">
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-accent border-b-2 border-accent whitespace-nowrap transition-colors" data-tab="tab-summary">
+                            Summary
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-schedule">
+                            Amortization Schedule
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-fee">
+                            Fee Impact Breakdown
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-print">
+                            Print Report
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        
+                        <!-- TAB 1: SUMMARY -->
+                        <div id="tab-summary" class="tab-content block space-y-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-lg font-bold">Standard vs. Accelerated Payoff Comparison</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Evaluate baseline repayment versus applying your extra monthly principal payments.</p>
+                                </div>
+                                <button id="btn-copy" class="btn-secondary text-xs flex items-center text-accent hover:text-accent-hover font-semibold">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    Copy Summary
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Standard Terms Box -->
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-3 flex items-center justify-between">
+                                        <span>Standard Scheduled Repayment</span>
+                                        <span class="text-[10px] bg-sub-light/10 px-2 py-0.5 rounded font-semibold">Contractual</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Contract Term:</span>
+                                            <span class="font-medium" id="sum-std-term">3 Years (36 Mos)</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Monthly Payment:</span>
+                                            <span class="font-bold"><span class="cur-symbol">$</span><span id="sum-std-pmt">494.87</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Interest Paid:</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-std-interest">2,815.32</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Origination Fee:</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-std-fee">600.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark font-medium">Total Cost of Borrowing:</span>
+                                            <span class="font-bold text-txt-light dark:text-txt-dark"><span class="cur-symbol">$</span><span id="sum-std-cost">3,415.32</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Accelerated Terms Box -->
+                                <div class="p-4 rounded-lg bg-accent/5 dark:bg-accent/10 border border-accent/20 dark:border-accent/30 relative">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-accent mb-3 flex items-center justify-between">
+                                        <span>With Extra Monthly Payments</span>
+                                        <span class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded font-bold" id="badge-accelerated">Active Plan</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Actual Payoff Time:</span>
+                                            <span class="font-bold text-accent" id="sum-acc-term">36 Mos</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Monthly Payment:</span>
+                                            <span class="font-bold text-accent"><span class="cur-symbol">$</span><span id="sum-acc-pmt">494.87</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Revised Total Interest:</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-acc-interest">2,815.32</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Interest Saved:</span>
+                                            <span class="font-bold text-green-600 dark:text-green-400"><span class="cur-symbol">$</span><span id="sum-acc-savings">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark font-medium">Months Shaved Off:</span>
+                                            <span class="font-bold text-green-600 dark:text-green-400" id="sum-acc-time-saved">0 Months</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Cost per Dollar Borrowed Highlight -->
+                            <div class="p-4 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 flex items-center justify-between text-xs">
+                                <div class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span class="text-txt-light dark:text-txt-dark font-medium" id="sum-cost-per-dollar">
+                                        For every $1.00 received in cash, you repay $1.24 in principal, fees, and interest.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Charts Grid Inside Summary Tab -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-brd-light dark:border-brd-dark">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Loan Cost Composition</h4>
+                                    <div class="h-56 relative flex items-center justify-center">
+                                        <canvas id="loanDoughnutChart"></canvas>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Principal Balance Amortization</h4>
+                                    <div class="h-56 relative flex items-center justify-center">
+                                        <canvas id="balanceLineChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: AMORTIZATION SCHEDULE TABLE -->
+                        <div id="tab-schedule" class="tab-content hidden space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-base font-bold">Personal Loan Amortization Schedule</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Monthly and annual breakdown of principal reduction, interest charges, and loan balance.</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="inline-flex rounded-lg p-0.5 bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                        <button type="button" id="btn-view-annual" class="px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition">
+                                            Annual
+                                        </button>
+                                        <button type="button" id="btn-view-monthly" class="px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition">
+                                            Monthly
+                                        </button>
+                                    </div>
+                                    <button type="button" id="btn-export-csv" class="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold bg-canvas-light dark:bg-canvas-dark hover:bg-card-light dark:hover:bg-card-dark text-txt-light dark:text-txt-dark rounded-lg border border-brd-light dark:border-brd-dark transition">
+                                        <svg class="w-3.5 h-3.5 text-sub-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        <span>Export CSV</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-xl border border-brd-light dark:border-brd-dark max-h-[460px] custom-scroll">
+                                <table class="min-w-full divide-y divide-brd-light dark:divide-brd-dark text-xs">
+                                    <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark font-semibold uppercase sticky top-0 z-10 text-[11px]">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left" id="th-period">Year</th>
+                                            <th class="px-3 py-2.5 text-right">Payment</th>
+                                            <th class="px-3 py-2.5 text-right">Principal</th>
+                                            <th class="px-3 py-2.5 text-right">Interest</th>
+                                            <th class="px-3 py-2.5 text-right">Extra Paid</th>
+                                            <th class="px-3 py-2.5 text-right">Remaining Balance</th>
+                                            <th class="px-3 py-2.5 text-right">Total Interest</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="amortization-table-body" class="divide-y divide-brd-light dark:divide-brd-dark bg-card-light dark:bg-card-dark font-mono text-[11px]">
+                                        <!-- Dynamically populated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: FEE IMPACT BREAKDOWN -->
+                        <div id="tab-fee" class="tab-content hidden space-y-5">
+                            <div>
+                                <h3 class="text-base font-bold">Origination Fee & True Borrowing Cost Analysis</h3>
+                                <p class="text-xs text-sub-light dark:text-sub-dark">Understanding how upfront lender deductions inflate your effective Annual Percentage Rate (APR).</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                    <span class="text-xs text-sub-light dark:text-sub-dark block mb-1">Contract Note Rate:</span>
+                                    <span class="text-2xl font-bold text-txt-light dark:text-txt-dark" id="fee-nominal-rate">11.50%</span>
+                                    <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Stated annual interest applied to outstanding principal balance.</p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-purple-50/60 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40">
+                                    <span class="text-xs text-purple-700 dark:text-purple-400 font-semibold block mb-1">TILA Effective APR:</span>
+                                    <span class="text-2xl font-bold text-purple-700 dark:text-purple-400" id="fee-effective-apr">14.38%</span>
+                                    <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Actual borrowing cost calculated against net cash proceeds in hand.</p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                    <span class="text-xs text-sub-light dark:text-sub-dark block mb-1">APR Surcharge:</span>
+                                    <span class="text-2xl font-bold text-amber-600 dark:text-amber-400" id="fee-apr-gap">+2.88%</span>
+                                    <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Premium added to your borrowing cost solely by the upfront origination fee.</p>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-3">
+                                <h4 class="text-sm font-bold">Lender Deduction Mechanics</h4>
+                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                    <div class="border-b sm:border-b-0 sm:border-r border-brd-light dark:border-brd-dark pb-2 sm:pb-0 sm:pr-3">
+                                        <span class="text-sub-light dark:text-sub-dark block">Gross Loan Amount Borrowed:</span>
+                                        <span class="font-bold text-sm"><span class="cur-symbol">$</span><span id="fee-box-gross">15,000.00</span></span>
+                                    </div>
+                                    <div class="border-b sm:border-b-0 sm:border-r border-brd-light dark:border-brd-dark pb-2 sm:pb-0 sm:pr-3">
+                                        <span class="text-sub-light dark:text-sub-dark block">Lender Origination Withholding:</span>
+                                        <span class="font-bold text-sm text-red-600 dark:text-red-400">-<span class="cur-symbol">$</span><span id="fee-box-withheld">600.00</span></span>
+                                    </div>
+                                    <div>
+                                        <span class="text-sub-light dark:text-sub-dark block">Net Direct Bank Deposit:</span>
+                                        <span class="font-bold text-sm text-green-600 dark:text-green-400"><span class="cur-symbol">$</span><span id="fee-box-net">14,400.00</span></span>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-sub-light dark:text-sub-dark leading-relaxed pt-2 border-t border-brd-light dark:border-brd-dark">
+                                    <strong>Important Note on Funding Goals:</strong> If you need exactly <span class="cur-symbol">$</span><span id="fee-target-amt">15,000</span> in cash for a planned expenditure or debt payoff, you must request a larger loan amount of <strong class="text-txt-light dark:text-txt-dark"><span class="cur-symbol">$</span><span id="fee-grossed-up">15,625.00</span></strong> to cover the 4.0% origination fee deduction.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: PRINT REPORT -->
+                        <div id="tab-print" class="tab-content hidden space-y-4">
+                            <div class="p-6 rounded-lg border border-dashed border-brd-light dark:border-brd-dark text-center">
+                                <svg class="w-12 h-12 mx-auto text-accent mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                <h4 class="text-lg font-bold mb-1">Generate Print-Ready Loan Underwriting Sheet</h4>
+                                <p class="text-xs text-sub-light dark:text-sub-dark max-w-md mx-auto mb-4">Export a clean, institutional single-page PDF statement summarizing loan parameters, repayment costs, fee disclosures, and accelerated payoff figures.</p>
+                                <button onclick="window.print()" class="btn-primary inline-flex items-center text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print or Save as PDF
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PDF Lead Magnet Box -->
+                <div class="card-panel p-6 bg-gradient-to-r from-accent to-blue-800 text-white relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 opacity-15">
+                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-white/20 text-white mb-2">Free Resource</span>
+                        <h3 class="text-xl font-bold mb-1">Download Personal Loan Comparison & Debt Checklist</h3>
+                        <p class="text-blue-100 text-xs md:text-sm mb-4 max-w-lg">
+                            Get our complete PDF guide with lender vetting checklists, origination fee break-even worksheets, and debt consolidation strategies.
+                        </p>
+                        <form class="flex flex-col sm:flex-row gap-2 max-w-md" onsubmit="event.preventDefault(); alert('Your Personal Loan & Debt Consolidation Checklist has been queued for download.');">
+                            <input type="email" placeholder="Enter your email address" required class="flex-1 rounded-lg px-3.5 py-2 text-sm text-txt-light border-none outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="bg-white text-accent font-bold px-4 py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap shadow-sm">
+                                Send My PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 2: Under-Result Display Leaderboard (728x90) with AdBlock Fallback -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[110px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored Advertisement</span>
+                <div class="ad-content text-center">
+                    <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Leaderboard (728x90 / Responsive)</span>
+                </div>
+                <!-- AdBlock Recovery Notice -->
+                <div class="ad-fallback text-xs text-sub-light dark:text-sub-dark text-center mt-1">
+                    Free institutional calculator. Check consumer borrowing protections directly with the <a href="https://www.consumerfinance.gov" target="_blank" rel="noopener noreferrer" class="text-accent underline">CFPB</a>.
+                </div>
+            </div>
+        </div>
+
+        <!-- Print-Only Executive Summary Sheet -->
+        <div class="print-section hidden px-4 py-6 border-b border-slate-300">
+            <div class="border-b-2 border-slate-900 pb-3 mb-4">
+                <h2 class="text-2xl font-bold text-slate-900">Personal Loan Statement & Underwriting Summary</h2>
+                <p class="text-xs text-slate-600">Generated on <span id="prn-date"></span> &bull; Calculated via CalcWorld Institutional Tools</p>
+            </div>
+            <div class="grid grid-cols-2 gap-6 text-xs">
+                <div>
+                    <h3 class="font-bold border-b pb-1 mb-2">Loan Parameters</h3>
+                    <p>Principal Loan Amount: <span class="cur-symbol">$</span><span id="prn-amount">15,000.00</span></p>
+                    <p>Contract Interest Rate: <span id="prn-rate">11.50</span>%</p>
+                    <p>Loan Term: <span id="prn-term">3</span> Years (<span id="prn-months">36</span> Months)</p>
+                    <p>Origination Fee: <span class="cur-symbol">$</span><span id="prn-fee">600.00</span></p>
+                    <p>Extra Monthly Payment: <span class="cur-symbol">$</span><span id="prn-extra">0.00</span></p>
+                </div>
+                <div>
+                    <h3 class="font-bold border-b pb-1 mb-2">Repayment Metrics</h3>
+                    <p>Scheduled Monthly Payment: <span class="cur-symbol">$</span><span id="prn-payment">494.87</span></p>
+                    <p>Total Interest Charge: <span class="cur-symbol">$</span><span id="prn-interest">2,815.32</span></p>
+                    <p>Net Cash Disbursed: <span class="cur-symbol">$</span><span id="prn-net">14,400.00</span></p>
+                    <p>Total Repayment Balance: <span class="cur-symbol">$</span><span id="prn-total">17,815.32</span></p>
+                    <p>Effective APR (TILA): <span id="prn-apr">14.38</span>%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1200+ Word Educational Guide Section (Strict Zero Banned Words) -->
+        <article id="guide-section" class="max-w-none mt-12 mb-16 border-t border-brd-light dark:border-brd-dark pt-10">
+            
+            <div class="max-w-4xl mx-auto space-y-8 text-txt-light dark:text-txt-dark leading-relaxed">
+                
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-accent">Institutional Guide</span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1 mb-3">Complete Guide to Unsecured Personal Loans, APR Disclosures, and Debt Restructuring</h2>
+                    <p class="text-sub-light dark:text-sub-dark text-base">
+                        Unsecured personal loans represent one of the fastest-growing segments of consumer credit. By providing lump-sum capital with fixed monthly installments, personal loans help households consolidate variable revolving credit, fund necessary renovations, or address unexpected expenditures without placing personal assets at risk. Understanding loan mechanics, fee assessments, statutory disclosure standards under federal law, and underwriting guidelines helps borrowers secure optimal financial terms.
+                    </p>
+                </div>
+
+                <!-- Section 1: Unsecured Personal Loans vs Credit Cards -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">1. Unsecured Personal Loans vs. Credit Cards: Structural and Mathematical Differences</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-4">
+                        While both personal loans and credit cards extend uncollateralized financing, their financial mechanics operate on fundamentally different credit structures. The Federal Reserve reports consumer credit conditions monthly through its G.19 statistical release, consistently showing substantial interest rate divergence between installment loans and revolving accounts:
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1.5">Unsecured Personal Loans (Installment Credit)</h4>
+                            <ul class="space-y-1.5 text-sub-light dark:text-sub-dark">
+                                <li><strong>Structure:</strong> Closed-end credit disbursed in a single upfront lump sum.</li>
+                                <li><strong>Interest Application:</strong> Simple interest amortized across a contractual lifespan (12 to 84 months).</li>
+                                <li><strong>Rate Type:</strong> Fixed interest rates that remain unchanged throughout the term.</li>
+                                <li><strong>Repayment Path:</strong> Predictable monthly installments with an explicit payoff completion date.</li>
+                                <li><strong>Average APR:</strong> Typically ranges between 8.0% and 15.5% for creditworthy applicants.</li>
+                            </ul>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1.5">Credit Cards (Revolving Credit)</h4>
+                            <ul class="space-y-1.5 text-sub-light dark:text-sub-dark">
+                                <li><strong>Structure:</strong> Open-ended revolving lines where borrowers draw, repay, and re-borrow funds.</li>
+                                <li><strong>Interest Application:</strong> Compound interest calculated on average daily balances.</li>
+                                <li><strong>Rate Type:</strong> Variable rates pegged to the Wall Street Journal Prime Rate.</li>
+                                <li><strong>Repayment Path:</strong> Minimum monthly payments designed to keep accounts active indefinitely.</li>
+                                <li><strong>Average APR:</strong> Exceeds 21.0% to 24.5% according to Federal Reserve G.19 data.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        The primary financial risk of revolving credit cards lies in daily compounding interest combined with flexible minimum payments. When cardholders make only minimum required payments, a substantial portion pays interest charges while leaving the principal balance largely untouched. In contrast, standard personal loan amortization ensures that each fixed monthly payment steadily reduces principal debt from the first payment onward.
+                    </p>
+                </div>
+
+                <!-- Section 2: Origination Fees and True APR Impact -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">2. Origination Fees and Their Impact on Real Borrowing Costs</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        An origination fee is an upfront administrative and underwriting surcharge assessed by lenders to compensate for credit evaluation, identity verification, loan packaging, and capital disbursement. Personal loan origination fees typically range from 1% to 8% of the gross loan amount, depending directly upon the borrower's credit score, income verification, and requested repayment horizon.
+                    </p>
+
+                    <h4 class="font-bold text-sm text-txt-light dark:text-txt-dark mb-2">How Origination Fees Reduce Net Proceeds</h4>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Unlike mortgage closing costs that borrowers often pay out of pocket, personal loan origination fees are almost universally deducted directly from loan proceeds prior to bank deposit. Consider a representative borrower who qualifies for a $20,000 personal loan with a 5% origination fee:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-1.5 text-xs text-sub-light dark:text-sub-dark mb-4">
+                        <li><strong>Gross Principal Note:</strong> $20,000.00 (the full legal obligation owed).</li>
+                        <li><strong>Origination Fee Deducted:</strong> $1,000.00 ($20,000 multiplied by 5.0%).</li>
+                        <li><strong>Net Funds Disbursed:</strong> $19,000.00 deposited into the borrower's checking account.</li>
+                        <li><strong>Amortization Basis:</strong> Monthly installments are calculated on the full $20,000.00 principal, not the $19,000.00 received.</li>
+                    </ul>
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        This deduction creates a shortfall for borrowers attempting to fund an exact expense. For example, if a borrower needs precisely $20,000 to settle an existing tax debt, taking a $20,000 loan with a 5% fee leaves them with only $19,000, leaving a $1,000 deficit. To calculate the required gross loan amount to yield an exact net sum, use the following formula:
+                    </p>
+                    <div class="p-3 my-3 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark font-mono text-xs text-center">
+                        Required Gross Loan = Net Needed / (1 - (Origination Fee % / 100))
+                    </div>
+                </div>
+
+                <!-- Section 3: Truth in Lending Act (TILA) & Regulation Z -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">3. The Truth in Lending Act (TILA) and Regulation Z Compliance</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Enacted by the United States Congress and codified under 15 U.S.C. Section 1601 et seq., the Truth in Lending Act (TILA), implemented through Regulation Z, protects consumers against misleading loan advertising and obscured credit charges. Enforced by the Consumer Financial Protection Bureau (CFPB), TILA mandates that consumer lenders provide standard written disclosures before a borrower executes a binding loan agreement.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-1.5">
+                            <h4 class="font-bold text-accent text-sm">Mandatory TILA Disclosures</h4>
+                            <p class="text-sub-light dark:text-sub-dark"><strong>Annual Percentage Rate (APR):</strong> The comprehensive annualized cost of credit reflecting interest charges and origination fees.</p>
+                            <p class="text-sub-light dark:text-sub-dark"><strong>Finance Charge:</strong> The total dollar sum of all interest and prepaid finance fees incurred across the loan term.</p>
+                            <p class="text-sub-light dark:text-sub-dark"><strong>Amount Financed:</strong> The net credit disbursed to the borrower or on their behalf.</p>
+                            <p class="text-sub-light dark:text-sub-dark"><strong>Total of Payments:</strong> The absolute total dollar amount paid upon completing all scheduled payments.</p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-1.5">
+                            <h4 class="font-bold text-accent text-sm">The Regulatory APR Difference</h4>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Under TILA statutory rules, lenders cannot simply advertise a nominal interest rate while burying fees in disclosures. Because the origination fee constitutes a prepaid finance charge, it must be integrated into the advertised APR.
+                            </p>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                On a 2-year loan, a 4% fee adds roughly 3.9% to the effective APR. On a 5-year loan, that same 4% fee adds only about 1.7% to the APR because the upfront cost amortizes across sixty months.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Credit Score Tiers and Interest Rate Benchmarks -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">4. Credit Score Tiers, Underwriting Criteria, and Rate Benchmarks</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-4">
+                        Because unsecured personal loans lack physical collateral, lending algorithms and credit committees rely heavily on three core risk metrics: credit score (FICO or VantageScore), gross monthly income, and debt-to-income (DTI) ratio.
+                    </p>
+
+                    <div class="overflow-x-auto my-4 rounded-lg border border-brd-light dark:border-brd-dark text-xs">
+                        <table class="w-full text-left">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark uppercase text-[11px] border-b border-brd-light dark:border-brd-dark">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold">Credit Tier</th>
+                                    <th class="px-4 py-3 font-semibold">FICO Range</th>
+                                    <th class="px-4 py-3 font-semibold">Estimated APR Range</th>
+                                    <th class="px-4 py-3 font-semibold">Typical Origination Fee</th>
+                                    <th class="px-4 py-3 font-semibold">Max Recommended DTI</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brd-light dark:divide-brd-dark">
+                                <tr>
+                                    <td class="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400">Excellent Credit</td>
+                                    <td class="px-4 py-3 font-medium">740 - 850</td>
+                                    <td class="px-4 py-3 font-bold">6.99% - 11.99%</td>
+                                    <td class="px-4 py-3">0.0% - 2.0%</td>
+                                    <td class="px-4 py-3">Up to 45%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-bold text-blue-600 dark:text-blue-400">Good Credit</td>
+                                    <td class="px-4 py-3 font-medium">670 - 739</td>
+                                    <td class="px-4 py-3 font-bold">12.00% - 17.99%</td>
+                                    <td class="px-4 py-3">2.0% - 4.5%</td>
+                                    <td class="px-4 py-3">Up to 40%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-bold text-amber-600 dark:text-amber-400">Fair Credit</td>
+                                    <td class="px-4 py-3 font-medium">580 - 669</td>
+                                    <td class="px-4 py-3 font-bold">18.00% - 25.99%</td>
+                                    <td class="px-4 py-3">4.0% - 7.0%</td>
+                                    <td class="px-4 py-3">Up to 35%</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-bold text-red-600 dark:text-red-400">Poor / Subprime</td>
+                                    <td class="px-4 py-3 font-medium">300 - 579</td>
+                                    <td class="px-4 py-3 font-bold">26.00% - 35.99%</td>
+                                    <td class="px-4 py-3">6.0% - 8.0%</td>
+                                    <td class="px-4 py-3">Strict Underwriting</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        Underwriters define the debt-to-income (DTI) ratio as monthly recurring debt payments divided by gross monthly income. Most personal loan platforms prefer a total back-end DTI below 36% to 40%, although applicants with high discretionary income or liquid reserves may gain approval with DTIs reaching 45%.
+                    </p>
+                </div>
+
+                <!-- Section 5: Debt Consolidation Strategies & Break-Even Analysis -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">5. Strategic Debt Consolidation: Math, Break-Even, and Execution</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Consolidating multiple revolving credit card balances into a single installment loan is the most common use case for personal loans. When executed correctly, debt consolidation reduces monthly cash outflows, slashes total lifetime interest, and establishes a definitive debt payoff timeline.
+                    </p>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        However, consolidating debt requires evaluating the total dollar cost rather than solely monthly payments. For example, extending an existing debt from a 2-year credit card repayment schedule into a 7-year personal loan might reduce the monthly bill while increasing overall interest paid, even if the interest rate is lower.
+                    </p>
+                    <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-2 text-xs">
+                        <h4 class="font-bold text-accent text-sm">Example Consolidation Case Study</h4>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            A borrower carries $15,000 across three credit cards at an average APR of 23.5%. Making fixed payments of $500 per month, full payoff requires 47 months and costs <strong>$8,340</strong> in interest charges.
+                        </p>
+                        <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                            Consolidating that $15,000 into a 3-year personal loan at 11.5% APR with a 4% ($600) origination fee yields a monthly payment of $494.87. Over 36 months, total interest paid equals <strong>$2,815.32</strong>. Adding the $600 origination fee brings total borrowing costs to $3,415.32. The borrower saves <strong>$4,924.68</strong> in net out-of-pocket expenses while finishing debt-free 11 months earlier.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section 6: Prepayment Mechanics and Accelerated Payoff -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">6. Prepayment Mechanics: How Extra Principal Payments Save Money</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Personal loans use standard amortizing simple interest calculated on the daily outstanding principal balance. The Consumer Financial Protection Bureau emphasizes that under federal rules, lenders must provide clear accounting when extra payments are applied.
+                    </p>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Because simple interest accrues based on the remaining principal, sending an extra $50 or $100 payment per month bypasses interest and goes directly toward principal reduction. This reduces the balance on which future interest is calculated, triggering a compounding reduction in total financing costs.
+                    </p>
+                    <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark text-xs text-sub-light dark:text-sub-dark italic">
+                        Regulatory references and statistical benchmarks sourced from the Consumer Financial Protection Bureau (CFPB.gov), Federal Reserve G.19 Consumer Credit Historical Reports, and Truth in Lending Act 12 CFR Part 1026 (Regulation Z). Calculations are provided for educational and decision-support modeling.
+                    </div>
+                </div>
+
+            </div>
+        </article>
+
+        <!-- AdSense Slot 3: In-Content Responsive Banner Ad -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[100px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored</span>
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense In-Content Banner</span>
+            </div>
+        </div>
+
+        <!-- FAQ Section with Interactive Accordions -->
+        <div class="mb-12">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Frequently Asked Questions</h2>
+                <p class="text-xs md:text-sm text-sub-light dark:text-sub-dark">Common inquiries regarding personal loan approvals, origination fees, interest rate tiers, and payoff strategies.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto space-y-3">
+                
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What is an unsecured personal loan and how does it work?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            An unsecured personal loan is a fixed-rate installment credit product disbursed in a single upfront lump sum without requiring physical collateral like a house or vehicle. Borrowers repay the principal balance plus accrued interest in equal monthly installments over terms typically spanning 12 to 84 months.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What is a personal loan origination fee and how does it reduce loan proceeds?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            An origination fee is an upfront administrative cost charged by lenders to process and underwrite your loan, typically ranging from 1% to 8% of the loan amount. Most lenders deduct this fee directly from your disbursed proceeds. For example, borrowing $10,000 with a 5% ($500) origination fee yields $9,500 in net cash, while your monthly payment is calculated on the full $10,000 principal.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>How does the Truth in Lending Act (TILA) define APR versus interest rate?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The Truth in Lending Act (Regulation Z) requires lenders to disclose the Annual Percentage Rate (APR), which reflects the true annual cost of credit including both the nominal interest rate and mandatory finance fees like origination charges. The APR is calculated against net loan proceeds, making it a reliable benchmark for comparing loans.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>Is a personal loan better than using credit cards for debt consolidation?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Personal loans generally offer lower, fixed interest rates compared to credit cards, which feature variable rates compounding daily. According to Federal Reserve consumer credit data, personal loans carry significantly lower average interest rates than revolving credit cards, while establishing a definite debt-free date.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>Can I pay off my personal loan early without penalties?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Most major personal loan lenders do not charge prepayment penalties. Making additional principal payments reduces outstanding balance faster, which shortens your payoff term and lowers total interest charges.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What credit score do I need to qualify for a personal loan?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            While borrowers with credit scores of 580 to 669 can qualify with specialized lenders, borrowers with scores of 740 and above secure the lowest interest rates and minimal origination fees. Lenders also review income stability and debt-to-income (DTI) ratios.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Multiplex Native Grid (4 responsive units) -->
+        <div class="mb-14 ad-slot-container">
+            <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Recommended Financial Calculators</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="debt-payoff-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Debt Payoff</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Compare avalanche vs snowball debt methods</span>
+                </a>
+                <a href="credit-card-payoff-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Credit Card Payoff</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Calculate interest savings with extra payments</span>
+                </a>
+                <a href="loan-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">General Loan</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Simulate simple and amortized personal loans</span>
+                </a>
+                <a href="refinance-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Refinance Calculator</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Find your break-even point on loan refinancing</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 5: Bottom Banner Unit (728x90) -->
+        <div class="mb-12 ad-slot-container">
+            <div class="w-full min-h-[90px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center p-4">
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Footer Banner</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark py-8 text-center text-xs text-sub-light dark:text-sub-dark pb-24 md:pb-8">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <div class="flex flex-wrap justify-center gap-4 text-xs font-medium">
+                <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                <a href="/privacy-policy/" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/about-us/" class="hover:text-accent transition-colors">About Us</a>
+                <a href="/contact/" class="hover:text-accent transition-colors">Contact</a>
+            </div>
+            <p>&copy; 2026 CalcWorld. All rights reserved.</p>
+            <p class="max-w-2xl mx-auto text-[11px] opacity-75">
+                Educational tool only. Personal loan calculation models conform to Truth in Lending Act (TILA / Regulation Z) standards and CFPB financial disclosure guidelines. Not financial or legal advice. Verify final terms directly with your prospective lender.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Mobile / Sticky Bottom) -->
+    <div id="floating-bar" class="fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden">
+        <div class="flex items-center space-x-1 overflow-x-auto text-[11px] font-semibold text-sub-light dark:text-sub-dark">
+            <span class="text-txt-light dark:text-txt-dark mr-1 whitespace-nowrap">Compare:</span>
+            <a href="debt-payoff-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Debt Payoff</a>
+            <a href="credit-card-payoff-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Credit Card</a>
+            <a href="loan-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Loan</a>
+        </div>
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="ml-2 p-1.5 rounded-lg bg-accent text-white" aria-label="Back to Top">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+        </button>
+    </div>
+
+    <!-- Toast Notification (2-Second Duration) -->
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-6 bg-slate-900 text-white text-xs md:text-sm font-semibold px-4 py-3 rounded-lg shadow-xl flex items-center z-50 border border-slate-700">
+        <svg class="w-4 h-4 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span>Summary copied to clipboard!</span>
+    </div>
+
+    <!-- Core Calculator & Interactive Logic Script -->
+    <script>
+        // State variables
+        let currentFeeType = 'pct'; // 'pct' or 'fixed'
+        let scheduleView = 'annual'; // 'annual' or 'monthly'
+        let currentCurrency = '$';
+        let cachedSchedule = [];
+        let doughnutChartInstance = null;
+        let lineChartInstance = null;
+        let toastTimeout = null;
+
+        // DOM elements
+        const inputAmount = document.getElementById('in-amount');
+        const rangeAmount = document.getElementById('range-amount');
+        const inputRate = document.getElementById('in-rate');
+        const rangeRate = document.getElementById('range-rate');
+        const inputTerm = document.getElementById('in-term');
+        const inputFee = document.getElementById('in-fee');
+        const inputExtra = document.getElementById('in-extra');
+        const feeTypePctBtn = document.getElementById('fee-type-pct');
+        const feeTypeFixedBtn = document.getElementById('fee-type-fixed');
+        const feeSymbolPrefix = document.getElementById('fee-symbol-prefix');
+        const feeSymbolSuffix = document.getElementById('fee-symbol-suffix');
+        const currencySwitcher = document.getElementById('currency-switcher');
+        const termMonthsLabel = document.getElementById('term-months-label');
+
+        // Formats
+        function formatNumber(num) {
+            return (Math.round((num + Number.EPSILON) * 100) / 100).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        // TILA APR solver using Binary Search
+        function calculateEffectiveApr(netProceeds, monthlyPayment, totalMonths) {
+            if (netProceeds <= 0 || monthlyPayment <= 0 || totalMonths <= 0) return 0;
+            
+            // Monthly rate i satisfies: netProceeds = monthlyPayment * (1 - (1+i)^(-n)) / i
+            let low = 0.000001;
+            let high = 2.0; // Up to 2400% APR
+            let mid = 0;
+
+            for (let iter = 0; iter < 40; iter++) {
+                mid = (low + high) / 2;
+                const pv = monthlyPayment * (1 - Math.pow(1 + mid, -totalMonths)) / mid;
+                if (pv > netProceeds) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
+            }
+            return mid * 12 * 100;
+        }
+
+        // Toast display
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            if (message) {
+                toast.querySelector('span').textContent = message;
+            }
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Calculation Engine
+        function calculateLoan() {
+            const principal = Math.max(100, parseFloat(inputAmount.value) || 0);
+            const annualRate = Math.max(0, parseFloat(inputRate.value) || 0);
+            const termYears = parseInt(inputTerm.value) || 3;
+            const termMonths = termYears * 12;
+            const feeVal = Math.max(0, parseFloat(inputFee.value) || 0);
+            const extraMonthly = Math.max(0, parseFloat(inputExtra.value) || 0);
+
+            termMonthsLabel.textContent = `${termMonths} months`;
+
+            // Origination Fee Calculation
+            let feeAmount = 0;
+            let feePctValue = 0;
+            if (currentFeeType === 'pct') {
+                feePctValue = feeVal;
+                feeAmount = principal * (feeVal / 100);
+            } else {
+                feeAmount = feeVal;
+                feePctValue = principal > 0 ? (feeVal / principal) * 100 : 0;
+            }
+
+            const netProceeds = Math.max(0, principal - feeAmount);
+
+            // Monthly interest rate
+            const r = (annualRate / 100) / 12;
+
+            // Standard monthly payment
+            let standardMonthlyPayment = 0;
+            if (r > 0) {
+                const factor = Math.pow(1 + r, termMonths);
+                standardMonthlyPayment = principal * (r * factor) / (factor - 1);
+            } else {
+                standardMonthlyPayment = principal / termMonths;
+            }
+
+            // Standard Payoff Projection (without extra)
+            let stdTotalInterest = 0;
+            let stdBal = principal;
+            for (let m = 1; m <= termMonths; m++) {
+                const intPmt = stdBal * r;
+                const prinPmt = standardMonthlyPayment - intPmt;
+                stdBal = Math.max(0, stdBal - prinPmt);
+                stdTotalInterest += intPmt;
+            }
+            const stdTotalRepayment = principal + stdTotalInterest;
+
+            // Amortization Schedule Calculation (With Extra Payment)
+            let bal = principal;
+            let totalInterest = 0;
+            let totalPaid = 0;
+            const schedule = [];
+            const baselineSchedule = [];
+            let payoffMonth = 0;
+
+            let stdTempBal = principal;
+            for (let m = 1; m <= termMonths; m++) {
+                const stdInt = stdTempBal * r;
+                const stdPrin = Math.min(stdTempBal, standardMonthlyPayment - stdInt);
+                stdTempBal = Math.max(0, stdTempBal - stdPrin);
+                baselineSchedule.push({ month: m, balance: stdTempBal });
+            }
+
+            let month = 1;
+            const maxSimulationMonths = termMonths + 60;
+            while (bal > 0.005 && month <= maxSimulationMonths) {
+                const interestPayment = bal * r;
+                let regularPrincipal = standardMonthlyPayment - interestPayment;
+                if (regularPrincipal > bal) regularPrincipal = bal;
+                
+                let actualExtra = extraMonthly;
+                if (bal - regularPrincipal < actualExtra) {
+                    actualExtra = Math.max(0, bal - regularPrincipal);
+                }
+
+                const totalPrincipal = regularPrincipal + actualExtra;
+                const actualTotalPayment = interestPayment + totalPrincipal;
+
+                bal = Math.max(0, bal - totalPrincipal);
+                totalInterest += interestPayment;
+                totalPaid += actualTotalPayment;
+
+                schedule.push({
+                    month: month,
+                    payment: actualTotalPayment,
+                    principal: regularPrincipal,
+                    extra: actualExtra,
+                    totalPrincipal: totalPrincipal,
+                    interest: interestPayment,
+                    balance: bal,
+                    cumulInterest: totalInterest
+                });
+
+                if (bal <= 0.005) {
+                    payoffMonth = month;
+                    break;
+                }
+                month++;
+            }
+
+            if (payoffMonth === 0) payoffMonth = schedule.length;
+            cachedSchedule = schedule;
+
+            // Time and savings
+            const monthsSaved = Math.max(0, termMonths - payoffMonth);
+            const interestSaved = Math.max(0, stdTotalInterest - totalInterest);
+
+            // Payoff Date String
+            const now = new Date();
+            const payoffDate = new Date(now.getFullYear(), now.getMonth() + payoffMonth, 1);
+            const payoffMonthStr = payoffDate.toLocaleString('default', { month: 'short', year: 'numeric' });
+
+            // Effective APR under TILA
+            const effectiveApr = calculateEffectiveApr(netProceeds, standardMonthlyPayment, termMonths);
+            const aprGap = effectiveApr - annualRate;
+
+            // Cost per dollar borrowed
+            const totalBorrowingCost = totalInterest + feeAmount;
+            const costPerDollar = netProceeds > 0 ? (totalPaid + feeAmount) / netProceeds : 0;
+
+            // Update UI Outputs
+            document.getElementById('num-monthly').textContent = formatNumber(standardMonthlyPayment);
+            document.getElementById('num-total-repayment').textContent = formatNumber(totalPaid);
+            document.getElementById('num-interest').textContent = formatNumber(totalInterest);
+            document.getElementById('num-net-proceeds').textContent = formatNumber(netProceeds);
+            document.getElementById('num-fee-amount').textContent = formatNumber(feeAmount);
+
+            // Card sub-labels
+            if (extraMonthly > 0) {
+                document.getElementById('out-extra-summary').textContent = `+${currentCurrency}${formatNumber(extraMonthly)} extra = ${currentCurrency}${formatNumber(standardMonthlyPayment + extraMonthly)}/mo`;
+            } else {
+                document.getElementById('out-extra-summary').textContent = 'Fixed monthly installment';
+            }
+            document.getElementById('out-interest-ratio').textContent = `${((totalInterest / principal) * 100).toFixed(1)}% of loan principal`;
+            document.getElementById('out-fee-deduction').innerHTML = `Less <span class="cur-symbol">${currentCurrency}</span><span>${formatNumber(feeAmount)}</span> origination fee`;
+
+            // Metric Bar
+            document.getElementById('metric-fee-sub').textContent = formatNumber(feeAmount);
+            document.getElementById('metric-fee-rate').textContent = `${feePctValue.toFixed(1)}%`;
+            if (monthsSaved > 0) {
+                document.getElementById('metric-payoff-date').textContent = `${payoffMonthStr} (${monthsSaved} mos early!)`;
+            } else {
+                document.getElementById('metric-payoff-date').textContent = payoffMonthStr;
+            }
+            document.getElementById('metric-effective-apr').textContent = `${effectiveApr.toFixed(2)}%`;
+
+            // Tab 1 Summary
+            document.getElementById('sum-std-term').textContent = `${termYears} Years (${termMonths} Mos)`;
+            document.getElementById('sum-std-pmt').textContent = formatNumber(standardMonthlyPayment);
+            document.getElementById('sum-std-interest').textContent = formatNumber(stdTotalInterest);
+            document.getElementById('sum-std-fee').textContent = formatNumber(feeAmount);
+            document.getElementById('sum-std-cost').textContent = formatNumber(stdTotalInterest + feeAmount);
+
+            document.getElementById('sum-acc-term').textContent = `${payoffMonth} Months`;
+            document.getElementById('sum-acc-pmt').textContent = formatNumber(standardMonthlyPayment + extraMonthly);
+            document.getElementById('sum-acc-interest').textContent = formatNumber(totalInterest);
+            document.getElementById('sum-acc-savings').textContent = formatNumber(interestSaved);
+            document.getElementById('sum-acc-time-saved').textContent = `${monthsSaved} Months`;
+
+            document.getElementById('sum-cost-per-dollar').innerHTML = `For every ${currentCurrency}1.00 received in cash, you repay ${currentCurrency}${costPerDollar.toFixed(2)} in principal, fees, and interest.`;
+
+            // Tab 3 Fee Breakdown
+            document.getElementById('fee-nominal-rate').textContent = `${annualRate.toFixed(2)}%`;
+            document.getElementById('fee-effective-apr').textContent = `${effectiveApr.toFixed(2)}%`;
+            document.getElementById('fee-apr-gap').textContent = `+${Math.max(0, aprGap).toFixed(2)}%`;
+            document.getElementById('fee-box-gross').textContent = formatNumber(principal);
+            document.getElementById('fee-box-withheld').textContent = formatNumber(feeAmount);
+            document.getElementById('fee-box-net').textContent = formatNumber(netProceeds);
+            document.getElementById('fee-target-amt').textContent = formatNumber(principal);
+            const grossedUp = (1 - (feePctValue / 100)) > 0 ? principal / (1 - (feePctValue / 100)) : principal;
+            document.getElementById('fee-grossed-up').textContent = formatNumber(grossedUp);
+
+            // Print View Elements
+            const prnDate = document.getElementById('prn-date');
+            if (prnDate) prnDate.textContent = new Date().toLocaleDateString();
+            document.getElementById('prn-amount').textContent = formatNumber(principal);
+            document.getElementById('prn-rate').textContent = annualRate.toFixed(2);
+            document.getElementById('prn-term').textContent = termYears;
+            document.getElementById('prn-months').textContent = termMonths;
+            document.getElementById('prn-fee').textContent = formatNumber(feeAmount);
+            document.getElementById('prn-extra').textContent = formatNumber(extraMonthly);
+            document.getElementById('prn-payment').textContent = formatNumber(standardMonthlyPayment);
+            document.getElementById('prn-interest').textContent = formatNumber(totalInterest);
+            document.getElementById('prn-net').textContent = formatNumber(netProceeds);
+            document.getElementById('prn-total').textContent = formatNumber(totalPaid);
+            document.getElementById('prn-apr').textContent = effectiveApr.toFixed(2);
+
+            // Render Schedule & Charts
+            renderAmortizationTable();
+            updateCharts(principal, totalInterest, feeAmount, schedule, baselineSchedule, termMonths);
+
+            // Update URL State
+            updateUrlState(principal, annualRate, termYears, feeVal, currentFeeType, extraMonthly, currentCurrency);
+        }
+
+        // Render Table (Annual or Monthly)
+        function renderAmortizationTable() {
+            const tbody = document.getElementById('amortization-table-body');
+            const thPeriod = document.getElementById('th-period');
+            tbody.innerHTML = '';
+
+            if (scheduleView === 'annual') {
+                thPeriod.textContent = 'Year';
+                let currentYear = 1;
+                let yearPayment = 0;
+                let yearPrincipal = 0;
+                let yearInterest = 0;
+                let yearExtra = 0;
+                let endBal = 0;
+                let cumulInt = 0;
+
+                cachedSchedule.forEach((row, idx) => {
+                    yearPayment += row.payment;
+                    yearPrincipal += row.principal;
+                    yearInterest += row.interest;
+                    yearExtra += row.extra;
+                    endBal = row.balance;
+                    cumulInt = row.cumulInterest;
+
+                    const isYearEnd = (row.month % 12 === 0) || (idx === cachedSchedule.length - 1);
+                    if (isYearEnd) {
+                        const tr = document.createElement('tr');
+                        tr.className = 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors';
+                        tr.innerHTML = `
+                            <td class="px-3 py-2 text-left font-semibold">Year ${currentYear}</td>
+                            <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(yearPayment)}</td>
+                            <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(yearPrincipal)}</td>
+                            <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(yearInterest)}</td>
+                            <td class="px-3 py-2 text-right text-emerald-600 dark:text-emerald-400 font-medium">${currentCurrency}${formatNumber(yearExtra)}</td>
+                            <td class="px-3 py-2 text-right font-semibold">${currentCurrency}${formatNumber(endBal)}</td>
+                            <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(cumulInt)}</td>
+                        `;
+                        tbody.appendChild(tr);
+
+                        currentYear++;
+                        yearPayment = 0;
+                        yearPrincipal = 0;
+                        yearInterest = 0;
+                        yearExtra = 0;
+                    }
+                });
+            } else {
+                thPeriod.textContent = 'Month';
+                cachedSchedule.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors';
+                    tr.innerHTML = `
+                        <td class="px-3 py-2 text-left font-semibold">Month ${row.month}</td>
+                        <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(row.payment)}</td>
+                        <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(row.principal)}</td>
+                        <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(row.interest)}</td>
+                        <td class="px-3 py-2 text-right text-emerald-600 dark:text-emerald-400 font-medium">${currentCurrency}${formatNumber(row.extra)}</td>
+                        <td class="px-3 py-2 text-right font-semibold">${currentCurrency}${formatNumber(row.balance)}</td>
+                        <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(row.cumulInterest)}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // CSV Export
+        function exportScheduleCSV() {
+            if (cachedSchedule.length === 0) {
+                showToast('No schedule to export.');
+                return;
+            }
+            let csv = 'Month,Payment,Principal,Interest,ExtraPayment,RemainingBalance,CumulativeInterest\n';
+            cachedSchedule.forEach(r => {
+                csv += `${r.month},${r.payment.toFixed(2)},${r.principal.toFixed(2)},${r.interest.toFixed(2)},${r.extra.toFixed(2)},${r.balance.toFixed(2)},${r.cumulInterest.toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'personal_loan_amortization.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Schedule exported as CSV!');
+        }
+
+        // Charts Update
+        function updateCharts(principal, interest, fee, schedule, baselineSchedule, termMonths) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9CA3AF' : '#64748B';
+            const gridColor = isDark ? '#1F2937' : '#E2E8F0';
+
+            // 1. Doughnut Chart
+            const doughnutCtx = document.getElementById('loanDoughnutChart');
+            if (doughnutCtx) {
+                if (doughnutChartInstance) doughnutChartInstance.destroy();
+                doughnutChartInstance = new Chart(doughnutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Principal Paid', 'Total Interest', 'Origination Fee'],
+                        datasets: [{
+                            data: [principal, interest, fee],
+                            backgroundColor: ['#2563EB', '#F59E0B', '#EF4444'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, boxWidth: 12, font: { size: 11, family: 'Inter' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        const val = ctx.raw || 0;
+                                        return ` ${ctx.label}: ${currentCurrency}${formatNumber(val)}`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '68%'
+                    }
+                });
+            }
+
+            // 2. Line Chart: Amortization Balance
+            const lineCtx = document.getElementById('balanceLineChart');
+            if (lineCtx) {
+                if (lineChartInstance) lineChartInstance.destroy();
+
+                const maxMonths = Math.max(termMonths, schedule.length);
+                const labels = [];
+                const actualData = [];
+                const baselineData = [];
+
+                // Sample points for clean chart rendering
+                const step = maxMonths > 36 ? 3 : 1;
+                for (let m = 0; m <= maxMonths; m += step) {
+                    labels.push(m === 0 ? 'Start' : `M${m}`);
+                    if (m === 0) {
+                        actualData.push(principal);
+                        baselineData.push(principal);
+                    } else {
+                        const schedItem = schedule.find(x => x.month === m);
+                        actualData.push(schedItem ? schedItem.balance : 0);
+                        const baseItem = baselineSchedule.find(x => x.month === m);
+                        baselineData.push(baseItem ? baseItem.balance : 0);
+                    }
+                }
+
+                lineChartInstance = new Chart(lineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'With Extra Payment',
+                                data: actualData,
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                                fill: true,
+                                tension: 0.25,
+                                pointRadius: 1.5,
+                                borderWidth: 2
+                            },
+                            {
+                                label: 'Standard Schedule',
+                                data: baselineData,
+                                borderColor: '#2563EB',
+                                borderDash: [4, 4],
+                                fill: false,
+                                tension: 0.25,
+                                pointRadius: 1,
+                                borderWidth: 2
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, boxWidth: 12, font: { size: 11, family: 'Inter' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ` ${ctx.dataset.label}: ${currentCurrency}${formatNumber(ctx.raw)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: textColor, font: { size: 10, family: 'Inter' }, maxTicksLimit: 12 }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { size: 10, family: 'Inter' },
+                                    callback: function(v) { return `${currentCurrency}${v >= 1000 ? (v / 1000) + 'k' : v}`; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // URL State Handling
+        function updateUrlState(amt, rate, term, fee, feetype, extra, cur) {
+            const params = new URLSearchParams();
+            params.set('amount', amt);
+            params.set('rate', rate);
+            params.set('term', term);
+            params.set('fee', fee);
+            params.set('feetype', feetype);
+            params.set('extra', extra);
+            params.set('cur', cur);
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        function loadUrlState() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('amount')) inputAmount.value = params.get('amount');
+            if (params.has('rate')) inputRate.value = params.get('rate');
+            if (params.has('term')) inputTerm.value = params.get('term');
+            if (params.has('fee')) inputFee.value = params.get('fee');
+            if (params.has('extra')) inputExtra.value = params.get('extra');
+            if (params.has('feetype')) {
+                currentFeeType = params.get('feetype');
+                updateFeeTypeUI();
+            }
+            if (params.has('cur')) {
+                currentCurrency = params.get('cur');
+                currencySwitcher.value = currentCurrency;
+                updateCurrencySymbols();
+            }
+            rangeAmount.value = inputAmount.value;
+            rangeRate.value = inputRate.value;
+        }
+
+        function updateFeeTypeUI() {
+            if (currentFeeType === 'pct') {
+                feeTypePctBtn.className = 'px-2 py-0.5 rounded bg-accent text-white shadow-xs';
+                feeTypeFixedBtn.className = 'px-2 py-0.5 rounded text-sub-light dark:text-sub-dark hover:text-txt-light';
+                feeSymbolPrefix.classList.add('hidden');
+                feeSymbolSuffix.classList.remove('hidden');
+                inputFee.setAttribute('max', '8.0');
+                inputFee.setAttribute('step', '0.25');
+                inputFee.placeholder = '4.0';
+            } else {
+                feeTypeFixedBtn.className = 'px-2 py-0.5 rounded bg-accent text-white shadow-xs';
+                feeTypePctBtn.className = 'px-2 py-0.5 rounded text-sub-light dark:text-sub-dark hover:text-txt-light';
+                feeSymbolPrefix.classList.remove('hidden');
+                feeSymbolSuffix.classList.add('hidden');
+                inputFee.removeAttribute('max');
+                inputFee.setAttribute('step', '50');
+                inputFee.placeholder = '600';
+            }
+        }
+
+        function updateCurrencySymbols() {
+            document.querySelectorAll('.cur-symbol').forEach(el => {
+                el.textContent = currentCurrency;
+            });
+        }
+
+        // Copy Summary functionality
+        function copyLoanSummary() {
+            const p = inputAmount.value;
+            const r = inputRate.value;
+            const t = inputTerm.value;
+            const mPmt = document.getElementById('num-monthly').textContent;
+            const totPmt = document.getElementById('num-total-repayment').textContent;
+            const intPaid = document.getElementById('num-interest').textContent;
+            const feeAmt = document.getElementById('num-fee-amount').textContent;
+            const netCash = document.getElementById('num-net-proceeds').textContent;
+            const effApr = document.getElementById('metric-effective-apr').textContent;
+            const payoff = document.getElementById('metric-payoff-date').textContent;
+
+            const summaryText = [
+                `--- CalcWorld Personal Loan Summary ---`,
+                `Principal Borrowed: ${currentCurrency}${formatNumber(parseFloat(p))}`,
+                `Interest Rate (APR): ${r}%`,
+                `Term: ${t} Years (${t * 12} Months)`,
+                `Origination Fee: ${currentCurrency}${feeAmt}`,
+                `Net Cash Proceeds: ${currentCurrency}${netCash}`,
+                `Monthly Payment: ${currentCurrency}${mPmt}`,
+                `Total Interest: ${currentCurrency}${intPaid}`,
+                `Total Repayment: ${currentCurrency}${totPmt}`,
+                `TILA Effective APR: ${effApr}`,
+                `Estimated Payoff: ${payoff}`,
+                `Calculated at: https://calcworld.net/calculators/personal-loan-calculator.html`
+            ].join('\n');
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast('Summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy summary.');
+            });
+        }
+
+        // Event Listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            // Theme toggle init
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+            function syncThemeIcons() {
+                if (document.documentElement.classList.contains('dark')) {
+                    darkIcon.classList.add('hidden');
+                    lightIcon.classList.remove('hidden');
+                } else {
+                    lightIcon.classList.add('hidden');
+                    darkIcon.classList.remove('hidden');
+                }
+            }
+            syncThemeIcons();
+
+            themeToggleBtn.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+                syncThemeIcons();
+                calculateLoan();
+            });
+
+            // Currency Switcher
+            currencySwitcher.addEventListener('change', (e) => {
+                currentCurrency = e.target.value;
+                updateCurrencySymbols();
+                calculateLoan();
+            });
+
+            // Sliders & Number sync
+            inputAmount.addEventListener('input', () => {
+                rangeAmount.value = inputAmount.value;
+                calculateLoan();
+            });
+            rangeAmount.addEventListener('input', () => {
+                inputAmount.value = rangeAmount.value;
+                calculateLoan();
+            });
+
+            inputRate.addEventListener('input', () => {
+                rangeRate.value = inputRate.value;
+                calculateLoan();
+            });
+            rangeRate.addEventListener('input', () => {
+                inputRate.value = rangeRate.value;
+                calculateLoan();
+            });
+
+            inputTerm.addEventListener('change', calculateLoan);
+            inputFee.addEventListener('input', calculateLoan);
+            inputExtra.addEventListener('input', calculateLoan);
+
+            // Fee Type Toggle Buttons
+            feeTypePctBtn.addEventListener('click', () => {
+                if (currentFeeType !== 'pct') {
+                    currentFeeType = 'pct';
+                    const principal = parseFloat(inputAmount.value) || 15000;
+                    const curFixed = parseFloat(inputFee.value) || 0;
+                    inputFee.value = principal > 0 ? ((curFixed / principal) * 100).toFixed(1) : '4.0';
+                    updateFeeTypeUI();
+                    calculateLoan();
+                }
+            });
+
+            feeTypeFixedBtn.addEventListener('click', () => {
+                if (currentFeeType !== 'fixed') {
+                    currentFeeType = 'fixed';
+                    const principal = parseFloat(inputAmount.value) || 15000;
+                    const curPct = parseFloat(inputFee.value) || 4.0;
+                    inputFee.value = Math.round(principal * (curPct / 100));
+                    updateFeeTypeUI();
+                    calculateLoan();
+                }
+            });
+
+            // Extra chips
+            document.querySelectorAll('.extra-chip').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    inputExtra.value = btn.dataset.val;
+                    calculateLoan();
+                });
+            });
+
+            // Preset Buttons
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.dataset.preset;
+                    if (preset === 'debt') {
+                        inputAmount.value = 15000;
+                        inputRate.value = 11.5;
+                        inputTerm.value = 3;
+                        currentFeeType = 'pct';
+                        inputFee.value = 4.0;
+                        inputExtra.value = 0;
+                    } else if (preset === 'emergency') {
+                        inputAmount.value = 5000;
+                        inputRate.value = 14.0;
+                        inputTerm.value = 2;
+                        currentFeeType = 'pct';
+                        inputFee.value = 3.0;
+                        inputExtra.value = 0;
+                    } else if (preset === 'home') {
+                        inputAmount.value = 25000;
+                        inputRate.value = 8.5;
+                        inputTerm.value = 5;
+                        currentFeeType = 'pct';
+                        inputFee.value = 2.0;
+                        inputExtra.value = 50;
+                    }
+                    rangeAmount.value = inputAmount.value;
+                    rangeRate.value = inputRate.value;
+                    updateFeeTypeUI();
+                    calculateLoan();
+                    showToast(`Applied preset: ${btn.textContent.trim()}`);
+                });
+            });
+
+            // Tabs
+            document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                tabBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('text-accent', 'border-b-2', 'border-accent');
+                        b.classList.add('text-sub-light', 'dark:text-sub-dark');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+                    tabBtn.classList.remove('text-sub-light', 'dark:text-sub-dark');
+                    tabBtn.classList.add('text-accent', 'border-b-2', 'border-accent');
+                    const target = document.getElementById(tabBtn.dataset.tab);
+                    if (target) target.classList.remove('hidden');
+
+                    if (tabBtn.dataset.tab === 'tab-summary') {
+                        // Re-trigger chart resize
+                        if (doughnutChartInstance) doughnutChartInstance.resize();
+                        if (lineChartInstance) lineChartInstance.resize();
+                    }
+                });
+            });
+
+            // Amortization Table View Toggle
+            const btnAnnual = document.getElementById('btn-view-annual');
+            const btnMonthly = document.getElementById('btn-view-monthly');
+            btnAnnual.addEventListener('click', () => {
+                scheduleView = 'annual';
+                btnAnnual.className = 'px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition';
+                btnMonthly.className = 'px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition';
+                renderAmortizationTable();
+            });
+            btnMonthly.addEventListener('click', () => {
+                scheduleView = 'monthly';
+                btnMonthly.className = 'px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition';
+                btnAnnual.className = 'px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition';
+                renderAmortizationTable();
+            });
+
+            // CSV Export
+            document.getElementById('btn-export-csv').addEventListener('click', exportScheduleCSV);
+
+            // Copy Summary Button
+            document.getElementById('btn-copy').addEventListener('click', copyLoanSummary);
+
+            // FAQ Accordion
+            document.querySelectorAll('.accordion-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const content = btn.nextElementSibling;
+                    const icon = btn.querySelector('.acc-icon');
+                    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+                    if (isExpanded) {
+                        content.classList.remove('active');
+                        icon.classList.remove('rotate-180');
+                        btn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        content.classList.add('active');
+                        icon.classList.add('rotate-180');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            // Load initial state from URL or defaults
+            loadUrlState();
+            calculateLoan();
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

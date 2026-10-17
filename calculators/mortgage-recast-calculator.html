@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mortgage Recast Calculator | Calculate Savings & New Payments</title>
+    <meta name="description" content="Calculate your new monthly payments and interest savings after a mortgage recast. See amortization schedules, charts, and read our comprehensive recast guide.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: {
+                            light: '#F8FAFC',
+                            dark: '#0B0F19'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#111827'
+                        },
+                        txt: {
+                            light: '#0F172A',
+                            dark: '#F9FAFB'
+                        },
+                        sub: {
+                            light: '#64748B',
+                            dark: '#9CA3AF'
+                        },
+                        brd: {
+                            light: '#E2E8F0',
+                            dark: '#1F2937'
+                        },
+                        accent: {
+                            DEFAULT: '#3B82F6',
+                            hover: '#2563EB',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        // FOUC prevention
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        body {
+            @apply bg-canvas-light text-txt-light dark:bg-canvas-dark dark:text-txt-dark transition-colors duration-200;
+        }
+        .card-panel {
+            @apply bg-card-light border border-brd-light dark:bg-card-dark dark:border-brd-dark rounded-xl shadow-sm;
+        }
+        .input-field {
+            @apply w-full bg-canvas-light border border-brd-light dark:bg-canvas-dark dark:border-brd-dark rounded-lg px-4 py-2 text-txt-light dark:text-txt-dark focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all;
+        }
+        .btn-primary {
+            @apply bg-accent hover:bg-accent-hover text-white font-medium py-2 px-4 rounded-lg transition-colors shadow-sm;
+        }
+        .btn-secondary {
+            @apply bg-card-light border border-brd-light dark:bg-card-dark dark:border-brd-dark hover:bg-canvas-light dark:hover:bg-canvas-dark font-medium py-2 px-4 rounded-lg transition-colors;
+        }
+        
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.2) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1s infinite;
+        }
+        .dark .shimmer::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.05) 20%,
+                rgba(255, 255, 255, 0.1) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 500px;
+            opacity: 1;
+        }
+
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (RESULTS CARD REPORT) - CALCWORLD
+           Strictly prints ONLY the official calculation results summary.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Force the Calculation Results Container to be the ONLY visible document */
+            #resultsSection, #resultsArea, #resultsContainer, #resultsWrapper, #resultsCard,
+            #results-section, #results-container, #results-card, #output-container, #summaryTab,
+            #pane-summary, #tab-summary, #tabSummary, .results-card, .output-card,
+            .lg\:col-span-7, .lg\:col-span-8, .w-full.lg\:w-2\/3 {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 6. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Mortgage Recast Calculator",
+      "url": "https://calcworld.net/mortgage-recast-calculator",
+      "applicationCategory": "CalculatorApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://calcworld.net/"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Financial Calculators",
+        "item": "https://calcworld.net/financial-calculators"
+      },{
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Mortgage",
+        "item": "https://calcworld.net/mortgage"
+      },{
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Mortgage Recast Calculator"
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "What is mortgage recasting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mortgage recasting involves paying a lump sum toward your principal balance and asking your lender to recalculate the monthly payments based on the lower balance and the remaining term, keeping your current interest rate."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Is there a minimum lump sum required to recast?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, lenders typically require a minimum lump-sum payment of $5,000 to $10,000 to qualify for a mortgage recast."
+        }
+      }]
+    }
+    </script>
+    <link rel="canonical" href="https://calcworld.net/calculators/mortgage-recast-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Mortgage Recast Calculator | Calculate Savings & New Payments">
+    <meta property="og:description" content="Calculate your new monthly payments and interest savings after a mortgage recast. See amortization schedules, charts, and read our comprehensive recast guide.">
+    <meta property="og:url" content="https://calcworld.net/calculators/mortgage-recast-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Mortgage Recast Calculator | Calculate Savings & New Payments">
+    <meta name="twitter:description" content="Calculate your new monthly payments and interest savings after a mortgage recast. See amortization schedules, charts, and read our comprehensive recast guide.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb -->
+        <nav class="flex text-sm text-sub-light dark:text-sub-dark mb-6" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                <a href="../index.html" class="hover:text-accent transition-colors">Financial Calculators</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                <a href="#" class="hover:text-accent transition-colors">Mortgage</a>
+              </div>
+            </li>
+            <li aria-current="page">
+              <div class="flex items-center">
+                <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                <span class="text-txt-light dark:text-txt-dark font-medium">Recast Calculator</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Mortgage Recast Calculator</h1>
+        <p class="text-sub-light dark:text-sub-dark mb-8 text-lg">Calculate how a lump sum payment towards your principal reduces your monthly payments without refinancing.</p>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="card-panel p-6">
+                    <h2 class="text-xl font-semibold mb-6 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                        Loan Details
+                    </h2>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Current Loan Balance</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark cur-symbol">$</span>
+                                <input type="number" id="in-balance" value="300000" class="input-field pl-8 font-medium text-lg" step="1000">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Interest Rate (% APR)</label>
+                            <div class="relative">
+                                <input type="number" id="in-rate" value="6.5" class="input-field pr-8 font-medium text-lg" step="0.125">
+                                <span class="absolute right-3 top-2.5 text-sub-light dark:text-sub-dark">%</span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Years Left</label>
+                                <input type="number" id="in-years" value="25" class="input-field font-medium text-lg" step="1" min="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-1">Months Left</label>
+                                <input type="number" id="in-months" value="0" class="input-field font-medium text-lg" step="1" min="0" max="11">
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-brd-light dark:border-brd-dark">
+                            <label class="block text-sm font-medium mb-1 text-accent">Lump-Sum Recast Payment</label>
+                            <div class="relative mb-3">
+                                <span class="absolute left-3 top-2.5 text-accent font-medium cur-symbol">$</span>
+                                <input type="number" id="in-lump" value="50000" class="input-field pl-8 font-medium text-lg text-accent dark:text-accent border-accent focus:ring-accent" step="1000">
+                            </div>
+                            
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <button type="button" class="preset-btn text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark rounded px-2 py-1 hover:border-accent transition-colors" data-val="20000">Lump Sum 20k</button>
+                                <button type="button" class="preset-btn text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark rounded px-2 py-1 hover:border-accent transition-colors" data-val="50000">Lump Sum 50k</button>
+                                <button type="button" class="preset-btn text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark rounded px-2 py-1 hover:border-accent transition-colors" data-val="100000">Lump Sum 100k</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Recast Fee</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark cur-symbol">$</span>
+                                <input type="number" id="in-fee" value="250" class="input-field pl-8" step="10">
+                            </div>
+                            <p class="text-xs text-sub-light dark:text-sub-dark mt-1">Lender administrative fee (often $250 - $500)</p>
+                        </div>
+                    </div>
+                    
+                </div>
+                
+                <!-- Desktop Sidebar Ad -->
+                <div class="hidden lg:block w-full h-[600px] bg-brd-light dark:bg-brd-dark rounded-xl flex items-center justify-center border border-brd-light dark:border-brd-dark relative overflow-hidden">
+                    <span class="text-sub-light dark:text-sub-dark font-medium opacity-50">Advertisement (300x600)</span>
+                    <div class="absolute top-2 left-2 text-[10px] text-sub-light dark:text-sub-dark uppercase tracking-wider">Sponsored</div>
+                </div>
+            </div>
+
+            <!-- Right Column: Outputs -->
+            <div class="lg:col-span-8 space-y-6">
+                
+                <!-- Summary Metrics -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card-panel p-6 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-.464 5.535a1 1 0 10-1.415-1.414 3 3 0 01-4.242 0 1 1 0 00-1.415 1.414 5 5 0 007.072 0z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-sm font-medium text-sub-light dark:text-sub-dark mb-1">New Monthly Payment</p>
+                        <p class="text-4xl font-bold text-accent mb-2 flex items-baseline calc-res" id="out-new-pmt">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span class="num-counter">0.00</span>
+                        </p>
+                        <p class="text-sm text-sub-light dark:text-sub-dark">Original: <span class="cur-symbol">$</span><span id="out-old-pmt">0.00</span></p>
+                    </div>
+
+                    <div class="card-panel p-6 relative overflow-hidden group bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/10 border-green-200 dark:border-green-800/50">
+                        <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-green-600">
+                            <svg class="w-16 h-16" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-sm font-medium text-green-700 dark:text-green-400 mb-1">Monthly Payment Reduction</p>
+                        <p class="text-4xl font-bold text-green-600 dark:text-green-500 mb-2 flex items-baseline calc-res" id="out-savings-mo">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span class="num-counter">0.00</span>
+                        </p>
+                        <p class="text-sm text-green-700/80 dark:text-green-400/80">Every month for remaining term</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="card-panel p-6">
+                        <p class="text-sm font-medium text-sub-light dark:text-sub-dark mb-1">Total Interest Saved</p>
+                        <p class="text-2xl font-bold mb-1 flex items-baseline calc-res" id="out-int-saved">
+                            <span class="cur-symbol text-lg mr-1">$</span><span class="num-counter">0.00</span>
+                        </p>
+                    </div>
+                    <div class="card-panel p-6">
+                        <p class="text-sm font-medium text-sub-light dark:text-sub-dark mb-1">Net Lifetime Benefit</p>
+                        <p class="text-2xl font-bold mb-1 flex items-baseline calc-res" id="out-net-benefit">
+                            <span class="cur-symbol text-lg mr-1">$</span><span class="num-counter">0.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">(Interest saved minus recast fee)</p>
+                    </div>
+                </div>
+
+                <!-- Tabs & Detailed Output -->
+                <div class="card-panel overflow-hidden">
+                    <div class="flex border-b border-brd-light dark:border-brd-dark bg-canvas-light/50 dark:bg-canvas-dark/50 overflow-x-auto">
+                        <button class="tab-btn px-6 py-3 font-medium text-sm text-accent border-b-2 border-accent whitespace-nowrap" data-tab="tab-summary">Summary</button>
+                        <button class="tab-btn px-6 py-3 font-medium text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap" data-tab="tab-chart">Visual Chart</button>
+                        <button class="tab-btn px-6 py-3 font-medium text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap" data-tab="tab-schedule">Amortization Schedule</button>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Summary Tab -->
+                        <div id="tab-summary" class="tab-content block">
+                            <div class="flex justify-between items-center mb-6">
+                                <h3 class="text-lg font-semibold">Recast Comparison</h3>
+                                <button id="btn-copy" class="text-sm flex items-center text-accent hover:text-accent-hover font-medium">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    Copy Summary
+                                </button>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-canvas-light dark:bg-canvas-dark p-4 rounded-lg border border-brd-light dark:border-brd-dark">
+                                    <h4 class="font-medium text-center text-sub-light dark:text-sub-dark mb-4 uppercase tracking-wider text-xs">Before Recast</h4>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Principal Balance</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-old-bal">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Monthly Payment</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-old-pmt">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Interest</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-old-int">0.00</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-accent/5 dark:bg-accent/10 p-4 rounded-lg border border-accent/20 dark:border-accent/30 relative">
+                                    <h4 class="font-medium text-center text-accent mb-4 uppercase tracking-wider text-xs">After Recast</h4>
+                                    <div class="space-y-3 text-sm">
+                                        <div class="flex justify-between border-b border-accent/10 dark:border-accent/20 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">New Balance</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-new-bal">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/10 dark:border-accent/20 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Monthly Payment</span>
+                                            <span class="font-medium text-accent"><span class="cur-symbol">$</span><span id="sum-new-pmt">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Interest</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-new-int">0.00</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 flex justify-center">
+                                <button onclick="window.print()" class="btn-secondary flex items-center text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Report
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Chart Tab -->
+                        <div id="tab-chart" class="tab-content hidden">
+                            <h3 class="text-lg font-semibold mb-4">Remaining Loan Balance Trajectory</h3>
+                            <div class="w-full h-[300px] relative">
+                                <canvas id="balanceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Schedule Tab -->
+                        <div id="tab-schedule" class="tab-content hidden">
+                            <h3 class="text-lg font-semibold mb-4">Annual Amortization Comparison</h3>
+                            <div class="overflow-x-auto max-h-[400px] overflow-y-auto">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="text-xs uppercase bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="px-4 py-3 rounded-tl-lg">Year</th>
+                                            <th class="px-4 py-3 text-right">Before Balance</th>
+                                            <th class="px-4 py-3 text-right">After Balance</th>
+                                            <th class="px-4 py-3 text-right rounded-tr-lg">Diff</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="schedule-body" class="divide-y divide-brd-light dark:divide-brd-dark">
+                                        <!-- Rows injected by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <!-- Lead Gen Box -->
+                <div class="card-panel p-6 bg-gradient-to-r from-accent to-blue-700 text-white relative overflow-hidden">
+                    <div class="absolute -right-10 -top-10 opacity-20">
+                        <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <h3 class="text-xl font-bold mb-2">Want to save these results?</h3>
+                        <p class="text-blue-100 mb-4 text-sm max-w-md">Get a comprehensive official Mortgage Recast Analysis PDF sent directly to your inbox.</p>
+                        <form class="flex max-w-sm gap-2" onsubmit="event.preventDefault(); alert('Lead Generation triggered!');">
+                            <input type="email" placeholder="Your Email Address" required class="flex-1 rounded-lg px-4 py-2 text-txt-light border-none outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="bg-card-light text-accent font-semibold px-4 py-2 rounded-lg hover:bg-canvas-light transition-colors whitespace-nowrap">Send PDF</button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Under Result Ad -->
+        <div class="my-10 w-full h-[90px] md:h-[120px] bg-brd-light dark:bg-brd-dark rounded-xl flex items-center justify-center relative overflow-hidden border border-brd-light dark:border-brd-dark">
+            <span class="text-sub-light dark:text-sub-dark font-medium opacity-50 text-center px-4">Advertisement (728x90) <br> AdBlock fallback visible</span>
+            <div class="absolute top-2 left-2 text-[10px] text-sub-light dark:text-sub-dark uppercase tracking-wider">Sponsored Advertisement</div>
+        </div>
+
+        <!-- Content Guide Section -->
+        <article class="prose prose-slate dark:prose-invert max-w-none mt-12 mb-16">
+            <h2 class="text-2xl font-bold mb-4">Comprehensive Guide to Mortgage Recasting</h2>
+            <div class="space-y-6 text-txt-light dark:text-txt-dark leading-relaxed">
+                
+                <p>When borrowers come into a large sum of money—whether through an inheritance, selling a secondary property, or receiving a substantial bonus—many wonder how best to apply it toward their mortgage. While making a standard extra payment reduces your principal and shortens your loan payoff time, it does not change your required monthly payment. This is where <strong>mortgage recasting</strong> becomes a powerful financial tool.</p>
+
+                <h3 class="text-xl font-semibold mt-8 mb-3">What is a Mortgage Recast vs Refinancing?</h3>
+                <p>Mortgage recasting (also known as loan re-amortization) occurs when you pay a significant lump sum toward your loan's principal balance and then ask your lender to recalculate your monthly payments based on the new, lower balance. The essential benefit is that your loan term and your interest rate remain exactly the same.</p>
+                <p>In contrast, refinancing involves replacing your existing loan with a completely new loan. Refinancing requires full underwriting, an appraisal, and closing costs that often range from 2% to 5% of the loan amount. If you already have a low fixed interest rate, refinancing in a higher-rate environment is a poor financial decision. Recasting allows you to keep that favorable low rate while immediately reducing your monthly cash flow obligations.</p>
+
+                <h3 class="text-xl font-semibold mt-8 mb-3">Requirements and Lender Guidelines</h3>
+                <p>Not all mortgages are eligible for recasting, and lenders impose specific rules. Under Fannie Mae and Freddie Mac guidelines (which govern most conventional loans in the US), lenders generally permit recasting, though it is usually at their discretion. Common requirements include:</p>
+                <ul class="list-disc pl-6 space-y-2 mt-2">
+                    <li><strong>Minimum Lump Sum:</strong> Most lenders require a minimum principal reduction of $5,000 to $10,000. Some lenders calculate this as a percentage, such as 10% of the remaining balance.</li>
+                    <li><strong>Good Standing:</strong> The borrower must have a history of on-time payments and cannot be in forbearance or default.</li>
+                    <li><strong>Loan Type:</strong> Conventional loans are typically eligible. Jumbo loans may also qualify depending on the portfolio lender.</li>
+                    <li><strong>Administrative Fees:</strong> Lenders typically charge a recast processing fee ranging from $150 to $500.</li>
+                </ul>
+                <p class="mt-4"><strong>Important Note on Government Loans:</strong> Loans backed by the Federal Housing Administration (FHA) and the Department of Veterans Affairs (VA) generally do not allow for recasting. If you hold an FHA or VA loan, you must typically refinance to alter your monthly payment structure.</p>
+
+                <h3 class="text-xl font-semibold mt-8 mb-3">A Numerical Scenario</h3>
+                <p>To understand the mathematics behind a recast, consider a borrower with a remaining loan balance of $300,000, an interest rate of 6.5%, and 25 years remaining on their 30-year fixed-rate mortgage. Their current monthly payment for principal and interest is approximately $2,025.</p>
+                <p>If this borrower inherits $50,000 and applies it as a lump sum recast payment, the new principal balance drops to $250,000. The lender recalculates the loan amortized over the same 25-year remaining term at the same 6.5% interest rate. The new monthly payment becomes approximately $1,687.</p>
+                <p><strong>The Results:</strong> By recasting, the borrower saves $338 per month. Over the remaining 25 years (300 months), the total amount of interest paid is drastically reduced. While the upfront cost was the $50,000 lump sum plus a nominal recast fee (e.g., $250), the long-term interest savings amount to tens of thousands of dollars.</p>
+                
+                <h3 class="text-xl font-semibold mt-8 mb-3">When Does Recasting Make Sense?</h3>
+                <p>Recasting is an excellent strategy for individuals who want to lower their monthly expenses to free up cash flow for other investments, retirement savings, or living expenses. It is particularly popular among homeowners who purchase a new home before selling their old one. Once the old home sells, the proceeds can be applied to the new mortgage as a recast, aligning the monthly payment with what it would have been had they put a large down payment initially.</p>
+                <p>However, if you are looking to pay off your mortgage faster, simply making standard extra principal payments without recasting will accelerate your payoff date faster than recasting, though your required monthly payment will not drop until the loan is fully satisfied.</p>
+                
+                <p class="text-sm text-sub-light dark:text-sub-dark mt-8 italic">Regulatory context is sourced from consumer finance principles outlined by the Consumer Financial Protection Bureau (CFPB) and general secondary market guidelines from the Fannie Mae Selling Guide.</p>
+            </div>
+        </article>
+
+        <!-- FAQ Section -->
+        <div class="mb-12">
+            <h2 class="text-2xl font-bold mb-6">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                
+                <div class="card-panel border border-brd-light dark:border-brd-dark rounded-lg overflow-hidden">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-medium focus:outline-none hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors">
+                        <span>Does recasting shorten the term of my loan?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-sub-light dark:text-sub-dark">No. Unlike making extra principal payments, recasting recalculates your payments to stretch the new lower balance over your existing remaining loan term. Your payoff date remains exactly the same.</p>
+                    </div>
+                </div>
+
+                <div class="card-panel border border-brd-light dark:border-brd-dark rounded-lg overflow-hidden">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-medium focus:outline-none hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors">
+                        <span>Can I recast an FHA or VA loan?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-sub-light dark:text-sub-dark">Generally, no. Government-backed loans like FHA, VA, and USDA loans typically do not allow recasting. You would usually need to refinance into a conventional loan to adjust your monthly payments based on a lower balance.</p>
+                    </div>
+                </div>
+                
+                <div class="card-panel border border-brd-light dark:border-brd-dark rounded-lg overflow-hidden">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-medium focus:outline-none hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors">
+                        <span>Is a credit check required for a mortgage recast?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-sub-light dark:text-sub-dark">No. Because you are not applying for a new loan, there is no underwriting process, no appraisal requirement, and no credit check. The lender simply executes a mathematical recalculation based on the new principal.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Multiplex Ad Grid Placeholder -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
+            <div class="h-[200px] bg-brd-light dark:bg-brd-dark rounded-lg flex items-center justify-center opacity-70 relative">
+                <span class="text-xs text-sub-light dark:text-sub-dark">Multiplex Ad 1</span>
+            </div>
+            <div class="h-[200px] bg-brd-light dark:bg-brd-dark rounded-lg flex items-center justify-center opacity-70 relative">
+                <span class="text-xs text-sub-light dark:text-sub-dark">Multiplex Ad 2</span>
+            </div>
+            <div class="h-[200px] bg-brd-light dark:bg-brd-dark rounded-lg flex items-center justify-center opacity-70 relative hidden md:flex">
+                <span class="text-xs text-sub-light dark:text-sub-dark">Multiplex Ad 3</span>
+            </div>
+            <div class="h-[200px] bg-brd-light dark:bg-brd-dark rounded-lg flex items-center justify-center opacity-70 relative hidden md:flex">
+                <span class="text-xs text-sub-light dark:text-sub-dark">Multiplex Ad 4</span>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark py-8 text-center text-sm text-sub-light dark:text-sub-dark pb-24 md:pb-8">
+        <p>&copy; 2026 CalcWorld. All rights reserved.</p>
+        <p class="mt-2 text-xs">Information provided for educational purposes. Consult a financial advisor for specific advice.</p>
+    </footer>
+
+    <!-- Floating Quick Switcher Bar (Mobile mostly) -->
+    <div class="fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark p-3 flex justify-around shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 md:hidden">
+        <button class="flex flex-col items-center text-accent text-xs font-medium">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            Calculator
+        </button>
+        <button class="flex flex-col items-center text-sub-light dark:text-sub-dark hover:text-accent text-xs font-medium transition-colors" onclick="document.getElementById('tab-chart').click(); window.scrollTo(0, document.getElementById('tab-chart').offsetTop)">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+            Charts
+        </button>
+        <button class="flex flex-col items-center text-sub-light dark:text-sub-dark hover:text-accent text-xs font-medium transition-colors">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            Guide
+        </button>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-24 md:bottom-6 right-6 bg-gray-800 text-white px-4 py-3 rounded-lg shadow-lg flex items-center z-50">
+        <svg class="w-5 h-5 text-green-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        Summary Copied to Clipboard
+    </div>
+
+    <!-- Calculator Logic & Scripts -->
+    <script>
+        // DOM Elements
+        const inputs = ['in-balance', 'in-rate', 'in-years', 'in-months', 'in-lump', 'in-fee'];
+        const currencySwitcher = document.getElementById('currency-switcher');
+        const curSymbols = document.querySelectorAll('.cur-symbol');
+        let chartInstance = null;
+        let isAnimating = false;
+
+        // Number Formatter
+        const formatMoney = (num) => {
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        };
+        const parseMoney = (str) => {
+            return parseFloat(str.replace(/,/g, '')) || 0;
+        };
+
+        // Calculation Core
+        function calculateMortgage(principal, annualRate, months) {
+            if (months === 0) return { payment: 0, totalInterest: 0, schedule: [] };
+            if (annualRate === 0) {
+                const pmt = principal / months;
+                return { payment: pmt, totalInterest: 0, schedule: Array(months).fill(pmt) };
+            }
+            const r = annualRate / 100 / 12;
+            const payment = principal * (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+            
+            let balance = principal;
+            let totalInterest = 0;
+            const schedule = [];
+            
+            for (let i = 0; i < months; i++) {
+                const interest = balance * r;
+                let prin = payment - interest;
+                totalInterest += interest;
+                balance -= prin;
+                if(balance < 0) balance = 0;
+                schedule.push({ interest, principal: prin, balance });
+            }
+            return { payment, totalInterest, schedule };
+        }
+
+        // Animate Counter
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // easeOutQuart
+                const ease = 1 - Math.pow(1 - progress, 4);
+                const current = start + ease * (end - start);
+                obj.innerHTML = formatMoney(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = formatMoney(end);
+                    obj.closest('.calc-res')?.classList.remove('shimmer');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function triggerCalculation() {
+            // Read Inputs
+            const bal = parseFloat(document.getElementById('in-balance').value) || 0;
+            const rate = parseFloat(document.getElementById('in-rate').value) || 0;
+            const years = parseInt(document.getElementById('in-years').value) || 0;
+            const months = parseInt(document.getElementById('in-months').value) || 0;
+            const lump = parseFloat(document.getElementById('in-lump').value) || 0;
+            const fee = parseFloat(document.getElementById('in-fee').value) || 0;
+
+            const totalMonths = (years * 12) + months;
+            
+            // Calculate Before
+            const beforeCalc = calculateMortgage(bal, rate, totalMonths);
+            
+            // Calculate After
+            const newBal = Math.max(0, bal - lump);
+            const afterCalc = calculateMortgage(newBal, rate, totalMonths);
+
+            const oldPmt = beforeCalc.payment;
+            const newPmt = afterCalc.payment;
+            const savingsMo = Math.max(0, oldPmt - newPmt);
+            
+            const oldInt = beforeCalc.totalInterest;
+            const newInt = afterCalc.totalInterest;
+            const intSaved = Math.max(0, oldInt - newInt);
+            
+            const netBenefit = intSaved - fee;
+
+            // Update URL State
+            const urlParams = new URLSearchParams();
+            urlParams.set('bal', bal);
+            urlParams.set('rate', rate);
+            urlParams.set('term', totalMonths);
+            urlParams.set('lump', lump);
+            urlParams.set('fee', fee);
+            urlParams.set('cur', currencySwitcher.value);
+            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`);
+
+            // Apply UI Shimmer
+            document.querySelectorAll('.calc-res').forEach(el => el.classList.add('shimmer'));
+
+            // Animate primary numbers
+            const counters = document.querySelectorAll('.num-counter');
+            
+            const getOldVal = (idx) => parseMoney(counters[idx].innerText);
+            
+            animateValue(counters[0], getOldVal(0), newPmt, 800);
+            animateValue(counters[1], getOldVal(1), savingsMo, 800);
+            animateValue(counters[2], getOldVal(2), intSaved, 800);
+            animateValue(counters[3], getOldVal(3), netBenefit, 800);
+
+            document.getElementById('out-old-pmt').innerText = formatMoney(oldPmt);
+
+            // Update Summary Tab Data
+            document.getElementById('sum-old-bal').innerText = formatMoney(bal);
+            document.getElementById('sum-old-pmt').innerText = formatMoney(oldPmt);
+            document.getElementById('sum-old-int').innerText = formatMoney(oldInt);
+            
+            document.getElementById('sum-new-bal').innerText = formatMoney(newBal);
+            document.getElementById('sum-new-pmt').innerText = formatMoney(newPmt);
+            document.getElementById('sum-new-int').innerText = formatMoney(newInt);
+
+            updateChartAndSchedule(beforeCalc.schedule, afterCalc.schedule, bal, newBal);
+        }
+
+        function updateChartAndSchedule(beforeSched, afterSched, startBalBefore, startBalAfter) {
+            // Build annual data
+            const labels = [];
+            const dataBefore = [];
+            const dataAfter = [];
+            
+            let bBefore = startBalBefore;
+            let bAfter = startBalAfter;
+
+            let scheduleHTML = '';
+            
+            for (let i = 0; i <= beforeSched.length; i += 12) {
+                const year = i / 12;
+                labels.push(`Year ${year}`);
+                
+                let curBBefore = i === 0 ? startBalBefore : (beforeSched[i-1] ? beforeSched[i-1].balance : 0);
+                let curBAfter = i === 0 ? startBalAfter : (afterSched[i-1] ? afterSched[i-1].balance : 0);
+                
+                dataBefore.push(curBBefore);
+                dataAfter.push(curBAfter);
+
+                if (i > 0) {
+                    const diff = curBBefore - curBAfter;
+                    scheduleHTML += `
+                        <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors">
+                            <td class="px-4 py-3 font-medium">Year ${year}</td>
+                            <td class="px-4 py-3 text-right">${formatMoney(curBBefore)}</td>
+                            <td class="px-4 py-3 text-right">${formatMoney(curBAfter)}</td>
+                            <td class="px-4 py-3 text-right text-green-600 dark:text-green-400 font-medium">${formatMoney(diff)}</td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            document.getElementById('schedule-body').innerHTML = scheduleHTML;
+
+            // Chart
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#F9FAFB' : '#0F172A';
+            const gridColor = isDark ? '#1F2937' : '#E2E8F0';
+
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = dataBefore;
+                chartInstance.data.datasets[1].data = dataAfter;
+                chartInstance.options.scales.x.ticks.color = textColor;
+                chartInstance.options.scales.y.ticks.color = textColor;
+                chartInstance.options.scales.x.grid.color = gridColor;
+                chartInstance.options.scales.y.grid.color = gridColor;
+                chartInstance.update();
+            } else {
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Balance Before Recast',
+                                data: dataBefore,
+                                borderColor: '#9CA3AF',
+                                backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                                borderDash: [5, 5],
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Balance After Recast',
+                                data: dataAfter,
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.dataset.label + ': $' + formatMoney(context.parsed.y);
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                ticks: { color: textColor },
+                                grid: { color: gridColor }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Setup Events
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', triggerCalculation);
+        });
+
+        // Presets
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.getElementById('in-lump').value = e.target.getAttribute('data-val');
+                triggerCalculation();
+            });
+        });
+
+        // Currency Switcher
+        currencySwitcher.addEventListener('change', (e) => {
+            const sym = e.target.value;
+            curSymbols.forEach(el => el.innerText = sym);
+            triggerCalculation();
+        });
+
+        // Tabs
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                // reset styling
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('text-accent', 'border-b-2', 'border-accent');
+                    b.classList.add('text-sub-light', 'dark:text-sub-dark');
+                });
+                // set active
+                e.target.classList.remove('text-sub-light', 'dark:text-sub-dark');
+                e.target.classList.add('text-accent', 'border-b-2', 'border-accent');
+
+                // hide contents
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.add('hidden');
+                    c.classList.remove('block');
+                });
+                
+                // show active
+                const targetId = e.target.getAttribute('data-tab');
+                document.getElementById(targetId).classList.remove('hidden');
+                document.getElementById(targetId).classList.add('block');
+            });
+        });
+
+        // Accordion
+        document.querySelectorAll('.accordion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('.acc-icon');
+                
+                if (content.classList.contains('active')) {
+                    content.classList.remove('active');
+                    icon.classList.remove('rotate-180');
+                } else {
+                    content.classList.add('active');
+                    icon.classList.add('rotate-180');
+                }
+            });
+        });
+
+        // Theme Toggle
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (document.documentElement.classList.contains('dark')) {
+            lightIcon.classList.remove('hidden');
+        } else {
+            darkIcon.classList.remove('hidden');
+        }
+
+        themeToggleBtn.addEventListener('click', function() {
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+            triggerCalculation(); // Re-render chart colors
+        });
+
+        // Copy Summary
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            const sym = currencySwitcher.value;
+            const txt = `Mortgage Recast Summary:
+Before: Balance ${sym}${document.getElementById('sum-old-bal').innerText} | Pmt ${sym}${document.getElementById('sum-old-pmt').innerText}
+After: Balance ${sym}${document.getElementById('sum-new-bal').innerText} | Pmt ${sym}${document.getElementById('sum-new-pmt').innerText}
+Monthly Savings: ${sym}${document.querySelectorAll('.num-counter')[1].innerText}
+Total Interest Saved: ${sym}${document.querySelectorAll('.num-counter')[2].innerText}`;
+            
+            navigator.clipboard.writeText(txt).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            });
+        });
+
+        // Init on load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Parse URL Params
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('bal')) document.getElementById('in-balance').value = params.get('bal');
+            if (params.has('rate')) document.getElementById('in-rate').value = params.get('rate');
+            if (params.has('term')) {
+                const term = parseInt(params.get('term'));
+                document.getElementById('in-years').value = Math.floor(term / 12);
+                document.getElementById('in-months').value = term % 12;
+            }
+            if (params.has('lump')) document.getElementById('in-lump').value = params.get('lump');
+            if (params.has('fee')) document.getElementById('in-fee').value = params.get('fee');
+            if (params.has('cur')) {
+                currencySwitcher.value = params.get('cur');
+                curSymbols.forEach(el => el.innerText = params.get('cur'));
+            }
+
+            // Initial Calc
+            triggerCalculation();
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

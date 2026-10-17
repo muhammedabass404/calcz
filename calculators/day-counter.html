@@ -1,0 +1,2792 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Day Counter, Business Days &amp; Date Math Suite | CalcWorld</title>
+    <meta name="description" content="Free scientific calendar day counter and business days calculator. Calculate days between dates, net working days excluding weekends and US federal holidays, date addition/subtraction, and live countdown milestones.">
+    <link rel="canonical" href="https://calcworld.net/calculators/day-counter.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax CDN for Mathematical & Astronomical Formulations -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Calendar grid day styling */
+        .cal-day-cell {
+            aspect-ratio: 1 / 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.5rem;
+            font-size: 0.8rem;
+            transition: all 0.15s ease;
+            position: relative;
+        }
+        .cal-day-cell:hover {
+            transform: scale(1.08);
+            z-index: 10;
+        }
+
+        /* Toast notification */
+        .toast-notify {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 50;
+            background: #1e293b;
+            color: #ffffff;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.4);
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            transform: translateY(150%);
+            opacity: 0;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease-out;
+            pointer-events: none;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Pulse animation for live ticker */
+        @keyframes pulseDot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.85); }
+        }
+        .live-dot {
+            animation: pulseDot 2s infinite ease-in-out;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Day Counter"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Calendar Day Counter & Date Math Engine",
+          "url": "https://calcworld.net/other/day-counter",
+          "applicationCategory": "ProductivityApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate calendar days, net business days excluding weekends and US federal holidays, date offsets with addition or subtraction, and real-time milestone countdowns."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How does the 400-year leap year rule work in the Gregorian calendar?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under the Gregorian calendar established in 1582, a year is a leap year if it is evenly divisible by 4, with one critical exception: century years divisible by 100 are common years (365 days) unless they are also evenly divisible by 400. Thus, years 1600 and 2000 were leap years, whereas years 1700, 1800, 1900, and 2100 are common years. This mathematical adjustment yields an average calendar year of 365.2425 days, closely matching the mean tropical year of approximately 365.24219 days."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why were ten calendar days dropped in October 1582?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The prior Julian calendar assumed a tropical year length of exactly 365.25 days. Because the true solar year is about 11 minutes and 14 seconds shorter, the calendar drifted by approximately one full day every 128 years. By 1582, the vernal equinox had shifted backward from March 21 to March 11. Pope Gregory XIII issued the papal bull Inter Gravissimas, decreeing that Thursday, 4 October 1582 be followed immediately by Friday, 15 October 1582, restoring the astronomical vernal equinox to March 21 for Easter computation."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the common financial day count conventions such as Actual/Actual and 30/360?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Financial contracts calculate accrued interest using established day count conventions. Actual/Actual counts the exact number of elapsed calendar days divided by the actual days in the period or year, standard for US Treasury bonds. The 30/360 convention assumes each month has 30 days and a year has 360 days, common for corporate and municipal bonds. The Actual/360 convention takes exact calendar days divided by a 360-day year, standard in US money markets and commercial paper."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does ISO 8601 define calendar dates, week dates, and ordinal dates?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "ISO 8601 is the international standard for date and time representation. Standard calendar dates follow YYYY-MM-DD format (such as 2026-10-16). Week dates follow YYYY-Www-D, where Week 01 is defined as the week with the first Thursday of the Gregorian year. Ordinal dates follow YYYY-DDD, representing the year and the sequential day of the year from 001 to 365 (or 366 in leap years)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How are US federal holidays observed when falling on a weekend?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under Title 5 Section 6103 of the United States Code, when a federal holiday falls on a Saturday, the preceding Friday is observed as a legal public holiday for federal employees. When a federal holiday falls on a Sunday, the following Monday is treated as the observed public holiday."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between working days and calendar days?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Calendar days include all 7 days of each week from Monday through Sunday, including public holidays. Working days (also called business days) exclude standard non-working weekend days (typically Saturday and Sunday in Western commerce) as well as statutory public and banking holidays."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What astronomical bodies regulate the tropical year and leap seconds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The tropical year is measured by astronomical institutions including the United States Naval Observatory (USNO) and the International Earth Rotation and Reference Systems Service (IERS). Earth's rotational speed fluctuates due to tidal friction and atmospheric mass redistribution, prompting the IERS to monitor Delta T and coordinate leap seconds relative to Universal Coordinated Time (UTC)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the date offset calculator determine the target date when adding business days?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "When adding or subtracting business days, the calculator steps forward or backward day-by-day. On each step, it checks whether the day is a weekend day or an enabled holiday. If so, it advances without decrementing the remaining business day tally until the exact target quota of valid business days is satisfied."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Calendar Day Counter, Business Days &amp; Date Math Suite | CalcWorld">
+    <meta property="og:description" content="Free scientific calendar day counter and business days calculator. Calculate days between dates, net working days excluding weekends and US federal holidays, date addition/subtraction, and live countdown milestones.">
+    <meta property="og:url" content="https://calcworld.net/calculators/day-counter.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Calendar Day Counter, Business Days &amp; Date Math Suite | CalcWorld">
+    <meta name="twitter:description" content="Free scientific calendar day counter and business days calculator. Calculate days between dates, net working days excluding weekends and US federal holidays, date addition/subtraction, and live countdown milestones.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Calendar Engine:</strong> CalcWorld provides scientific date math and working day calculation tools 100% free with zero sign-up. Please support our platform by allowing clean display ads.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="font-medium text-slate-800 dark:text-slate-200" aria-current="page">Day Counter</li>
+            </ol>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="mb-6 no-print">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Calendar Day Counter &amp; Date Math Engine</h1>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 mt-1 max-w-3xl">Compute exact calendar intervals, net business days excluding weekends and official US federal holidays, date additions or subtractions, and live countdown milestones.</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 live-dot"></span>
+                        Gregorian &amp; ISO 8601 Engine
+                    </span>
+                </div>
+            </div>
+
+            <!-- Real-time Astronomical & Calendar KPI Bar -->
+            <div id="kpiBanner" class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-sm">
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Today's Date</span>
+                    <span id="kpiToday" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate block">Loading...</span>
+                    <span id="kpiTodayWeekday" class="text-[11px] text-brand-600 dark:text-brand-400 font-medium">Local Time</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-sm">
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Day of the Year</span>
+                    <span id="kpiDayOfYear" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">Day ---</span>
+                    <span id="kpiYearProgress" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">---% elapsed</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-sm">
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">ISO 8601 Week</span>
+                    <span id="kpiIsoWeek" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">Week --</span>
+                    <span id="kpiWeeksLeft" class="text-[11px] text-slate-500 dark:text-slate-400">-- weeks remaining</span>
+                </div>
+                <div class="bg-white dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3 shadow-sm">
+                    <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Leap Year Status</span>
+                    <span id="kpiLeapStatus" class="text-sm sm:text-base font-bold text-slate-900 dark:text-white block">Common Year</span>
+                    <span id="kpiDaysInYear" class="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">365 Calendar Days</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ad Slot 1: Top Responsive Banner -->
+        <div id="ad-slot-1" class="ad-slot no-print" aria-label="Advertisement Slot 1">
+            <span>Advertisement &bull; CalcWorld Horology Engine</span>
+        </div>
+
+        <!-- Tab Navigation Bar -->
+        <div id="tabButtons" class="scroll-smooth whitespace-nowrap border-b border-slate-200 dark:border-slate-700 mb-6 flex overflow-x-auto no-scrollbar gap-2 no-print">
+            <button onclick="switchTab('between')" id="tab-btn-between" class="py-3 px-4 font-semibold text-sm border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Days Between Dates
+            </button>
+            <button onclick="switchTab('business')" id="tab-btn-business" class="py-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                Business Days &amp; Holidays
+            </button>
+            <button onclick="switchTab('offset')" id="tab-btn-offset" class="py-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                Date Offset (+/- Days)
+            </button>
+            <button onclick="switchTab('countdown')" id="tab-btn-countdown" class="py-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Live Milestones
+            </button>
+            <button onclick="switchTab('print')" id="tab-btn-print" class="py-3 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print Report
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: DAYS BETWEEN TWO DATES SOLVER       -->
+        <!-- ========================================== -->
+        <div id="tab-between" class="tab-panel active">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Input Controls Card -->
+                <div class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 flex items-center justify-center text-xs font-bold">01</span>
+                        Specify Interval Dates
+                    </h2>
+
+                    <div class="space-y-4">
+                        <!-- Start Date -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="betweenStartDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Start Date</label>
+                                <span id="betweenStartDayName" class="text-xs text-brand-600 dark:text-brand-400 font-semibold">Today</span>
+                            </div>
+                            <input type="date" id="betweenStartDate" onchange="calculateDaysBetween()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <button onclick="setBetweenStartPreset('today')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">Today</button>
+                                <button onclick="setBetweenStartPreset('startOfMonth')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">Start of Month</button>
+                                <button onclick="setBetweenStartPreset('startOfYear')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">Jan 1</button>
+                            </div>
+                        </div>
+
+                        <!-- Date Swap Button -->
+                        <div class="flex justify-center">
+                            <button onclick="swapBetweenDates()" class="p-2 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 hover:shadow-md transition group" title="Swap Start and End Dates">
+                                <svg class="w-4 h-4 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- End Date -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="betweenEndDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">End Date</label>
+                                <span id="betweenEndDayName" class="text-xs text-brand-600 dark:text-brand-400 font-semibold">Future</span>
+                            </div>
+                            <input type="date" id="betweenEndDate" onchange="calculateDaysBetween()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                            <div class="flex flex-wrap gap-1.5 mt-2">
+                                <button onclick="setBetweenEndOffset(7)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">+7 Days</button>
+                                <button onclick="setBetweenEndOffset(30)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">+30 Days</button>
+                                <button onclick="setBetweenEndOffset(90)" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">+90 Days</button>
+                                <button onclick="setBetweenEndPreset('endOfYear')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition">Dec 31</button>
+                            </div>
+                        </div>
+
+                        <!-- Inclusive Option Toggle -->
+                        <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                            <label class="flex items-center gap-3 cursor-pointer">
+                                <input type="checkbox" id="betweenInclusive" onchange="calculateDaysBetween()" class="w-4 h-4 rounded text-brand-600 focus:ring-brand-500 border-slate-300 dark:border-slate-600">
+                                <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Include end date in calculation (adds 1 calendar day for inclusive span)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <button onclick="resetBetweenTab()" class="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">Reset Dates</button>
+                        <button onclick="copyBetweenSummary()" class="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 text-xs font-bold flex items-center gap-1.5 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                            Copy Results
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right Results & Breakdown Card -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Hero Metric Container -->
+                    <div class="bg-gradient-to-br from-indigo-900 via-brand-900 to-slate-900 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-widest text-indigo-200">Total Calendar Duration</span>
+                                <span id="betweenSpanLabel" class="text-xs bg-white/10 px-2.5 py-0.5 rounded-full text-indigo-100 font-mono">Exclusive</span>
+                            </div>
+                            <div class="mt-2 flex items-baseline gap-3">
+                                <span id="betweenTotalDays" class="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">0</span>
+                                <span class="text-xl sm:text-2xl font-bold text-indigo-200">Calendar Days</span>
+                            </div>
+                            <div id="betweenYMD" class="mt-2 text-sm text-indigo-200/90 font-medium">0 Years, 0 Months, 0 Days</div>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-brand-500/20 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- Breakdown Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Full Weeks</span>
+                            <span id="betweenWeeks" class="text-lg font-bold text-slate-900 dark:text-white font-mono">0</span>
+                            <span id="betweenWeeksRem" class="text-[11px] text-slate-500 dark:text-slate-400 block">+0 days</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Weekdays (Mon-Fri)</span>
+                            <span id="betweenWeekdays" class="text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono">0</span>
+                            <span id="betweenWeekdayPct" class="text-[11px] text-emerald-700 dark:text-emerald-300 block">0% of total</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Weekend Days</span>
+                            <span id="betweenWeekends" class="text-lg font-bold text-slate-700 dark:text-slate-300 font-mono">0</span>
+                            <span id="betweenWeekendPct" class="text-[11px] text-slate-500 dark:text-slate-400 block">0% of total</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Total Hours</span>
+                            <span id="betweenHours" class="text-lg font-bold text-indigo-600 dark:text-indigo-400 font-mono">0</span>
+                            <span id="betweenMinutes" class="text-[11px] text-slate-500 dark:text-slate-400 block">0 minutes</span>
+                        </div>
+                    </div>
+
+                    <!-- Doughnut Chart & Calendar Preview Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Chart Container -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm flex flex-col justify-between">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Interval Composition</h3>
+                                <span class="text-[10px] text-slate-400 font-mono">Ratio</span>
+                            </div>
+                            <div class="relative h-44 flex items-center justify-center">
+                                <canvas id="betweenChart"></canvas>
+                            </div>
+                            <div class="flex justify-center gap-4 text-xs font-medium mt-2">
+                                <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Weekdays</span>
+                                <span class="inline-flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-indigo-500"></span> Weekend Days</span>
+                            </div>
+                        </div>
+
+                        <!-- Mini Calendar Visualizer -->
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm flex flex-col">
+                            <div class="flex items-center justify-between mb-3">
+                                <button onclick="stepBetweenCalMonth(-1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Previous Month">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                                </button>
+                                <span id="betweenCalMonthYear" class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">October 2026</span>
+                                <button onclick="stepBetweenCalMonth(1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Next Month">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                                </button>
+                            </div>
+                            
+                            <!-- Day of week header -->
+                            <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 mb-1">
+                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                            </div>
+
+                            <!-- Calendar Day Cells Grid -->
+                            <div id="betweenCalGrid" class="grid grid-cols-7 gap-1 text-center flex-grow">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+
+                            <div class="mt-3 pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-slate-500">
+                                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-brand-500"></span> Range Span</span>
+                                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded border border-brand-500 bg-brand-50 dark:bg-brand-950"></span> Start / End</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: BUSINESS DAYS & HOLIDAY CALCULATOR  -->
+        <!-- ========================================== -->
+        <div id="tab-business" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Configuration Column -->
+                <div class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm space-y-5">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 flex items-center justify-center text-xs font-bold">02</span>
+                        Business Days Configuration
+                    </h2>
+
+                    <!-- Dates Row -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="bizStartDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Start Date</label>
+                            <input type="date" id="bizStartDate" onchange="calculateBusinessDays()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="bizEndDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">End Date</label>
+                            <input type="date" id="bizEndDate" onchange="calculateBusinessDays()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Weekend Excluder Selector -->
+                    <div>
+                        <label for="bizWeekendType" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Weekend Definition</label>
+                        <select id="bizWeekendType" onchange="calculateBusinessDays()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="sat-sun" selected>Saturday &amp; Sunday (Standard 5-day week)</option>
+                            <option value="sun-only">Sunday Only (6-day work week)</option>
+                            <option value="fri-sat">Friday &amp; Saturday (Middle East standard)</option>
+                            <option value="none">No Weekends (Continuous 7-day operations)</option>
+                        </select>
+                    </div>
+
+                    <!-- Federal Holiday Master Toggle & Observed Rule -->
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                        <div class="flex items-center justify-between">
+                            <label class="flex items-center gap-2.5 cursor-pointer">
+                                <input type="checkbox" id="bizToggleHolidays" checked onchange="toggleMasterHolidays()" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-600">
+                                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Exclude US Federal Holidays</span>
+                            </label>
+                            <button type="button" onclick="toggleHolidayDetails()" class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                Customize (11)
+                            </button>
+                        </div>
+                        <div class="pl-6">
+                            <label class="flex items-center gap-2 cursor-pointer text-[11px] text-slate-600 dark:text-slate-400">
+                                <input type="checkbox" id="bizToggleObserved" checked onchange="calculateBusinessDays()" class="w-3.5 h-3.5 rounded text-emerald-600 border-slate-300">
+                                <span>Apply 5 U.S.C. 6103 observed rule (Sat &rarr; Fri, Sun &rarr; Mon)</span>
+                            </label>
+                        </div>
+
+                        <!-- Expandable checklist of individual US Federal Holidays -->
+                        <div id="bizHolidayChecklist" class="hidden pt-2 border-t border-slate-200 dark:border-slate-700 space-y-1.5 text-xs text-slate-700 dark:text-slate-300 max-h-48 overflow-y-auto pr-1">
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="new-year" checked onchange="calculateBusinessDays()"> New Year's Day (Jan 1)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="mlk" checked onchange="calculateBusinessDays()"> Martin Luther King Jr. Day (3rd Mon Jan)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="presidents" checked onchange="calculateBusinessDays()"> Washington's Birthday / Presidents' Day (3rd Mon Feb)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="memorial" checked onchange="calculateBusinessDays()"> Memorial Day (Last Mon May)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="juneteenth" checked onchange="calculateBusinessDays()"> Juneteenth National Independence Day (Jun 19)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="independence" checked onchange="calculateBusinessDays()"> Independence Day (Jul 4)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="labor" checked onchange="calculateBusinessDays()"> Labor Day (1st Mon Sep)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="columbus" checked onchange="calculateBusinessDays()"> Columbus / Indigenous Peoples' Day (2nd Mon Oct)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="veterans" checked onchange="calculateBusinessDays()"> Veterans Day (Nov 11)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="thanksgiving" checked onchange="calculateBusinessDays()"> Thanksgiving Day (4th Thu Nov)</label>
+                            <label class="flex items-center gap-2"><input type="checkbox" class="fed-h-check" value="christmas" checked onchange="calculateBusinessDays()"> Christmas Day (Dec 25)</label>
+                        </div>
+                    </div>
+
+                    <!-- Custom Holidays Manager -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Custom Excluded Holidays</label>
+                            <span class="text-[11px] text-slate-400">e.g. Corporate Closures</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="date" id="customHolidayDate" class="w-36 px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs">
+                            <input type="text" id="customHolidayName" placeholder="Holiday label (optional)" class="flex-grow px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs">
+                            <button onclick="addCustomHoliday()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 transition">Add</button>
+                        </div>
+                        <!-- List of Custom Holidays -->
+                        <div id="customHolidaysList" class="flex flex-wrap gap-1.5 mt-2.5 min-h-[28px]">
+                            <!-- Added items rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Billable Hours Per Day Rate -->
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                        <label for="bizHoursPerDay" class="text-xs font-medium text-slate-700 dark:text-slate-300">Working Hours / Day:</label>
+                        <select id="bizHoursPerDay" onchange="calculateBusinessDays()" class="px-2 py-1 rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs font-semibold">
+                            <option value="7">7.0 Hours</option>
+                            <option value="7.5">7.5 Hours</option>
+                            <option value="8" selected>8.0 Hours (Standard)</option>
+                            <option value="8.5">8.5 Hours</option>
+                        </select>
+                    </div>
+
+                    <!-- Ad Slot 2: Configuration Context Banner -->
+                    <div id="ad-slot-2" class="ad-slot no-print" aria-label="Advertisement Slot 2">
+                        <span>Advertisement &bull; Working Days Engine</span>
+                    </div>
+
+                </div>
+
+                <!-- Right Results Column -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Business Days Hero Banner -->
+                    <div class="bg-gradient-to-br from-emerald-950 via-slate-900 to-teal-950 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-widest text-emerald-300">Net Working Days</span>
+                                <span class="text-xs bg-emerald-500/20 text-emerald-200 px-2.5 py-0.5 rounded-full font-mono">Business Day Math</span>
+                            </div>
+                            <div class="mt-2 flex items-baseline gap-3">
+                                <span id="bizWorkingDays" class="text-5xl sm:text-6xl font-black tracking-tight text-white font-mono">0</span>
+                                <span class="text-xl sm:text-2xl font-bold text-emerald-300">Working Days</span>
+                            </div>
+                            <div id="bizHoursNote" class="mt-2 text-sm text-emerald-200/90 font-medium">Equates to 0 Total Billable Working Hours</div>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- Business Days Metric Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Total Calendar Days</span>
+                            <span id="bizTotalDays" class="text-lg font-bold text-slate-900 dark:text-white font-mono">0</span>
+                            <span class="text-[11px] text-slate-400 block">Gross Interval</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Excluded Weekends</span>
+                            <span id="bizWeekendCount" class="text-lg font-bold text-indigo-600 dark:text-indigo-400 font-mono">0</span>
+                            <span id="bizWeekendPct" class="text-[11px] text-slate-400 block">0% of span</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Federal Holidays</span>
+                            <span id="bizFedHolidayCount" class="text-lg font-bold text-amber-600 dark:text-amber-400 font-mono">0</span>
+                            <span class="text-[11px] text-amber-600/80 dark:text-amber-400/80 block">Excluded Days</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Custom Holidays</span>
+                            <span id="bizCustomCount" class="text-lg font-bold text-rose-600 dark:text-rose-400 font-mono">0</span>
+                            <span class="text-[11px] text-rose-600/80 dark:text-rose-400/80 block">Excluded Days</span>
+                        </div>
+                    </div>
+
+                    <!-- Recognized Excluded Holidays in Span -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Holidays Falling Within Selected Span</h3>
+                            <span id="bizHolidaysBadge" class="text-[11px] font-mono bg-slate-100 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">0 Total</span>
+                        </div>
+                        <div id="bizHolidaysList" class="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 max-h-36 overflow-y-auto">
+                            <!-- Populated with recognized holidays -->
+                            <p class="text-slate-400 italic">No recognized holidays fall within this date span.</p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Mini Calendar for Working Days -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <button onclick="stepBizCalMonth(-1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Previous Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <span id="bizCalMonthYear" class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Month Year</span>
+                            <button onclick="stepBizCalMonth(1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Next Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 mb-1">
+                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                        </div>
+
+                        <div id="bizCalGrid" class="grid grid-cols-7 gap-1 text-center">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+
+                        <!-- Legend -->
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-emerald-500"></span> Working Day</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-slate-300 dark:bg-slate-700"></span> Weekend</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-amber-500"></span> Federal Holiday</span>
+                            <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded bg-rose-500"></span> Custom Holiday</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: DATE OFFSET (ADD / SUBTRACT DAYS)   -->
+        <!-- ========================================== -->
+        <div id="tab-offset" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Input Card -->
+                <div class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 flex items-center justify-center text-xs font-bold">03</span>
+                        Date Arithmetic &amp; Offsets
+                    </h2>
+
+                    <!-- Base Date -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="offsetBaseDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider">Start / Anchor Date</label>
+                            <button onclick="setOffsetBaseToday()" class="text-[11px] text-sky-600 dark:text-sky-400 font-semibold hover:underline">Set Today</button>
+                        </div>
+                        <input type="date" id="offsetBaseDate" onchange="calculateDateOffset()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-medium text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                    </div>
+
+                    <!-- Operation Selector (Add vs Subtract) -->
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Operation</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" id="offsetOpAdd" onclick="setOffsetOperation('add')" class="py-2.5 rounded-xl font-bold text-xs border border-sky-600 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 flex items-center justify-center gap-1.5 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Add (+) Future
+                            </button>
+                            <button type="button" id="offsetOpSub" onclick="setOffsetOperation('subtract')" class="py-2.5 rounded-xl font-bold text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1.5 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                                Subtract (&minus;) Past
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Value & Unit -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="offsetAmount" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Quantity</label>
+                            <input type="number" id="offsetAmount" value="30" min="1" max="10000" oninput="calculateDateOffset()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono font-bold text-sm focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label for="offsetUnit" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Unit Type</label>
+                            <select id="offsetUnit" onchange="calculateDateOffset()" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <option value="calendar-days" selected>Calendar Days</option>
+                                <option value="business-days">Business Days (Skip Weekends &amp; Holidays)</option>
+                                <option value="weeks">Weeks</option>
+                                <option value="months">Months</option>
+                                <option value="years">Years</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Quick Offset Buttons -->
+                    <div>
+                        <span class="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Quick Presets</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            <button onclick="setQuickOffset(15, 'calendar-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">15 Days</button>
+                            <button onclick="setQuickOffset(30, 'calendar-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">30 Days</button>
+                            <button onclick="setQuickOffset(60, 'calendar-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">60 Days</button>
+                            <button onclick="setQuickOffset(90, 'calendar-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">90 Days</button>
+                            <button onclick="setQuickOffset(20, 'business-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">20 Biz Days</button>
+                            <button onclick="setQuickOffset(180, 'calendar-days')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">180 Days</button>
+                            <button onclick="setQuickOffset(1, 'years')" class="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-700/80 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300">1 Year</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Results Card -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Primary Offset Result Card -->
+                    <div class="bg-gradient-to-br from-sky-950 via-slate-900 to-indigo-950 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-semibold uppercase tracking-widest text-sky-300">Calculated Target Date</span>
+                                <span id="offsetResultBadge" class="text-xs bg-sky-500/20 text-sky-200 px-2.5 py-0.5 rounded-full font-mono">Future</span>
+                            </div>
+                            <div class="mt-2">
+                                <span id="offsetResultDate" class="text-3xl sm:text-4xl font-black tracking-tight text-white block">Thursday, November 26, 2026</span>
+                            </div>
+                            <div id="offsetIsoDate" class="mt-2 text-sm text-sky-200/90 font-mono font-medium">ISO 8601: 2026-11-26</div>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-sky-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- Target Date Technical Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Day of the Week</span>
+                            <span id="offsetDayOfWeek" class="text-base font-bold text-slate-900 dark:text-white block">Thursday</span>
+                            <span id="offsetIsWeekend" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Weekday</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">ISO Week Number</span>
+                            <span id="offsetIsoWeek" class="text-base font-bold text-slate-900 dark:text-white font-mono block">Week 48</span>
+                            <span id="offsetDayOfYear" class="text-[11px] text-slate-400 block">Day 330 of 365</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">From Today</span>
+                            <span id="offsetDaysFromToday" class="text-base font-bold text-sky-600 dark:text-sky-400 font-mono block">41 Days</span>
+                            <span id="offsetDirectionLabel" class="text-[11px] text-slate-400 block">in the future</span>
+                        </div>
+                        <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-sm">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider block">Leap Year Check</span>
+                            <span id="offsetLeapYear" class="text-base font-bold text-slate-900 dark:text-white block">Common Year</span>
+                            <span class="text-[11px] text-indigo-500 font-medium">Feb has 28 days</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Date Visual Month View -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <button onclick="stepOffsetCalMonth(-1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Previous Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                            <span id="offsetCalMonthYear" class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">November 2026</span>
+                            <button onclick="stepOffsetCalMonth(1)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300" title="Next Month">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-7 text-center text-[10px] font-bold text-slate-400 mb-1">
+                            <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                        </div>
+
+                        <div id="offsetCalGrid" class="grid grid-cols-7 gap-1 text-center">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+
+                        <div class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px]">
+                            <button onclick="copyOffsetResult()" class="text-sky-600 dark:text-sky-400 font-bold hover:underline flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                Copy Target Date
+                            </button>
+                            <span class="text-slate-400">Highlighted in blue</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 4: COUNTDOWN / TIME UNTIL EVENT        -->
+        <!-- ========================================== -->
+        <div id="tab-countdown" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                
+                <!-- Left Preset & Config Card -->
+                <div class="lg:col-span-5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 sm:p-6 shadow-sm space-y-4">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 flex items-center justify-center text-xs font-bold">04</span>
+                        Milestone Ticker Configuration
+                    </h2>
+
+                    <!-- Presets Selection -->
+                    <div>
+                        <label for="cdPresetSelect" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1.5">Select Popular Milestone</label>
+                        <select id="cdPresetSelect" onchange="applyCountdownPreset()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                            <option value="new-year">Next New Year's Day (Jan 1)</option>
+                            <option value="summer-solstice">Summer Solstice (Jun 21)</option>
+                            <option value="christmas">Christmas Day (Dec 25)</option>
+                            <option value="independence">US Independence Day (Jul 4)</option>
+                            <option value="custom">-- Custom Event / Date --</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom Event Form -->
+                    <div id="cdCustomGroup" class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+                        <div>
+                            <label for="cdCustomTitle" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Event Title</label>
+                            <input type="text" id="cdCustomTitle" value="Product Launch Milestone" oninput="updateCountdown()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label for="cdCustomDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Target Date</label>
+                                <input type="date" id="cdCustomDate" onchange="updateCountdown()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium">
+                            </div>
+                            <div>
+                                <label for="cdCustomTime" class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-1">Target Time</label>
+                                <input type="time" id="cdCustomTime" value="00:00" onchange="updateCountdown()" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white text-xs font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-300">
+                        <strong>Live High-Precision Ticker:</strong> Updates every second based on your local device clock and calculates the precise elapsed distance in astronomical days.
+                    </div>
+                </div>
+
+                <!-- Right Countdown Clock Display -->
+                <div class="lg:col-span-7 space-y-6">
+                    <div class="bg-gradient-to-br from-amber-950 via-slate-900 to-stone-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden text-center">
+                        <div class="relative z-10">
+                            <span id="cdDisplayEventName" class="text-xs sm:text-sm font-bold uppercase tracking-widest text-amber-300 block mb-1">Next New Year's Day</span>
+                            <span id="cdDisplayTargetDate" class="text-xs text-slate-400 block mb-6 font-mono">January 1, 2027 at 00:00:00</span>
+
+                            <!-- 4 Live Digits Grid -->
+                            <div class="grid grid-cols-4 gap-2 sm:gap-4 max-w-lg mx-auto">
+                                <div class="bg-white/10 backdrop-blur rounded-2xl p-3 sm:p-4 border border-white/10">
+                                    <span id="cdDays" class="text-3xl sm:text-5xl font-black font-mono block text-white">00</span>
+                                    <span class="text-[10px] sm:text-xs uppercase font-bold text-amber-300 tracking-wider">Days</span>
+                                </div>
+                                <div class="bg-white/10 backdrop-blur rounded-2xl p-3 sm:p-4 border border-white/10">
+                                    <span id="cdHours" class="text-3xl sm:text-5xl font-black font-mono block text-white">00</span>
+                                    <span class="text-[10px] sm:text-xs uppercase font-bold text-amber-300 tracking-wider">Hours</span>
+                                </div>
+                                <div class="bg-white/10 backdrop-blur rounded-2xl p-3 sm:p-4 border border-white/10">
+                                    <span id="cdMinutes" class="text-3xl sm:text-5xl font-black font-mono block text-white">00</span>
+                                    <span class="text-[10px] sm:text-xs uppercase font-bold text-amber-300 tracking-wider">Minutes</span>
+                                </div>
+                                <div class="bg-white/10 backdrop-blur rounded-2xl p-3 sm:p-4 border border-white/10">
+                                    <span id="cdSeconds" class="text-3xl sm:text-5xl font-black font-mono block text-white">00</span>
+                                    <span class="text-[10px] sm:text-xs uppercase font-bold text-amber-300 tracking-wider">Seconds</span>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="mt-8 max-w-md mx-auto">
+                                <div class="flex justify-between text-xs text-slate-400 mb-1">
+                                    <span>Annual Progress Towards Milestone</span>
+                                    <span id="cdProgressPct" class="font-mono text-amber-300 font-bold">0%</span>
+                                </div>
+                                <div class="w-full bg-white/10 h-2.5 rounded-full overflow-hidden">
+                                    <div id="cdProgressBar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full rounded-full transition-all duration-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute -right-8 -bottom-8 w-44 h-44 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                    </div>
+
+                    <!-- Milestone Fact Box -->
+                    <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm text-xs text-slate-600 dark:text-slate-400 space-y-2">
+                        <h3 class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/></svg>
+                            Solar &amp; Astronomical Calibration
+                        </h3>
+                        <p>The astronomical length of one mean solar day is defined by the International Earth Rotation and Reference Systems Service (IERS) as exactly 86,400 SI seconds. Countdowns to solstices and annual epochs align with the tropical year of approximately 365.24219 days.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 5: PRINTABLE AUDIT REPORT              -->
+        <!-- ========================================== -->
+        <div id="tab-print" class="tab-panel">
+            <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-8 shadow-sm">
+                
+                <!-- Report Header -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-700 gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">DC</span>
+                            <span class="text-xl font-bold text-slate-900 dark:text-white">CalcWorld Date &amp; Business Day Audit Report</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">Formal Calendar Duration, Working Day Calculation &amp; Statutory Holiday Audit</p>
+                    </div>
+                    <div class="flex items-center gap-2 no-print">
+                        <button onclick="window.print()" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm transition">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            Print / Save as PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Report Metadata Input Row (editable before printing) -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700/60 text-xs">
+                    <div>
+                        <span class="font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider text-[10px]">Project / Docket Reference</span>
+                        <input type="text" id="printProjectRef" value="Q4 Corporate Operations &amp; Contract Audit" class="w-full bg-transparent font-bold text-slate-900 dark:text-white border-b border-transparent focus:border-brand-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider text-[10px]">Date Interval Audited</span>
+                        <span id="printIntervalSpan" class="font-bold text-slate-900 dark:text-white block font-mono">2026-10-16 to 2026-12-31</span>
+                    </div>
+                    <div>
+                        <span class="font-bold text-slate-500 dark:text-slate-400 block uppercase tracking-wider text-[10px]">Audit Generation Timestamp</span>
+                        <span id="printGeneratedTime" class="font-bold text-slate-900 dark:text-white block font-mono">--</span>
+                    </div>
+                </div>
+
+                <!-- Summary Breakdown Table -->
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <thead class="bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 font-bold uppercase text-[10px] tracking-wider">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Metric Classification</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Days / Units</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Percentage of Span</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Statutory / Regulatory Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60 font-mono">
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Gross Calendar Days</td>
+                                <td id="printGrossDays" class="p-3 font-bold text-slate-900 dark:text-white">0 Days</td>
+                                <td class="p-3">100.0%</td>
+                                <td class="p-3 font-sans text-slate-500">Full inclusive astronomical duration</td>
+                            </tr>
+                            <tr class="bg-emerald-50/50 dark:bg-emerald-950/20">
+                                <td class="p-3 font-bold font-sans text-emerald-800 dark:text-emerald-300">Net Working Days (Business Days)</td>
+                                <td id="printNetWorkDays" class="p-3 font-bold text-emerald-600 dark:text-emerald-400">0 Days</td>
+                                <td id="printWorkDaysPct" class="p-3 text-emerald-700 dark:text-emerald-300">0.0%</td>
+                                <td class="p-3 font-sans text-emerald-700 dark:text-emerald-400">Excludes scheduled weekends &amp; recognized statutory holidays</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Scheduled Weekend Days</td>
+                                <td id="printWeekendDays" class="p-3">0 Days</td>
+                                <td id="printWeekendPct" class="p-3 text-slate-500">0.0%</td>
+                                <td class="p-3 font-sans text-slate-500">Standard weekly non-working days (Saturday &amp; Sunday)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Recognized Federal Holidays</td>
+                                <td id="printFedHolidays" class="p-3 text-amber-600 dark:text-amber-400 font-bold">0 Days</td>
+                                <td id="printFedPct" class="p-3 text-amber-600 dark:text-amber-400">0.0%</td>
+                                <td class="p-3 font-sans text-slate-500">Statutory public closures per 5 U.S.C. 6103</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Custom Excluded Closures</td>
+                                <td id="printCustomHolidays" class="p-3 text-rose-600 dark:text-rose-400 font-bold">0 Days</td>
+                                <td id="printCustomPct" class="p-3 text-rose-600 dark:text-rose-400">0.0%</td>
+                                <td class="p-3 font-sans text-slate-500">Organization-specific closures / enterprise shutdown</td>
+                            </tr>
+                            <tr class="bg-indigo-50/50 dark:bg-indigo-950/20 font-bold">
+                                <td class="p-3 font-sans text-indigo-900 dark:text-indigo-200">Total Billable Working Hours</td>
+                                <td id="printBillableHours" class="p-3 text-indigo-600 dark:text-indigo-400">0.0 Hours</td>
+                                <td class="p-3">--</td>
+                                <td class="p-3 font-sans text-indigo-700 dark:text-indigo-300">Based on standard 8.0 hours/workday standard</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Sign-off / Verification Block -->
+                <div class="mt-8 pt-6 border-t border-slate-200 dark:border-slate-700 grid grid-cols-2 gap-8 text-xs text-slate-500">
+                    <div>
+                        <span class="block font-bold text-slate-700 dark:text-slate-300 mb-6">Prepared / Audited By:</span>
+                        <div class="border-b border-slate-300 dark:border-slate-600 pb-1">Signature: __________________________</div>
+                    </div>
+                    <div>
+                        <span class="block font-bold text-slate-700 dark:text-slate-300 mb-6">Authorized Approval:</span>
+                        <div class="border-b border-slate-300 dark:border-slate-600 pb-1">Date: _______________________________</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- PDF Lead Generation Box -->
+        <div class="lead-box my-8 bg-gradient-to-r from-brand-900 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white shadow-md no-print">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-1 text-center md:text-left">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-brand-300">Free Printable PDF Tool</span>
+                    <h3 class="text-xl font-extrabold text-white">Download the 2026-2027 Working Days &amp; Federal Holiday Reference Sheet</h3>
+                    <p class="text-xs text-indigo-200 max-w-xl">Get our full multi-year business day matrix, statutory holiday schedule with 5 U.S.C. 6103 observed day rules, and financial day count convention cheat sheet in one convenient PDF document.</p>
+                </div>
+                <form onsubmit="handleLeadSubmit(event)" class="flex flex-col sm:flex-row gap-2 w-full md:w-auto shrink-0">
+                    <input type="email" id="leadEmailInput" required placeholder="Enter your work email" class="px-3.5 py-2.5 rounded-xl text-slate-900 text-xs w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                    <button type="submit" id="leadSubmitBtn" class="px-4 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 font-bold text-xs text-white shrink-0 transition">
+                        Get Free PDF
+                    </button>
+                </form>
+            </div>
+            <div id="leadSuccessMsg" class="hidden mt-3 text-xs text-emerald-300 text-center md:text-left">
+                &check; Success! Your reference sheet download link has been queued.
+            </div>
+        </div>
+
+        <!-- Ad Slot 3: Mid-Page Banner -->
+        <div id="ad-slot-3" class="ad-slot no-print" aria-label="Advertisement Slot 3">
+            <span>Advertisement &bull; Date Math &amp; Calendrical Standards</span>
+        </div>
+        <!-- ========================================== -->
+        <!-- EDUCATIONAL GUIDE & SCIENTIFIC REFERENCE   -->
+        <!-- ========================================== -->
+        <article class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-10 shadow-sm mt-8 no-print space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base">
+            
+            <!-- Article Header -->
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-6">
+                <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400 block mb-1">Authoritative Horology &amp; Calendrical Reference</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">The Mechanics of Civil Time: Gregorian Calendar Reform, Financial Day Count Conventions, and ISO 8601 Standards</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2">A technical analysis of astronomical year lengths, intercalary leap rules, statutory holiday observations, and bond market day count math.</p>
+            </div>
+
+            <!-- Section 1: The Gregorian Reform of 1582 -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">1.</span>
+                    The Gregorian Calendar Reform of 1582 and Papal Bull <em>Inter Gravissimas</em>
+                </h3>
+                <p>
+                    Civil timekeeping in the modern era relies on the Gregorian calendar, promulgated in February 1582 by Pope Gregory XIII through the papal bull <em>Inter gravissimas</em>. To understand why this reform was instituted, one must examine the fundamental discrepancy between Earth's orbital period and the preceding Julian calendar system established by Julius Caesar in 45 BC.
+                </p>
+                <p>
+                    The Julian calendar operated on an uncomplicated intercalary formula: every fourth year inserted an extra leap day into the calendar, resulting in an average annual duration of exactly 365.25 mean solar days. However, precise measurements by the United States Naval Observatory (USNO) and modern astronomers demonstrate that the true astronomical tropical year—the duration required for the Sun to return to the identical position along the ecliptic relative to the vernal equinox—is approximately 365.242189 mean solar days.
+                </p>
+                <p>
+                    This tiny difference of 0.007811 days per year equals approximately 11 minutes and 14 seconds annually. While seemingly modest over a single human lifespan, this surplus accumulated systematically at a rate of roughly 1 full calendar day every 128 years. By the late sixteenth century, the cumulative drift had reached 10 full calendar days.
+                </p>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 font-mono text-xs sm:text-sm space-y-2">
+                    <div class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">The Tropical Year Discrepancy Formulation:</div>
+                    <div>$$\Delta t_{\text{annual}} = 365.25 - 365.242189 = 0.007811\text{ days} \approx 11\text{ minutes } 14.87\text{ seconds}$$</div>
+                    <div>$$\text{Drift Rate} = \frac{1}{0.007811} \approx 128.02\text{ years per accumulated day}$$</div>
+                </div>
+                <p>
+                    This astronomical shift created significant theological and ecclesiastical complications. The First Council of Nicaea in 325 AD had formalized the calculation of Easter as the first Sunday following the full moon that occurs on or after the vernal equinox, which was fixed at March 21 in the fourth century. Because of the 11-minute annual Julian drift, the actual astronomical vernal equinox had retreated to March 11 by the year 1582. The date of Easter was drifting progressively deeper into late spring and summer.
+                </p>
+            </section>
+
+            <!-- Section 2: The 10-Day Deletion and Adoption Timeline -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">2.</span>
+                    The 10-Day Deletion and Global Calendar Transition
+                </h3>
+                <p>
+                    To eliminate the accumulated error and realign the civil calendar with the vernal equinox, Pope Gregory XIII directed a mathematical correction devised primarily by the Calabrian physician and astronomer Aloysius Lilius (Luigi Lilio) and the Jesuit mathematician Christopher Clavius.
+                </p>
+                <p>
+                    The solution required an immediate chronological excision. In October 1582, ten days were completely removed from the civil timeline:
+                </p>
+                <div class="p-4 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 text-xs sm:text-sm font-semibold text-indigo-900 dark:text-indigo-200 flex items-center justify-between">
+                    <span>Thursday, 4 October 1582</span>
+                    <span class="text-brand-600 dark:text-brand-400 font-mono font-bold">&rarr; Next Day &rarr;</span>
+                    <span>Friday, 15 October 1582</span>
+                </div>
+                <p>
+                    Crucially, the seven-day cycle of the week was kept strictly continuous. Thursday was followed immediately by Friday, ensuring that the ancient sequence of religious sabbaths remained uninterrupted despite the 10-digit skip in date numerals.
+                </p>
+                <p>
+                    Adoption across sovereign nations occurred in staggered waves based on religious and political alignments:
+                </p>
+                <ul class="list-disc list-inside space-y-1.5 pl-2">
+                    <li><strong>October 1582:</strong> Catholic states including Spain, Portugal, Poland-Lithuania, and most Italian states enacted the reform immediately. France transitioned two months later in December 1582 (skipping 10 days from December 9 to December 20).</li>
+                    <li><strong>September 1752:</strong> Great Britain and the British Empire (including the American colonies) adopted the calendar via the Calendar (New Style) Act 1750. Because another 170 years of Julian drift had passed, an 11-day omission was required: Wednesday, 2 September 1752 was followed by Thursday, 14 September 1752.</li>
+                    <li><strong>Early 20th Century:</strong> Orthodox nations retained the Julian calendar until the collapse of imperial empires. Russia adopted the Gregorian system in February 1918 following the Bolshevik decree (omitting 13 days from January 31 to February 14, 1918), Greece adopted it in 1923, and Turkey adopted it in 1926.</li>
+                </ul>
+            </section>
+
+            <!-- Section 3: The 400-Year Leap Year Mathematical Rule -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">3.</span>
+                    The 400-Year Leap Year Rule and Century Divisibility
+                </h3>
+                <p>
+                    Deleting ten days addressed the historical error, but preventing future drift required revising the leap year insertion schedule. The Julian rule of adding a leap day every four years created an excess of three leap days every four centuries (3.12 days every 400 years).
+                </p>
+                <p>
+                    The Gregorian rule corrected this with an elegant numerical test:
+                </p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-3">
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="font-bold text-brand-600 dark:text-brand-400 block text-xs uppercase mb-1">Standard Rule</span>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">Any year evenly divisible by 4 is a leap year containing 366 days.</p>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="font-bold text-amber-600 dark:text-amber-400 block text-xs uppercase mb-1">Century Exception</span>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">Century years ending in 00 (divisible by 100) are common years (365 days).</p>
+                    </div>
+                    <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <span class="font-bold text-emerald-600 dark:text-emerald-400 block text-xs uppercase mb-1">The 400 Exception</span>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">Century years divisible by 400 remain leap years with 366 days.</p>
+                    </div>
+                </div>
+                <p>
+                    Under this system, the years 1600, 2000, and 2400 are leap years, whereas 1700, 1800, 1900, 2100, 2200, and 2300 are regular common years of 365 days. Across any 400-year cycle, there are exactly 97 leap years and 303 common years:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 font-mono text-xs sm:text-sm space-y-1">
+                    <div>$$\text{Total Days in 400 Years} = (303 \times 365) + (97 \times 366) = 110{,}595 + 35{,}502 = 146{,}097\text{ days}$$</div>
+                    <div>$$\text{Average Gregorian Year Length} = \frac{146{,}097}{400} = 365.2425\text{ days}$$</div>
+                </div>
+                <p>
+                    Comparing the Gregorian average year (365.2425 days) to the tropical year (365.242189 days) reveals a tiny residual variance of just 0.000311 days (approx. 26.8 seconds) per year. The Gregorian calendar requires approximately 3,215 years to accumulate a single day of error, providing stability for civil and commercial institutions.
+                </p>
+            </section>
+
+            <!-- Ad Slot 4: Mid-Article Responsive Unit -->
+            <div id="ad-slot-4" class="ad-slot" aria-label="Advertisement Slot 4">
+                <span>Advertisement &bull; Financial Day Count Math</span>
+            </div>
+
+            <!-- Section 4: Day Count Conventions in Financial Markets -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">4.</span>
+                    Day Count Conventions in Financial Markets
+                </h3>
+                <p>
+                    In fixed-income markets, debt securities, derivative swaps, and corporate finance, calculating the exact amount of accrued interest payable across an arbitrary date span requires standardized day count conventions. Because different calendar months contain varying numbers of days (28, 29, 30, or 31), market participants developed formal conventions defined by organizations like the International Capital Market Association (ICMA) and the International Swaps and Derivatives Association (ISDA).
+                </p>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <thead class="bg-slate-100 dark:bg-slate-700/50 font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                            <tr>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Convention</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Days Counted (Numerator)</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Year Basis (Denominator)</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Primary Financial Instruments</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60 font-mono text-xs">
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Actual/Actual (ICMA)</td>
+                                <td class="p-3">Actual calendar days</td>
+                                <td class="p-3">Actual days in coupon year (365 or 366)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-400">US Treasury bonds, Eurobonds, UK Gilts</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">30/360 (Bond Basis)</td>
+                                <td class="p-3">Assumes 30 days per month</td>
+                                <td class="p-3">Fixed 360-day year</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-400">US corporate bonds, Municipal bonds</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Actual/360 (French)</td>
+                                <td class="p-3">Actual calendar days</td>
+                                <td class="p-3">Fixed 360-day year</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-400">US Treasury bills, Commercial paper, SOFR/interbank lending</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-bold font-sans text-slate-900 dark:text-white">Actual/365 Fixed</td>
+                                <td class="p-3">Actual calendar days</td>
+                                <td class="p-3">Fixed 365-day year</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-400">UK money markets, Australian/Canadian short-term paper</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p>
+                    Under the <strong>Actual/360</strong> convention common in commercial paper and money markets, an investor collects an interest fraction based on actual elapsed days divided by 360. Because a normal calendar year contains 365 days, a full year of interest under Actual/360 yields an effective rate equal to $365 / 360 = 1.01389$ times the stated coupon rate (an additional 1.39% in cash earnings relative to nominal interest).
+                </p>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 font-mono text-xs sm:text-sm">
+                    $$\text{Accrued Interest} = \text{Notional} \times \text{Coupon Rate} \times \left( \frac{\text{Days Counted}}{\text{Year Basis}} \right)$$
+                </div>
+            </section>
+
+            <!-- Section 5: ISO 8601 Date Formatting Standards -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">5.</span>
+                    ISO 8601 Standard for Date and Time Representations
+                </h3>
+                <p>
+                    To resolve confusion arising from localized date notations—where <code>03/04/2026</code> denotes March 4 in the United States but April 3 in the United Kingdom and Europe—the International Organization for Standardization published ISO 8601.
+                </p>
+                <p>
+                    ISO 8601 uses the big-endian format (descending from the largest temporal unit to the smallest), providing natural alphabetical sorting in computational databases:
+                </p>
+                <ul class="list-disc list-inside space-y-1.5 pl-2">
+                    <li><strong>Calendar Date:</strong> Expressed as <code>YYYY-MM-DD</code> (such as <code>2026-10-16</code>). Hyphens serve as standard separators.</li>
+                    <li><strong>Ordinal Date:</strong> Expressed as <code>YYYY-DDD</code>, indicating the year followed by the three-digit day of the year from <code>001</code> to <code>365</code> (or <code>366</code> in leap years). For example, <code>2026-289</code> represents the 289th day of 2026.</li>
+                    <li><strong>Week Date:</strong> Expressed as <code>YYYY-Www-D</code>, where <code>W</code> identifies the week designator, <code>ww</code> represents the two-digit week number (01 to 53), and <code>D</code> represents the day of the week from 1 (Monday) to 7 (Sunday).</li>
+                </ul>
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm space-y-2">
+                    <div class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">The ISO Week Numbering Algorithm:</div>
+                    <p class="text-slate-600 dark:text-slate-400">
+                        ISO 8601 defines <strong>Week 01</strong> as the week containing the first Thursday of the new Gregorian year, or equivalently, the week that contains January 4. Because Thursday is the middle day of a Monday-to-Sunday week, whichever year contains the majority of days in that week owns the week number. Consequently, late December days can belong to Week 01 of the subsequent year, or early January days can belong to Week 52 or 53 of the preceding year.
+                    </p>
+                </div>
+            </section>
+
+            <!-- Section 6: Astronomical Citations: USNO & IERS -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">6.</span>
+                    Astronomical Timekeeping: US Naval Observatory (USNO) and the IERS
+                </h3>
+                <p>
+                    Civil dates are grounded in atomic and celestial reference frames. The United States Naval Observatory (USNO) in Washington, D.C., maintains the master atomic clock ensemble that provides the precise reference standard for United States civil time and the Global Positioning System (GPS).
+                </p>
+                <p>
+                    Concurrently, the International Earth Rotation and Reference Systems Service (IERS), based in Paris and Frankfurt, monitors the precise orientation and angular rotation speed of Earth using Very Long Baseline Interferometry (VLBI) and satellite laser ranging. Because tidal friction from the Moon, mantle convection, and atmospheric wind patterns cause tiny fluctuations in Earth's axial rotation, astronomical mean solar time (UT1) drifts relative to ultra-stable International Atomic Time (TAI).
+                </p>
+                <p>
+                    To keep Universal Coordinated Time (UTC) aligned within 0.9 seconds of UT1, the IERS coordinates the insertion of leap seconds at the conclusion of June 30 or December 31 when required, ensuring long-term fidelity between civil calendar dates and astronomical daylight.
+                </p>
+            </section>
+
+            <!-- Section 7: Federal Holiday Observation Rules (5 U.S.C. 6103) -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="text-brand-600 dark:text-brand-400">7.</span>
+                    Statutory Holidays and Observed Rules Under 5 U.S.C. 6103
+                </h3>
+                <p>
+                    In public law and commercial contracts, calculating working days requires accounting for statutory public holidays. In the United States, federal public holidays are established by Congress under Title 5, Section 6103 of the United States Code.
+                </p>
+                <p>
+                    The eleven official United States federal holidays include:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>New Year's Day:</strong> January 1</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Martin Luther King Jr. Day:</strong> 3rd Monday in January</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Washington's Birthday:</strong> 3rd Monday in February</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Memorial Day:</strong> Last Monday in May</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Juneteenth National Independence Day:</strong> June 19</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Independence Day:</strong> July 4</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Labor Day:</strong> 1st Monday in September</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Columbus / Indigenous Peoples' Day:</strong> 2nd Monday in October</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Veterans Day:</strong> November 11</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700"><strong>Thanksgiving Day:</strong> 4th Thursday in November</div>
+                    <div class="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 sm:col-span-2"><strong>Christmas Day:</strong> December 25</div>
+                </div>
+                <p>
+                    When a fixed-date federal holiday falls on a weekend, 5 U.S.C. 6103(b) dictates the observation rule: if the holiday falls on a <strong>Saturday</strong>, federal employees receive the preceding <strong>Friday</strong> as their paid public holiday; if the holiday falls on a <strong>Sunday</strong>, the following <strong>Monday</strong> serves as the observed holiday. Our business day calculator engine models this statutory shift to yield compliant business day counts.
+                </p>
+            </section>
+
+        </article>
+
+        <!-- Ad Slot 5: Above FAQ Unit -->
+        <div id="ad-slot-5" class="ad-slot no-print" aria-label="Advertisement Slot 5">
+            <span>Advertisement &bull; Verified Horological Knowledge Base</span>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- FREQUENTLY ASKED QUESTIONS (FAQ)           -->
+        <!-- ========================================== -->
+        <section class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 sm:p-10 shadow-sm mt-8 no-print space-y-6">
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 block mb-1">Common Inquiries</span>
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white">Frequently Asked Questions: Day Counting &amp; Date Math</h2>
+            </div>
+
+            <div class="space-y-3">
+                <!-- FAQ Item 1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(1)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>How does the 400-year leap year rule work in the Gregorian calendar?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Under the Gregorian calendar established in 1582, a year is a leap year if it is evenly divisible by 4, with one critical exception: century years divisible by 100 are common years (365 days) unless they are also evenly divisible by 400. Thus, years 1600 and 2000 were leap years, whereas years 1700, 1800, 1900, and 2100 are common years. This mathematical adjustment yields an average calendar year of 365.2425 days, closely matching the mean tropical year of approximately 365.24219 days.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(2)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>Why were ten calendar days dropped in October 1582?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        The prior Julian calendar assumed a tropical year length of exactly 365.25 days. Because the true solar year is about 11 minutes and 14 seconds shorter, the calendar drifted by approximately one full day every 128 years. By 1582, the vernal equinox had shifted backward from March 21 to March 11. Pope Gregory XIII issued the papal bull Inter Gravissimas, decreeing that Thursday, 4 October 1582 be followed immediately by Friday, 15 October 1582, restoring the astronomical vernal equinox to March 21 for Easter computation.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(3)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>What are the common financial day count conventions such as Actual/Actual and 30/360?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Financial contracts calculate accrued interest using established day count conventions. Actual/Actual counts the exact number of elapsed calendar days divided by the actual days in the period or year, standard for US Treasury bonds. The 30/360 convention assumes each month has 30 days and a year has 360 days, common for corporate and municipal bonds. The Actual/360 convention takes exact calendar days divided by a 360-day year, standard in US money markets and commercial paper.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(4)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>How does ISO 8601 define calendar dates, week dates, and ordinal dates?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        ISO 8601 is the international standard for date and time representation. Standard calendar dates follow YYYY-MM-DD format (such as 2026-10-16). Week dates follow YYYY-Www-D, where Week 01 is defined as the week with the first Thursday of the Gregorian year. Ordinal dates follow YYYY-DDD, representing the year and the sequential day of the year from 001 to 365 (or 366 in leap years).
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(5)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>How are US federal holidays observed when falling on a weekend?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Under Title 5 Section 6103 of the United States Code, when a federal holiday falls on a Saturday, the preceding Friday is observed as a legal public holiday for federal employees. When a federal holiday falls on a Sunday, the following Monday is treated as the observed public holiday.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(6)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>What is the difference between working days and calendar days?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Calendar days include all 7 days of each week from Monday through Sunday, including public holidays. Working days (also called business days) exclude standard non-working weekend days (typically Saturday and Sunday in Western commerce) as well as statutory public and banking holidays.
+                    </div>
+                </div>
+
+                <!-- FAQ Item 7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(7)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>What astronomical bodies regulate the tropical year and leap seconds?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        The tropical year is measured by astronomical institutions including the United States Naval Observatory (USNO) and the International Earth Rotation and Reference Systems Service (IERS). Earth's rotational speed fluctuates due to tidal friction and atmospheric mass redistribution, prompting the IERS to monitor Delta T and coordinate leap seconds relative to Universal Coordinated Time (UTC).
+                    </div>
+                </div>
+
+                <!-- FAQ Item 8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(8)" class="w-full text-left p-4 font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                        <span>How does the date offset calculator determine the target date when adding business days?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 shrink-0 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="hidden p-4 pt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        When adding or subtracting business days, the calculator steps forward or backward day-by-day. On each step, it checks whether the day is a weekend day or an enabled holiday. If so, it advances without decrementing the remaining business day tally until the exact target quota of valid business days is satisfied.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Floating Bottom Bar -->
+    <div id="floatingBar" class="fixed bottom-0 inset-x-0 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 py-2.5 px-4 z-40 no-print flex items-center justify-between shadow-lg">
+        <div class="max-w-7xl mx-auto w-full flex items-center justify-between text-xs sm:text-sm">
+            <div class="flex items-center gap-3">
+                <span class="font-bold text-slate-900 dark:text-white hidden sm:inline">Active Duration:</span>
+                <span class="font-mono font-bold text-brand-600 dark:text-brand-400" id="floatDurationText">0 Calendar Days</span>
+                <span class="text-slate-400 hidden md:inline">&bull;</span>
+                <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400 hidden md:inline" id="floatBizDaysText">0 Working Days</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="switchTab('print')" class="px-3.5 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    Print Audit
+                </button>
+                <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" title="Back to top">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMsg">Action completed successfully</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 mt-12 text-xs text-slate-500 dark:text-slate-400 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="w-6 h-6 rounded bg-brand-600 text-white font-bold flex items-center justify-center text-xs">DC</span>
+                <span class="font-bold text-slate-700 dark:text-slate-300">CalcWorld Calendar &amp; Horology Engine</span>
+                <span>&copy; 2026 CalcWorld. All rights reserved.</span>
+            </div>
+            <div class="flex items-center gap-4 text-xs">
+                <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Calculators</a>
+                <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+            </div>
+        </div>
+    </footer>
+    <!-- Date Math & Horological Engine Script -->
+    <script>
+    // --- Global State & Configuration ---
+    let betweenChart = null;
+    let customHolidays = [
+        { date: '2026-11-27', name: 'Day After Thanksgiving' },
+        { date: '2026-12-24', name: 'Christmas Eve' },
+        { date: '2026-12-31', name: "New Year's Eve" }
+    ];
+
+    let currentOffsetOp = 'add';
+    let betweenCalDate = new Date();
+    let bizCalDate = new Date();
+    let offsetCalDate = new Date();
+    let countdownInterval = null;
+
+    // --- Helper: Format & Parse Dates ---
+    function formatYMD(d) {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    }
+
+    function parseYMD(str) {
+        if (!str) return new Date();
+        const parts = str.split('-');
+        return new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+    }
+
+    function isLeapYear(year) {
+        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    }
+
+    function getDayOfYear(date) {
+        const start = new Date(date.getFullYear(), 0, 1);
+        const diff = date - start;
+        return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+    }
+
+    function getIsoWeek(date) {
+        const target = new Date(date.valueOf());
+        const dayNr = (date.getDay() + 6) % 7;
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = target.valueOf();
+        target.setMonth(0, 1);
+        if (target.getDay() !== 4) {
+            target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+        }
+        return 1 + Math.ceil((firstThursday - target) / 604800000);
+    }
+
+    function getDayOfWeekName(d) {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[d.getDay()];
+    }
+
+    function getMonthName(monthIndex) {
+        const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        return months[monthIndex];
+    }
+
+    // --- US Federal Holiday Engine (5 U.S.C. 6103) ---
+    function getNthWeekdayOfMonth(year, monthIndex, targetWeekday, n) {
+        let count = 0;
+        for (let day = 1; day <= 31; day++) {
+            const d = new Date(year, monthIndex, day);
+            if (d.getMonth() !== monthIndex) break;
+            if (d.getDay() === targetWeekday) {
+                count++;
+                if (count === n) return d;
+            }
+        }
+        return null;
+    }
+
+    function getLastWeekdayOfMonth(year, monthIndex, targetWeekday) {
+        for (let day = 31; day >= 20; day--) {
+            const d = new Date(year, monthIndex, day);
+            if (d.getMonth() === monthIndex && d.getDay() === targetWeekday) {
+                return d;
+            }
+        }
+        return null;
+    }
+
+    function getObservedDate(date, applyObserved) {
+        if (!applyObserved) return date;
+        const dayOfWeek = date.getDay();
+        if (dayOfWeek === 6) { // Saturday -> Friday
+            const obs = new Date(date);
+            obs.setDate(obs.getDate() - 1);
+            return obs;
+        } else if (dayOfWeek === 0) { // Sunday -> Monday
+            const obs = new Date(date);
+            obs.setDate(obs.getDate() + 1);
+            return obs;
+        }
+        return date;
+    }
+
+    function getActiveFederalHolidaysMap(year, applyObserved) {
+        const map = new Map();
+        const enabledKeys = new Set();
+        document.querySelectorAll('.fed-h-check:checked').forEach(cb => enabledKeys.add(cb.value));
+        const masterEnabled = document.getElementById('bizToggleHolidays').checked;
+        if (!masterEnabled) return map;
+
+        function addH(key, rawDate, name) {
+            if (enabledKeys.has(key)) {
+                const obsDate = getObservedDate(rawDate, applyObserved);
+                const ymd = formatYMD(obsDate);
+                const isObs = obsDate.getTime() !== rawDate.getTime();
+                map.set(ymd, `${name}${isObs ? ' (Observed)' : ''}`);
+            }
+        }
+
+        // 1. New Year's Day: Jan 1
+        addH('new-year', new Date(year, 0, 1), "New Year's Day");
+        // 2. MLK Day: 3rd Monday in Jan
+        addH('mlk', getNthWeekdayOfMonth(year, 0, 1, 3), "Martin Luther King Jr. Day");
+        // 3. Washington's Birthday (Presidents' Day): 3rd Monday in Feb
+        addH('presidents', getNthWeekdayOfMonth(year, 1, 1, 3), "Washington's Birthday");
+        // 4. Memorial Day: Last Monday in May
+        addH('memorial', getLastWeekdayOfMonth(year, 4, 1), "Memorial Day");
+        // 5. Juneteenth: June 19
+        addH('juneteenth', new Date(year, 5, 19), "Juneteenth National Independence Day");
+        // 6. Independence Day: July 4
+        addH('independence', new Date(year, 6, 4), "Independence Day");
+        // 7. Labor Day: 1st Monday in Sep
+        addH('labor', getNthWeekdayOfMonth(year, 8, 1, 1), "Labor Day");
+        // 8. Columbus Day: 2nd Monday in Oct
+        addH('columbus', getNthWeekdayOfMonth(year, 9, 1, 2), "Columbus Day");
+        // 9. Veterans Day: Nov 11
+        addH('veterans', new Date(year, 10, 11), "Veterans Day");
+        // 10. Thanksgiving Day: 4th Thursday in Nov
+        addH('thanksgiving', getNthWeekdayOfMonth(year, 10, 4, 4), "Thanksgiving Day");
+        // 11. Christmas Day: Dec 25
+        addH('christmas', new Date(year, 11, 25), "Christmas Day");
+
+        return map;
+    }
+
+    function isWeekend(date, weekendType) {
+        const d = date.getDay();
+        if (weekendType === 'sat-sun') return d === 0 || d === 6;
+        if (weekendType === 'sun-only') return d === 0;
+        if (weekendType === 'fri-sat') return d === 5 || d === 6;
+        if (weekendType === 'none') return false;
+        return d === 0 || d === 6;
+    }
+
+    // --- Tab 1: Days Between Two Dates ---
+    function calculateDaysBetween() {
+        const startInput = document.getElementById('betweenStartDate');
+        const endInput = document.getElementById('betweenEndDate');
+        const inclusiveCheck = document.getElementById('betweenInclusive');
+
+        let d1 = parseYMD(startInput.value);
+        let d2 = parseYMD(endInput.value);
+
+        // Update day names
+        document.getElementById('betweenStartDayName').textContent = getDayOfWeekName(d1);
+        document.getElementById('betweenEndDayName').textContent = getDayOfWeekName(d2);
+
+        // Ensure chronological order
+        let swapped = false;
+        if (d1 > d2) {
+            const temp = d1;
+            d1 = d2;
+            d2 = temp;
+            swapped = true;
+        }
+
+        const isInclusive = inclusiveCheck.checked;
+        document.getElementById('betweenSpanLabel').textContent = isInclusive ? 'Inclusive Span' : 'Exclusive Span';
+
+        // Calculate total calendar days
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const rawDiffDays = Math.round((d2 - d1) / msPerDay);
+        const totalDays = isInclusive ? rawDiffDays + 1 : rawDiffDays;
+
+        document.getElementById('betweenTotalDays').textContent = totalDays.toLocaleString();
+
+        // Compute Weeks & Days
+        const weeks = Math.floor(totalDays / 7);
+        const remDays = totalDays % 7;
+        document.getElementById('betweenWeeks').textContent = weeks;
+        document.getElementById('betweenWeeksRem').textContent = `+${remDays} day${remDays === 1 ? '' : 's'}`;
+
+        // Compute Weekdays (Mon-Fri) vs Weekend Days (Sat-Sun)
+        let weekdays = 0;
+        let weekends = 0;
+        const cur = new Date(d1);
+        const limit = isInclusive ? totalDays : totalDays;
+
+        for (let i = 0; i < limit; i++) {
+            const dayOfWeek = cur.getDay();
+            if (dayOfWeek === 0 || dayOfWeek === 6) {
+                weekends++;
+            } else {
+                weekdays++;
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+
+        document.getElementById('betweenWeekdays').textContent = weekdays.toLocaleString();
+        document.getElementById('betweenWeekends').textContent = weekends.toLocaleString();
+
+        const weekdayPct = totalDays > 0 ? ((weekdays / totalDays) * 100).toFixed(1) : '0.0';
+        const weekendPct = totalDays > 0 ? ((weekends / totalDays) * 100).toFixed(1) : '0.0';
+        document.getElementById('betweenWeekdayPct').textContent = `${weekdayPct}% of total`;
+        document.getElementById('betweenWeekendPct').textContent = `${weekendPct}% of total`;
+
+        // Hours & Minutes
+        const totalHours = totalDays * 24;
+        const totalMinutes = totalHours * 60;
+        document.getElementById('betweenHours').textContent = totalHours.toLocaleString();
+        document.getElementById('betweenMinutes').textContent = `${totalMinutes.toLocaleString()} minutes`;
+
+        // YMD Breakdown
+        let y = d2.getFullYear() - d1.getFullYear();
+        let m = d2.getMonth() - d1.getMonth();
+        let d = d2.getDate() - d1.getDate();
+
+        if (d < 0) {
+            m -= 1;
+            const prevMonthLastDay = new Date(d2.getFullYear(), d2.getMonth(), 0).getDate();
+            d += prevMonthLastDay;
+        }
+        if (m < 0) {
+            y -= 1;
+            m += 12;
+        }
+        if (isInclusive) {
+            d += 1;
+        }
+        document.getElementById('betweenYMD').textContent = `${y} Year${y === 1 ? '' : 's'}, ${m} Month${m === 1 ? '' : 's'}, ${d} Day${d === 1 ? '' : 's'}`;
+
+        // Update Floating Bar
+        document.getElementById('floatDurationText').textContent = `${totalDays} Calendar Days`;
+
+        // Update Chart
+        renderBetweenChart(weekdays, weekends);
+
+        // Update Mini Calendar
+        renderBetweenCalendar();
+
+        // Sync with Print Tab
+        updatePrintAuditTab();
+    }
+
+    function renderBetweenChart(weekdays, weekends) {
+        const ctx = document.getElementById('betweenChart');
+        if (!ctx) return;
+
+        if (betweenChart) {
+            betweenChart.data.datasets[0].data = [weekdays, weekends];
+            betweenChart.update();
+            return;
+        }
+
+        betweenChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Weekdays', 'Weekend Days'],
+                datasets: [{
+                    data: [weekdays, weekends],
+                    backgroundColor: ['#10b981', '#6366f1'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(item) {
+                                return ` ${item.label}: ${item.raw.toLocaleString()} days`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderBetweenCalendar() {
+        const grid = document.getElementById('betweenCalGrid');
+        const monthYearLabel = document.getElementById('betweenCalMonthYear');
+        if (!grid || !monthYearLabel) return;
+
+        const startInput = document.getElementById('betweenStartDate');
+        const endInput = document.getElementById('betweenEndDate');
+        let d1 = parseYMD(startInput.value);
+        let d2 = parseYMD(endInput.value);
+        if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+
+        const year = betweenCalDate.getFullYear();
+        const month = betweenCalDate.getMonth();
+        monthYearLabel.textContent = `${getMonthName(month)} ${year}`;
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        grid.innerHTML = '';
+
+        // Empty cells before start of month
+        for (let i = 0; i < firstDayIndex; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-day-cell opacity-20 text-slate-400';
+            grid.appendChild(empty);
+        }
+
+        // Month days
+        for (let day = 1; day <= daysInMonth; day++) {
+            const curDate = new Date(year, month, day);
+            const curYMD = formatYMD(curDate);
+            const inRange = curDate >= d1 && curDate <= d2;
+            const isStart = curYMD === formatYMD(d1);
+            const isEnd = curYMD === formatYMD(d2);
+            const isWknd = curDate.getDay() === 0 || curDate.getDay() === 6;
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-day-cell';
+            cell.textContent = day;
+
+            if (isStart || isEnd) {
+                cell.className += ' bg-brand-600 text-white font-bold ring-2 ring-brand-400 shadow-sm';
+            } else if (inRange) {
+                cell.className += isWknd ? ' bg-brand-100 dark:bg-brand-950/70 text-indigo-800 dark:text-indigo-200 font-medium' : ' bg-brand-50 dark:bg-brand-900/40 text-brand-700 dark:text-brand-300 font-medium';
+            } else {
+                cell.className += isWknd ? ' text-slate-400 dark:text-slate-500' : ' text-slate-700 dark:text-slate-300';
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function stepBetweenCalMonth(delta) {
+        betweenCalDate.setMonth(betweenCalDate.getMonth() + delta);
+        renderBetweenCalendar();
+    }
+
+    function setBetweenStartPreset(type) {
+        const d = new Date();
+        if (type === 'today') {
+            document.getElementById('betweenStartDate').value = formatYMD(d);
+        } else if (type === 'startOfMonth') {
+            d.setDate(1);
+            document.getElementById('betweenStartDate').value = formatYMD(d);
+        } else if (type === 'startOfYear') {
+            d.setMonth(0, 1);
+            document.getElementById('betweenStartDate').value = formatYMD(d);
+        }
+        calculateDaysBetween();
+    }
+
+    function setBetweenEndOffset(days) {
+        const start = parseYMD(document.getElementById('betweenStartDate').value);
+        start.setDate(start.getDate() + days);
+        document.getElementById('betweenEndDate').value = formatYMD(start);
+        calculateDaysBetween();
+    }
+
+    function setBetweenEndPreset(type) {
+        const start = parseYMD(document.getElementById('betweenStartDate').value);
+        if (type === 'endOfYear') {
+            const end = new Date(start.getFullYear(), 11, 31);
+            document.getElementById('betweenEndDate').value = formatYMD(end);
+        }
+        calculateDaysBetween();
+    }
+
+    function swapBetweenDates() {
+        const s = document.getElementById('betweenStartDate');
+        const e = document.getElementById('betweenEndDate');
+        const tmp = s.value;
+        s.value = e.value;
+        e.value = tmp;
+        calculateDaysBetween();
+        showToast('Swapped start and end dates');
+    }
+
+    function resetBetweenTab() {
+        const today = new Date();
+        const future = new Date();
+        future.setDate(today.getDate() + 30);
+        document.getElementById('betweenStartDate').value = formatYMD(today);
+        document.getElementById('betweenEndDate').value = formatYMD(future);
+        document.getElementById('betweenInclusive').checked = false;
+        betweenCalDate = new Date();
+        calculateDaysBetween();
+        showToast('Reset interval dates');
+    }
+
+    function copyBetweenSummary() {
+        const total = document.getElementById('betweenTotalDays').textContent;
+        const ymd = document.getElementById('betweenYMD').textContent;
+        const s = document.getElementById('betweenStartDate').value;
+        const e = document.getElementById('betweenEndDate').value;
+        const text = `Calendar Duration: ${total} Days (${ymd})
+Interval: ${s} to ${e}
+Calculated via CalcWorld Day Counter`;
+        navigator.clipboard.writeText(text).then(() => showToast('Summary copied to clipboard!'));
+    }
+
+    // --- Tab 2: Business Days & Holiday Calculator ---
+    function calculateBusinessDays() {
+        const sInput = document.getElementById('bizStartDate');
+        const eInput = document.getElementById('bizEndDate');
+        const wkndType = document.getElementById('bizWeekendType').value;
+        const applyObserved = document.getElementById('bizToggleObserved').checked;
+        const hoursPerDay = parseFloat(document.getElementById('bizHoursPerDay').value) || 8.0;
+
+        let d1 = parseYMD(sInput.value);
+        let d2 = parseYMD(eInput.value);
+
+        if (d1 > d2) {
+            const temp = d1;
+            d1 = d2;
+            d2 = temp;
+        }
+
+        // Collect all federal holidays across the years in span
+        const startYear = d1.getFullYear();
+        const endYear = d2.getFullYear();
+        const fedMap = new Map();
+        for (let yr = startYear; yr <= endYear; yr++) {
+            const yearMap = getActiveFederalHolidaysMap(yr, applyObserved);
+            yearMap.forEach((name, ymd) => fedMap.set(ymd, name));
+        }
+
+        // Custom holiday map
+        const customMap = new Map();
+        customHolidays.forEach(h => customMap.set(h.date, h.name));
+
+        const msPerDay = 1000 * 60 * 60 * 24;
+        const totalCalendarDays = Math.round((d2 - d1) / msPerDay) + 1;
+
+        let workingDays = 0;
+        let weekendDays = 0;
+        let fedHolidaysCount = 0;
+        let customHolidaysCount = 0;
+        const recognizedHolidaysInRange = [];
+
+        const cur = new Date(d1);
+        for (let i = 0; i < totalCalendarDays; i++) {
+            const curYMD = formatYMD(cur);
+            const isWknd = isWeekend(cur, wkndType);
+            const fedName = fedMap.get(curYMD);
+            const custName = customMap.get(curYMD);
+
+            if (isWknd) {
+                weekendDays++;
+            } else if (fedName) {
+                fedHolidaysCount++;
+                recognizedHolidaysInRange.push({ date: curYMD, name: fedName, type: 'Federal' });
+            } else if (custName) {
+                customHolidaysCount++;
+                recognizedHolidaysInRange.push({ date: curYMD, name: custName, type: 'Custom' });
+            } else {
+                workingDays++;
+            }
+            cur.setDate(cur.getDate() + 1);
+        }
+
+        document.getElementById('bizWorkingDays').textContent = workingDays.toLocaleString();
+        document.getElementById('bizTotalDays').textContent = totalCalendarDays.toLocaleString();
+        document.getElementById('bizWeekendCount').textContent = weekendDays.toLocaleString();
+        document.getElementById('bizFedHolidayCount').textContent = fedHolidaysCount.toLocaleString();
+        document.getElementById('bizCustomCount').textContent = customHolidaysCount.toLocaleString();
+
+        const wkndPct = totalCalendarDays > 0 ? ((weekendDays / totalCalendarDays) * 100).toFixed(1) : '0.0';
+        document.getElementById('bizWeekendPct').textContent = `${wkndPct}% of span`;
+
+        const totalHours = (workingDays * hoursPerDay).toFixed(1);
+        document.getElementById('bizHoursNote').textContent = `Equates to ${totalHours} Total Billable Working Hours (${hoursPerDay}h/day)`;
+
+        // Floating bar update
+        document.getElementById('floatBizDaysText').textContent = `${workingDays} Working Days`;
+
+        // Render recognized holidays list
+        const hList = document.getElementById('bizHolidaysList');
+        const hBadge = document.getElementById('bizHolidaysBadge');
+        hBadge.textContent = `${recognizedHolidaysInRange.length} Recognized`;
+
+        if (recognizedHolidaysInRange.length === 0) {
+            hList.innerHTML = '<p class="text-slate-400 italic">No recognized statutory or custom holidays fall within this date span.</p>';
+        } else {
+            hList.innerHTML = '';
+            recognizedHolidaysInRange.forEach(h => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700/60';
+                item.innerHTML = `
+                    <span class="font-medium text-slate-800 dark:text-slate-200">${h.name}</span>
+                    <span class="font-mono text-[11px] ${h.type === 'Federal' ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'} font-bold">${h.date}</span>
+                `;
+                hList.appendChild(item);
+            });
+        }
+
+        renderBizCalendar();
+        updatePrintAuditTab();
+    }
+
+    function renderBizCalendar() {
+        const grid = document.getElementById('bizCalGrid');
+        const label = document.getElementById('bizCalMonthYear');
+        if (!grid || !label) return;
+
+        const sInput = document.getElementById('bizStartDate');
+        const eInput = document.getElementById('bizEndDate');
+        const wkndType = document.getElementById('bizWeekendType').value;
+        const applyObserved = document.getElementById('bizToggleObserved').checked;
+
+        let d1 = parseYMD(sInput.value);
+        let d2 = parseYMD(eInput.value);
+        if (d1 > d2) { const t = d1; d1 = d2; d2 = t; }
+
+        const year = bizCalDate.getFullYear();
+        const month = bizCalDate.getMonth();
+        label.textContent = `${getMonthName(month)} ${year}`;
+
+        const fedMap = getActiveFederalHolidaysMap(year, applyObserved);
+        const custMap = new Map();
+        customHolidays.forEach(h => custMap.set(h.date, h.name));
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        grid.innerHTML = '';
+        for (let i = 0; i < firstDayIndex; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-day-cell opacity-20 text-slate-400';
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const curDate = new Date(year, month, day);
+            const curYMD = formatYMD(curDate);
+            const inRange = curDate >= d1 && curDate <= d2;
+            const isWknd = isWeekend(curDate, wkndType);
+            const isFed = fedMap.has(curYMD);
+            const isCust = custMap.has(curYMD);
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-day-cell font-mono';
+            cell.textContent = day;
+
+            if (isFed) {
+                cell.className += ' bg-amber-500 text-white font-bold ring-1 ring-amber-400';
+                cell.title = fedMap.get(curYMD);
+            } else if (isCust) {
+                cell.className += ' bg-rose-500 text-white font-bold ring-1 ring-rose-400';
+                cell.title = custMap.get(curYMD);
+            } else if (isWknd) {
+                cell.className += inRange ? ' bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' : ' text-slate-400 dark:text-slate-600';
+            } else if (inRange) {
+                cell.className += ' bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold border border-emerald-500/40';
+            } else {
+                cell.className += ' text-slate-700 dark:text-slate-300';
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function stepBizCalMonth(delta) {
+        bizCalDate.setMonth(bizCalDate.getMonth() + delta);
+        renderBizCalendar();
+    }
+
+    function toggleHolidayDetails() {
+        const el = document.getElementById('bizHolidayChecklist');
+        el.classList.toggle('hidden');
+    }
+
+    function toggleMasterHolidays() {
+        const master = document.getElementById('bizToggleHolidays').checked;
+        document.querySelectorAll('.fed-h-check').forEach(cb => { cb.checked = master; });
+        calculateBusinessDays();
+    }
+
+    function addCustomHoliday() {
+        const dInput = document.getElementById('customHolidayDate');
+        const nInput = document.getElementById('customHolidayName');
+        const dVal = dInput.value;
+        const nVal = nInput.value.trim() || 'Custom Holiday';
+
+        if (!dVal) {
+            showToast('Please select a date for the custom holiday');
+            return;
+        }
+
+        customHolidays.push({ date: dVal, name: nVal });
+        dInput.value = '';
+        nInput.value = '';
+        renderCustomHolidaysList();
+        calculateBusinessDays();
+        showToast(`Added custom holiday: ${nVal}`);
+    }
+
+    function removeCustomHoliday(index) {
+        customHolidays.splice(index, 1);
+        renderCustomHolidaysList();
+        calculateBusinessDays();
+    }
+
+    function renderCustomHolidaysList() {
+        const container = document.getElementById('customHolidaysList');
+        if (!container) return;
+        container.innerHTML = '';
+        customHolidays.forEach((h, idx) => {
+            const badge = document.createElement('span');
+            badge.className = 'inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800';
+            badge.innerHTML = `
+                <span>${h.name} (${h.date})</span>
+                <button onclick="removeCustomHoliday(${idx})" class="hover:text-rose-900 font-bold ml-1 text-sm leading-none">&times;</button>
+            `;
+            container.appendChild(badge);
+        });
+    }
+
+    // --- Tab 3: Date Offset (Add / Subtract Days) ---
+    function setOffsetOperation(op) {
+        currentOffsetOp = op;
+        const btnAdd = document.getElementById('offsetOpAdd');
+        const btnSub = document.getElementById('offsetOpSub');
+        if (op === 'add') {
+            btnAdd.className = 'py-2.5 rounded-xl font-bold text-xs border border-sky-600 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 flex items-center justify-center gap-1.5 transition';
+            btnSub.className = 'py-2.5 rounded-xl font-bold text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1.5 transition';
+            document.getElementById('offsetResultBadge').textContent = 'Future Date';
+        } else {
+            btnSub.className = 'py-2.5 rounded-xl font-bold text-xs border border-sky-600 bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 flex items-center justify-center gap-1.5 transition';
+            btnAdd.className = 'py-2.5 rounded-xl font-bold text-xs border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 flex items-center justify-center gap-1.5 transition';
+            document.getElementById('offsetResultBadge').textContent = 'Past Date';
+        }
+        calculateDateOffset();
+    }
+
+    function calculateDateOffset() {
+        const baseInput = document.getElementById('offsetBaseDate');
+        const amtInput = document.getElementById('offsetAmount');
+        const unitSelect = document.getElementById('offsetUnit');
+
+        const baseDate = parseYMD(baseInput.value);
+        const amount = parseInt(amtInput.value, 10) || 0;
+        const unit = unitSelect.value;
+        const isAdd = currentOffsetOp === 'add';
+
+        let target = new Date(baseDate);
+
+        if (unit === 'calendar-days') {
+            target.setDate(target.getDate() + (isAdd ? amount : -amount));
+        } else if (unit === 'business-days') {
+            let step = isAdd ? 1 : -1;
+            let count = 0;
+            const applyObserved = true;
+            while (count < amount) {
+                target.setDate(target.getDate() + step);
+                const curYMD = formatYMD(target);
+                const isWknd = target.getDay() === 0 || target.getDay() === 6;
+                const fedMap = getActiveFederalHolidaysMap(target.getFullYear(), applyObserved);
+                const isFed = fedMap.has(curYMD);
+                if (!isWknd && !isFed) {
+                    count++;
+                }
+            }
+        } else if (unit === 'weeks') {
+            target.setDate(target.getDate() + (isAdd ? amount * 7 : -amount * 7));
+        } else if (unit === 'months') {
+            target.setMonth(target.getMonth() + (isAdd ? amount : -amount));
+        } else if (unit === 'years') {
+            target.setFullYear(target.getFullYear() + (isAdd ? amount : -amount));
+        }
+
+        // Render Results
+        const targetYMD = formatYMD(target);
+        document.getElementById('offsetResultDate').textContent = `${getDayOfWeekName(target)}, ${getMonthName(target.getMonth())} ${target.getDate()}, ${target.getFullYear()}`;
+        document.getElementById('offsetIsoDate').textContent = `ISO 8601: ${targetYMD}`;
+        document.getElementById('offsetDayOfWeek').textContent = getDayOfWeekName(target);
+
+        const isWknd = target.getDay() === 0 || target.getDay() === 6;
+        document.getElementById('offsetIsWeekend').textContent = isWknd ? 'Weekend Day' : 'Working Weekday';
+
+        const isoWeek = getIsoWeek(target);
+        const dayOfYear = getDayOfYear(target);
+        const daysInTargetYear = isLeapYear(target.getFullYear()) ? 366 : 365;
+        document.getElementById('offsetIsoWeek').textContent = `Week ${isoWeek}`;
+        document.getElementById('offsetDayOfYear').textContent = `Day ${dayOfYear} of ${daysInTargetYear}`;
+
+        const isTargetLeap = isLeapYear(target.getFullYear());
+        document.getElementById('offsetLeapYear').textContent = isTargetLeap ? 'Leap Year (366d)' : 'Common Year (365d)';
+
+        // Distance from today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const diffFromToday = Math.round((target - today) / (1000 * 60 * 60 * 24));
+        const absDiff = Math.abs(diffFromToday);
+        document.getElementById('offsetDaysFromToday').textContent = `${absDiff.toLocaleString()} Days`;
+        document.getElementById('offsetDirectionLabel').textContent = diffFromToday >= 0 ? 'in the future' : 'in the past';
+
+        offsetCalDate = new Date(target);
+        renderOffsetCalendar(baseDate, target);
+    }
+
+    function renderOffsetCalendar(baseDate, targetDate) {
+        const grid = document.getElementById('offsetCalGrid');
+        const label = document.getElementById('offsetCalMonthYear');
+        if (!grid || !label) return;
+
+        const year = offsetCalDate.getFullYear();
+        const month = offsetCalDate.getMonth();
+        label.textContent = `${getMonthName(month)} ${year}`;
+
+        const firstDayIndex = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        grid.innerHTML = '';
+        for (let i = 0; i < firstDayIndex; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'cal-day-cell opacity-20 text-slate-400';
+            grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const curDate = new Date(year, month, day);
+            const curYMD = formatYMD(curDate);
+            const isTarget = curYMD === formatYMD(targetDate);
+            const isBase = curYMD === formatYMD(baseDate);
+
+            const cell = document.createElement('div');
+            cell.className = 'cal-day-cell';
+            cell.textContent = day;
+
+            if (isTarget) {
+                cell.className += ' bg-sky-600 text-white font-bold ring-2 ring-sky-300 shadow-md';
+            } else if (isBase) {
+                cell.className += ' bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900 font-bold';
+            } else {
+                cell.className += ' text-slate-700 dark:text-slate-300';
+            }
+
+            grid.appendChild(cell);
+        }
+    }
+
+    function stepOffsetCalMonth(delta) {
+        offsetCalDate.setMonth(offsetCalDate.getMonth() + delta);
+        const base = parseYMD(document.getElementById('offsetBaseDate').value);
+        calculateDateOffset();
+    }
+
+    function setOffsetBaseToday() {
+        document.getElementById('offsetBaseDate').value = formatYMD(new Date());
+        calculateDateOffset();
+    }
+
+    function setQuickOffset(amount, unit) {
+        document.getElementById('offsetAmount').value = amount;
+        document.getElementById('offsetUnit').value = unit;
+        calculateDateOffset();
+    }
+
+    function copyOffsetResult() {
+        const result = document.getElementById('offsetResultDate').textContent;
+        const iso = document.getElementById('offsetIsoDate').textContent;
+        navigator.clipboard.writeText(`${result} (${iso})`).then(() => showToast('Target date copied!'));
+    }
+
+    // --- Tab 4: Live Milestone Countdown Ticker ---
+    function applyCountdownPreset() {
+        const val = document.getElementById('cdPresetSelect').value;
+        const customGroup = document.getElementById('cdCustomGroup');
+        const now = new Date();
+
+        if (val === 'custom') {
+            customGroup.classList.remove('hidden');
+            updateCountdown();
+            return;
+        }
+
+        customGroup.classList.add('hidden');
+        let target = new Date();
+
+        if (val === 'new-year') {
+            target = new Date(now.getFullYear() + 1, 0, 1, 0, 0, 0);
+            document.getElementById('cdDisplayEventName').textContent = "Next New Year's Day";
+        } else if (val === 'summer-solstice') {
+            let yr = now.getFullYear();
+            let solstice = new Date(yr, 5, 21, 0, 0, 0);
+            if (now > solstice) solstice = new Date(yr + 1, 5, 21, 0, 0, 0);
+            target = solstice;
+            document.getElementById('cdDisplayEventName').textContent = "Summer Solstice (June 21)";
+        } else if (val === 'christmas') {
+            let yr = now.getFullYear();
+            let xmas = new Date(yr, 11, 25, 0, 0, 0);
+            if (now > xmas) xmas = new Date(yr + 1, 11, 25, 0, 0, 0);
+            target = xmas;
+            document.getElementById('cdDisplayEventName').textContent = "Christmas Day (December 25)";
+        } else if (val === 'independence') {
+            let yr = now.getFullYear();
+            let ind = new Date(yr, 6, 4, 0, 0, 0);
+            if (now > ind) ind = new Date(yr + 1, 6, 4, 0, 0, 0);
+            target = ind;
+            document.getElementById('cdDisplayEventName').textContent = "US Independence Day (July 4)";
+        }
+
+        document.getElementById('cdCustomDate').value = formatYMD(target);
+        document.getElementById('cdCustomTime').value = '00:00';
+        updateCountdown();
+    }
+
+    function updateCountdown() {
+        const preset = document.getElementById('cdPresetSelect').value;
+        const now = new Date();
+        let target = null;
+
+        if (preset === 'custom') {
+            const dVal = document.getElementById('cdCustomDate').value;
+            const tVal = document.getElementById('cdCustomTime').value || '00:00';
+            const titleVal = document.getElementById('cdCustomTitle').value || 'Custom Event';
+            document.getElementById('cdDisplayEventName').textContent = titleVal;
+
+            if (dVal) {
+                const parts = dVal.split('-');
+                const tParts = tVal.split(':');
+                target = new Date(parts[0], parts[1] - 1, parts[2], tParts[0], tParts[1], 0);
+            } else {
+                target = new Date(now.getFullYear() + 1, 0, 1);
+            }
+        } else {
+            const dVal = document.getElementById('cdCustomDate').value;
+            if (dVal) {
+                const parts = dVal.split('-');
+                target = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0);
+            } else {
+                target = new Date(now.getFullYear() + 1, 0, 1);
+            }
+        }
+
+        document.getElementById('cdDisplayTargetDate').textContent = target.toLocaleString();
+
+        const diff = target - now;
+
+        if (diff <= 0) {
+            document.getElementById('cdDays').textContent = '00';
+            document.getElementById('cdHours').textContent = '00';
+            document.getElementById('cdMinutes').textContent = '00';
+            document.getElementById('cdSeconds').textContent = '00';
+            document.getElementById('cdProgressPct').textContent = '100%';
+            document.getElementById('cdProgressBar').style.width = '100%';
+            return;
+        }
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((diff / (1000 * 60)) % 60);
+        const seconds = Math.floor((diff / 1000) % 60);
+
+        document.getElementById('cdDays').textContent = String(days).padStart(2, '0');
+        document.getElementById('cdHours').textContent = String(hours).padStart(2, '0');
+        document.getElementById('cdMinutes').textContent = String(minutes).padStart(2, '0');
+        document.getElementById('cdSeconds').textContent = String(seconds).padStart(2, '0');
+
+        // Year progress calculation
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const yearEnd = new Date(now.getFullYear() + 1, 0, 1);
+        const pct = Math.min(100, Math.max(0, ((now - yearStart) / (yearEnd - yearStart)) * 100));
+        document.getElementById('cdProgressPct').textContent = `${pct.toFixed(1)}%`;
+        document.getElementById('cdProgressBar').style.width = `${pct}%`;
+    }
+
+    // --- Tab 5: Print Report Generator ---
+    function updatePrintAuditTab() {
+        const s = document.getElementById('bizStartDate').value;
+        const e = document.getElementById('bizEndDate').value;
+        const total = document.getElementById('bizTotalDays').textContent;
+        const work = document.getElementById('bizWorkingDays').textContent;
+        const wknd = document.getElementById('bizWeekendCount').textContent;
+        const fed = document.getElementById('bizFedHolidayCount').textContent;
+        const cust = document.getElementById('bizCustomCount').textContent;
+        const hrsPerDay = parseFloat(document.getElementById('bizHoursPerDay').value) || 8.0;
+
+        document.getElementById('printIntervalSpan').textContent = `${s} to ${e}`;
+        document.getElementById('printGeneratedTime').textContent = new Date().toLocaleString();
+
+        document.getElementById('printGrossDays').textContent = `${total} Days`;
+        document.getElementById('printNetWorkDays').textContent = `${work} Days`;
+        document.getElementById('printWeekendDays').textContent = `${wknd} Days`;
+        document.getElementById('printFedHolidays').textContent = `${fed} Days`;
+        document.getElementById('printCustomHolidays').textContent = `${cust} Days`;
+
+        const totalNum = parseInt(total.replace(/,/g, ''), 10) || 1;
+        const workNum = parseInt(work.replace(/,/g, ''), 10) || 0;
+        const wkndNum = parseInt(wknd.replace(/,/g, ''), 10) || 0;
+        const fedNum = parseInt(fed.replace(/,/g, ''), 10) || 0;
+        const custNum = parseInt(cust.replace(/,/g, ''), 10) || 0;
+
+        document.getElementById('printWorkDaysPct').textContent = `${((workNum / totalNum) * 100).toFixed(1)}%`;
+        document.getElementById('printWeekendPct').textContent = `${((wkndNum / totalNum) * 100).toFixed(1)}%`;
+        document.getElementById('printFedPct').textContent = `${((fedNum / totalNum) * 100).toFixed(1)}%`;
+        document.getElementById('printCustomPct').textContent = `${((custNum / totalNum) * 100).toFixed(1)}%`;
+        document.getElementById('printBillableHours').textContent = `${(workNum * hrsPerDay).toFixed(1)} Hours`;
+    }
+
+    // --- Tab Switching ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('#tabButtons button').forEach(b => {
+            b.classList.remove('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'dark:border-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const panel = document.getElementById(`tab-${tabId}`);
+        const btn = document.getElementById(`tab-btn-${tabId}`);
+        if (panel) panel.classList.add('active');
+        if (btn) {
+            btn.classList.add('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'dark:border-brand-400');
+            btn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'print') {
+            updatePrintAuditTab();
+        } else if (tabId === 'between') {
+            calculateDaysBetween();
+        } else if (tabId === 'business') {
+            calculateBusinessDays();
+        } else if (tabId === 'offset') {
+            calculateDateOffset();
+        } else if (tabId === 'countdown') {
+            updateCountdown();
+        }
+    }
+
+    // --- UI Notifications & Theme ---
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast) return;
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2600);
+    }
+
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.theme = isDark ? 'dark' : 'light';
+        if (betweenChart) betweenChart.update();
+    }
+
+    function toggleFaq(id) {
+        const ans = document.getElementById(`faqAns_${id}`);
+        const icon = document.getElementById(`faqIcon_${id}`);
+        if (!ans || !icon) return;
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+            ans.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const btn = document.getElementById('leadSubmitBtn');
+        const msg = document.getElementById('leadSuccessMsg');
+        if (input && input.value) {
+            btn.disabled = true;
+            btn.textContent = 'Queued';
+            msg.classList.remove('hidden');
+            showToast('Reference sheet download sent!');
+        }
+    }
+
+    // --- Init KPI Cards & Page on Load ---
+    window.addEventListener('DOMContentLoaded', () => {
+        const now = new Date();
+        document.getElementById('kpiToday').textContent = `${getMonthName(now.getMonth()).slice(0, 3)} ${now.getDate()}, ${now.getFullYear()}`;
+        document.getElementById('kpiTodayWeekday').textContent = getDayOfWeekName(now);
+
+        const doy = getDayOfYear(now);
+        const daysInYr = isLeapYear(now.getFullYear()) ? 366 : 365;
+        const pctYr = ((doy / daysInYr) * 100).toFixed(1);
+        document.getElementById('kpiDayOfYear').textContent = `Day ${doy} of ${daysInYr}`;
+        document.getElementById('kpiYearProgress').textContent = `${pctYr}% of year elapsed`;
+
+        const week = getIsoWeek(now);
+        document.getElementById('kpiIsoWeek').textContent = `Week ${week} of 52`;
+        document.getElementById('kpiWeeksLeft').textContent = `${52 - week} weeks remaining`;
+
+        const isLeap = isLeapYear(now.getFullYear());
+        document.getElementById('kpiLeapStatus').textContent = isLeap ? 'Leap Year' : 'Common Year';
+        document.getElementById('kpiDaysInYear').textContent = `${daysInYr} Calendar Days`;
+
+        // Set default dates
+        const todayStr = formatYMD(now);
+        const futureDate = new Date(now);
+        futureDate.setDate(now.getDate() + 30);
+        const futureStr = formatYMD(futureDate);
+
+        document.getElementById('betweenStartDate').value = todayStr;
+        document.getElementById('betweenEndDate').value = futureStr;
+
+        document.getElementById('bizStartDate').value = todayStr;
+        document.getElementById('bizEndDate').value = futureStr;
+
+        document.getElementById('offsetBaseDate').value = todayStr;
+
+        renderCustomHolidaysList();
+        calculateDaysBetween();
+        calculateBusinessDays();
+        calculateDateOffset();
+        applyCountdownPreset();
+
+        countdownInterval = setInterval(updateCountdown, 1000);
+    });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

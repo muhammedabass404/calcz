@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Calculator | Calculate Loan Payments & Affordability</title>
+    <meta name="description" content="Calculate your monthly loan payments or determine how much you can afford to borrow. Features interactive charts, amortization schedules, and DTI analysis.">
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        dark: '#111827',
+                        darker: '#030712'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- FOUC Prevention Script -->
+    <script>
+        (function() {
+            if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+    
+    <!-- MathJax for formula rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        .shimmer {
+            animation: shimmer 2s infinite linear;
+            background: linear-gradient(to right, #4a5568 4%, #718096 25%, #4a5568 36%);
+            background-size: 1000px 100%;
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #toast { transition: opacity 0.3s; }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Payment Calculator",
+      "url": "https://calcworld.net/payment-calculator",
+      "description": "Advanced tool to calculate monthly loan payments and maximum borrowing power.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://calcworld.net/"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Financial Calculators",
+        "item": "https://calcworld.net/financial-calculators"
+      },{
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Payments",
+        "item": "https://calcworld.net/financial-calculators/payments"
+      },{
+        "@type": "ListItem",
+        "position": 4,
+        "name": "Payment Calculator"
+      }]
+    }
+    </script>
+    <link rel="canonical" href="https://calcworld.net/calculators/payment-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Payment Calculator | Calculate Loan Payments & Affordability">
+    <meta property="og:description" content="Calculate your monthly loan payments or determine how much you can afford to borrow. Features interactive charts, amortization schedules, and DTI analysis.">
+    <meta property="og:url" content="https://calcworld.net/calculators/payment-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Payment Calculator | Calculate Loan Payments & Affordability">
+    <meta name="twitter:description" content="Calculate your monthly loan payments or determine how much you can afford to borrow. Features interactive charts, amortization schedules, and DTI analysis.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Nav -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24 sm:pb-16">
+        
+        <!-- Inputs Column (Left) -->
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-white dark:bg-dark rounded-xl shadow-lg p-6">
+                <h1 class="text-2xl font-bold mb-4">Payment Calculator</h1>
+                
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Calculate For</label>
+                    <div class="flex space-x-2 bg-gray-100 dark:bg-gray-800 p-1 rounded-lg">
+                        <button id="calc-mode-payment" class="flex-1 py-2 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow transition" onclick="setMode('payment')">Monthly Payment</button>
+                        <button id="calc-mode-afford" class="flex-1 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition" onclick="setMode('afford')">Max Affordability</button>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Principal / Target -->
+                    <div>
+                        <label id="label-principal" class="block text-sm font-medium mb-1">Loan Principal</label>
+                        <div class="relative mt-1 rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm curr-symbol">$</span>
+                            </div>
+                            <input type="number" id="input-amount" class="focus:ring-primary focus:border-primary block w-full pl-8 pr-12 sm:text-sm border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-md py-2" placeholder="0.00">
+                        </div>
+                        <div id="presets" class="mt-2 flex space-x-2 hidden">
+                            <button class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded" onclick="document.getElementById('input-amount').value=250; calculate()">$250/mo</button>
+                            <button class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded" onclick="document.getElementById('input-amount').value=500; calculate()">$500/mo</button>
+                            <button class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 px-2 py-1 rounded" onclick="document.getElementById('input-amount').value=1000; calculate()">$1,000/mo</button>
+                        </div>
+                    </div>
+
+                    <!-- Interest Rate -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Interest Rate (% APR)</label>
+                        <div class="relative mt-1 rounded-md shadow-sm">
+                            <input type="number" id="input-rate" step="0.01" class="focus:ring-primary focus:border-primary block w-full pr-8 sm:text-sm border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-md py-2" placeholder="5.00">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Term -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Loan Term</label>
+                        <div class="flex space-x-2">
+                            <input type="number" id="input-term" class="focus:ring-primary focus:border-primary block w-full sm:text-sm border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-md py-2 px-3" placeholder="30">
+                            <select id="input-term-type" class="focus:ring-primary focus:border-primary block sm:text-sm border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-md py-2 px-3">
+                                <option value="years">Years</option>
+                                <option value="months">Months</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Optional DTI Section -->
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Monthly Gross Income (for DTI)</label>
+                        <div class="relative mt-1 rounded-md shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <span class="text-gray-500 sm:text-sm curr-symbol">$</span>
+                            </div>
+                            <input type="number" id="input-income" class="focus:ring-primary focus:border-primary block w-full pl-8 sm:text-sm border-gray-300 dark:bg-gray-800 dark:border-gray-700 rounded-md py-2" placeholder="Optional">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="calculate()" class="w-full mt-6 bg-primary hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    Calculate Now
+                </button>
+            </div>
+            
+            <!-- Ad Slot 1 -->
+            <div class="bg-gray-200 dark:bg-gray-800 h-64 rounded-xl flex items-center justify-center text-gray-500 text-sm">
+                [AdSense Slot 1: Responsive Square]
+            </div>
+        </div>
+
+        <!-- Outputs Column (Right) -->
+        <div class="lg:col-span-8 space-y-6">
+            
+            <!-- Output Tabs -->
+            <div class="bg-white dark:bg-dark rounded-xl shadow-lg overflow-hidden">
+                <div class="border-b border-gray-200 dark:border-gray-700">
+                    <nav class="flex -mb-px" aria-label="Tabs">
+                        <button class="tab-btn active w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-primary text-primary" onclick="switchTab('summary')">Summary</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="switchTab('chart')">Visual Chart</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="switchTab('table')">Breakdown</button>
+                        <button class="tab-btn w-1/4 py-4 px-1 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300" onclick="switchTab('print')">Print</button>
+                    </nav>
+                </div>
+
+                <div class="p-6 relative">
+                    <!-- Shimmer overlay for loading state -->
+                    <div id="loading-overlay" class="absolute inset-0 bg-white/80 dark:bg-dark/80 flex items-center justify-center z-10 hidden">
+                        <div class="w-3/4 h-32 rounded shimmer"></div>
+                    </div>
+
+                    <!-- Summary Tab -->
+                    <div id="tab-summary" class="tab-content active">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-100 dark:border-blue-800 text-center">
+                                <h3 id="result-main-label" class="text-lg font-semibold text-gray-600 dark:text-gray-300 mb-2">Required Monthly Payment</h3>
+                                <div class="text-5xl font-bold text-primary mb-2 flex justify-center items-baseline space-x-1">
+                                    <span class="curr-symbol text-3xl">$</span>
+                                    <span id="result-main" class="counter">0.00</span>
+                                </div>
+                                <button onclick="copyResults()" class="text-sm text-blue-600 hover:underline flex items-center justify-center w-full">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    Copy Summary
+                                </button>
+                            </div>
+                            
+                            <div class="space-y-4">
+                                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <span class="text-sm font-medium">Total Interest Paid</span>
+                                    <span class="font-bold text-red-500"><span class="curr-symbol">$</span><span id="result-interest">0.00</span></span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <span class="text-sm font-medium">Total Finance Cost</span>
+                                    <span class="font-bold"><span class="curr-symbol">$</span><span id="result-total">0.00</span></span>
+                                </div>
+                                <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                                    <span class="text-sm font-medium">Debt-to-Income (DTI)</span>
+                                    <span class="font-bold" id="result-dti">-%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Tab -->
+                    <div id="tab-chart" class="tab-content">
+                        <canvas id="paymentChart" height="120"></canvas>
+                    </div>
+
+                    <!-- Table Tab -->
+                    <div id="tab-table" class="tab-content overflow-x-auto max-h-96">
+                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead class="bg-gray-50 dark:bg-gray-800 sticky top-0">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Month</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Principal</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Interest</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                                </tr>
+                            </thead>
+                            <tbody id="schedule-body" class="bg-white dark:bg-dark divide-y divide-gray-200 dark:divide-gray-800">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Print Tab -->
+                    <div id="tab-print" class="tab-content text-center py-8">
+                        <p class="mb-4">Generate a printable PDF report of your calculation and amortization schedule.</p>
+                        <button onclick="window.print()" class="bg-secondary hover:bg-green-600 text-white font-bold py-2 px-6 rounded shadow">
+                            Print / Save as PDF
+                        </button>
+                        
+                        <!-- Lead Box -->
+                        <div class="mt-8 border-t dark:border-gray-700 pt-8 max-w-md mx-auto">
+                            <h4 class="font-bold mb-2">Get Results via Email</h4>
+                            <div class="flex mt-2">
+                                <input type="email" placeholder="Your Email Address" class="flex-1 rounded-l-md border-gray-300 dark:bg-gray-800 dark:border-gray-700 px-4 py-2">
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded-r-md">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ad Slot 2 -->
+            <div class="bg-gray-200 dark:bg-gray-800 h-24 rounded-xl flex items-center justify-center text-gray-500 text-sm w-full">
+                [AdSense Slot 2: Leaderboard]
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Comprehensive SEO Guide & Article -->
+    
+        <!-- Comprehensive Evidence-Based Loan Payment Guide (1,720+ Words) -->
+        <article class="prose dark:prose-invert max-w-4xl mx-auto bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mt-12 mb-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-6 mb-8">
+                <span class="inline-block px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300 text-xs font-bold uppercase tracking-wider mb-3">Consumer Credit &amp; Debt Amortization</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">The Mechanics of Loan Payments: Fixed Amortization, Interest Deceleration, and Debt Service Optimization</h2>
+                <p class="text-slate-600 dark:text-slate-400 text-base mt-2">A comprehensive mathematical and financial manual on equal monthly debt amortization payments, principal-interest splits, balloon liabilities, and interest acceleration reduction strategies.</p>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">1. The Structure of Equal Debt Installments</h3>
+            <p>
+                In retail banking, auto lending, and commercial mortgages, the overwhelming majority of debt obligations are structured as fully amortizing, fixed-rate installment loans. Under this framework, the borrower makes an identical fixed periodic payment (typically monthly) across the entirety of the loan tenure.
+            </p>
+            <p>
+                However, beneath the surface of this constant dollar installment lies an internal mathematical shift: the relative allocation between <strong>interest expense</strong> and <strong>principal reduction</strong> changes continuously with every passing payment cycle. In the early months of a 30-year mortgage or 6-year auto loan, interest consumes the vast majority of your monthly remittance. As principal is slowly paid down, interest charges decline, causing the principal repayment portion to accelerate exponentially toward final maturity.
+            </p>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">2. Core Amortization Formulas</h3>
+            <p>
+                The exact monthly installment payment $M$ required to amortize a principal loan balance $P$ to precisely zero over $N$ monthly periods at periodic interest rate $r$ is derived using the standard annuity present value formulation:
+            </p>
+
+            <div class="p-5 my-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 font-mono text-sm text-slate-800 dark:text-slate-200">
+                <div class="font-bold text-emerald-600 dark:text-emerald-400 font-sans text-xs uppercase tracking-wider mb-1">Standard Amortization Formula</div>
+                <div><strong>Monthly Payment:</strong> M = P &times; [ r(1 + r)^N ] / [ (1 + r)^N - 1 ]</div>
+                <div><strong>Periodic Interest Portion:</strong> I_k = Balance_{k-1} &times; r</div>
+                <div><strong>Periodic Principal Portion:</strong> C_k = M - I_k</div>
+                <div><strong>Remaining Balance After k Payments:</strong> B_k = P &times; [ (1 + r)^N - (1 + r)^k ] / [ (1 + r)^N - 1 ]</div>
+            </div>
+
+            <p>
+                Where:
+            </p>
+            <ul>
+                <li><strong>M:</strong> Fixed monthly installment payment.</li>
+                <li><strong>P:</strong> Initial loan principal balance.</li>
+                <li><strong>r:</strong> Monthly periodic interest rate, calculated as $\text{Annual Nominal Rate (APR)} / 12$.</li>
+                <li><strong>N:</strong> Total count of monthly installment payments across the loan tenure (e.g., $5 \times 12 = 60$ payments for a 5-year auto loan).</li>
+                <li><strong>I_k:</strong> Interest fee charged during payment period $k$.</li>
+                <li><strong>C_k:</strong> Principal reduction credited during payment period $k$.</li>
+            </ul>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">3. Step-by-Step Worked Numerical Example</h3>
+            <p>
+                To illustrate the mathematical mechanics, consider a borrower purchasing a new vehicle with a loan balance of <strong>$35,000</strong>, financed for <strong>5 years (60 months)</strong> at a fixed annual percentage rate (APR) of <strong>6.00%</strong>.
+            </p>
+            <ol class="space-y-3 pl-6 list-decimal text-slate-700 dark:text-slate-300">
+                <li>
+                    <strong>Determine the Monthly Periodic Rate:</strong>
+                    $$r = \frac{0.06}{12} = 0.005 \text{ (0.50% per month)}$$
+                </li>
+                <li>
+                    <strong>Calculate the Compounding Growth Factor $(1 + r)^N$:</strong>
+                    $$(1 + 0.005)^{60} = (1.005)^{60} \approx 1.348850$$
+                </li>
+                <li>
+                    <strong>Compute the Amortization Multiplier Fraction:</strong>
+                    $$\text{Fraction} = \frac{0.005 \times 1.348850}{1.348850 - 1} = \frac{0.00674425}{0.348850} \approx 0.0193328$$
+                </li>
+                <li>
+                    <strong>Solve for Fixed Monthly Payment:</strong>
+                    $$M = 35,000 \times 0.0193328 \approx \mathbf{\$676.65 \text{ per month}}$$
+                </li>
+                <li>
+                    <strong>Analyze Payment 1 Distribution:</strong>
+                    <ul>
+                        <li>Interest Charge = $35,000 \times 0.005 = \$175.00$.</li>
+                        <li>Principal Paydown = $\$676.65 - \$175.00 = \$501.65$.</li>
+                        <li>Remaining Balance = $\$35,000 - \$501.65 = \$34,498.35$.</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Analyze Payment 60 (Final Installment):</strong>
+                    Prior balance = $\$673.28$.
+                    <ul>
+                        <li>Interest Charge = $\$673.28 \times 0.005 = \$3.37$.</li>
+                        <li>Principal Paydown = $\$676.65 - \$3.37 = \$673.28$.</li>
+                        <li>Ending Balance = $\$0.00$ (Debt fully satisfied).</li>
+                    </ul>
+                </li>
+            </ol>
+            <p>
+                Total payments over the 5 years equal $60 \times \$676.65 = \$40,599.00$, representing <strong>$5,599.00</strong> in cumulative interest expense.
+            </p>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">4. Loan Tenure Comparison Matrix ($35,000 Loan at 6.00% APR)</h3>
+            <div class="overflow-x-auto my-6 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="p-3">Loan Term</th>
+                            <th class="p-3">Monthly Payment</th>
+                            <th class="p-3">Total Cumulative Interest</th>
+                            <th class="p-3">Total Repayment Amount</th>
+                            <th class="p-3">Interest-to-Principal Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <td class="p-3 font-sans font-semibold text-slate-900 dark:text-white">3 Years (36 Mo)</td>
+                            <td class="p-3">$1,064.67</td>
+                            <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">$3,328.12</td>
+                            <td class="p-3">$38,328.12</td>
+                            <td class="p-3">9.5%</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-sans font-semibold text-slate-900 dark:text-white">5 Years (60 Mo)</td>
+                            <td class="p-3">$676.65</td>
+                            <td class="p-3">$5,599.00</td>
+                            <td class="p-3">$40,599.00</td>
+                            <td class="p-3">16.0%</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-sans font-semibold text-slate-900 dark:text-white">6 Years (72 Mo)</td>
+                            <td class="p-3">$579.96</td>
+                            <td class="p-3">$6,757.12</td>
+                            <td class="p-3">$41,757.12</td>
+                            <td class="p-3">19.3%</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-sans font-semibold text-slate-900 dark:text-white">7 Years (84 Mo)</td>
+                            <td class="p-3">$511.08</td>
+                            <td class="p-3 font-bold text-red-600 dark:text-red-400">$7,930.72</td>
+                            <td class="p-3">$42,930.72</td>
+                            <td class="p-3">22.7%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">5. Strategic Debt Reduction Strategies</h3>
+            <ul>
+                <li><strong>The Dedicated Principal-Only Overpayment:</strong> Because monthly interest is calculated solely on the unamortized balance, paying an extra $100 per month directed explicitly to principal reduces the balance upon which next month's interest is assessed, compounding interest savings.</li>
+                <li><strong>Avoiding Prepayment Penalties:</strong> Before prepaying significant loan balances, confirm that your promissory note does not contain precomputed interest clauses or prepayment penalty covenants common in subprime automotive financing.</li>
+            </ul>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">6. Frequently Asked Questions</h3>
+            <div class="space-y-4">
+                <details class="group bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                    <summary class="font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm sm:text-base">
+                        <span>Why does extending a loan term to lower monthly payments increase total borrowing costs?</span>
+                        <span class="text-emerald-600 group-open:rotate-180 transition-transform">&darr;</span>
+                    </summary>
+                    <p class="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        Extending loan duration spreads principal reduction across more payment cycles, lowering the required monthly payment. However, because principal balances remain outstanding for much longer, the lender charges monthly interest on substantial balances across 72 or 84 months rather than 36 or 48 months. On a $35,000 auto loan at 6%, an 84-month term cuts payments by $553/month compared to a 36-month term, but more than doubles total interest expense from $3,328 to $7,930.
+                    </p>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                    <summary class="font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm sm:text-base">
+                        <span>What is the difference between simple interest loans and precomputed interest loans?</span>
+                        <summary class="hidden"></summary>
+                        <span class="text-emerald-600 group-open:rotate-180 transition-transform">&darr;</span>
+                    </summary>
+                    <p class="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        In a simple interest loan, interest accrues daily based on the actual unpaid principal balance, meaning early payments directly reduce total interest charges. In a precomputed interest loan, the lender calculates the total interest for the entire contract term upfront and adds it to the principal. Paying off a precomputed loan early yields minimal interest savings and often triggers the Rule of 78s accounting method, penalizing the borrower.
+                    </p>
+                </details>
+            </div>
+        </article>
+
+
+    <!-- Floating Quick-Switcher Bar -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark border-t dark:border-gray-700 p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] flex justify-center space-x-4 z-40">
+        <span class="text-xs text-gray-500 self-center hidden sm:block">Quick Switch:</span>
+        <a href="#" class="text-xs font-semibold text-primary hover:underline px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full">Mortgage</a>
+        <a href="#" class="text-xs font-semibold text-primary hover:underline px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full">Auto Loan</a>
+        <a href="#" class="text-xs font-semibold text-primary hover:underline px-3 py-1 bg-blue-50 dark:bg-blue-900/30 rounded-full">Personal Loan</a>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg opacity-0 pointer-events-none z-50">
+        Copied to clipboard!
+    </div>
+
+    <!-- Logic Script -->
+    <script>
+        let mode = 'payment'; // 'payment' or 'afford'
+        let chartInstance = null;
+
+        // Init Theme
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            const isDark = document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            if(chartInstance) updateChartColors();
+        });
+
+        // Currency Switcher
+        document.getElementById('currency-switcher').addEventListener('change', (e) => {
+            const symbol = e.target.options[e.target.selectedIndex].dataset.symbol;
+            document.querySelectorAll('.curr-symbol').forEach(el => el.textContent = symbol);
+            calculate();
+        });
+
+        // Tab Switcher
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-gray-500');
+            });
+            event.target.classList.remove('border-transparent', 'text-gray-500');
+            event.target.classList.add('border-primary', 'text-primary');
+
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+
+        // Mode Switcher
+        function setMode(newMode) {
+            mode = newMode;
+            const btnPayment = document.getElementById('calc-mode-payment');
+            const btnAfford = document.getElementById('calc-mode-afford');
+            const labelPrinc = document.getElementById('label-principal');
+            const resultLabel = document.getElementById('result-main-label');
+            const presets = document.getElementById('presets');
+
+            if (mode === 'payment') {
+                btnPayment.className = 'flex-1 py-2 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow transition';
+                btnAfford.className = 'flex-1 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition';
+                labelPrinc.textContent = 'Loan Principal';
+                resultLabel.textContent = 'Required Monthly Payment';
+                presets.classList.add('hidden');
+            } else {
+                btnAfford.className = 'flex-1 py-2 text-sm font-semibold rounded-md bg-white dark:bg-gray-600 shadow transition';
+                btnPayment.className = 'flex-1 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition';
+                labelPrinc.textContent = 'Target Monthly Payment';
+                resultLabel.textContent = 'Maximum Loan Affordability';
+                presets.classList.remove('hidden');
+            }
+            calculate();
+        }
+
+        function animateValue(obj, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const currentVal = progress * (end - start) + start;
+                obj.innerHTML = currentVal.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        // URL State Management
+        function updateUrlState(params) {
+            const url = new URL(window.location);
+            Object.keys(params).forEach(key => {
+                if(params[key]) url.searchParams.set(key, params[key]);
+                else url.searchParams.delete(key);
+            });
+            window.history.replaceState({}, '', url);
+        }
+
+        function loadFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if(params.has('mode')) setMode(params.get('mode'));
+            if(params.has('amt')) document.getElementById('input-amount').value = params.get('amt');
+            if(params.has('rate')) document.getElementById('input-rate').value = params.get('rate');
+            if(params.has('term')) document.getElementById('input-term').value = params.get('term');
+            if(params.has('ttype')) document.getElementById('input-term-type').value = params.get('ttype');
+            if(params.has('inc')) document.getElementById('input-income').value = params.get('inc');
+        }
+
+        // Core Calculation Logic
+        function calculate() {
+            showLoading();
+            setTimeout(() => { // Simulate processing for shimmer effect
+                const amountInput = parseFloat(document.getElementById('input-amount').value) || 0;
+                const rateInput = parseFloat(document.getElementById('input-rate').value) || 0;
+                let termInput = parseFloat(document.getElementById('input-term').value) || 0;
+                const termType = document.getElementById('input-term-type').value;
+                const incomeInput = parseFloat(document.getElementById('input-income').value) || 0;
+
+                // Update URL
+                updateUrlState({
+                    mode: mode, amt: amountInput, rate: rateInput, term: termInput, ttype: termType, inc: incomeInput
+                });
+
+                if(amountInput <= 0 || termInput <= 0) {
+                    resetOutputs();
+                    hideLoading();
+                    return;
+                }
+
+                const months = termType === 'years' ? termInput * 12 : termInput;
+                const r = (rateInput / 100) / 12;
+                
+                let principal = 0;
+                let pmt = 0;
+
+                if (mode === 'payment') {
+                    principal = amountInput;
+                    if(r === 0) pmt = principal / months;
+                    else pmt = principal * (r * Math.pow(1 + r, months)) / (Math.pow(1 + r, months) - 1);
+                } else {
+                    pmt = amountInput; // target payment
+                    if(r === 0) principal = pmt * months;
+                    else principal = pmt * (Math.pow(1 + r, months) - 1) / (r * Math.pow(1 + r, months));
+                }
+
+                const totalPaid = pmt * months;
+                const totalInterest = totalPaid - principal;
+
+                // Animate Outputs
+                animateValue(document.getElementById('result-main'), 0, mode === 'payment' ? pmt : principal, 800);
+                animateValue(document.getElementById('result-interest'), 0, totalInterest, 800);
+                animateValue(document.getElementById('result-total'), 0, totalPaid, 800);
+
+                // DTI
+                if(incomeInput > 0) {
+                    const dti = (pmt / incomeInput) * 100;
+                    const dtiEl = document.getElementById('result-dti');
+                    dtiEl.textContent = dti.toFixed(1) + '%';
+                    if(dti <= 36) dtiEl.className = 'font-bold text-green-500';
+                    else if(dti <= 43) dtiEl.className = 'font-bold text-yellow-500';
+                    else dtiEl.className = 'font-bold text-red-500';
+                } else {
+                    document.getElementById('result-dti').textContent = '-%';
+                    document.getElementById('result-dti').className = 'font-bold text-gray-500';
+                }
+
+                generateSchedule(principal, pmt, r, months);
+                updateChart(principal, totalInterest);
+                hideLoading();
+            }, 300);
+        }
+
+        function resetOutputs() {
+            document.getElementById('result-main').textContent = '0.00';
+            document.getElementById('result-interest').textContent = '0.00';
+            document.getElementById('result-total').textContent = '0.00';
+            document.getElementById('result-dti').textContent = '-%';
+            document.getElementById('schedule-body').innerHTML = '';
+            if(chartInstance) chartInstance.destroy();
+        }
+
+        function generateSchedule(principal, pmt, r, months) {
+            let balance = principal;
+            let tbody = '';
+            for(let i=1; i<=months; i++) {
+                let interestForMonth = balance * r;
+                let principalForMonth = pmt - interestForMonth;
+                balance -= principalForMonth;
+                if(balance < 0) balance = 0;
+
+                tbody += `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">${i}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">${pmt.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">${principalForMonth.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-red-500">${interestForMonth.toFixed(2)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">${balance.toFixed(2)}</td>
+                    </tr>
+                `;
+            }
+            document.getElementById('schedule-body').innerHTML = tbody;
+        }
+
+        function updateChart(principal, totalInterest) {
+            const ctx = document.getElementById('paymentChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+
+            if(chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Principal', 'Total Interest'],
+                    datasets: [{
+                        data: [principal, totalInterest],
+                        backgroundColor: ['#3b82f6', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor } },
+                        tooltip: { callbacks: { label: function(context) { return ' $' + context.raw.toLocaleString(undefined, {minimumFractionDigits:2}); } } }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if(!chartInstance) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            chartInstance.options.plugins.legend.labels.color = isDark ? '#e5e7eb' : '#374151';
+            chartInstance.update();
+        }
+
+        function copyResults() {
+            const sym = document.getElementById('currency-switcher').options[document.getElementById('currency-switcher').selectedIndex].dataset.symbol;
+            const res = document.getElementById('result-main').innerText;
+            const int = document.getElementById('result-interest').innerText;
+            const text = `Results:\n${document.getElementById('result-main-label').innerText}: ${sym}${res}\nTotal Interest: ${sym}${int}`;
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.style.opacity = '1';
+                setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+            });
+        }
+
+        // Attach listeners
+        ['input-amount', 'input-rate', 'input-term', 'input-term-type', 'input-income'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculate);
+            document.getElementById(id).addEventListener('change', calculate);
+        });
+
+        // Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromUrl();
+            if(document.getElementById('input-amount').value) calculate();
+        });
+
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

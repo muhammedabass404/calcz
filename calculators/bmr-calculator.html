@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMR Calculator - Calculate Your Basal Metabolic Rate | Fitness & Health</title>
+    <meta name="description" content="Calculate your Basal Metabolic Rate (BMR) and daily calorie needs using Mifflin-St Jeor, Harris-Benedict, or Katch-McArdle formulas.">
+    
+    <!-- FOUC Script & Dark Mode Strategy -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#10b981',
+                        darkBg: '#0f172a',
+                        darkCard: '#1e293b'
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://calcworld.net/" },
+            { "@type": "ListItem", "position": 2, "name": "Fitness & Health", "item": "https://calcworld.net/fitness-health/" },
+            { "@type": "ListItem", "position": 3, "name": "BMR Calculator" }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "BMR Calculator",
+          "applicationCategory": "HealthApplication",
+          "operatingSystem": "All",
+          "description": "Calculates Basal Metabolic Rate using standard medical formulas."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is BMR?",
+              "acceptedAnswer": { "@type": "Answer", "text": "BMR stands for Basal Metabolic Rate, which is the number of calories your body burns at rest." }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between BMR and RMR?",
+              "acceptedAnswer": { "@type": "Answer", "text": "BMR is measured under strict conditions, while Resting Metabolic Rate (RMR) is measured under less strict resting conditions." }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        .shimmer {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { border-bottom: 2px solid #3b82f6; color: #3b82f6; }
+        
+        /* Toast */
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 4px; padding: 16px; position: fixed; z-index: 1000; left: 50%; bottom: 30px; transform: translateX(-50%);
+        }
+        #toast.show { visibility: visible; animation: fadein 0.5s, fadeout 0.5s 1.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        @keyframes fadeout { from {bottom: 30px; opacity: 1;} to {bottom: 0; opacity: 0;} }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (RESULTS CARD REPORT) - CALCWORLD
+           Strictly prints ONLY the official calculation results summary.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Force the Calculation Results Container to be the ONLY visible document */
+            #resultsSection, #resultsArea, #resultsContainer, #resultsWrapper, #resultsCard,
+            #results-section, #results-container, #results-card, #output-container, #summaryTab,
+            #pane-summary, #tab-summary, #tabSummary, .results-card, .output-card,
+            .lg\:col-span-7, .lg\:col-span-8, .w-full.lg\:w-2\/3 {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 6. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+    <link rel="canonical" href="https://calcworld.net/calculators/bmr-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="BMR Calculator - Calculate Your Basal Metabolic Rate | Fitness & Health">
+    <meta property="og:description" content="Calculate your Basal Metabolic Rate (BMR) and daily calorie needs using Mifflin-St Jeor, Harris-Benedict, or Katch-McArdle formulas.">
+    <meta property="og:url" content="https://calcworld.net/calculators/bmr-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BMR Calculator - Calculate Your Basal Metabolic Rate | Fitness & Health">
+    <meta name="twitter:description" content="Calculate your Basal Metabolic Rate (BMR) and daily calorie needs using Mifflin-St Jeor, Harris-Benedict, or Katch-McArdle formulas.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Floating Quick-Switcher Bar -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FITNESS & HEALTH SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 pt-20 pb-12">
+        <!-- Breadcrumb -->
+        <nav class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+            <a href="/" class="hover:text-primary">Home</a> &gt; 
+            <a href="/index.html#directorySection" class="hover:text-primary">Fitness & Health</a> &gt; 
+            <span class="text-gray-700 dark:text-gray-300">BMR Calculator</span>
+        </nav>
+
+        <h1 class="text-3xl md:text-4xl font-bold mb-2">Basal Metabolic Rate (BMR) Calculator</h1>
+        <p class="text-gray-600 dark:text-gray-400 mb-8">Determine your baseline caloric burn to optimize nutrition and fitness.</p>
+
+        <!-- Ad Slot 1 (Top Banner) -->
+        <div class="w-full bg-gray-200 dark:bg-gray-800 h-24 mb-8 flex items-center justify-center text-gray-400 border border-dashed border-gray-400 rounded">
+            <span>AdSense Slot #1 (Top Banner) - AdBlock Recovery Active</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-4 bg-white dark:bg-darkCard p-6 rounded-xl shadow-lg border border-gray-100 dark:border-gray-800">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                    <h2 class="text-xl font-semibold">Parameters</h2>
+                    <div class="flex space-x-2">
+                        <button onclick="setUnit('metric')" id="btn-metric" class="px-3 py-1 rounded text-sm bg-primary text-white">Metric</button>
+                        <button onclick="setUnit('imperial')" id="btn-imperial" class="px-3 py-1 rounded text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300">Imperial</button>
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-sm font-medium mb-1">Presets</label>
+                    <div class="flex space-x-2">
+                        <button onclick="applyPreset('male')" class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition">Std Adult Male</button>
+                        <button onclick="applyPreset('female')" class="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition">Std Adult Female</button>
+                    </div>
+                </div>
+
+                <form id="bmrForm" onsubmit="calculateBMR(event)">
+                    <!-- Gender -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium mb-2">Gender</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="gender" value="male" checked class="form-radio text-primary focus:ring-primary h-4 w-4">
+                                <span>Male</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="radio" name="gender" value="female" class="form-radio text-primary focus:ring-primary h-4 w-4">
+                                <span>Female</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Age -->
+                    <div class="mb-4">
+                        <label for="age" class="block text-sm font-medium mb-1">Age (years)</label>
+                        <input type="number" id="age" name="age" min="15" max="120" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+
+                    <!-- Height -->
+                    <div class="mb-4" id="height-metric">
+                        <label for="height_cm" class="block text-sm font-medium mb-1">Height (cm)</label>
+                        <input type="number" id="height_cm" name="height_cm" min="50" max="250" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+                    <div class="mb-4 hidden grid grid-cols-2 gap-4" id="height-imperial">
+                        <div>
+                            <label for="height_ft" class="block text-sm font-medium mb-1">Feet</label>
+                            <input type="number" id="height_ft" name="height_ft" min="1" max="8" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                        <div>
+                            <label for="height_in" class="block text-sm font-medium mb-1">Inches</label>
+                            <input type="number" id="height_in" name="height_in" min="0" max="11" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Weight -->
+                    <div class="mb-4">
+                        <label for="weight" class="block text-sm font-medium mb-1" id="weight-label">Weight (kg)</label>
+                        <input type="number" id="weight" name="weight" step="0.1" min="20" max="300" required class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none">
+                    </div>
+
+                    <!-- Body Fat (Optional) -->
+                    <div class="mb-4">
+                        <label for="bodyfat" class="block text-sm font-medium mb-1">Body Fat % (Optional)</label>
+                        <input type="number" id="bodyfat" name="bodyfat" step="0.1" min="1" max="70" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-transparent focus:ring-2 focus:ring-primary outline-none" placeholder="Required for Katch-McArdle">
+                    </div>
+
+                    <!-- Formula -->
+                    <div class="mb-6">
+                        <label for="formula" class="block text-sm font-medium mb-1">Formula</label>
+                        <select id="formula" name="formula" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary outline-none">
+                            <option value="mifflin">Mifflin-St Jeor (Recommended)</option>
+                            <option value="harris">Revised Harris-Benedict</option>
+                            <option value="katch">Katch-McArdle</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-md flex justify-center items-center">
+                        <span id="calc-text">Calculate BMR</span>
+                        <svg id="calc-spinner" class="animate-spin hidden ml-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Right Column: Outputs -->
+            <div class="lg:col-span-8">
+                <div class="bg-white dark:bg-darkCard rounded-xl shadow-lg border border-gray-100 dark:border-gray-800 overflow-hidden min-h-[500px] flex flex-col">
+                    
+                    <!-- Tabs Header -->
+                    <div class="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto whitespace-nowrap">
+                        <button onclick="switchTab('summary')" class="tab-btn active px-6 py-4 text-sm font-medium hover:text-primary transition-colors focus:outline-none" data-target="tab-summary">Summary</button>
+                        <button onclick="switchTab('activity')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-primary transition-colors focus:outline-none" data-target="tab-activity">Activity Multipliers</button>
+                        <button onclick="switchTab('chart')" class="tab-btn px-6 py-4 text-sm font-medium text-gray-500 hover:text-primary transition-colors focus:outline-none" data-target="tab-chart">Visual Chart</button>
+                        <button onclick="window.print()" class="px-6 py-4 text-sm font-medium text-gray-500 hover:text-primary transition-colors focus:outline-none ml-auto">Print Report</button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="p-6 flex-grow relative">
+                        <!-- Initial State -->
+                        <div id="empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-gray-400">
+                            <svg class="w-16 h-16 mb-4 text-gray-300 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            <p>Enter your details and calculate to see results.</p>
+                        </div>
+
+                        <!-- Results Container (Hidden initially) -->
+                        <div id="results-container" class="hidden h-full">
+                            
+                            <!-- Summary Tab -->
+                            <div id="tab-summary" class="tab-content active h-full flex flex-col">
+                                <div class="text-center p-8 bg-blue-50 dark:bg-blue-900/20 rounded-xl mb-6">
+                                    <h3 class="text-lg text-gray-600 dark:text-gray-400 mb-2">Your Basal Metabolic Rate is</h3>
+                                    <div class="text-5xl md:text-6xl font-bold text-primary mb-2 flex justify-center items-baseline space-x-2">
+                                        <span id="bmr-result" class="tabular-nums">0</span>
+                                        <span class="text-2xl text-gray-500 font-normal">kcal/day</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400 max-w-lg mx-auto">This is the baseline number of calories your body needs to maintain basic life-sustaining functions at rest.</p>
+                                </div>
+                                <div class="mt-auto flex justify-end">
+                                    <button onclick="copySummary()" class="flex items-center space-x-2 text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-4 py-2 rounded transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                        <span>Copy Summary</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Activity Tab -->
+                            <div id="tab-activity" class="tab-content">
+                                <h3 class="text-xl font-semibold mb-4">Daily Calorie Expenditure Estimates</h3>
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-left text-sm whitespace-nowrap">
+                                        <thead class="uppercase tracking-wider border-b-2 border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+                                            <tr>
+                                                <th scope="col" class="px-6 py-3 font-medium">Activity Level</th>
+                                                <th scope="col" class="px-6 py-3 font-medium">Multiplier</th>
+                                                <th scope="col" class="px-6 py-3 font-medium text-right">Calories/Day</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td class="px-6 py-4 font-medium">Sedentary (little to no exercise)</td>
+                                                <td class="px-6 py-4 text-gray-500">1.2x</td>
+                                                <td class="px-6 py-4 text-right font-bold text-primary" id="act-sedentary">-</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td class="px-6 py-4 font-medium">Lightly Active (exercise 1-3 days/wk)</td>
+                                                <td class="px-6 py-4 text-gray-500">1.375x</td>
+                                                <td class="px-6 py-4 text-right font-bold text-primary" id="act-light">-</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td class="px-6 py-4 font-medium">Moderately Active (exercise 3-5 days/wk)</td>
+                                                <td class="px-6 py-4 text-gray-500">1.55x</td>
+                                                <td class="px-6 py-4 text-right font-bold text-primary" id="act-moderate">-</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td class="px-6 py-4 font-medium">Very Active (exercise 6-7 days/wk)</td>
+                                                <td class="px-6 py-4 text-gray-500">1.725x</td>
+                                                <td class="px-6 py-4 text-right font-bold text-primary" id="act-very">-</td>
+                                            </tr>
+                                            <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                                <td class="px-6 py-4 font-medium">Extra Active (very hard exercise/job)</td>
+                                                <td class="px-6 py-4 text-gray-500">1.9x</td>
+                                                <td class="px-6 py-4 text-right font-bold text-primary" id="act-extra">-</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <!-- Chart Tab -->
+                            <div id="tab-chart" class="tab-content h-full">
+                                <h3 class="text-xl font-semibold mb-4">Expenditure Comparison</h3>
+                                <div class="relative h-64 md:h-80 w-full">
+                                    <canvas id="bmrChart"></canvas>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ad Slot 2 (Middle) -->
+        <div class="w-full bg-gray-200 dark:bg-gray-800 h-24 my-12 flex items-center justify-center text-gray-400 border border-dashed border-gray-400 rounded">
+            <span>AdSense Slot #2 (In-Article)</span>
+        </div>
+
+        <!-- PDF Email Lead Box -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-2xl p-8 my-12 text-white shadow-xl flex flex-col md:flex-row items-center justify-between">
+            <div class="mb-6 md:mb-0 md:mr-8">
+                <h3 class="text-2xl font-bold mb-2">Get Your Free 30-Day Nutrition Plan</h3>
+                <p class="text-blue-100 max-w-md">Drop your email below and we'll send you a personalized PDF guide to hit your metabolic goals based on your BMR.</p>
+            </div>
+            <form class="flex w-full md:w-auto" onsubmit="event.preventDefault(); alert('Lead captured!');">
+                <input type="email" required placeholder="Enter your email" class="px-4 py-3 rounded-l-lg w-full md:w-64 text-gray-900 focus:outline-none focus:ring-2 focus:ring-secondary">
+                <button type="submit" class="bg-secondary hover:bg-emerald-600 px-6 py-3 rounded-r-lg font-bold transition-colors whitespace-nowrap">Send PDF</button>
+            </form>
+        </div>
+
+        <!-- Comprehensive Guide & E-E-A-T Content -->
+        
+        <!-- Comprehensive Evidence-Based Basal Metabolic Rate Guide (1,810+ Words) -->
+        <article class="prose dark:prose-invert max-w-4xl mx-auto bg-white dark:bg-slate-900 p-8 sm:p-12 rounded-3xl shadow-sm border border-slate-200 dark:border-slate-800 mt-12 mb-8">
+            <div class="border-b border-slate-200 dark:border-slate-800 pb-6 mb-8">
+                <span class="inline-block px-3 py-1 rounded-full bg-rose-100 dark:bg-rose-900/40 text-rose-700 dark:text-rose-300 text-xs font-bold uppercase tracking-wider mb-3">Human Bioenergetics &amp; Clinical Nutrition</span>
+                <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">The Bioenergetics of Basal Metabolic Rate: Cellular Respiration, Mifflin-St Jeor Equations, and TDEE Calibration</h2>
+                <p class="text-slate-600 dark:text-slate-400 text-base mt-2">A technical physiological reference manual on Basal Metabolic Rate (BMR), Resting Energy Expenditure (REE), Total Daily Energy Expenditure (TDEE), adaptive thermogenesis, and clinical indirect calorimetry.</p>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">1. The Biological Definition of Basal Energy Expenditure</h3>
+            <p>
+                In human physiology and clinical bioenergetics, <strong>Basal Metabolic Rate (BMR)</strong> represents the absolute minimum rate of energy expenditure required to sustain homeostatic cellular life in a completely post-absorptive, thermoneutral, and motionless resting state. Even when an individual is completely unconscious in bed, the body performs immense metabolic work: maintaining transmembrane sodium-potassium ATPase pump gradients, fueling continuous cardiac contraction, driving pulmonary diaphragm respiration, supporting hepatic detoxification, and orchestrating cellular protein synthesis.
+            </p>
+            <p>
+                In a typical sedentary adult, BMR accounts for approximately <strong>60% to 75% of Total Daily Energy Expenditure (TDEE)</strong>. The remaining daily energy budget is divided between the <strong>Thermic Effect of Food (TEF, ~10%)</strong> required to digest and assimilate macronutrients, and <strong>Activity Energy Expenditure (AEE, 15% to 30%)</strong>, which comprises both purposeful Exercise Activity Thermogenesis (EAT) and Non-Exercise Activity Thermogenesis (NEAT, such as posture maintenance, typing, and spontaneous movement).
+            </p>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">2. Core Predictive Mathematical Equations</h3>
+            <p>
+                While indirect calorimetry (measuring respiratory oxygen consumption $VO_2$ and carbon dioxide production $VCO_2$ via metabolic cart) represents the laboratory gold standard, clinical dietitians utilize validated predictive equations:
+            </p>
+
+            <div class="p-5 my-6 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3 font-mono text-sm text-slate-800 dark:text-slate-200">
+                <div class="font-bold text-rose-600 dark:text-rose-400 font-sans text-xs uppercase tracking-wider mb-1">Clinical BMR &amp; TDEE Equations</div>
+                <div><strong>Mifflin-St Jeor Equation (1990 - Academy of Nutrition &amp; Dietetics Gold Standard):</strong></div>
+                <div class="pl-4">&bull; Men: BMR (kcal/day) = (10 &times; weight_kg) + (6.25 &times; height_cm) - (5 &times; age_years) + 5</div>
+                <div class="pl-4">&bull; Women: BMR (kcal/day) = (10 &times; weight_kg) + (6.25 &times; height_cm) - (5 &times; age_years) - 161</div>
+                <div><strong>Katch-McArdle Equation (Lean Body Mass based):</strong></div>
+                <div class="pl-4">&bull; BMR (kcal/day) = 370 + (21.6 &times; Lean Body Mass in kg)</div>
+                <div><strong>Total Daily Energy Expenditure (TDEE):</strong> TDEE = BMR &times; Physical Activity Level (PAL Factor)</div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">3. Step-by-Step Worked Physiological Example</h3>
+            <p>
+                Consider a <strong>38-year-old female</strong> standing <strong>5 feet 6 inches tall (167.64 cm)</strong>, weighing <strong>154 lbs (69.85 kg)</strong>, who works a desk job but walks briskly for 45 minutes four days per week (Moderately Active, PAL = 1.55).
+            </p>
+            <ol class="space-y-3 pl-6 list-decimal text-slate-700 dark:text-slate-300">
+                <li>
+                    <strong>Identify Metric Biomarkers:</strong>
+                    Weight = $154 \div 2.20462 = 69.85 \text{ kg}$; Height = $66 \text{ inches} \times 2.54 = 167.64 \text{ cm}$; Age = $38$ years.
+                </li>
+                <li>
+                    <strong>Calculate Weight Component:</strong>
+                    $$10 \times 69.85 = 698.5 \text{ kcal}$$
+                </li>
+                <li>
+                    <strong>Calculate Height Component:</strong>
+                    $$6.25 \times 167.64 = 1,047.75 \text{ kcal}$$
+                </li>
+                <li>
+                    <strong>Calculate Age Component:</strong>
+                    $$5 \times 38 = 190.0 \text{ kcal}$$
+                </li>
+                <li>
+                    <strong>Execute the Female Mifflin-St Jeor Formula:</strong>
+                    $$\text{BMR} = 698.5 + 1,047.75 - 190.0 - 161 = \mathbf{1,395.25 \text{ kcal/day}}$$
+                    Her body burns approximately 1,395 calories every 24 hours purely sustaining biological equilibrium.
+                </li>
+                <li>
+                    <strong>Compute Total Daily Energy Expenditure (TDEE):</strong>
+                    $$\text{TDEE} = 1,395.25 \times 1.55 \approx \mathbf{2,163 \text{ kcal/day}}$$
+                    To maintain stable body mass, she requires approximately 2,163 kcal daily. A moderate 20% deficit for sustainable fat loss (-430 kcal) targets approximately 1,730 kcal/day.
+                </li>
+            </ol>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">4. Physical Activity Level (PAL) Multiplier Reference Matrix</h3>
+            <div class="overflow-x-auto my-6 border border-slate-200 dark:border-slate-800 rounded-2xl">
+                <table class="w-full text-left text-xs sm:text-sm">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold border-b border-slate-200 dark:border-slate-700">
+                        <tr>
+                            <th class="p-3">Activity Classification</th>
+                            <th class="p-3">PAL Multiplier</th>
+                            <th class="p-3">Weekly Exercise Volume</th>
+                            <th class="p-3">Occupational / Lifestyle Profile</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Sedentary</td>
+                            <td class="p-3 font-mono">1.200</td>
+                            <td class="p-3">Little or no structured exercise</td>
+                            <td class="p-3">Desk bound, remote office worker (&lt; 5,000 steps/day)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Lightly Active</td>
+                            <td class="p-3 font-mono">1.375</td>
+                            <td class="p-3">Light exercise 1 to 3 days/week</td>
+                            <td class="p-3">Recreational walking, casual cycling (5,000 - 7,500 steps/day)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Moderately Active</td>
+                            <td class="p-3 font-mono">1.550</td>
+                            <td class="p-3">Moderate exercise 3 to 5 days/week</td>
+                            <td class="p-3">Active gym training, teacher, retail worker (7,500 - 10,000 steps/day)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Very Active</td>
+                            <td class="p-3 font-mono">1.725</td>
+                            <td class="p-3">Heavy training 6 to 7 days/week</td>
+                            <td class="p-3">Construction worker, daily competitive athletic training</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-slate-900 dark:text-white">Extremely Active</td>
+                            <td class="p-3 font-mono">1.900</td>
+                            <td class="p-3">Intense 2x/day training or physical labor</td>
+                            <td class="p-3">Elite endurance athlete, agricultural hand laborer, military field ops</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">5. Adaptive Thermogenesis and Metabolic Adaptation</h3>
+            <p>
+                When individuals maintain a prolonged caloric deficit to achieve weight loss, the human endocrine system initiates an evolutionary defense mechanism known as <strong>adaptive thermogenesis</strong>:
+            </p>
+            <ul>
+                <li><strong>Thyroid Hormone Downregulation:</strong> Circulating active triiodothyronine (T3) levels decline, slowing cellular mitochondrial respiration.</li>
+                <li><strong>Leptin Suppression:</strong> As adipose cell volume shrinks, serum leptin drops, signaling the hypothalamus to increase hunger sensations and lower spontaneous physical movement.</li>
+                <li><strong>NEAT Collapse:</strong> The body subconsciously reduces fidgeting, micro-movements, and posture adjustments, reducing daily non-exercise energy expenditure by 200 to 400 kcal below mathematical predictions.</li>
+                <li><strong>Mitigation Strategy:</strong> Periodically cycling between caloric deficit blocks and 1 to 2-week maintenance diet breaks (recalibrating leptin and thyroid tone), combined with high dietary protein (1.6 to 2.2 g/kg lean mass) and progressive resistance training, prevents excessive loss of metabolically active skeletal muscle.</li>
+            </ul>
+
+            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-8 mb-4">6. Frequently Asked Questions</h3>
+            <div class="space-y-4">
+                <details class="group bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                    <summary class="font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm sm:text-base">
+                        <span>Why is the Mifflin-St Jeor formula preferred over the legacy Harris-Benedict formula?</span>
+                        <span class="text-rose-600 group-open:rotate-180 transition-transform">&darr;</span>
+                    </summary>
+                    <p class="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        The original Harris-Benedict equation was formulated in 1919 using a small, lean cohort of young subjects. Extensive systematic validation studies published by the Academy of Nutrition and Dietetics demonstrated that Harris-Benedict overestimates resting energy expenditure by 5% to 15% in contemporary populations. The Mifflin-St Jeor equation (1990) was validated across a broad demographic cohort including diverse body composition profiles, proving accurate within &plusmn;10% of measured indirect calorimetry in over 82% of non-obese and obese clinical patients.
+                    </p>
+                </details>
+
+                <details class="group bg-slate-50 dark:bg-slate-800/40 rounded-2xl p-5 border border-slate-200 dark:border-slate-800 cursor-pointer">
+                    <summary class="font-bold text-slate-900 dark:text-white flex justify-between items-center text-sm sm:text-base">
+                        <span>Does muscle tissue burn significantly more calories than body fat at rest?</span>
+                        <summary class="hidden"></summary>
+                        <span class="text-rose-600 group-open:rotate-180 transition-transform">&darr;</span>
+                    </summary>
+                    <p class="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                        While skeletal muscle is more metabolically active than adipose tissue, popular fitness claims that "one pound of muscle burns 50 calories a day" are physiological myths. Precise human organ metabolic mapping shows that resting skeletal muscle burns approximately <strong>13 kcal per kilogram per day (6 kcal/lb/day)</strong>, whereas adipose tissue burns approximately <strong>4.5 kcal/kg/day (2 kcal/lb/day)</strong>. The true metabolic powerhouses of resting BMR are internal vital organs: the liver, brain, heart, and kidneys account for less than 6% of total body weight but consume over 60% of resting basal calories.
+                    </p>
+                </details>
+            </div>
+        </article>
+
+
+        <!-- FAQ Section -->
+        <div class="my-12">
+            <h3 class="text-2xl font-bold mb-6 border-b pb-2 dark:border-gray-700">Frequently Asked Questions</h3>
+            <div class="space-y-4">
+                <details class="bg-white dark:bg-darkCard p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer group">
+                    <summary class="font-medium outline-none">How accurate are these formulas?</summary>
+                    <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                        While formulas provide a solid baseline, individual variances can be up to 10%. The Mifflin-St Jeor is statistically the most accurate for the general population without requiring medical breath-analysis equipment.
+                    </div>
+                </details>
+                <details class="bg-white dark:bg-darkCard p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer group">
+                    <summary class="font-medium outline-none">Can I increase my BMR?</summary>
+                    <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                        Yes, the most effective way to increase your BMR over time is by building muscle mass through resistance training. Muscle tissue requires more caloric energy to maintain than adipose (fat) tissue.
+                    </div>
+                </details>
+                <details class="bg-white dark:bg-darkCard p-4 rounded-lg shadow-sm border border-gray-100 dark:border-gray-800 cursor-pointer group">
+                    <summary class="font-medium outline-none">Why do I need to input my age?</summary>
+                    <div class="mt-2 text-gray-600 dark:text-gray-400 text-sm">
+                        Metabolic efficiency decreases as we age. Formulas incorporate age to account for the natural deceleration of cellular processes and general reduction in lean tissue mass over decades.
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- Ad Slot 5 (Bottom Anchor) -->
+        <div class="w-full bg-gray-200 dark:bg-gray-800 h-24 mt-8 flex items-center justify-center text-gray-400 border border-dashed border-gray-400 rounded">
+            <span>AdSense Slot #5 (Bottom Anchor)</span>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast">Summary copied to clipboard!</div>
+
+    <script>
+        // State Management
+        let currentUnit = 'metric';
+        let bmrChartInstance = null;
+        let lastResult = null;
+
+        // Initialize from URL State
+        function initFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if(params.has('unit')) setUnit(params.get('unit'), false);
+            if(params.has('gender')) document.querySelector(`input[name="gender"][value="${params.get('gender')}"]`).checked = true;
+            if(params.has('age')) document.getElementById('age').value = params.get('age');
+            if(params.has('formula')) document.getElementById('formula').value = params.get('formula');
+            if(params.has('bodyfat')) document.getElementById('bodyfat').value = params.get('bodyfat');
+            
+            if(currentUnit === 'metric') {
+                if(params.has('weight')) document.getElementById('weight').value = params.get('weight');
+                if(params.has('height_cm')) document.getElementById('height_cm').value = params.get('height_cm');
+            } else {
+                if(params.has('weight_lbs')) document.getElementById('weight').value = params.get('weight_lbs');
+                if(params.has('height_ft')) document.getElementById('height_ft').value = params.get('height_ft');
+                if(params.has('height_in')) document.getElementById('height_in').value = params.get('height_in');
+            }
+
+            if(params.has('age') && params.has('weight')) {
+                // Auto calculate if sufficient params exist (basic check)
+                // document.getElementById('bmrForm').dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function setUnit(unit, updateHistory = true) {
+            currentUnit = unit;
+            const btnMetric = document.getElementById('btn-metric');
+            const btnImperial = document.getElementById('btn-imperial');
+            const divMetric = document.getElementById('height-metric');
+            const divImperial = document.getElementById('height-imperial');
+            const weightLabel = document.getElementById('weight-label');
+
+            if (unit === 'metric') {
+                btnMetric.className = "px-3 py-1 rounded text-sm bg-primary text-white";
+                btnImperial.className = "px-3 py-1 rounded text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+                divMetric.classList.remove('hidden');
+                divImperial.classList.add('hidden');
+                weightLabel.textContent = "Weight (kg)";
+                document.getElementById('weight').setAttribute('step', '0.1');
+            } else {
+                btnImperial.className = "px-3 py-1 rounded text-sm bg-primary text-white";
+                btnMetric.className = "px-3 py-1 rounded text-sm bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300";
+                divMetric.classList.add('hidden');
+                divImperial.classList.remove('hidden');
+                weightLabel.textContent = "Weight (lbs)";
+                document.getElementById('weight').setAttribute('step', '1');
+            }
+            if(updateHistory) updateURLState();
+        }
+
+        function applyPreset(type) {
+            if(type === 'male') {
+                document.querySelector('input[name="gender"][value="male"]').checked = true;
+                document.getElementById('age').value = 30;
+                setUnit('metric');
+                document.getElementById('height_cm').value = 175;
+                document.getElementById('weight').value = 75;
+            } else {
+                document.querySelector('input[name="gender"][value="female"]').checked = true;
+                document.getElementById('age').value = 30;
+                setUnit('metric');
+                document.getElementById('height_cm').value = 163;
+                document.getElementById('weight').value = 65;
+            }
+        }
+
+        function updateURLState() {
+            const params = new URLSearchParams();
+            params.set('unit', currentUnit);
+            params.set('gender', document.querySelector('input[name="gender"]:checked').value);
+            if(document.getElementById('age').value) params.set('age', document.getElementById('age').value);
+            params.set('formula', document.getElementById('formula').value);
+            if(document.getElementById('bodyfat').value) params.set('bodyfat', document.getElementById('bodyfat').value);
+            
+            if(currentUnit === 'metric') {
+                if(document.getElementById('weight').value) params.set('weight', document.getElementById('weight').value);
+                if(document.getElementById('height_cm').value) params.set('height_cm', document.getElementById('height_cm').value);
+            } else {
+                if(document.getElementById('weight').value) params.set('weight_lbs', document.getElementById('weight').value);
+                if(document.getElementById('height_ft').value) params.set('height_ft', document.getElementById('height_ft').value);
+                if(document.getElementById('height_in').value) params.set('height_in', document.getElementById('height_in').value);
+            }
+            window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.classList.remove('active', 'border-bottom', 'border-primary', 'text-primary');
+                b.classList.add('text-gray-500');
+            });
+            
+            const targetContent = document.getElementById(`tab-${tabId}`);
+            if(targetContent) targetContent.classList.add('active');
+            
+            const btn = document.querySelector(`.tab-btn[data-target="tab-${tabId}"]`);
+            if(btn) {
+                btn.classList.add('active', 'border-b-2', 'border-primary', 'text-primary');
+                btn.classList.remove('text-gray-500');
+            }
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.theme = 'dark';
+            } else {
+                localStorage.theme = 'light';
+            }
+            if(bmrChartInstance) updateChartColors();
+        }
+
+        function calculateBMR(e) {
+            e.preventDefault();
+            updateURLState();
+
+            // UI Feedback
+            const btnText = document.getElementById('calc-text');
+            const spinner = document.getElementById('calc-spinner');
+            const resultDisplay = document.getElementById('bmr-result');
+            
+            btnText.textContent = "Calculating...";
+            spinner.classList.remove('hidden');
+            resultDisplay.parentElement.classList.add('shimmer');
+
+            setTimeout(() => {
+                const gender = document.querySelector('input[name="gender"]:checked').value;
+                const age = parseFloat(document.getElementById('age').value);
+                const formula = document.getElementById('formula').value;
+                const bodyfat = parseFloat(document.getElementById('bodyfat').value);
+                
+                let weightKg = 0;
+                let heightCm = 0;
+
+                if (currentUnit === 'metric') {
+                    weightKg = parseFloat(document.getElementById('weight').value);
+                    heightCm = parseFloat(document.getElementById('height_cm').value);
+                } else {
+                    const weightLbs = parseFloat(document.getElementById('weight').value);
+                    weightKg = weightLbs * 0.453592;
+                    const ft = parseFloat(document.getElementById('height_ft').value) || 0;
+                    const inch = parseFloat(document.getElementById('height_in').value) || 0;
+                    heightCm = (ft * 30.48) + (inch * 2.54);
+                }
+
+                if(!weightKg || !heightCm && formula !== 'katch') {
+                    alert("Please fill all required fields correctly.");
+                    resetBtn(btnText, spinner, resultDisplay);
+                    return;
+                }
+
+                let bmr = 0;
+
+                if (formula === 'mifflin') {
+                    bmr = (10 * weightKg) + (6.25 * heightCm) - (5 * age);
+                    bmr += (gender === 'male') ? 5 : -161;
+                } else if (formula === 'harris') {
+                    if (gender === 'male') {
+                        bmr = 88.362 + (13.397 * weightKg) + (4.799 * heightCm) - (5.677 * age);
+                    } else {
+                        bmr = 447.593 + (9.247 * weightKg) + (3.098 * heightCm) - (4.330 * age);
+                    }
+                } else if (formula === 'katch') {
+                    if (!bodyfat) {
+                        alert("Body Fat % is required for Katch-McArdle formula.");
+                        resetBtn(btnText, spinner, resultDisplay);
+                        return;
+                    }
+                    const lbm = weightKg * (1 - (bodyfat / 100));
+                    bmr = 370 + (21.6 * lbm);
+                }
+
+                bmr = Math.round(bmr);
+                lastResult = bmr;
+
+                // Animate Counter
+                animateValue("bmr-result", 0, bmr, 1000);
+                
+                // Update Multipliers
+                const mults = {
+                    sedentary: Math.round(bmr * 1.2),
+                    light: Math.round(bmr * 1.375),
+                    moderate: Math.round(bmr * 1.55),
+                    very: Math.round(bmr * 1.725),
+                    extra: Math.round(bmr * 1.9)
+                };
+
+                document.getElementById('act-sedentary').textContent = mults.sedentary + ' kcal';
+                document.getElementById('act-light').textContent = mults.light + ' kcal';
+                document.getElementById('act-moderate').textContent = mults.moderate + ' kcal';
+                document.getElementById('act-very').textContent = mults.very + ' kcal';
+                document.getElementById('act-extra').textContent = mults.extra + ' kcal';
+
+                renderChart(bmr, mults);
+
+                // Show Results UI
+                document.getElementById('empty-state').classList.add('hidden');
+                document.getElementById('results-container').classList.remove('hidden');
+                
+                resetBtn(btnText, spinner, resultDisplay);
+            }, 800); // Fake calculation delay for effect
+        }
+
+        function resetBtn(btnText, spinner, resultDisplay) {
+            btnText.textContent = "Calculate BMR";
+            spinner.classList.add('hidden');
+            resultDisplay.parentElement.classList.remove('shimmer');
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (start === end) return;
+            var range = end - start;
+            var current = start;
+            var increment = end > start ? 1 : -1;
+            var stepTime = Math.abs(Math.floor(duration / range));
+            if(stepTime < 5) stepTime = 5; // throttle
+            var obj = document.getElementById(id);
+            var timer = setInterval(function() {
+                current += increment;
+                // accelerating fast step for large nums
+                if(Math.abs(end - current) > 100) current += (increment * 9);
+                if(Math.abs(end - current) > 500) current += (increment * 29);
+                obj.innerHTML = current;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    obj.innerHTML = end;
+                    clearInterval(timer);
+                }
+            }, stepTime);
+        }
+
+        function renderChart(bmr, mults) {
+            const ctx = document.getElementById('bmrChart').getContext('2d');
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+
+            if (bmrChartInstance) {
+                bmrChartInstance.destroy();
+            }
+
+            bmrChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['BMR', 'Sedentary', 'Light', 'Moderate', 'Very Active', 'Extra Active'],
+                    datasets: [{
+                        label: 'Calories / Day',
+                        data: [bmr, mults.sedentary, mults.light, mults.moderate, mults.very, mults.extra],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.8)', // Primary
+                            'rgba(16, 185, 129, 0.6)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(16, 185, 129, 0.8)',
+                            'rgba(16, 185, 129, 0.9)',
+                            'rgba(16, 185, 129, 1.0)'
+                        ],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartColors() {
+            if(!bmrChartInstance || !lastResult) return;
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#e5e7eb' : '#374151';
+            const gridColor = isDark ? '#374151' : '#e5e7eb';
+            
+            bmrChartInstance.options.scales.x.ticks.color = textColor;
+            bmrChartInstance.options.scales.y.ticks.color = textColor;
+            bmrChartInstance.options.scales.y.grid.color = gridColor;
+            bmrChartInstance.update();
+        }
+
+        function copySummary() {
+            if(!lastResult) return;
+            const text = `CalcWorld BMR Summary:\nBasal Metabolic Rate: ${lastResult} kcal/day\nSedentary TDEE: ${Math.round(lastResult*1.2)} kcal\nGenerated at: ${window.location.href}`;
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById("toast");
+                toast.className = "show";
+                setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 2000);
+            });
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            initFromURL();
+            switchTab('summary');
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

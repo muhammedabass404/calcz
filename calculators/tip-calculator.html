@@ -1,0 +1,2787 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tip Calculator | Restaurant Bill Splitter &amp; Group Apportionment</title>
+    <meta name="description" content="Calculate dining tips on pre-tax or post-tax subtotals, split restaurant bills equally or unequally with itemized dish tracking, round totals, and view global tipping etiquette.">
+    <link rel="canonical" href="https://calcworld.net/calculators/tip-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                            950: '#022c22',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(5, 150, 105, 0.08) 20%,
+                rgba(5, 150, 105, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            z-index: 50;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Tip Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Tip Calculator",
+      "url": "https://calcworld.net/other/tip-calculator",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Calculate restaurant dining tips on pre-tax or post-tax subtotals, split group bills equally or unequally with itemized dish tracking, round up shares, and consult global tipping etiquette."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Should I calculate the tip on the pre-tax subtotal or the post-tax bill total?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Industry standard best practice\u2014supported by culinary organizations and labor economists\u2014is to calculate the tip on the pre-tax food and beverage subtotal. Sales tax is an obligatory government collection, not a restaurant service. Calculating tips on post-tax amounts forces diners to pay gratuity on state and local taxes, inflating effective tip percentages by 1.5% to 2.2% in high-tax metropolitan areas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the legal difference between a mandatory service charge and a voluntary tip under the FLSA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Under the Fair Labor Standards Act and IRS regulations, a voluntary tip is 100% optional, determined solely by the guest, and belongs entirely to the employee. A mandatory service charge (such as an automatic 18% charge on parties of 6 or more) is contractually obligatory and legally constitutes gross revenue belonging to the restaurant enterprise, which management may distribute or retain at its discretion."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the FLSA tip credit function for restaurant employers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Under Section 3(m) of the FLSA, employers may claim a tip credit of up to $5.12 per hour against the federal $7.25 minimum wage, paying tipped employees a direct cash wage as low as $2.13 per hour. However, if the employee's direct cash wage plus actual tips received does not equal at least $7.25 per hour across the workweek, the employer must pay the monetary difference."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are managers or supervisors legally permitted to participate in employee tip pools?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Under the Fair Labor Standards Act regulations updated in 2020 and 2021, employers, managers, and supervisors are strictly prohibited from keeping or participating in employee tip pools for any reason, regardless of whether the employer claims a tip credit. Managers may only keep tips that they personally and directly receive from customers for services they directly provided without the assistance of other employees."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the standard tipping percentage for restaurant dining in the United States?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In United States sit-down restaurants, customary tipping benchmarks are: 15% for acceptable service, 18% for solid standard service, 20% for attentive dining service, and 22% to 25% for exceptional culinary and beverage hospitality. Leaving less than 15% generally signals a notable service failure."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How should group dining tabs with shared items and unequal drink orders be split fairly?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The most equitable approach is proportional apportionment: assign each person their ordered dishes, divide shared appetizers equally among participants, and then distribute the total sales tax and group tip proportionally based on each person's percentage of the total food and drink subtotal. This ensures nondrinkers do not subsidize expensive wine or cocktails."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is tipping considered impolite or offensive in Japan?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In Japan, service culture is governed by 'omotenashi'\u2014the philosophy of selfless, mindful hospitality. High-quality service is considered the baseline duty of the establishment and is included in the stated price. Offering extra money can imply that the worker's employer does not pay them adequately or that the customer believes money is necessary to motivate professional behavior."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much should I tip food delivery couriers compared to rideshare drivers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For food delivery (DoorDash, Uber Eats), customary tipping is 15% to 20% of the food subtotal, with an absolute minimum of $4.00 to $5.00 to account for personal vehicle gas, depreciation, and wait times. For rideshare drivers (Uber, Lyft), standard tipping ranges from 10% to 20% of the fare, or $2.00 to $5.00 for short urban trips."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Tip Calculator | Restaurant Bill Splitter &amp; Group Apportionment">
+    <meta property="og:description" content="Calculate dining tips on pre-tax or post-tax subtotals, split restaurant bills equally or unequally with itemized dish tracking, round totals, and view global tipping etiquette.">
+    <meta property="og:url" content="https://calcworld.net/calculators/tip-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tip Calculator | Restaurant Bill Splitter &amp; Group Apportionment">
+    <meta name="twitter:description" content="Calculate dining tips on pre-tax or post-tax subtotals, split restaurant bills equally or unequally with itemized dish tracking, round totals, and view global tipping etiquette.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Dining Software:</strong> CalcWorld provides open-access dining calculation tools free of registration barriers. Please safelist our domain to support ongoing hospitality calculation software development.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Tip Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Tip Calculator &amp; Restaurant Bill Splitter</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Comprehensive restaurant dining gratuity engine and group expense splitter. Calculate customary tips on pre-tax or post-tax subtotals, apportion unequal dining orders and shared appetizers, round up bills to the nearest dollar, and consult international tipping etiquette.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white">Dining Parameters</h2>
+                        <div class="flex items-center gap-1 text-xs">
+                            <span class="text-slate-400">Currency:</span>
+                            <select id="currencySelect" onchange="setCurrency(this.value)" class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-0.5 text-xs font-bold focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                <option value="$" selected>USD ($)</option>
+                                <option value="€">EUR (€)</option>
+                                <option value="£">GBP (£)</option>
+                                <option value="C$">CAD (C$)</option>
+                                <option value="A$">AUD (A$)</option>
+                                <option value="¥">JPY (¥)</option>
+                                <option value="CHF">CHF (Fr)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Dining Presets -->
+                    <div class="mb-5">
+                        <label for="diningPresetSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Dining Presets</label>
+                        <select id="diningPresetSelect" onchange="loadDiningPreset(this.value)" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Select Dining Scenario --</option>
+                            <option value="preset_lunch">Solo Bistro Lunch ($24.50, 1 person, 18% tip)</option>
+                            <option value="preset_dinner" selected>Couples Dinner ($88.00, 2 people, 20% tip)</option>
+                            <option value="preset_group4">Friends Feast ($195.00, 4 people, 20% tip)</option>
+                            <option value="preset_celebration">Celebration Party ($420.00, 6 people, 22% tip)</option>
+                            <option value="preset_coffee">Coffee &amp; Pastry ($14.00, 1 person, 15% tip)</option>
+                        </select>
+                    </div>
+
+                    <!-- Bill Subtotal Input -->
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="billSubtotalInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Food &amp; Drink Subtotal</label>
+                            <span class="text-[11px] text-slate-400">Pre-tax bill</span>
+                        </div>
+                        <div class="relative">
+                            <span class="currency-symbol absolute left-3 top-2.5 text-slate-400 font-medium text-sm">$</span>
+                            <input type="number" id="billSubtotalInput" min="0" step="0.01" value="88.00" oninput="calculateTip()" class="w-full pl-8 pr-3 py-2.5 text-base font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                    </div>
+
+                    <!-- Sales Tax Configuration -->
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Sales Tax</label>
+                            <div class="flex items-center gap-1 text-[11px]">
+                                <button type="button" id="taxModePercentBtn" onclick="setTaxMode('percent')" class="px-2 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">Rate (%)</button>
+                                <button type="button" id="taxModeDollarBtn" onclick="setTaxMode('dollar')" class="px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">Amount (<span class="currency-symbol">$</span>)</button>
+                            </div>
+                        </div>
+                        <div id="taxPercentContainer" class="relative">
+                            <input type="number" id="taxPercentInput" min="0" max="30" step="0.001" value="8.875" oninput="calculateTip()" class="w-full pl-3 pr-8 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-3 top-2 text-slate-400 text-sm font-semibold">%</span>
+                        </div>
+                        <div id="taxDollarContainer" class="relative hidden">
+                            <span class="currency-symbol absolute left-3 top-2 text-slate-400 text-sm font-semibold">$</span>
+                            <input type="number" id="taxDollarInput" min="0" step="0.01" value="7.81" oninput="calculateTip()" class="w-full pl-8 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                    </div>
+
+                    <!-- Pre-Tax vs Post-Tax Tip Calculation Toggle -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Tipping Basis</label>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <label class="relative flex items-start p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="tipBasis" value="pretax" checked onchange="setTipBasis('pretax')" class="mt-0.5 w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-2 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Pre-Tax Subtotal</span>
+                                    <span class="text-slate-500 dark:text-slate-400 text-[10px]">Industry standard norm</span>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-start p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="tipBasis" value="posttax" onchange="setTipBasis('posttax')" class="mt-0.5 w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-2 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Post-Tax Total</span>
+                                    <span class="text-slate-500 dark:text-slate-400 text-[10px]">Subtotal + Tax</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Quick Tip Percentage Buttons -->
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Tip Percentage</label>
+                            <span class="text-xs font-extrabold text-brand-600 dark:text-brand-400 font-mono" id="tipPercentageBadge">20%</span>
+                        </div>
+                        <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5 mb-3">
+                            <button type="button" onclick="setTipPercent(10)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_10">10%</button>
+                            <button type="button" onclick="setTipPercent(15)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_15">15%</button>
+                            <button type="button" onclick="setTipPercent(18)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_18">18%</button>
+                            <button type="button" onclick="setTipPercent(20)" class="tip-btn active py-1.5 px-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/80 dark:text-brand-300 transition" id="tipBtn_20">20%</button>
+                            <button type="button" onclick="setTipPercent(22)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_22">22%</button>
+                            <button type="button" onclick="setTipPercent(25)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_25">25%</button>
+                            <button type="button" onclick="setTipPercent(30)" class="tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition" id="tipBtn_30">30%</button>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="range" id="tipSliderInput" min="0" max="50" step="0.5" value="20" oninput="onTipSlider(this.value)" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                            <div class="relative w-20 shrink-0">
+                                <input type="number" id="tipCustomInput" min="0" max="100" step="0.1" value="20" oninput="onTipCustom(this.value)" class="w-full pl-2 pr-6 py-1 text-xs font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500 text-right">
+                                <span class="absolute right-2 top-1 text-slate-400 text-xs font-bold">%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Number of People (Party Split) -->
+                    <div class="mb-5">
+                        <div class="flex justify-between items-center mb-1.5">
+                            <label for="peopleCountInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Party Size (Number of People)</label>
+                            <span class="text-[11px] text-slate-400" id="splitStatusLabel">Split into 2 equal shares</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="stepPeople(-1)" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-lg flex items-center justify-center transition" aria-label="Decrease diners">&minus;</button>
+                            <input type="number" id="peopleCountInput" min="1" max="50" step="1" value="2" oninput="calculateTip()" class="flex-grow text-center py-2 text-base font-bold bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <button type="button" onclick="stepPeople(1)" class="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-lg flex items-center justify-center transition" aria-label="Increase diners">&plus;</button>
+                        </div>
+                    </div>
+
+                    <!-- Round Up Options -->
+                    <div class="mb-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Round Up Options</label>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <button type="button" onclick="setRoundingMode('none')" id="roundBtn_none" class="round-btn active p-2 rounded-xl border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 font-semibold text-center transition">Exact Cents</button>
+                            <button type="button" onclick="setRoundingMode('roundTotal')" id="roundBtn_roundTotal" class="round-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-center transition">Round Total ($1)</button>
+                            <button type="button" onclick="setRoundingMode('roundPerson')" id="roundBtn_roundPerson" class="round-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-center transition">Round Person ($1)</button>
+                            <button type="button" onclick="setRoundingMode('round5')" id="roundBtn_round5" class="round-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-center transition">Round Total ($5)</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-slate-900 to-emerald-950 text-white p-5 rounded-2xl shadow-md border border-emerald-900/50">
+                    <div class="flex items-center gap-2 mb-2 text-emerald-400 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Global Gratuity Handbook</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Global Dining &amp; Tipping Cheat Sheet</h3>
+                    <p class="text-xs text-emerald-200 mb-3">Download our traveler reference guide covering tipping etiquette, service charge laws, and currency norms across 45 countries (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="traveler@example.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-emerald-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg transition shadow">Download Free PDF Guide</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">&check; Handbook confirmed. Your dining etiquette guide has been dispatched.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Dining Gratuity Summary</span>
+                        <div class="flex items-center gap-2">
+                            <span id="serviceLevelBadge" class="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">Attentive Service (20%)</span>
+                        </div>
+                    </div>
+
+                    <!-- Dual Primary Big Metrics (Total Tip & Grand Total) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Total Gratuity (Tip)</span>
+                            <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="totalTipDisplay">
+                                $17.60
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="tipBasisDisplay">Calculated on pre-tax subtotal ($88.00)</span>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Total Bill to Pay</span>
+                            <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono" id="grandTotalDisplay">
+                                $113.41
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="billSummaryDisplay">Subtotal $88.00 + Tax $7.81 + Tip $17.60</span>
+                        </div>
+                    </div>
+
+                    <!-- Per-Person Split Summary Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Each Person Total</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono text-brand-600 dark:text-brand-400" id="perPersonTotalVal">$56.71</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Each Person Tip</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="perPersonTipVal">$8.80</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Each Person Food</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="perPersonFoodVal">$44.00</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Each Person Tax</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="perPersonTaxVal">$3.91</span>
+                        </div>
+                    </div>
+
+                    <!-- Rounding and Effective Percentage Row -->
+                    <div id="roundingNoticeContainer" class="hidden text-xs px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200/50 dark:border-emerald-800/50 mb-3 flex items-center justify-between">
+                        <span id="roundingNoticeText">Rounded up to nearest dollar.</span>
+                        <span class="font-mono font-bold" id="roundingDiffVal">+$0.59</span>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="effectiveRateSummary">Effective Tip on Total: 18.37%</span>
+                            <span>&bull;</span>
+                            <span id="taxShareSummary">Sales Tax: 6.89% of bill</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyBillSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Receipt</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('fast')" id="tabBtn_fast" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Fast Tip &amp; Split Calculator
+                        </button>
+                        <button onclick="switchTab('itemized')" id="tabBtn_itemized" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Itemized Group Bill Apportionment
+                        </button>
+                        <button onclick="switchTab('etiquette')" id="tabBtn_etiquette" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Global Tipping Etiquette Reference
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Fast Tip & Split Calculator -->
+                <div id="tab-fast" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart.js Visualization Container (Bill vs Tip vs Tax Breakdown Doughnut) -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Bill vs. Tip vs. Tax Cost Breakdown</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Proportional allocation of dining expenses across food, statutory tax, and gratuity.</p>
+                            </div>
+                            <span class="text-xs font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-md border border-brand-200/50" id="chartTotalLabel">Total: $113.41</span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full flex items-center justify-center">
+                            <canvas id="billBreakdownChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Dining Gratuity Formulas</span>
+                        </h3>
+                        
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="text-center py-2 text-slate-400">Computing dining formulas...</div>
+                        </div>
+                    </div>
+
+                    <!-- Tip Comparison Matrix Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3">Quick Tip Sensitivity Matrix</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Compare total bill amounts and per-person contributions across standard gratuity tiers.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Tip Rate</th>
+                                        <th class="px-3 py-2.5">Service Tier</th>
+                                        <th class="px-3 py-2.5">Tip Amount</th>
+                                        <th class="px-3 py-2.5">Total Bill</th>
+                                        <th class="px-3 py-2.5">Per Person (<span id="matrixPeopleHeader">2 diners</span>)</th>
+                                        <th class="px-3 py-2.5">Difference vs 15%</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tipMatrixBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Dynamically filled by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Itemized Group Bill Apportionment -->
+                <div id="tab-itemized" class="tab-panel space-y-6">
+                    
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Multi-Payer Unequal Bill Splitter</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Add individual dining items or drinks to apportion exact shares to each guest.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="loadSampleGroup()" class="px-3 py-1.5 rounded-lg border border-brand-500/50 bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 text-xs font-semibold hover:bg-brand-100 transition">Load Sample Party</button>
+                                <button type="button" onclick="resetGroup()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-xs font-medium transition">Reset</button>
+                            </div>
+                        </div>
+
+                        <!-- Guest Management Bar -->
+                        <div class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Dining Guests</span>
+                                <button type="button" onclick="addGuest()" class="px-2.5 py-1 text-xs rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-bold transition flex items-center gap-1">
+                                    <span>&plus; Add Guest</span>
+                                </button>
+                            </div>
+                            <div id="guestTagsContainer" class="flex flex-wrap gap-2">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Add Item Form -->
+                        <div class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/60 dark:border-slate-700/60">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-3">Add Dish or Beverage</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                <div class="sm:col-span-5">
+                                    <label for="itemDescInput" class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Item Description</label>
+                                    <input type="text" id="itemDescInput" placeholder="e.g., Ribeye Steak, Cocktail" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                </div>
+                                <div class="sm:col-span-3">
+                                    <label for="itemPriceInput" class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Price (<span class="currency-symbol">$</span>)</label>
+                                    <input type="number" id="itemPriceInput" min="0" step="0.01" placeholder="28.50" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                </div>
+                                <div class="sm:col-span-4">
+                                    <label for="itemAssignSelect" class="block text-[11px] text-slate-500 dark:text-slate-400 mb-1">Assigned Guest</label>
+                                    <div class="flex gap-2">
+                                        <select id="itemAssignSelect" class="flex-grow px-2 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                            <!-- Dynamically filled with guest names + "Shared by All" -->
+                                        </select>
+                                        <button type="button" onclick="addItemToBill()" class="px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg transition shrink-0">&plus; Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Itemized Bill Table -->
+                        <div class="mb-6 overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-100 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Item Description</th>
+                                        <th class="px-3 py-2.5">Assigned To</th>
+                                        <th class="px-3 py-2.5 text-right">Price</th>
+                                        <th class="px-3 py-2.5 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemizedBillBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Group Tax & Tip Controls -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 mb-6">
+                            <div>
+                                <label for="groupTaxInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Group Sales Tax Rate (%)</label>
+                                <input type="number" id="groupTaxInput" min="0" step="0.001" value="8.875" oninput="calculateItemizedGroup()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                <span class="text-[10px] text-slate-400 mt-1 block">Proportionally distributed based on individual food share.</span>
+                            </div>
+                            <div>
+                                <label for="groupTipInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Group Tip Percentage (%)</label>
+                                <input type="number" id="groupTipInput" min="0" step="0.5" value="20" oninput="calculateItemizedGroup()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                <span class="text-[10px] text-slate-400 mt-1 block">Proportionally allocated across personal order subtotals.</span>
+                            </div>
+                        </div>
+
+                        <!-- Per-Guest Apportionment Breakdown Cards Grid -->
+                        <div>
+                            <div class="flex justify-between items-center mb-3">
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">Individual Guest Settlements</h4>
+                                <button type="button" onclick="copyEntireGroupBreakdown()" class="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 transition">
+                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span>Copy Group Summary</span>
+                                </button>
+                            </div>
+                            <div id="guestBreakdownGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Populated dynamically by JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 3: Global Tipping Etiquette Reference -->
+                <div id="tab-etiquette" class="tab-panel space-y-6">
+                    
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="mb-6">
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Global Tipping Customs &amp; Etiquette Guide</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">Essential tipping protocols and service charge legal frameworks across North America, Europe, Asia, and Australasia.</p>
+                        </div>
+
+                        <!-- Country Cards Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                            
+                            <!-- US -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1FA;&#x1F1F8;</span>
+                                        <span>United States</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">15% - 22% Expected</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Tipping is an institutional element of server income due to the FLSA tip credit ($2.13 federal cash wage). Calculate tips on the pre-tax food and drink subtotal. Automatic service charges (often 18% to 20%) are standard on parties of 6 or more.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: 18% standard, 20% good service, 22%+ fine dining.</span>
+                            </div>
+
+                            <!-- Canada -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1E8;&#x1F1E6;</span>
+                                        <span>Canada</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">15% - 20% Standard</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Similar dining customs to the United States. Tip calculated on pre-tax subtotal before federal GST and provincial HST/PST. Card payment terminals offer preset buttons starting at 15%.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: 15% acceptable, 18% good, 20% generous.</span>
+                            </div>
+
+                            <!-- UK -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1EC;&#x1F1E7;</span>
+                                        <span>United Kingdom</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300">10% - 12.5% Discretionary</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Most sit-down restaurants in London and major cities add an optional 12.5% discretionary service charge to the final bill. If included, do not tip extra. In traditional pubs, order at the bar; tipping is not customary.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: Check bill for service charge; round up change in casual cafes.</span>
+                            </div>
+
+                            <!-- France / Europe -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1EB;&#x1F1F7;</span>
+                                        <span>France &amp; Western Europe</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">Service Compris (Included)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    By French law, a 15% service charge is included in every menu price (<em>service compris</em>). Servers receive full statutory wages. Leaving €1 to €3 in small coins (<em>pourboire</em>) for polite hospitality is appreciated but strictly optional.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: Small change round up; no percentage tips required.</span>
+                            </div>
+
+                            <!-- Germany -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1E9;&#x1F1EA;</span>
+                                        <span>Germany</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-blue-100 dark:bg-blue-950/60 text-blue-800 dark:text-blue-300">5% - 10% Round Up</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Service is legally included in the menu price (<em>Bedienungsgeld</em>). Customary etiquette is rounding the bill up to the next even euro or adding 5% to 10% directly when handing cash to the server, stating &quot;Stimmt so&quot; (keep the change).
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: State total payment directly to server; don't leave cash on table.</span>
+                            </div>
+
+                            <!-- Japan -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1EF;&#x1F1F5;</span>
+                                        <span>Japan</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300">Strictly 0% (Do Not Tip)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Tipping is completely contrary to Japanese dining culture and <em>omotenashi</em> (selfless hospitality). Leaving money on the table will cause confusion, distress, or offense; staff may chase you down the street to return forgotten money.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: Pay exact bill at the front register; polite bow and &quot;Gochisousama&quot;.</span>
+                            </div>
+
+                            <!-- Australia -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1E6;&#x1F1FA;</span>
+                                        <span>Australia &amp; New Zealand</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">0% - Optional Round Up</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    Hospitality staff receive high statutory minimum award wages ($23+ AUD/hr plus weekend penalty rates). Tipping is never required. Rounding up to the nearest $5 or leaving 5% to 10% in high-end dining is optional.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: No tips in cafes or casual dining; occasional round up in fine dining.</span>
+                            </div>
+
+                            <!-- Mexico -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                                        <span class="text-base">&#x1F1F2;&#x1F1FD;</span>
+                                        <span>Mexico</span>
+                                    </span>
+                                    <span class="px-2 py-0.5 rounded text-[11px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300">10% - 15% Customary</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-2">
+                                    In Mexican restaurants, a tip (<em>propina</em>) of 10% to 15% in cash is standard practice. Mandatory tips are illegal under Mexican consumer protection law (PROFECO); review bill for unauthorized charges.
+                                </p>
+                                <span class="text-[11px] text-slate-400 block font-medium">Norm: 10% standard, 15% tourist/fine dining. Cash preferred.</span>
+                            </div>
+
+                        </div>
+
+                        <!-- Industry Benchmark Table -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <div class="bg-slate-100 dark:bg-slate-900/80 px-4 py-3 font-bold text-xs sm:text-sm text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700">
+                                United States Cross-Industry Gratuity Reference Table
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300">
+                                    <thead class="bg-slate-50 dark:bg-slate-900/50 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                        <tr>
+                                            <th class="px-3 py-2.5">Service Sector</th>
+                                            <th class="px-3 py-2.5">Customary Gratuity</th>
+                                            <th class="px-3 py-2.5">Suggested Baseline Amount</th>
+                                            <th class="px-3 py-2.5">Key Etiquette Consideration</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Full-Service Restaurant</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">18% - 22%</td>
+                                            <td class="px-3 py-2.5">$18 - $22 per $100 subtotal</td>
+                                            <td class="px-3 py-2.5">Calculate on pre-tax food and beverage subtotal</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Cocktail Bar / Pub</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">18% - 20% or $1-$3/drink</td>
+                                            <td class="px-3 py-2.5">$1-$2 for beer/wine; $2-$3 for craft cocktails</td>
+                                            <td class="px-3 py-2.5">Leave cash on bar top or add to closing credit tab</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Food Delivery (DoorDash/UberEats)</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">15% - 20%</td>
+                                            <td class="px-3 py-2.5">$4.00 - $5.00 absolute minimum</td>
+                                            <td class="px-3 py-2.5">Increase for bad weather, heavy bags, or stairs</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Rideshare &amp; Taxis (Uber/Lyft)</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">10% - 20%</td>
+                                            <td class="px-3 py-2.5">$2.00 - $5.00 for short rides</td>
+                                            <td class="px-3 py-2.5">Tip 20% for airport luggage handling or long highway trips</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Hair Salon &amp; Barber</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">15% - 20%</td>
+                                            <td class="px-3 py-2.5">$10 - $20 on $60-$100 services</td>
+                                            <td class="px-3 py-2.5">Tip stylist directly; give $3-$5 cash to shampoo assistant</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Hotel Housekeeping</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">Flat Daily Cash</td>
+                                            <td class="px-3 py-2.5">$3.00 - $5.00 per night of stay</td>
+                                            <td class="px-3 py-2.5">Leave cash daily in marked envelope for rotating cleaners</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="px-3 py-2.5 font-bold text-slate-900 dark:text-white">Valet Parking</td>
+                                            <td class="px-3 py-2.5 text-brand-600 dark:text-brand-400 font-semibold">Flat Cash</td>
+                                            <td class="px-3 py-2.5">$3.00 - $5.00 upon retrieval</td>
+                                            <td class="px-3 py-2.5">Paid when the attendant delivers car keys back to you</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700" id="printableReceiptArea">
+                        
+                        <!-- Print Document Header -->
+                        <div class="border-b-2 border-slate-900 dark:border-white pb-4 mb-6 flex flex-wrap justify-between items-start gap-4">
+                            <div>
+                                <h3 class="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight">DINING SETTLEMENT STATEMENT</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">CalcWorld Certified Dining Bill &amp; Expense Apportionment Receipt</p>
+                            </div>
+                            <div class="text-right text-xs font-mono text-slate-600 dark:text-slate-300">
+                                <div>Date: <span id="printDateDisplay">October 16, 2026</span></div>
+                                <div>Party Size: <span id="printPartySizeDisplay">2 Guests</span></div>
+                                <div>Tipping Basis: <span id="printBasisDisplay">Pre-Tax Subtotal</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Print Financial Summary Table -->
+                        <div class="mb-6">
+                            <table class="w-full text-xs text-left text-slate-700 dark:text-slate-300 border-collapse mb-4">
+                                <thead>
+                                    <tr class="border-b border-slate-300 dark:border-slate-600 font-bold uppercase text-slate-500">
+                                        <th class="py-2">Description</th>
+                                        <th class="py-2 text-right">Calculation Factor</th>
+                                        <th class="py-2 text-right">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                    <tr>
+                                        <td class="py-2.5 font-bold">Food &amp; Beverage Subtotal</td>
+                                        <td class="py-2.5 text-right text-slate-500">Base menu order</td>
+                                        <td class="py-2.5 text-right font-bold" id="printSubtotalVal">$88.00</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5">State &amp; Local Sales Tax</td>
+                                        <td class="py-2.5 text-right text-slate-500" id="printTaxRateVal">8.875%</td>
+                                        <td class="py-2.5 text-right" id="printTaxAmountVal">$7.81</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2.5 font-bold text-brand-600 dark:text-brand-400">Voluntary Gratuity (Tip)</td>
+                                        <td class="py-2.5 text-right text-slate-500" id="printTipRateVal">20.0%</td>
+                                        <td class="py-2.5 text-right font-bold text-brand-600 dark:text-brand-400" id="printTipAmountVal">$17.60</td>
+                                    </tr>
+                                    <tr id="printRoundingRow">
+                                        <td class="py-2.5">Rounding Adjustment</td>
+                                        <td class="py-2.5 text-right text-slate-500" id="printRoundingTypeVal">Exact cents</td>
+                                        <td class="py-2.5 text-right" id="printRoundingVal">$0.00</td>
+                                    </tr>
+                                    <tr class="border-t-2 border-slate-900 dark:border-white text-sm font-extrabold text-slate-900 dark:text-white">
+                                        <td class="py-3 uppercase">Total Amount Due</td>
+                                        <td class="py-3 text-right text-xs font-normal text-slate-500">Subtotal + Tax + Tip</td>
+                                        <td class="py-3 text-right" id="printGrandTotalVal">$113.41</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Per-Person Settlement Breakdown -->
+                        <div class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white mb-2">Equal Split Distribution</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block">Per Person Share:</span>
+                                    <span class="font-bold text-sm text-brand-600 dark:text-brand-400" id="printPerPersonTotal">$56.71</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block">Food Share:</span>
+                                    <span class="font-semibold" id="printPerPersonFood">$44.00</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block">Tax Share:</span>
+                                    <span class="font-semibold" id="printPerPersonTax">$3.91</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 text-[10px] block">Tip Share:</span>
+                                    <span class="font-semibold" id="printPerPersonTip">$8.80</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Guest Payment Checklist (Printable Table) -->
+                        <div class="mb-6">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-900 dark:text-white mb-2">Guest Payment Collection Checklist</h4>
+                            <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-slate-100 dark:bg-slate-900 font-semibold text-slate-500">
+                                        <tr>
+                                            <th class="p-2 w-10 text-center">Status</th>
+                                            <th class="p-2">Diner / Guest Name</th>
+                                            <th class="p-2 text-right">Share Due</th>
+                                            <th class="p-2 text-center">Payment Method</th>
+                                            <th class="p-2">Notes / Confirmation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="printChecklistBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                        <!-- Dynamically generated -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Print Action Footer -->
+                        <div class="flex items-center justify-between pt-4 border-t border-slate-200 dark:border-slate-700 text-xs no-print">
+                            <span class="text-slate-500">Press Print or Ctrl+P to generate clean paper or PDF receipt.</span>
+                            <button onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition flex items-center gap-2 shadow">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Settlement Receipt</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 2: Mid-Content In-Feed Banner -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-2">
+            <span>Sponsored Advertisement &bull; Mid-Content In-Feed Slot 2</span>
+        </div>
+
+        <!-- AdSense Slot 4: Pre-Article Banner -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; In-Article Native Slot 4</span>
+        </div>
+
+        <!-- Educational Guide Article -->
+        <article class="prose prose-slate dark:prose-invert max-w-none space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed">
+    
+    <!-- Section 1 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            1. The Economics and History of Gratuities in the Hospitality Industry
+        </h2>
+        <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-4">
+            The practice of tipping, known in legal terminology as a voluntary gratuity, originated in sixteenth-century Tudor England. Patrons at public houses and taverns dropped coins into brass urns inscribed with the phrase &quot;To Insure Prompt Service&quot; (giving rise to the popular, though etymologically debated, acronym &quot;TIPS&quot;). Over five centuries, this casual social custom shifted into an institutional component of North American restaurant compensation and hospitality operations.
+        </p>
+        <p class="mb-4">
+            In modern labor economics, a gratuity serves as a direct, consumer-funded performance incentive. Unlike fixed hourly wages negotiated through collective bargaining or management discretion, tips represent variable income paid directly by the guest to service personnel. The United States dining market exhibits one of the highest customary tipping percentages in the world, with standard gratuities ranging between 15% and 22% of the food and beverage subtotal.
+        </p>
+        <p class="mb-4">
+            Economists analyze tipping through principal-agent theory: the restaurant guest acts as a temporary principal monitoring the server (agent) on behalf of restaurant management. Because restaurant managers cannot observe every interaction at individual dining tables, voluntary gratuities incentivize waitstaff to maintain attentive hospitality, food accuracy, and table pacing. However, empirical studies published in consumer research journals reveal that tip amounts often correlate as strongly with diner mood, weather, and bill size as with objective measures of culinary or mechanical service quality.
+        </p>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            2. The Fair Labor Standards Act (FLSA), Tip Credits, and Labor Law Regulations
+        </h2>
+        <p class="mb-4">
+            In the United States, commercial dining compensation is regulated at the federal level under the <strong>Fair Labor Standards Act (FLSA)</strong>, enforced by the <strong>United States Department of Labor (DOL) Wage and Hour Division</strong>. The cornerstone statutory guidance is detailed in <strong>DOL Wage and Hour Division Fact Sheet #15: Tipped Employees Under the Fair Labor Standards Act</strong>.
+        </p>
+        <p class="mb-4">
+            Under Section 3(m)(2)(A) of the FLSA, an employer may pay a cash wage lower than the standard federal minimum wage (currently $7.25 per hour) to a &quot;tipped employee&quot;—defined as any worker engaged in an occupation in which they customarily and regularly receive more than $30 a month in tips. This statutory provision is known as the <strong>Tip Credit</strong>:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\text{Direct Cash Wage (Minimum \$2.13)} + \text{Maximum Tip Credit (\$5.12)} = \text{Federal Minimum Wage (\$7.25)}$$
+        </div>
+        <p class="mb-4">
+            Federal law establishes that the direct cash wage paid by an employer cannot fall below $2.13 per hour, permitting a maximum tip credit of $5.12 per hour against the federal minimum wage of $7.25. If an employee's direct cash wage combined with actual tips received during a workweek does not equal at least the minimum hourly wage, the employer must make up the monetary shortfall.
+        </p>
+        <p class="mb-4">
+            Several states provide higher protections for service workers. Seven states—Alaska, California, Minnesota, Montana, Nevada, Oregon, and Washington—have eliminated the tip credit entirely. In those jurisdictions, restaurant employers must pay waitstaff the full state statutory minimum wage (often $15.00 to $16.50+ per hour) prior to any gratuities received.
+        </p>
+        <p class="mb-4">
+            Federal regulations enacted in 2020 and 2021 substantially clarified <strong>Tip Pooling</strong> mandates under Section 3(m)(2)(B):
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Prohibition on Employer Retention:</strong> Employers, managers, and supervisors are strictly prohibited from retaining any portion of employee tips for any purpose, regardless of whether the employer claims a tip credit.
+            </li>
+            <li>
+                <strong>Traditional vs. Nontraditional Tip Pools:</strong> If an employer claims a tip credit, tip pools can only include employees who customarily receive tips (front-of-house staff such as servers, bussers, food runners, and bartenders). If an employer pays employees the full minimum wage without claiming a tip credit, the employer may implement a nontraditional tip pool that shares gratuities with back-of-house personnel, such as line cooks, dishwashers, and prep staff.
+            </li>
+            <li>
+                <strong>The 80/20 and Continuous 30-Minute Rules:</strong> Under current Department of Labor guidance regarding dual-occupation duties, an employer may only take a tip credit for hours when an employee performs tip-producing work or directly supporting work. If an employee spends more than 20 percent of their working time or more than 30 consecutive minutes on non-tip-producing supporting duties (such as rolling silverware or cleaning soda dispensers), the employer must pay the full direct minimum wage for that excess time.
+            </li>
+        </ul>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            3. Mandatory Service Charges vs. Voluntary Gratuities Under Federal Law
+        </h2>
+        <p class="mb-4">
+            A critical legal and tax distinction exists between a <strong>voluntary tip</strong> and a <strong>mandatory service charge</strong>. The Internal Revenue Service (IRS Rev. Rul. 2012-18) and the Department of Labor maintain explicit criteria to distinguish between the two:
+        </p>
+        <div class="overflow-x-auto my-6">
+            <table class="w-full text-xs sm:text-sm text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-semibold">
+                    <tr>
+                        <th class="p-3 border-b border-slate-200 dark:border-slate-700">Characteristic</th>
+                        <th class="p-3 border-b border-slate-200 dark:border-slate-700">Voluntary Gratuity (Tip)</th>
+                        <th class="p-3 border-b border-slate-200 dark:border-slate-700">Mandatory Service Charge</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                    <tr>
+                        <td class="p-3 font-medium">Customer Discretion</td>
+                        <td class="p-3 text-emerald-600 dark:text-emerald-400 font-semibold">100% Voluntary; customer decides whether to tip and the exact amount</td>
+                        <td class="p-3 text-rose-600 dark:text-rose-400 font-semibold">Contractually required (e.g., automatic 18% charge on parties of 6 or more)</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 font-medium">Ownership of Funds</td>
+                        <td class="p-3">Sole property of the employee; employer cannot keep any share</td>
+                        <td class="p-3">Legal property of the restaurant enterprise as gross operational revenue</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 font-medium">Payroll Treatment</td>
+                        <td class="p-3">Reported by employee on IRS Form 4070; subject to FICA withholding</td>
+                        <td class="p-3">Treated as regular employee wages if distributed; included in overtime wage calculation</td>
+                    </tr>
+                    <tr>
+                        <td class="p-3 font-medium">Sales Tax Application</td>
+                        <td class="p-3">Exempt from state and municipal sales tax in almost all states</td>
+                        <td class="p-3">Frequently subject to state sales tax because it is an obligatory charge</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mb-4">
+            When a diner notices a &quot;20% Automatic Service Charge&quot; on their guest check, that amount legally belongs to the restaurant entity. While reputable restaurateurs distribute service charges to their kitchen and dining staff as enhanced hourly pay, management has legal discretion over how those funds are allocated. In contrast, a tip written on the gratuity line must pass directly to the service staff under federal law.
+        </p>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            4. National Restaurant Association Operational Benchmarks
+        </h2>
+        <p class="mb-4">
+            Data compiled by the <strong>National Restaurant Association (NRA)</strong> illustrates the economic realities of food service operations. The typical full-service restaurant operates on tight pre-tax net profit margins between 3% and 5%. Food and beverage costs account for approximately 28% to 35% of total sales, while overall labor costs absorb another 30% to 35%. Occupancy, utilities, insurance, credit card processing fees, and maintenance consume the remainder.
+        </p>
+        <p class="mb-4">
+            Because operating margins are narrow, full-service dining models rely heavily on customer tipping to attract qualified front-of-house staff. An experienced server in a busy metropolitan restaurant may earn between $25 and $45 per hour in combined cash wages and customer tips. Without the tipping system, restaurant operators would need to raise menu prices by 20% to 28% to cover equivalent employee hourly wages, employer payroll taxes, worker compensation premiums, and administrative overhead.
+        </p>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            5. Mathematical Precision: Pre-Tax Subtotal vs. Post-Tax Tip Calculation
+        </h2>
+        <p class="mb-4">
+            One of the most persistent dining dilemmas concerns the base figure used for calculating the gratuity: should a diner calculate the tip on the <strong>pre-tax food and beverage subtotal</strong> or on the <strong>post-tax total bill</strong>?
+        </p>
+        <p class="mb-4">
+            The hospitality industry consensus—supported by etiquette authorities, culinary foundations, and financial educators—is unambiguous: <strong>customary tips should be calculated on the pre-tax subtotal of food and beverages</strong>.
+        </p>
+        <p class="mb-4">
+            The rationale rests on fundamental fairness:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Sales Tax Is a Government Levy:</strong> State, county, and municipal sales taxes are statutory fees imposed by government authorities to fund public infrastructure. A server does not provide service on government tax revenue; their professional labor corresponds exclusively to the culinary preparation and presentation of ordered menu items.
+            </li>
+            <li>
+                <strong>The Compounding Tax Penalty:</strong> In high-tax jurisdictions—such as Chicago (10.25%), Seattle (10.35%), or New York City (8.875%)—tipping on the post-tax bill increases the effective tip percentage by roughly 1.5% to 2.2% above the stated rate. For example, a 20% tip applied to a post-tax bill in a 10% tax district results in an effective 22% gratuity on the actual dining subtotal:
+            </li>
+        </ul>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\text{Tip}_{\text{post-tax}} = (\text{Subtotal} + \text{Tax}) \times \text{Tip \%} = \text{Subtotal} \times \text{Tip \%} + \underbrace{\text{Tax} \times \text{Tip \%}}_{\text{Gratuity paid on state taxes}}$$
+        </div>
+        <p class="mb-4">
+            When calculating tips via mobile point-of-sale tablets (such as Square, Toast, or Clover), diners should observe whether preset percentage prompts calculate against the subtotal or post-tax total. Many automated systems default to post-tax calculations, silently inflating the tip amount. Our calculator empowers diners with an instantaneous toggle to examine both calculations side-by-side.
+        </p>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            6. Cross-Industry Gratuity Standards: Delivery, Rideshare, Hospitality, and Personal Care
+        </h2>
+        <p class="mb-4">
+            While restaurant dining represents the most visible tipping environment, gratuity practices extend across numerous service industries, each with distinct economic norms:
+        </p>
+        <div class="space-y-4 my-6">
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-base text-slate-900 dark:text-white mb-1">Food Delivery Services (DoorDash, Uber Eats, Grubhub)</h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    Unlike dining servers who manage multiple tables inside a fixed room, food delivery couriers incur personal vehicular operating expenses (fuel, vehicle depreciation, insurance) and transit time. Standard practice suggests tipping <strong>15% to 20% of the food subtotal, with a strict absolute minimum of $4.00 to $5.00 for short trips</strong>. During severe weather (snowstorms, torrential rain) or during peak traffic hours, tipping $6.00 to $10.00 reflects the courier's direct physical risk and delay.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-base text-slate-900 dark:text-white mb-1">Rideshare and Taxi Drivers (Uber, Lyft, Yellow Cab)</h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    For rideshare transport, customary tips range between <strong>10% and 20% of the fare</strong>. For standard short urban commutes, a $2.00 to $3.00 tip is customary. For rides involving airport baggage handling, heavy traffic delays, or exceptional vehicle cleanliness, a 20% gratuity ($5.00 to $10.00+) is standard practice.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-base text-slate-900 dark:text-white mb-1">Personal Care Services (Hair Salons, Barbershops, Spas)</h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    Hair stylists, barbers, estheticians, and massage therapists customarily receive <strong>15% to 20% of the total service bill</strong>. An enduring urban myth suggests that clients should not tip salon owners; however, modern etiquette recommends tipping salon owners the standard 15% to 20% if they personally perform the haircut or treatment. Shampoo assistants or color apprentices are typically tipped an additional $3.00 to $5.00 in cash.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-base text-slate-900 dark:text-white mb-1">Bartenders and Beverage Lounges</h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    At walk-up bars, patrons tip <strong>$1.00 to $2.00 per standard beer or wine pour</strong>, and <strong>$2.00 to $3.00 per labor-intensive craft cocktail</strong> involving muddling or specialty spirits. When running an open tab, patrons customarily leave <strong>18% to 20% on the final beverage check</strong>.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-base text-slate-900 dark:text-white mb-1">Hotels and Lodging Hospitality</h4>
+                <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+                    Hotel bellhops receive <strong>$2.00 to $3.00 per delivered suitcase</strong> ($5.00 minimum for luggage carts). Housekeeping staff should receive <strong>$3.00 to $5.00 per night of stay</strong>, left daily in a clearly marked envelope, because different cleaners may service the room across consecutive days. Valet parking attendants are tipped <strong>$3.00 to $5.00 upon vehicle retrieval</strong>.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 7 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            7. Group Dining Bill Splitting: Resolving the Unequal Payer Problem
+        </h2>
+        <p class="mb-4">
+            Group dining frequently generates social friction when bills are settled. An equal split—dividing the grand total evenly by the number of seated guests—is convenient for parties where everyone ordered comparable dishes and drinks. However, when one guest orders water and a garden salad while another orders dry-aged steak and multiple signature cocktails, an equal split imposes an unfair financial burden on the modest diner.
+        </p>
+        <p class="mb-4">
+            The mathematically ethical solution is <strong>Itemized Group Bill Apportionment</strong>, as implemented in Tab 2 of our engine. The exact calculation proceeds as follows:
+        </p>
+        <ol class="list-decimal pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Individual Item Allocation:</strong> Each diner is assigned the exact cost of their personal food, beverages, and specialty desserts ($S_i$).
+            </li>
+            <li>
+                <strong>Shared Item Division:</strong> Shared appetizers, family-style sides, or bottles of wine are divided equally among the diners who partook in those dishes ($S_{\text{shared}, i}$).
+            </li>
+            <li>
+                <strong>Personal Subtotal Calculation:</strong> The personal subtotal for diner $i$ equals:
+                <div class="my-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs">
+                    $$\text{Subtotal}_i = S_i + S_{\text{shared}, i}$$
+                </div>
+            </li>
+            <li>
+                <strong>Proportional Sales Tax Apportionment:</strong> Total sales tax is distributed according to each guest's individual proportion of the table's total food and drink subtotal:
+                <div class="my-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs">
+                    $$\text{Tax}_i = \text{Total Sales Tax} \times \left( \frac{\text{Subtotal}_i}{\sum \text{Subtotal}} \right)$$
+                </div>
+            </li>
+            <li>
+                <strong>Proportional Gratuity Allocation:</strong> The agreed group tip (or individual custom tip percentage) is calculated against the diner's personal subtotal:
+                <div class="my-2 p-2 rounded-lg bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs">
+                    $$\text{Tip}_i = \text{Total Tip} \times \left( \frac{\text{Subtotal}_i}{\sum \text{Subtotal}} \right)$$
+                </div>
+            </li>
+            <li>
+                <strong>Final Share Due:</strong> Each guest's total responsibility is $\text{Total}_i = \text{Subtotal}_i + \text{Tax}_i + \text{Tip}_i$.
+            </li>
+        </ol>
+        <p>
+            This proportional apportionment guarantees that every diner pays their exact share of tax and tip, eliminating disputes over who financed the cocktail tab.
+        </p>
+    </section>
+
+    <!-- Section 8 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            8. Cultural Norms and International Etiquette: North America vs. The World
+        </h2>
+        <p class="mb-4">
+            Tipping customs diverge dramatically across international borders. American travelers who attempt to apply domestic tipping percentages abroad frequently cause awkwardness or violate cultural protocols:
+        </p>
+        <ul class="list-disc pl-6 space-y-3 mb-4">
+            <li>
+                <strong>Japan (Strict Zero-Tipping Norm):</strong> In Japanese culture, professional service is rooted in the philosophy of <em>omotenashi</em> (mindful hospitality without expectation of reward). Excellent service is viewed as a baseline obligation already included in the purchase price. Leaving extra cash on a table will cause confusion or embarrassment; waitstaff will often chase customers down the street to return &quot;forgotten&quot; money.
+            </li>
+            <li>
+                <strong>France and the European Union:</strong> In France, a 1933 law mandates that all dining bills include a 15% service charge (<em>service compris</em>). Servers are paid full professional salaries with national health coverage, paid leave, and retirement pensions. While leaving small change (a <em>pourboire</em> of €1.00 to €2.00 for casual bistros, or €5.00 to €10.00 for Michelin fine dining) is appreciated for attentive service, leaving a 20% tip is unexpected and unnecessary.
+            </li>
+            <li>
+                <strong>United Kingdom:</strong> Most London and UK sit-down restaurants include an optional 12.5% discretionary service charge on the printed bill. If this charge is already itemized on the receipt, no extra tip is needed. In traditional British pubs, patrons order and pay at the bar; tipping is not customary, although regular patrons may offer &quot;and one for yourself,&quot; allowing the bartender to ring up a half-pint for their shift break.
+            </li>
+            <li>
+                <strong>Australia and New Zealand:</strong> Australian hospitality workers are protected under Modern Awards that guarantee high statutory minimum wages ($23.23+ AUD per hour, plus penalty rates of 125% to 175% for weekend, holiday, and late-night shifts). Tipping is not expected. Rounding up to the nearest $5 or $10 is common in fine dining, but casual dining never demands a tip.
+            </li>
+        </ul>
+        <p>
+            Understanding these cross-cultural distinctions ensures travelers navigate international dining tabs with confidence and cultural respect.
+        </p>
+    </section>
+
+</article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print" id="faq-section">
+            <div class="mb-8">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Expert Dining &amp; Labor Law Insights</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Answers to common consumer questions regarding restaurant tipping calculations, FLSA labor laws, service charges, and bill splitting ethics.</p>
+            </div>
+
+            <div class="space-y-3">
+
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Should I calculate the tip on the pre-tax subtotal or the post-tax bill total?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Industry standard best practice—supported by culinary organizations and labor economists—is to calculate the tip on the pre-tax food and beverage subtotal. Sales tax is an obligatory government collection, not a restaurant service. Calculating tips on post-tax amounts forces diners to pay gratuity on state and local taxes, inflating effective tip percentages by 1.5% to 2.2% in high-tax metropolitan areas.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the legal difference between a mandatory service charge and a voluntary tip under the FLSA?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Under the Fair Labor Standards Act and IRS regulations, a voluntary tip is 100% optional, determined solely by the guest, and belongs entirely to the employee. A mandatory service charge (such as an automatic 18% charge on parties of 6 or more) is contractually obligatory and legally constitutes gross revenue belonging to the restaurant enterprise, which management may distribute or retain at its discretion.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does the FLSA tip credit function for restaurant employers?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Under Section 3(m) of the FLSA, employers may claim a tip credit of up to $5.12 per hour against the federal $7.25 minimum wage, paying tipped employees a direct cash wage as low as $2.13 per hour. However, if the employee's direct cash wage plus actual tips received does not equal at least $7.25 per hour across the workweek, the employer must pay the monetary difference.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Are managers or supervisors legally permitted to participate in employee tip pools?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        No. Under the Fair Labor Standards Act regulations updated in 2020 and 2021, employers, managers, and supervisors are strictly prohibited from keeping or participating in employee tip pools for any reason, regardless of whether the employer claims a tip credit. Managers may only keep tips that they personally and directly receive from customers for services they directly provided without the assistance of other employees.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the standard tipping percentage for restaurant dining in the United States?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        In United States sit-down restaurants, customary tipping benchmarks are: 15% for acceptable service, 18% for solid standard service, 20% for attentive dining service, and 22% to 25% for exceptional culinary and beverage hospitality. Leaving less than 15% generally signals a notable service failure.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How should group dining tabs with shared items and unequal drink orders be split fairly?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The most equitable approach is proportional apportionment: assign each person their ordered dishes, divide shared appetizers equally among participants, and then distribute the total sales tax and group tip proportionally based on each person's percentage of the total food and drink subtotal. This ensures nondrinkers do not subsidize expensive wine or cocktails.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why is tipping considered impolite or offensive in Japan?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        In Japan, service culture is governed by 'omotenashi'—the philosophy of selfless, mindful hospitality. High-quality service is considered the baseline duty of the establishment and is included in the stated price. Offering extra money can imply that the worker's employer does not pay them adequately or that the customer believes money is necessary to motivate professional behavior.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How much should I tip food delivery couriers compared to rideshare drivers?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        For food delivery (DoorDash, Uber Eats), customary tipping is 15% to 20% of the food subtotal, with an absolute minimum of $4.00 to $5.00 to account for personal vehicle gas, depreciation, and wait times. For rideshare drivers (Uber, Lyft), standard tipping ranges from 10% to 20% of the fare, or $2.00 to $5.00 for short urban trips.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">%</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Hospitality Computing. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Regulatory &amp; Methodological Notice:</strong> CalcWorld Tip Calculator provides mathematical computations based on United States Department of Labor (DOL) Wage and Hour Division regulations (FLSA Section 3(m)), Internal Revenue Service revenue rulings (IRS Rev. Rul. 2012-18), and National Restaurant Association (NRA) operational benchmarks. Calculations are advisory and intended for consumer convenience and expense settlement. State and municipal sales tax laws and mandatory service charge disclosures vary across jurisdictions.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Suite Nav:</span>
+        <button onclick="switchTab('fast')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Fast Tip &amp; Split</button>
+        <button onclick="switchTab('itemized')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Itemized Split</button>
+        <button onclick="switchTab('etiquette')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Global Etiquette</button>
+        <button onclick="switchTab('print'); window.print();" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Print Receipt</button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Dining summary copied to clipboard!</span>
+    </div>
+<script>
+    // --- Global Application State ---
+    let currentCurrency = '$';
+    let currentTaxMode = 'percent'; // 'percent', 'dollar'
+    let currentTipBasis = 'pretax'; // 'pretax', 'posttax'
+    let currentTipPercent = 20.0;
+    let currentRoundingMode = 'none'; // 'none', 'roundTotal', 'roundPerson', 'round5'
+    let currentDiners = 2;
+
+    // Calculation Storage
+    let lastCalc = {};
+
+    // Chart Reference
+    let billChart = null;
+
+    // Multi-Payer Unequal Bill Splitter State
+    let groupGuests = ['Alice', 'Bob', 'Charlie', 'Dana'];
+    let groupItems = [
+        { id: 1, name: 'Truffle Fries (Shared)', price: 14.00, assignedTo: 'shared' },
+        { id: 2, name: 'Crispy Calamari (Shared)', price: 18.00, assignedTo: 'shared' },
+        { id: 3, name: 'Dry-Aged Ribeye', price: 46.00, assignedTo: 'Alice' },
+        { id: 4, name: 'Wild Salmon Fillet', price: 34.00, assignedTo: 'Bob' },
+        { id: 5, name: 'Handmade Gnocchi', price: 26.00, assignedTo: 'Charlie' },
+        { id: 6, name: 'Wagyu Burger', price: 28.00, assignedTo: 'Dana' },
+        { id: 7, name: 'Craft IPA x2', price: 18.00, assignedTo: 'Bob' },
+        { id: 8, name: 'Cabernet Sauvignon', price: 32.00, assignedTo: 'Alice' },
+        { id: 9, name: 'Chocolate Lava Cake (Shared)', price: 12.00, assignedTo: 'shared' }
+    ];
+    let nextItemId = 10;
+
+    // Center Text Plugin for Chart.js Doughnut
+    const centerTextPlugin = {
+        id: 'centerTextPlugin',
+        afterDraw(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            const ctx = chart.ctx;
+            const width = chart.width;
+            const height = chart.height;
+            ctx.save();
+            
+            const isDark = document.documentElement.classList.contains('dark');
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // Label
+            ctx.font = '500 11px Inter, sans-serif';
+            ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+            ctx.fillText('TOTAL BILL', width / 2, (height / 2) - 12);
+
+            // Value
+            ctx.font = 'bold 20px Inter, sans-serif';
+            ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+            const totalText = lastCalc.total ? `${currentCurrency}${lastCalc.total.toFixed(2)}` : '$0.00';
+            ctx.fillText(totalText, width / 2, (height / 2) + 12);
+            
+            ctx.restore();
+        }
+    };
+    Chart.register(centerTextPlugin);
+
+    // Document Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+        parseUrlParams();
+        updatePrintDate();
+        calculateTip();
+        renderGuestRoster();
+        updateItemAssignOptions();
+        renderItemizedBill();
+        calculateItemizedGroup();
+
+        // AdBlock Detection Check
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    function updatePrintDate() {
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const dateEl = document.getElementById('printDateDisplay');
+        if (dateEl) dateEl.innerText = now.toLocaleDateString('en-US', options);
+    }
+
+    // --- Currency Management ---
+    function setCurrency(symbol) {
+        currentCurrency = symbol;
+        document.querySelectorAll('.currency-symbol').forEach(el => {
+            el.innerText = symbol;
+        });
+        calculateTip();
+        calculateItemizedGroup();
+    }
+
+    // --- Tax Mode Management ---
+    function setTaxMode(mode) {
+        currentTaxMode = mode;
+        const btnPercent = document.getElementById('taxModePercentBtn');
+        const btnDollar = document.getElementById('taxModeDollarBtn');
+        const contPercent = document.getElementById('taxPercentContainer');
+        const contDollar = document.getElementById('taxDollarContainer');
+
+        if (mode === 'percent') {
+            btnPercent.className = "px-2 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300";
+            btnDollar.className = "px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white";
+            contPercent.classList.remove('hidden');
+            contDollar.classList.add('hidden');
+        } else {
+            btnDollar.className = "px-2 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300";
+            btnPercent.className = "px-2 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white";
+            contDollar.classList.remove('hidden');
+            contPercent.classList.add('hidden');
+        }
+        calculateTip();
+    }
+
+    // --- Tip Basis Management ---
+    function setTipBasis(basis) {
+        currentTipBasis = basis;
+        calculateTip();
+    }
+
+    // --- Tip Percentage Controls ---
+    function setTipPercent(val) {
+        currentTipPercent = parseFloat(val);
+        document.getElementById('tipSliderInput').value = val;
+        document.getElementById('tipCustomInput').value = val;
+        updateTipButtonHighlights(val);
+        calculateTip();
+    }
+
+    function onTipSlider(val) {
+        currentTipPercent = parseFloat(val);
+        document.getElementById('tipCustomInput').value = val;
+        updateTipButtonHighlights(val);
+        calculateTip();
+    }
+
+    function onTipCustom(val) {
+        const parsed = parseFloat(val);
+        if (isNaN(parsed) || parsed < 0) return;
+        currentTipPercent = parsed;
+        document.getElementById('tipSliderInput').value = Math.min(parsed, 50);
+        updateTipButtonHighlights(parsed);
+        calculateTip();
+    }
+
+    function updateTipButtonHighlights(val) {
+        const presets = [10, 15, 18, 20, 22, 25, 30];
+        presets.forEach(p => {
+            const btn = document.getElementById('tipBtn_' + p);
+            if (!btn) return;
+            if (Math.abs(p - val) < 0.05) {
+                btn.className = "tip-btn active py-1.5 px-1 text-xs font-bold rounded-lg border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/80 dark:text-brand-300 transition";
+            } else {
+                btn.className = "tip-btn py-1.5 px-1 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-brand-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition";
+            }
+        });
+        document.getElementById('tipPercentageBadge').innerText = `${val}%`;
+    }
+
+    // --- Diner Count Stepper ---
+    function stepPeople(delta) {
+        const input = document.getElementById('peopleCountInput');
+        let current = parseInt(input.value) || 1;
+        current = Math.max(1, Math.min(50, current + delta));
+        input.value = current;
+        calculateTip();
+    }
+
+    // --- Rounding Mode Controls ---
+    function setRoundingMode(mode) {
+        currentRoundingMode = mode;
+        ['none', 'roundTotal', 'roundPerson', 'round5'].forEach(m => {
+            const btn = document.getElementById('roundBtn_' + m);
+            if (!btn) return;
+            if (m === mode) {
+                btn.className = "round-btn active p-2 rounded-xl border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 font-semibold text-center transition";
+            } else {
+                btn.className = "round-btn p-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium text-center transition";
+            }
+        });
+        calculateTip();
+    }
+
+    // --- Presets Loader ---
+    function loadDiningPreset(presetKey) {
+        if (presetKey === 'preset_lunch') {
+            document.getElementById('billSubtotalInput').value = '24.50';
+            setTaxMode('percent');
+            document.getElementById('taxPercentInput').value = '8.875';
+            setTipBasis('pretax');
+            setTipPercent(18);
+            document.getElementById('peopleCountInput').value = '1';
+            setRoundingMode('none');
+        } else if (presetKey === 'preset_dinner') {
+            document.getElementById('billSubtotalInput').value = '88.00';
+            setTaxMode('percent');
+            document.getElementById('taxPercentInput').value = '8.875';
+            setTipBasis('pretax');
+            setTipPercent(20);
+            document.getElementById('peopleCountInput').value = '2';
+            setRoundingMode('none');
+        } else if (presetKey === 'preset_group4') {
+            document.getElementById('billSubtotalInput').value = '195.00';
+            setTaxMode('percent');
+            document.getElementById('taxPercentInput').value = '8.875';
+            setTipBasis('pretax');
+            setTipPercent(20);
+            document.getElementById('peopleCountInput').value = '4';
+            setRoundingMode('roundTotal');
+        } else if (presetKey === 'preset_celebration') {
+            document.getElementById('billSubtotalInput').value = '420.00';
+            setTaxMode('percent');
+            document.getElementById('taxPercentInput').value = '8.875';
+            setTipBasis('pretax');
+            setTipPercent(22);
+            document.getElementById('peopleCountInput').value = '6';
+            setRoundingMode('none');
+        } else if (presetKey === 'preset_coffee') {
+            document.getElementById('billSubtotalInput').value = '14.00';
+            setTaxMode('percent');
+            document.getElementById('taxPercentInput').value = '8.875';
+            setTipBasis('pretax');
+            setTipPercent(15);
+            document.getElementById('peopleCountInput').value = '1';
+            setRoundingMode('roundTotal');
+        }
+        calculateTip();
+    }
+
+    // --- Core Fast Tip Calculation Engine ---
+    function calculateTip() {
+        const subtotal = Math.max(0, parseFloat(document.getElementById('billSubtotalInput').value) || 0);
+        currentDiners = Math.max(1, parseInt(document.getElementById('peopleCountInput').value) || 1);
+
+        // Sales Tax calculation
+        let taxAmount = 0;
+        let taxRate = 0;
+        if (currentTaxMode === 'percent') {
+            taxRate = Math.max(0, parseFloat(document.getElementById('taxPercentInput').value) || 0);
+            taxAmount = subtotal * (taxRate / 100);
+            document.getElementById('taxDollarInput').value = taxAmount.toFixed(2);
+        } else {
+            taxAmount = Math.max(0, parseFloat(document.getElementById('taxDollarInput').value) || 0);
+            taxRate = subtotal > 0 ? (taxAmount / subtotal) * 100 : 0;
+            document.getElementById('taxPercentInput').value = taxRate.toFixed(3);
+        }
+
+        // Tipping base
+        const baseForTip = (currentTipBasis === 'pretax') ? subtotal : (subtotal + taxAmount);
+        const unroundedTip = baseForTip * (currentTipPercent / 100);
+        const unroundedTotal = subtotal + taxAmount + unroundedTip;
+        const unroundedPerPerson = unroundedTotal / currentDiners;
+
+        let finalTotal = unroundedTotal;
+        let finalTip = unroundedTip;
+        let finalPerPerson = unroundedPerPerson;
+        let roundingDiff = 0;
+
+        // Apply Rounding Option
+        if (currentRoundingMode === 'roundTotal') {
+            const roundedTotal = Math.ceil(unroundedTotal);
+            roundingDiff = roundedTotal - unroundedTotal;
+            finalTotal = roundedTotal;
+            finalTip = unroundedTip + roundingDiff;
+            finalPerPerson = finalTotal / currentDiners;
+        } else if (currentRoundingMode === 'roundPerson') {
+            const roundedPerson = Math.ceil(unroundedPerPerson);
+            finalPerPerson = roundedPerson;
+            finalTotal = roundedPerson * currentDiners;
+            roundingDiff = finalTotal - unroundedTotal;
+            finalTip = unroundedTip + roundingDiff;
+        } else if (currentRoundingMode === 'round5') {
+            const rounded5 = Math.ceil(unroundedTotal / 5) * 5;
+            roundingDiff = rounded5 - unroundedTotal;
+            finalTotal = rounded5;
+            finalTip = unroundedTip + roundingDiff;
+            finalPerPerson = finalTotal / currentDiners;
+        }
+
+        // Store in global calculation object
+        lastCalc = {
+            subtotal,
+            taxRate,
+            taxAmount,
+            tipBasis: currentTipBasis,
+            tipPercent: currentTipPercent,
+            baseForTip,
+            tip: finalTip,
+            unroundedTip,
+            total: finalTotal,
+            unroundedTotal,
+            perPerson: finalPerPerson,
+            foodPerPerson: subtotal / currentDiners,
+            taxPerPerson: taxAmount / currentDiners,
+            tipPerPerson: finalTip / currentDiners,
+            diners: currentDiners,
+            roundingMode: currentRoundingMode,
+            roundingDiff
+        };
+
+        // Update UI Displays
+        document.getElementById('totalTipDisplay').innerText = `${currentCurrency}${finalTip.toFixed(2)}`;
+        document.getElementById('grandTotalDisplay').innerText = `${currentCurrency}${finalTotal.toFixed(2)}`;
+        document.getElementById('tipBasisDisplay').innerText = (currentTipBasis === 'pretax')
+            ? `Calculated on pre-tax subtotal (${currentCurrency}${subtotal.toFixed(2)})`
+            : `Calculated on post-tax total (${currentCurrency}${(subtotal + taxAmount).toFixed(2)})`;
+        document.getElementById('billSummaryDisplay').innerText = 
+            `Subtotal ${currentCurrency}${subtotal.toFixed(2)} + Tax ${currentCurrency}${taxAmount.toFixed(2)} + Tip ${currentCurrency}${finalTip.toFixed(2)}`;
+
+        // Per person cards
+        document.getElementById('perPersonTotalVal').innerText = `${currentCurrency}${finalPerPerson.toFixed(2)}`;
+        document.getElementById('perPersonTipVal').innerText = `${currentCurrency}${(finalTip / currentDiners).toFixed(2)}`;
+        document.getElementById('perPersonFoodVal').innerText = `${currentCurrency}${(subtotal / currentDiners).toFixed(2)}`;
+        document.getElementById('perPersonTaxVal').innerText = `${currentCurrency}${(taxAmount / currentDiners).toFixed(2)}`;
+        document.getElementById('splitStatusLabel').innerText = (currentDiners === 1)
+            ? 'Single diner (100% of bill)'
+            : `Split into ${currentDiners} equal shares`;
+
+        // Rounding Notice
+        const roundingContainer = document.getElementById('roundingNoticeContainer');
+        if (currentRoundingMode !== 'none' && Math.abs(roundingDiff) > 0.001) {
+            roundingContainer.classList.remove('hidden');
+            const diffSign = roundingDiff >= 0 ? '+' : '';
+            document.getElementById('roundingDiffVal').innerText = `${diffSign}${currentCurrency}${roundingDiff.toFixed(2)}`;
+            if (currentRoundingMode === 'roundTotal') {
+                document.getElementById('roundingNoticeText').innerText = `Total bill rounded up to nearest ${currentCurrency}1.00.`;
+            } else if (currentRoundingMode === 'roundPerson') {
+                document.getElementById('roundingNoticeText').innerText = `Each diner's share rounded up to nearest ${currentCurrency}1.00.`;
+            } else if (currentRoundingMode === 'round5') {
+                document.getElementById('roundingNoticeText').innerText = `Total bill rounded up to nearest ${currentCurrency}5.00.`;
+            }
+        } else {
+            roundingContainer.classList.add('hidden');
+        }
+
+        // Effective Rates
+        const effOnSubtotal = subtotal > 0 ? (finalTip / subtotal) * 100 : 0;
+        const effOnTotal = (subtotal + taxAmount) > 0 ? (finalTip / (subtotal + taxAmount)) * 100 : 0;
+        document.getElementById('effectiveRateSummary').innerText = `Effective Tip on Total: ${effOnTotal.toFixed(2)}%`;
+        const taxSharePercent = finalTotal > 0 ? (taxAmount / finalTotal) * 100 : 0;
+        document.getElementById('taxShareSummary').innerText = `Sales Tax: ${taxSharePercent.toFixed(1)}% of bill`;
+
+        // Service Level Badge
+        updateServiceBadge(currentTipPercent);
+
+        // Chart Update
+        updateChart(subtotal, taxAmount, finalTip);
+        document.getElementById('chartTotalLabel').innerText = `Total: ${currentCurrency}${finalTotal.toFixed(2)}`;
+
+        // MathJax Step-by-Step Derivation
+        renderMathDerivation();
+
+        // Tip Sensitivity Matrix Table
+        renderTipMatrix(subtotal, taxAmount, currentDiners);
+
+        // Update Print Tab
+        updatePrintTab();
+    }
+
+    function updateServiceBadge(percent) {
+        const badge = document.getElementById('serviceLevelBadge');
+        if (!badge) return;
+        if (percent < 12) {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50";
+            badge.innerText = `Modest Gratuity (${percent}%)`;
+        } else if (percent < 17) {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50";
+            badge.innerText = `Standard Baseline (${percent}%)`;
+        } else if (percent < 21) {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50";
+            badge.innerText = `Attentive Service (${percent}%)`;
+        } else if (percent < 26) {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300 border border-teal-200/50";
+            badge.innerText = `Generous Hospitality (${percent}%)`;
+        } else {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-semibold bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300 border border-purple-200/50";
+            badge.innerText = `Exceptional Dining (${percent}%)`;
+        }
+    }
+
+    // --- Chart.js Doughnut Rendering ---
+    function updateChart(subtotal, tax, tip) {
+        const canvas = document.getElementById('billBreakdownChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        const labels = ['Food & Beverage Subtotal', 'Sales Tax', 'Voluntary Gratuity (Tip)'];
+        const data = [Math.max(0, subtotal), Math.max(0, tax), Math.max(0, tip)];
+
+        if (!billChart) {
+            billChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels,
+                    datasets: [{
+                        data,
+                        backgroundColor: ['#059669', '#f59e0b', '#10b981'],
+                        borderColor: document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff',
+                        borderWidth: 3,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 15,
+                                font: { family: 'Inter', size: 11, weight: '500' },
+                                color: document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label(context) {
+                                    const val = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${currentCurrency}${val.toFixed(2)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        } else {
+            billChart.data.datasets[0].data = data;
+            billChart.data.datasets[0].borderColor = document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff';
+            billChart.options.plugins.legend.labels.color = document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
+            billChart.update();
+        }
+    }
+
+    // --- Step-by-Step Mathematical Derivation Block ---
+    function renderMathDerivation() {
+        const block = document.getElementById('mathJaxDerivationBlock');
+        if (!block) return;
+
+        const cur = currentCurrency;
+        const s = lastCalc.subtotal.toFixed(2);
+        const tRate = lastCalc.taxRate.toFixed(3);
+        const tAmt = lastCalc.taxAmount.toFixed(2);
+        const tipPct = lastCalc.tipPercent.toFixed(1);
+        const tipVal = lastCalc.tip.toFixed(2);
+        const tot = lastCalc.total.toFixed(2);
+        const n = lastCalc.diners;
+        const perP = lastCalc.perPerson.toFixed(2);
+        const isPre = (lastCalc.tipBasis === 'pretax');
+
+        const generalHeader = `
+            <div class="mb-3 pb-2 border-b border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400 text-[11px] space-y-1">
+                <div class="font-bold text-slate-700 dark:text-slate-300">Governing Restaurant Dining Formulas:</div>
+                <div>&bull; <strong>Tip Amount:</strong> \(\text{Tip} = \text{Bill Amount} \times \frac{\text{Tip } \%}{100}\)</div>
+                <div>&bull; <strong>Total Amount:</strong> \(\text{Bill} + \text{Tip}\) (or \(\text{Subtotal} + \text{Tax} + \text{Tip}\))</div>
+                <div>&bull; <strong>Per Person Split:</strong> \(\frac{\text{Total Amount}}{\text{Number of People}}\)</div>
+                <div>&bull; <strong>Round Up Option:</strong> Round total or per-person share up to nearest dollar.</div>
+            </div>
+        `;
+
+        const baseFormula = isPre
+            ? `$$\\text{Tip Amount} = \\text{Bill Amount} \\times \\left(\\frac{\\text{Tip \\%}}{100}\\right) = ${cur}${s} \\times \\left(\\frac{${tipPct}}{100}\\right) = ${cur}${tipVal}$$`
+            : `$$\\text{Tip Amount} = (\\text{Bill Amount} + \\text{Tax}) \\times \\left(\\frac{\\text{Tip \\%}}{100}\\right) = (${cur}${s} + ${cur}${tAmt}) \\times \\left(\\frac{${tipPct}}{100}\\right) = ${cur}${tipVal}$$`;
+
+        const totalFormula = `$$\\text{Total Amount} = \\text{Bill} + \\text{Tax} + \\text{Tip} = ${cur}${s} + ${cur}${tAmt} + ${cur}${tipVal} = ${cur}${tot}$$`;
+        const splitFormula = `$$\\text{Per Person Split} = \\frac{\\text{Total Amount}}{\\text{Number of People}} = \\frac{${cur}${tot}}{${n}} = ${cur}${perP}$$`;
+
+        block.innerHTML = `
+            <div class="space-y-2">
+                ${generalHeader}
+                <div><span class="text-xs text-slate-400 font-semibold uppercase">1. Tip Amount (${isPre ? 'Pre-Tax Standard' : 'Post-Tax'}):</span>${baseFormula}</div>
+                <div><span class="text-xs text-slate-400 font-semibold uppercase">2. Total Amount:</span>${totalFormula}</div>
+                <div><span class="text-xs text-slate-400 font-semibold uppercase">3. Per Person Split:</span>${splitFormula}</div>
+            </div>
+        `;
+
+        if (window.MathJax && MathJax.typesetPromise) {
+            MathJax.typesetPromise([block]).catch(err => console.log('MathJax error: ', err));
+        }
+    }
+
+    // --- Tip Sensitivity Matrix Table ---
+    function renderTipMatrix(subtotal, taxAmount, diners) {
+        const tbody = document.getElementById('tipMatrixBody');
+        const header = document.getElementById('matrixPeopleHeader');
+        if (!tbody) return;
+        if (header) header.innerText = (diners === 1) ? '1 diner' : `${diners} diners`;
+
+        const tiers = [
+            { rate: 10, label: 'Modest / Basic' },
+            { rate: 15, label: 'Fair Standard' },
+            { rate: 18, label: 'Good Table Service' },
+            { rate: 20, label: 'Attentive Hospitality' },
+            { rate: 22, label: 'Generous Dining' },
+            { rate: 25, label: 'Fine Dining Quality' },
+            { rate: 30, label: 'Exceptional High Roller' }
+        ];
+
+        const baseForTip = (currentTipBasis === 'pretax') ? subtotal : (subtotal + taxAmount);
+        const baselineTip15 = baseForTip * 0.15;
+
+        let rowsHtml = '';
+        tiers.forEach(t => {
+            const tipVal = baseForTip * (t.rate / 100);
+            const totalVal = subtotal + taxAmount + tipVal;
+            const perPersonVal = totalVal / diners;
+            const diff15 = tipVal - baselineTip15;
+            const diffSign = diff15 >= 0 ? '+' : '';
+            const isCurrent = Math.abs(t.rate - currentTipPercent) < 0.05;
+
+            const rowClass = isCurrent
+                ? 'bg-brand-50/70 dark:bg-brand-950/40 font-bold text-brand-700 dark:text-brand-300'
+                : 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+
+            rowsHtml += `
+                <tr class="${rowClass}">
+                    <td class="px-3 py-2.5 font-bold">${t.rate}%</td>
+                    <td class="px-3 py-2.5 text-slate-500 dark:text-slate-400 text-[11px]">${t.label}</td>
+                    <td class="px-3 py-2.5">${currentCurrency}${tipVal.toFixed(2)}</td>
+                    <td class="px-3 py-2.5">${currentCurrency}${totalVal.toFixed(2)}</td>
+                    <td class="px-3 py-2.5 font-bold">${currentCurrency}${perPersonVal.toFixed(2)}</td>
+                    <td class="px-3 py-2.5 text-slate-500">${diffSign}${currentCurrency}${diff15.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = rowsHtml;
+    }
+
+    // --- TAB 2: Multi-Payer Unequal Bill Splitter ---
+    function renderGuestRoster() {
+        const container = document.getElementById('guestTagsContainer');
+        if (!container) return;
+        let html = '';
+        groupGuests.forEach((g, idx) => {
+            html += `
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                    <input type="text" value="${g}" onchange="renameGuest(${idx}, this.value)" class="bg-transparent text-slate-900 dark:text-white font-bold w-20 sm:w-24 focus:outline-none focus:ring-1 focus:ring-brand-500 rounded px-1 text-xs">
+                    ${groupGuests.length > 1 ? `<button type="button" onclick="removeGuest(${idx})" class="text-slate-400 hover:text-rose-500 transition font-bold text-sm ml-1">&times;</button>` : ''}
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    function addGuest() {
+        const newName = `Guest ${groupGuests.length + 1}`;
+        groupGuests.push(newName);
+        renderGuestRoster();
+        updateItemAssignOptions();
+        calculateItemizedGroup();
+    }
+
+    function removeGuest(idx) {
+        if (groupGuests.length <= 1) return;
+        const removed = groupGuests[idx];
+        groupGuests.splice(idx, 1);
+        // Reassign any item that was assigned to this guest to 'shared'
+        groupItems.forEach(item => {
+            if (item.assignedTo === removed) {
+                item.assignedTo = 'shared';
+            }
+        });
+        renderGuestRoster();
+        updateItemAssignOptions();
+        renderItemizedBill();
+        calculateItemizedGroup();
+    }
+
+    function renameGuest(idx, newName) {
+        const oldName = groupGuests[idx];
+        const trimmed = newName.trim() || `Guest ${idx + 1}`;
+        groupGuests[idx] = trimmed;
+        groupItems.forEach(item => {
+            if (item.assignedTo === oldName) item.assignedTo = trimmed;
+        });
+        renderGuestRoster();
+        updateItemAssignOptions();
+        renderItemizedBill();
+        calculateItemizedGroup();
+    }
+
+    function updateItemAssignOptions() {
+        const select = document.getElementById('itemAssignSelect');
+        if (!select) return;
+        let html = `<option value="shared">Shared by All Guests</option>`;
+        groupGuests.forEach(g => {
+            html += `<option value="${g}">${g}</option>`;
+        });
+        select.innerHTML = html;
+    }
+
+    function renderItemizedBill() {
+        const tbody = document.getElementById('itemizedBillBody');
+        if (!tbody) return;
+        if (groupItems.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="px-3 py-6 text-center text-slate-400 text-xs">No dining items added yet. Enter items above or click 'Load Sample Party'.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        groupItems.forEach((item, index) => {
+            const assignBadge = (item.assignedTo === 'shared')
+                ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-teal-50 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">Shared by All</span>`
+                : `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">${item.assignedTo}</span>`;
+
+            html += `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                    <td class="px-3 py-2 font-medium text-slate-900 dark:text-white">${item.name}</td>
+                    <td class="px-3 py-2">${assignBadge}</td>
+                    <td class="px-3 py-2 text-right font-bold">${currentCurrency}${item.price.toFixed(2)}</td>
+                    <td class="px-3 py-2 text-center">
+                        <button type="button" onclick="removeItemFromBill(${index})" class="text-slate-400 hover:text-rose-500 font-bold transition text-sm">&times;</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    }
+
+    function addItemToBill() {
+        const descInput = document.getElementById('itemDescInput');
+        const priceInput = document.getElementById('itemPriceInput');
+        const assignSelect = document.getElementById('itemAssignSelect');
+
+        const name = descInput.value.trim() || 'Menu Item';
+        const price = Math.max(0, parseFloat(priceInput.value) || 0);
+        const assignedTo = assignSelect.value;
+
+        if (price <= 0) {
+            showToast('Please enter a valid item price.');
+            return;
+        }
+
+        groupItems.push({
+            id: nextItemId++,
+            name,
+            price,
+            assignedTo
+        });
+
+        descInput.value = '';
+        priceInput.value = '';
+        descInput.focus();
+
+        renderItemizedBill();
+        calculateItemizedGroup();
+    }
+
+    function removeItemFromBill(index) {
+        groupItems.splice(index, 1);
+        renderItemizedBill();
+        calculateItemizedGroup();
+    }
+
+    function loadSampleGroup() {
+        groupGuests = ['Alice', 'Bob', 'Charlie', 'Dana'];
+        groupItems = [
+            { id: 1, name: 'Truffle Fries (Shared)', price: 14.00, assignedTo: 'shared' },
+            { id: 2, name: 'Crispy Calamari (Shared)', price: 18.00, assignedTo: 'shared' },
+            { id: 3, name: 'Dry-Aged Ribeye', price: 46.00, assignedTo: 'Alice' },
+            { id: 4, name: 'Wild Salmon Fillet', price: 34.00, assignedTo: 'Bob' },
+            { id: 5, name: 'Handmade Gnocchi', price: 26.00, assignedTo: 'Charlie' },
+            { id: 6, name: 'Wagyu Burger', price: 28.00, assignedTo: 'Dana' },
+            { id: 7, name: 'Craft IPA x2', price: 18.00, assignedTo: 'Bob' },
+            { id: 8, name: 'Cabernet Sauvignon', price: 32.00, assignedTo: 'Alice' },
+            { id: 9, name: 'Chocolate Lava Cake (Shared)', price: 12.00, assignedTo: 'shared' }
+        ];
+        renderGuestRoster();
+        updateItemAssignOptions();
+        renderItemizedBill();
+        calculateItemizedGroup();
+        showToast('Sample dinner party loaded!');
+    }
+
+    function resetGroup() {
+        groupGuests = ['Alice', 'Bob'];
+        groupItems = [];
+        renderGuestRoster();
+        updateItemAssignOptions();
+        renderItemizedBill();
+        calculateItemizedGroup();
+        showToast('Group items cleared.');
+    }
+
+    // Multi-Payer Apportionment Mathematics
+    function calculateItemizedGroup() {
+        const taxRate = Math.max(0, parseFloat(document.getElementById('groupTaxInput').value) || 0);
+        const tipRate = Math.max(0, parseFloat(document.getElementById('groupTipInput').value) || 0);
+
+        let totalFoodSubtotal = 0;
+        let sharedTotal = 0;
+        const guestData = {};
+
+        groupGuests.forEach(g => {
+            guestData[g] = {
+                name: g,
+                individualSubtotal: 0,
+                sharedPortion: 0,
+                personalFoodSubtotal: 0,
+                taxShare: 0,
+                tipShare: 0,
+                totalDue: 0,
+                items: []
+            };
+        });
+
+        groupItems.forEach(item => {
+            totalFoodSubtotal += item.price;
+            if (item.assignedTo === 'shared') {
+                sharedTotal += item.price;
+            } else if (guestData[item.assignedTo]) {
+                guestData[item.assignedTo].individualSubtotal += item.price;
+                guestData[item.assignedTo].items.push(item);
+            }
+        });
+
+        // Apportion shared items equally across all guests
+        const sharedPerGuest = groupGuests.length > 0 ? (sharedTotal / groupGuests.length) : 0;
+        groupGuests.forEach(g => {
+            guestData[g].sharedPortion = sharedPerGuest;
+            guestData[g].personalFoodSubtotal = guestData[g].individualSubtotal + sharedPerGuest;
+        });
+
+        // Total Tax & Tip
+        const totalTaxAmount = totalFoodSubtotal * (taxRate / 100);
+        const totalTipAmount = totalFoodSubtotal * (tipRate / 100);
+
+        // Apportion tax and tip proportionally
+        groupGuests.forEach(g => {
+            const guest = guestData[g];
+            const proportion = totalFoodSubtotal > 0 ? (guest.personalFoodSubtotal / totalFoodSubtotal) : (1 / groupGuests.length);
+            guest.taxShare = totalTaxAmount * proportion;
+            guest.tipShare = totalTipAmount * proportion;
+            guest.totalDue = guest.personalFoodSubtotal + guest.taxShare + guest.tipShare;
+        });
+
+        renderGuestBreakdownCards(guestData);
+    }
+
+    function renderGuestBreakdownCards(guestData) {
+        const grid = document.getElementById('guestBreakdownGrid');
+        if (!grid) return;
+        let html = '';
+
+        groupGuests.forEach(g => {
+            const d = guestData[g];
+            html += `
+                <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-3 border-b border-slate-200 dark:border-slate-700/60 pb-2">
+                            <span class="font-extrabold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                <span>${d.name}</span>
+                            </span>
+                            <span class="text-base font-extrabold font-mono text-brand-600 dark:text-brand-400">
+                                ${currentCurrency}${d.totalDue.toFixed(2)}
+                            </span>
+                        </div>
+
+                        <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-mono mb-4">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Direct Items:</span>
+                                <span>${currentCurrency}${d.individualSubtotal.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Shared Food Share:</span>
+                                <span>${currentCurrency}${d.sharedPortion.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Proportional Tax:</span>
+                                <span>${currentCurrency}${d.taxShare.toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between font-semibold text-brand-700 dark:text-brand-300">
+                                <span>Proportional Tip:</span>
+                                <span>${currentCurrency}${d.tipShare.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="copyGuestShare('${d.name}', ${d.totalDue.toFixed(2)}, ${d.personalFoodSubtotal.toFixed(2)}, ${d.taxShare.toFixed(2)}, ${d.tipShare.toFixed(2)})" class="w-full py-2 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-200 transition flex items-center justify-center gap-1.5 shadow-sm">
+                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        <span>Copy ${d.name}'s Share</span>
+                    </button>
+                </div>
+            `;
+        });
+        grid.innerHTML = html;
+    }
+
+    function copyGuestShare(name, total, food, tax, tip) {
+        const cur = currentCurrency;
+        const text = `${name}'s dining share: ${cur}${total} (Food: ${cur}${food}, Tax: ${cur}${tax}, Gratuity: ${cur}${tip}) via CalcWorld Tip Splitter.`;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast(`${name}'s share copied!`);
+        });
+    }
+
+    function copyEntireGroupBreakdown() {
+        const cur = currentCurrency;
+        let summary = `DINING BILL SETTLEMENT BREAKDOWN\n----------------------------------\n`;
+        const taxRate = document.getElementById('groupTaxInput').value;
+        const tipRate = document.getElementById('groupTipInput').value;
+
+        let totalBill = 0;
+        let totalFood = 0;
+        let sharedTotal = 0;
+        const guestData = {};
+
+        groupGuests.forEach(g => {
+            guestData[g] = { individualSubtotal: 0, sharedPortion: 0, food: 0, tax: 0, tip: 0, total: 0 };
+        });
+
+        groupItems.forEach(item => {
+            totalFood += item.price;
+            if (item.assignedTo === 'shared') sharedTotal += item.price;
+            else if (guestData[item.assignedTo]) guestData[item.assignedTo].individualSubtotal += item.price;
+        });
+
+        const sharedPerGuest = groupGuests.length > 0 ? (sharedTotal / groupGuests.length) : 0;
+        const totalTax = totalFood * (parseFloat(taxRate) / 100);
+        const totalTip = totalFood * (parseFloat(tipRate) / 100);
+        totalBill = totalFood + totalTax + totalTip;
+
+        groupGuests.forEach(g => {
+            const d = guestData[g];
+            d.food = d.individualSubtotal + sharedPerGuest;
+            const prop = totalFood > 0 ? (d.food / totalFood) : (1 / groupGuests.length);
+            d.tax = totalTax * prop;
+            d.tip = totalTip * prop;
+            d.total = d.food + d.tax + d.tip;
+            summary += `${g}: ${cur}${d.total.toFixed(2)} (Food: ${cur}${d.food.toFixed(2)} + Tax: ${cur}${d.tax.toFixed(2)} + Tip: ${cur}${d.tip.toFixed(2)})\n`;
+        });
+
+        summary += `----------------------------------\nTable Grand Total: ${cur}${totalBill.toFixed(2)} (Subtotal: ${cur}${totalFood.toFixed(2)}, Tax: ${cur}${totalTax.toFixed(2)}, Tip: ${cur}${totalTip.toFixed(2)})`;
+
+        navigator.clipboard.writeText(summary).then(() => {
+            showToast('Group breakdown copied to clipboard!');
+        });
+    }
+
+    // --- TAB 4: Print Tab Synchronizer ---
+    function updatePrintTab() {
+        const cur = currentCurrency;
+        const partySize = lastCalc.diners || 2;
+
+        const pSizeEl = document.getElementById('printPartySizeDisplay');
+        if (pSizeEl) pSizeEl.innerText = `${partySize} ${partySize === 1 ? 'Guest' : 'Guests'}`;
+
+        const pBasisEl = document.getElementById('printBasisDisplay');
+        if (pBasisEl) pBasisEl.innerText = (lastCalc.tipBasis === 'pretax') ? 'Pre-Tax Subtotal' : 'Post-Tax Total';
+
+        const sEl = document.getElementById('printSubtotalVal');
+        if (sEl) sEl.innerText = `${cur}${lastCalc.subtotal.toFixed(2)}`;
+
+        const tRateEl = document.getElementById('printTaxRateVal');
+        if (tRateEl) tRateEl.innerText = `${lastCalc.taxRate.toFixed(3)}%`;
+
+        const tAmtEl = document.getElementById('printTaxAmountVal');
+        if (tAmtEl) tAmtEl.innerText = `${cur}${lastCalc.taxAmount.toFixed(2)}`;
+
+        const tipRateEl = document.getElementById('printTipRateVal');
+        if (tipRateEl) tipRateEl.innerText = `${lastCalc.tipPercent.toFixed(1)}%`;
+
+        const tipAmtEl = document.getElementById('printTipAmountVal');
+        if (tipAmtEl) tipAmtEl.innerText = `${cur}${lastCalc.tip.toFixed(2)}`;
+
+        const roundTypeEl = document.getElementById('printRoundingTypeVal');
+        if (roundTypeEl) {
+            if (lastCalc.roundingMode === 'none') roundTypeEl.innerText = 'Exact cents';
+            else if (lastCalc.roundingMode === 'roundTotal') roundTypeEl.innerText = 'Round total to $1';
+            else if (lastCalc.roundingMode === 'roundPerson') roundTypeEl.innerText = 'Round person to $1';
+            else if (lastCalc.roundingMode === 'round5') roundTypeEl.innerText = 'Round total to $5';
+        }
+
+        const roundAmtEl = document.getElementById('printRoundingVal');
+        if (roundAmtEl) {
+            const diffSign = lastCalc.roundingDiff >= 0 ? '+' : '';
+            roundAmtEl.innerText = `${diffSign}${cur}${lastCalc.roundingDiff.toFixed(2)}`;
+        }
+
+        const grandEl = document.getElementById('printGrandTotalVal');
+        if (grandEl) grandEl.innerText = `${cur}${lastCalc.total.toFixed(2)}`;
+
+        const perPersonTotalEl = document.getElementById('printPerPersonTotal');
+        if (perPersonTotalEl) perPersonTotalEl.innerText = `${cur}${lastCalc.perPerson.toFixed(2)}`;
+
+        const perPersonFoodEl = document.getElementById('printPerPersonFood');
+        if (perPersonFoodEl) perPersonFoodEl.innerText = `${cur}${lastCalc.foodPerPerson.toFixed(2)}`;
+
+        const perPersonTaxEl = document.getElementById('printPerPersonTax');
+        if (perPersonTaxEl) perPersonTaxEl.innerText = `${cur}${lastCalc.taxPerPerson.toFixed(2)}`;
+
+        const perPersonTipEl = document.getElementById('printPerPersonTip');
+        if (perPersonTipEl) perPersonTipEl.innerText = `${cur}${lastCalc.tipPerPerson.toFixed(2)}`;
+
+        // Populate Printable Payment Checklist Body
+        const checkBody = document.getElementById('printChecklistBody');
+        if (checkBody) {
+            let checkHtml = '';
+            for (let i = 1; i <= partySize; i++) {
+                const dinerName = (i <= groupGuests.length) ? groupGuests[i - 1] : `Guest ${i}`;
+                checkHtml += `
+                    <tr>
+                        <td class="p-2 text-center text-slate-400">&#x2610;</td>
+                        <td class="p-2 font-medium text-slate-800 dark:text-slate-200">${dinerName}</td>
+                        <td class="p-2 text-right font-bold text-slate-900 dark:text-white">${cur}${lastCalc.perPerson.toFixed(2)}</td>
+                        <td class="p-2 text-center text-slate-500">[ ] Venmo [ ] Cash [ ] Card</td>
+                        <td class="p-2 text-slate-400">________________________</td>
+                    </tr>
+                `;
+            }
+            checkBody.innerHTML = checkHtml;
+        }
+    }
+
+    // --- Copy Bill Summary ---
+    function copyBillSummary() {
+        const cur = currentCurrency;
+        const text = `Dining Bill Summary:\nSubtotal: ${cur}${lastCalc.subtotal.toFixed(2)}\nSales Tax: ${cur}${lastCalc.taxAmount.toFixed(2)}\nTip (${lastCalc.tipPercent}%): ${cur}${lastCalc.tip.toFixed(2)}\nTotal Due: ${cur}${lastCalc.total.toFixed(2)}\nPer Person (${lastCalc.diners} guests): ${cur}${lastCalc.perPerson.toFixed(2)}\nCalculated via CalcWorld Tip Calculator.`;
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Bill summary copied to clipboard!');
+        });
+    }
+
+    // --- Lead Capture Handler ---
+    function handleLeadSubmit(event) {
+        event.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const submitBtn = document.getElementById('leadSubmitBtn');
+        const successMsg = document.getElementById('leadSuccessMsg');
+        if (!input || !submitBtn || !successMsg) return;
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Dispatching PDF...';
+
+        setTimeout(() => {
+            input.value = '';
+            submitBtn.classList.add('hidden');
+            successMsg.classList.remove('hidden');
+            showToast('Free dining guide sent to your inbox!');
+        }, 600);
+    }
+
+    // --- Tab Switching Logic ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(panel => {
+            panel.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            btn.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+        }
+
+        if (tabId === 'fast') {
+            if (billChart) billChart.update();
+            renderMathDerivation();
+        } else if (tabId === 'itemized') {
+            calculateItemizedGroup();
+        } else if (tabId === 'print') {
+            updatePrintTab();
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!ans || !icon) return;
+
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    // --- Toast Notification ---
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2800);
+    }
+
+    // --- Theme Toggle ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        if (billChart) {
+            billChart.data.datasets[0].borderColor = document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff';
+            billChart.options.plugins.legend.labels.color = document.documentElement.classList.contains('dark') ? '#cbd5e1' : '#475569';
+            billChart.update();
+        }
+    }
+
+    // --- Parse URL Parameters for Deep Linking ---
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('subtotal')) {
+            const s = parseFloat(params.get('subtotal'));
+            if (!isNaN(s)) document.getElementById('billSubtotalInput').value = s;
+        }
+        if (params.has('tax')) {
+            const t = parseFloat(params.get('tax'));
+            if (!isNaN(t)) {
+                setTaxMode('percent');
+                document.getElementById('taxPercentInput').value = t;
+            }
+        }
+        if (params.has('tip')) {
+            const p = parseFloat(params.get('tip'));
+            if (!isNaN(p)) setTipPercent(p);
+        }
+        if (params.has('people')) {
+            const n = parseInt(params.get('people'));
+            if (!isNaN(n)) document.getElementById('peopleCountInput').value = Math.max(1, n);
+        }
+        if (params.has('currency')) {
+            setCurrency(params.get('currency'));
+        }
+        if (params.has('tab')) {
+            switchTab(params.get('tab'));
+        }
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

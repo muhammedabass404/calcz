@@ -1,0 +1,2559 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heat Index Calculator | NOAA NWS Rothfusz &amp; OSHA Heat Stress Engine</title>
+    <meta name="description" content="Scientific Heat Index and Feels Like calculator implementing the official NOAA National Weather Service Rothfusz 9-parameter regression equation with humidity adjustments. Features OSHA workplace heat stress standards, work-to-rest ratios, biometeorology charts, and emergency heat illness protocols.">
+    <meta name="keywords" content="heat index calculator, feels like temperature, NOAA heat index formula, Rothfusz equation, OSHA heat stress calculator, work rest ratio, heat exhaustion vs heat stroke, wet bulb globe temperature, biometeorology, apparent temperature">
+    <link rel="canonical" href="https://calcworld.net/calculators/heat-index-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN with darkMode: 'class' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                            950: '#431407'
+                        },
+                        osha: {
+                            caution: '#eab308',
+                            exCaution: '#f97316',
+                            danger: '#ef4444',
+                            exDanger: '#9333ea'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 CDN & Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(249, 115, 22, 0.08) 20%,
+                rgba(249, 115, 22, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Toast feedback */
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: rgba(249, 115, 22, 0.3);
+        }
+
+        /* Custom range sliders */
+        input[type="range"] {
+            accent-color: #ea580c;
+        }
+
+        /* Interactive Heatmap Matrix Grid Cells */
+        .heat-cell {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            cursor: pointer;
+        }
+        .heat-cell:hover {
+            transform: scale(1.12);
+            z-index: 10;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .heat-cell.selected-cell {
+            outline: 2px solid #ffffff;
+            box-shadow: 0 0 0 3px #ea580c;
+            transform: scale(1.15);
+            z-index: 20;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Heat Index Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Heat Index Calculator & OSHA Heat Stress Solver",
+      "url": "https://calcworld.net/other/heat-index-calculator",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Scientific Heat Index calculator using NOAA NWS Rothfusz 9-parameter regression and OSHA workplace heat stress hazard staging. Computes feels-like temperature, work-to-rest schedules, hydration requirements, and emergency heat illness triage."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the Heat Index and how does it differ from actual air temperature?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Heat Index (HI), sometimes called apparent temperature or feels like temperature, measures how hot weather feels to the human body when relative humidity is combined with ambient air temperature. While a standard thermometer records dry-bulb temperature independent of moisture, human skin cools primarily through sweat evaporation. When humidity is high, moisture cannot evaporate readily into saturated air, inhibiting the release of latent heat and making the perceived temperature much hotter than the physical air temperature."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What equation does the National Weather Service use to calculate Heat Index?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The National Weather Service (NWS) calculates Heat Index using Lans P. Rothfusz's 9-parameter multivariate regression equation, derived from Robert G. Steadman's 1979 human biometeorological model: HI = -42.379 + 2.04901523*T + 10.14333127*R - 0.22475541*T*R - 0.00683783*T^2 - 0.05481717*R^2 + 0.00122874*T^2*R + 0.00085282*T*R^2 - 0.00000199*T^2*R^2, where T is temperature in degrees Fahrenheit and R is relative humidity percentage. Specialized adjustments are applied for conditions with low relative humidity (under 13%) and high relative humidity (over 85%)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does direct sunlight increase the Heat Index value?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The standard NOAA Heat Index equation assumes shaded conditions with a light 5-knot (approx. 5.7 mph) breeze. Exposure to direct full sunshine adds substantial solar shortwave radiation to the body, increasing the effective Heat Index by up to 15 degrees Fahrenheit (8.3 degrees Celsius). When assessing outdoor occupational safety, supervisors must add this solar surcharge to ensure accurate risk staging."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the four OSHA heat stress hazard levels?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OSHA categorizes heat risk into four stages: 1) Caution (80°F to 90°F / 26.7°C to 32.2°C): Fatigue possible with prolonged exposure. 2) Extreme Caution (91°F to 103°F / 32.8°C to 39.4°C): Heat stroke, cramps, and exhaustion possible; mandatory hydration and shade breaks advised. 3) Danger (104°F to 124°F / 40.0°C to 51.1°C): Heat cramps or exhaustion likely, heat stroke possible; aggressive work-rest cycles required. 4) Extreme Danger (125°F+ / 51.7°C+): Heat stroke imminent; stop non-essential outdoor heavy physical work."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between Heat Index and Wet-Bulb Globe Temperature (WBGT)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Heat Index is calculated strictly from dry-bulb air temperature and relative humidity under shaded, calm conditions. Wet-Bulb Globe Temperature (WBGT) is a comprehensive environmental heat measure derived from three sensors: natural wet-bulb temperature (70%), black globe temperature measuring radiant solar energy (20%), and dry-bulb air temperature (10%), with natural wind speed integrated. WBGT is preferred by the military, athletic organizations, and industrial hygienists for evaluating direct outdoor solar heat load."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does evaporative cooling work through latent heat of vaporization?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Evaporative cooling relies on the latent heat of vaporization of water, which is approximately 2,420 to 2,450 kilojoules per kilogram (about 580 calories per gram) at human skin temperature. When liquid sweat vaporizes into atmospheric water vapor, it absorbs this large quantity of thermal energy directly from the cutaneous blood vessels, cooling the body. If ambient vapor pressure is high (high relative humidity), the vapor pressure gradient between skin and air diminishes, halting evaporation and causing sweat to roll off without cooling."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the key differences between heat exhaustion and heat stroke?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Heat exhaustion presents with heavy sweating, cold pale clammy skin, weakness, dizziness, and a core body temperature below 104°F (40°C), with normal mental alertness. Heat stroke is a catastrophic medical emergency marked by a core temperature exceeding 104°F (40°C), altered mental status (confusion, delirium, seizures, or coma), rapid bounding pulse, and hot skin (which can be dry or moist in exertional heat stroke). Heat stroke requires immediate 911 emergency services and rapid cold-water immersion cooling."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the recommended hydration rate for workers under high heat stress?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OSHA and NIOSH recommend drinking approximately 1 cup (8 ounces or 240 milliliters) of cool water every 15 to 20 minutes during moderate work in hot conditions, totaling about 1 quart (32 ounces) per hour. Drinking smaller amounts frequently is far more effective than drinking large volumes infrequently. For prolonged work exceeding two hours, electrolyte-replacement beverages should be provided to replace sodium and potassium lost in perspiration and avoid exertional hyponatremia."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Heat Index Calculator | NOAA NWS Rothfusz &amp; OSHA Heat Stress Engine">
+    <meta property="og:description" content="Scientific Heat Index and Feels Like calculator implementing the official NOAA National Weather Service Rothfusz 9-parameter regression equation with humidity adjustments. Features OSHA workplace heat stress standards, work-to-rest ratios, biometeorology charts, and emergency heat illness protocols.">
+    <meta property="og:url" content="https://calcworld.net/calculators/heat-index-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Heat Index Calculator | NOAA NWS Rothfusz &amp; OSHA Heat Stress Engine">
+    <meta name="twitter:description" content="Scientific Heat Index and Feels Like calculator implementing the official NOAA National Weather Service Rothfusz 9-parameter regression equation with humidity adjustments. Features OSHA workplace heat stress standards, work-to-rest ratios, biometeorology charts, and emergency heat illness protocols.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Occupational &amp; Biometeorological Reference:</strong> CalcWorld delivers peer-reviewed atmospheric safety engines free with zero registration. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Heat Index Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Heat Index Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Official NOAA National Weather Service Rothfusz 9-parameter regression solver for Heat Index and "Feels Like" biometeorology. Computes OSHA workplace heat stress hazard stages, work-to-rest cycles, hydration schedules, and clinical emergency triage protocols.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5 on lg, 4 on xl) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Environmental Conditions</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">NOAA NWS Engine</span>
+                    </h2>
+
+                    <!-- Air Temperature Input -->
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="tempInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Dry-Bulb Air Temperature</label>
+                            <div class="flex items-center gap-1">
+                                <select id="tempUnit" onchange="handleTempUnitChange()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <option value="F" selected>&deg;F (Fahrenheit)</option>
+                                    <option value="C">&deg;C (Celsius)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="tempInput" step="0.5" value="92.0" oninput="handleTempNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400" id="tempUnitSuffix">&deg;F</span>
+                        </div>
+                        <input type="range" id="tempSlider" min="70" max="125" step="0.5" value="92" oninput="handleTempSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span id="tempSliderMin">70&deg;F</span>
+                            <span id="tempSliderMid">95&deg;F</span>
+                            <span id="tempSliderMax">125&deg;F</span>
+                        </div>
+                    </div>
+
+                    <!-- Relative Humidity Input -->
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="rhInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Relative Humidity (RH)</label>
+                            <span class="text-xs font-bold font-mono text-brand-600 dark:text-brand-400" id="rhBadge">65%</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="rhInput" min="0" max="100" step="1" value="65" oninput="handleRhNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">%</span>
+                        </div>
+                        <input type="range" id="rhSlider" min="0" max="100" step="1" value="65" oninput="handleRhSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>0% (Desert Arid)</span>
+                            <span>50% (Moderate)</span>
+                            <span>100% (Saturated)</span>
+                        </div>
+                    </div>
+
+                    <!-- Solar Exposure Modifier -->
+                    <div class="space-y-2 mb-5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/></svg>
+                                <span>Solar Radiant Exposure</span>
+                            </label>
+                            <span id="sunSurchargeBadge" class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Shade Base</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:border-brand-500 transition">
+                                <input type="radio" name="sunExposure" value="shade" checked onchange="calculate()" class="text-brand-600 focus:ring-brand-500">
+                                <div>
+                                    <div class="font-semibold text-slate-800 dark:text-slate-200">In Shade / Indoors</div>
+                                    <div class="text-[10px] text-slate-400">+0&deg;F Standard</div>
+                                </div>
+                            </label>
+                            <label class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 cursor-pointer hover:border-brand-500 transition">
+                                <input type="radio" name="sunExposure" value="sun" onchange="calculate()" class="text-brand-600 focus:ring-brand-500">
+                                <div>
+                                    <div class="font-semibold text-amber-600 dark:text-amber-400">Direct Full Sun</div>
+                                    <div class="text-[10px] text-slate-400">+15&deg;F NWS Surge</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Clothing Adjustment Factor (CAF) -->
+                    <div class="space-y-2 mb-5">
+                        <label for="clothingFactor" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                            <span>Work Clothing Adjustment (CAF)</span>
+                            <span id="clothingAdjustmentBadge" class="text-[10px] text-slate-500 font-mono">+0&deg;F</span>
+                        </label>
+                        <select id="clothingFactor" onchange="calculate()" class="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="0" selected>Standard Summer Workwear (Shorts / Light Shirt: +0&deg;F)</option>
+                            <option value="3.5">Cotton Woven Coveralls (+3.5&deg;F / +1.9&deg;C)</option>
+                            <option value="5.0">Double-Layer Woven Fabric (+5.0&deg;F / +2.8&deg;C)</option>
+                            <option value="11.0">Vapor-Barrier Chemical / Tyvek Suit (+11.0&deg;F / +6.1&deg;C)</option>
+                        </select>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400">OSHA &amp; ACGIH clothing adjustment factor added to apparent thermal stress.</p>
+                    </div>
+
+                    <!-- Advanced Atmospheric Accordion -->
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mb-5">
+                        <button type="button" onclick="toggleAdvancedSettings()" class="w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span>Advanced Psychrometric Settings</span>
+                            </span>
+                            <svg id="advSettingsChevron" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="advSettingsContent" class="space-y-3 mt-3 hidden">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Barometric Pressure</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" id="pressureInput" step="1" value="1013" oninput="calculate()" class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <select id="pressureUnit" onchange="calculate()" class="px-2 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                        <option value="hPa" selected>hPa / mbar</option>
+                                        <option value="inHg">inHg</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Steadman Rothfusz Mode</label>
+                                <select id="regressionMode" onchange="calculate()" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                    <option value="noaa" selected>NOAA Official (9-Param + Dual RH Adjustments)</option>
+                                    <option value="unadjusted">Rothfusz Unadjusted Pure 9-Param</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Weather Presets -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Biometeorology Presets</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="applyPreset(88, 70, false, 0)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🌴 Tropical Coast</button>
+                            <button type="button" onclick="applyPreset(105, 15, false, 0)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🌵 Desert Arid</button>
+                            <button type="button" onclick="applyPreset(95, 60, false, 0)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">☀️ Midwest Noon</button>
+                            <button type="button" onclick="applyPreset(92, 80, true, 0)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🔥 Swamp Sun</button>
+                            <button type="button" onclick="applyPreset(102, 55, true, 3.5)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">⚠️ OSHA Danger</button>
+                            <button type="button" onclick="applyPreset(78, 50, false, 0)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🏡 Mild Summer</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="bg-gradient-to-br from-amber-950 via-slate-900 to-slate-950 text-white rounded-2xl p-5 shadow-sm border border-amber-900/60 lead-box">
+                    <div class="flex items-center gap-2 mb-2 text-amber-400 text-xs font-semibold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Occupational Compliance Kit</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">OSHA Heat Illness Prevention Plan</h3>
+                    <p class="text-xs text-amber-200/80 mb-3">Download our verified OSHA outdoor heat stress compliance checklists, NIOSH acclimatization schedules, hydration logs, and emergency triage response protocols (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="safety.officer@enterprise.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-amber-200/50 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Download Compliance PDF</button>
+                    </form>
+                    <p class="text-[10px] text-amber-300/70 mt-2 text-center">Instant digital delivery. Strictly zero promotional spam.</p>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results Dashboard, Tabs & Visualizations (Span 7 on lg, 8 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Primary Hero Results Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-4 mb-5">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Biometeorological Apparent Thermal Output</span>
+                            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Calculated Heat Index</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="sunActiveBadge" class="hidden text-xs font-semibold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">☀️ +15&deg;F Direct Sun</span>
+                            <span id="oshaHazardBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border border-amber-300 dark:border-amber-700 flex items-center gap-1.5 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                <span id="oshaHazardLabel">Extreme Caution</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Readout Display -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mb-6">
+                        <div class="sm:col-span-7">
+                            <div class="flex items-baseline gap-2">
+                                <span id="resHeatIndexPrimary" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">108.4</span>
+                                <span id="resHeatIndexUnit" class="text-xl font-bold text-slate-500 dark:text-slate-400 font-mono">&deg;F</span>
+                            </div>
+                            <div class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                                <span>Equivalent: </span>
+                                <span id="resHeatIndexSecondary" class="font-bold text-slate-700 dark:text-slate-300">42.4 &deg;C</span>
+                                <span class="mx-1">&bull;</span>
+                                <span id="resHeatIndexKelvin" class="text-slate-600 dark:text-slate-400">315.55 K</span>
+                            </div>
+                            <div class="mt-2 text-xs font-semibold flex items-center gap-1.5" id="feelsLikeDifferential">
+                                <span class="text-slate-500">Thermal Surcharge:</span>
+                                <span id="resThermalDelta" class="text-brand-600 dark:text-brand-400 font-bold">+16.4&deg;F hotter than air temp</span>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-5 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1 flex items-center justify-between">
+                                <span>OSHA Hazard Diagnosis</span>
+                                <span id="oshaRiskTier" class="text-[10px] font-bold text-orange-600 dark:text-orange-400">STAGE 3: DANGER</span>
+                            </div>
+                            <p id="oshaHazardDescription" class="text-xs text-slate-700 dark:text-slate-300 leading-snug">Heat cramps and heat exhaustion likely with continued physical activity. Heat stroke possible with prolonged exposure. Enforce scheduled hydration and shaded rest periods.</p>
+                        </div>
+                    </div>
+
+                    <!-- Visual Gauge Thermometer Bar -->
+                    <div class="mb-6">
+                        <div class="flex justify-between text-[11px] font-bold mb-1.5">
+                            <span class="text-yellow-600 dark:text-yellow-400">Caution (80-90&deg;F)</span>
+                            <span class="text-amber-600 dark:text-amber-400">Ext Caution (91-103&deg;F)</span>
+                            <span class="text-red-600 dark:text-red-400">Danger (104-124&deg;F)</span>
+                            <span class="text-purple-600 dark:text-purple-400">Ext Danger (125&deg;F+)</span>
+                        </div>
+                        <div class="relative h-4 rounded-full bg-gradient-to-r from-yellow-400 via-amber-500 via-red-500 to-purple-700 shadow-inner">
+                            <div id="gaugePointer" class="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-white shadow-lg transition-all duration-300" style="left: 65%;"></div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono mt-1">
+                            <span>70&deg;F</span>
+                            <span>80&deg;F</span>
+                            <span>91&deg;F</span>
+                            <span>104&deg;F</span>
+                            <span>125&deg;F</span>
+                            <span>135&deg;F</span>
+                        </div>
+                    </div>
+
+                    <!-- 6 Key Physiological & Atmospheric Metrics Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                        
+                        <!-- Metric 1: Dew Point -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dew Point ($T_{dp}$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resDewPoint">78.5</span> <span class="text-xs font-normal text-slate-500" id="resDewPointUnit">&deg;F</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resDewPointAlt">25.8 &deg;C (Muggy)</div>
+                        </div>
+
+                        <!-- Metric 2: Wet Bulb Temperature -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Wet-Bulb Temp ($T_{wb}$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resWetBulb">82.3</span> <span class="text-xs font-normal text-slate-500" id="resWetBulbUnit">&deg;F</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resWetBulbAlt">27.9 &deg;C</div>
+                        </div>
+
+                        <!-- Metric 3: Evaporative Cooling Efficiency -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sweat Evap Potential</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resEvapEfficiency">41.2</span> <span class="text-xs font-normal text-slate-500">%</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resEvapEfficiencyLabel">Severely Impaired</div>
+                        </div>
+
+                        <!-- Metric 4: Actual Vapor Pressure -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Vapor Pressure ($e$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resVaporPress">33.1</span> <span class="text-xs font-normal text-slate-500">hPa</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resSatVaporPress">Sat $e_s$: 51.0 hPa</div>
+                        </div>
+
+                        <!-- Metric 5: Work-to-Rest Ratio Recommendation -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Work / Rest Cycle</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-brand-600 dark:text-brand-400 mt-0.5">
+                                <span id="resWorkRestCycle">30 / 30</span> <span class="text-xs font-normal text-slate-500">min/hr</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">In shade with air movement</div>
+                        </div>
+
+                        <!-- Metric 6: Hydration Recommendation -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Hydration Target</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resHydrationTarget">32</span> <span class="text-xs font-normal text-slate-500">oz / hr</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">1 cup (8 oz) every 15 min</div>
+                        </div>
+
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 font-semibold transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Data</span>
+                            </button>
+                            <button type="button" onclick="resetCalculatorDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold transition">
+                                Reset
+                            </button>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold hover:bg-brand-100 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Generate OSHA Field Report</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 2: Mid Banner Above Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Workspace Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Buttons -->
+                <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 no-print">
+                    <button type="button" onclick="switchTab('calculator')" id="tabBtn_calculator" class="tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Heat Index &amp; Matrix</span>
+                    </button>
+                    <button type="button" onclick="switchTab('osha')" id="tabBtn_osha" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        <span>OSHA Workplace Standards</span>
+                    </button>
+                    <button type="button" onclick="switchTab('emergency')" id="tabBtn_emergency" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span>Heat Stroke Emergency Guide</span>
+                    </button>
+                    <button type="button" onclick="switchTab('print')" id="tabBtn_print" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Field Report</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Heat Index & Matrix -->
+                <div id="tab-calculator" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart.js Curve Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Relative Humidity vs. Heat Index Curve</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Response of apparent temperature across relative humidity spectrum at current dry bulb temperature</p>
+                            </div>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                                Current Coordinate: <span id="chartCoordPoint">92&deg;F @ 65% RH &rarr; 108&deg;F</span>
+                            </span>
+                        </div>
+                        <div class="relative w-full h-[320px] sm:h-[380px]">
+                            <canvas id="heatIndexChart"></canvas>
+                        </div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between">
+                            <span>Bands highlight OSHA Caution (yellow), Extreme Caution (orange), Danger (red), and Extreme Danger (purple).</span>
+                            <button type="button" onclick="renderChart()" class="text-brand-600 dark:text-brand-400 hover:underline">Refresh Plot</button>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Rothfusz Equation Derivation -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Step-by-Step Mathematical Derivation</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Live numerical evaluation using Lans P. Rothfusz's 9-parameter multivariate regression equation with NOAA boundary adjustments.</p>
+                        
+                        <div class="space-y-4 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 overflow-x-auto">
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 1: Test Steadman's Preliminary Simple Equation ($T \ge 80^\circ\text{F}$ trigger):</span>
+                                <div id="mathStep1" class="text-sm">
+                                    $$\text{HI}_{\text{simple}} = 0.5 \times \left(92.0 + 61.0 + (92.0 - 68.0) \times 1.2 + 65.0 \times 0.094
+ight) = 93.95^{\circ}\text{F} \ge 80^{\circ}\text{F}$$
+                                </div>
+                                <span class="text-[11px] text-slate-400 block mt-1">Result exceeds 80&deg;F; the full 9-parameter Rothfusz multivariate regression is required.</span>
+                            </div>
+
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 2: Evaluate 9-Parameter Multivariate Polynomial ($T = 92.0^{\circ}\text{F}, R = 65\%$):</span>
+                                <div id="mathStep2" class="text-xs leading-relaxed">
+                                    $$\begin{aligned}
+                                    \text{HI}_{\text{base}} = &amp; -42.379 + 2.04901523(92) + 10.14333127(65) - 0.22475541(92)(65) \
+                                    &amp; - 0.00683783(92)^2 - 0.05481717(65)^2 + 0.00122874(92)^2(65) \
+                                    &amp; + 0.00085282(92)(65)^2 - 0.00000199(92)^2(65)^2 = 108.41^{\circ}\text{F}
+                                    \end{aligned}$$
+                                </div>
+                            </div>
+
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 3: Check Boundary Humidity Adjustments:</span>
+                                <div id="mathStep3" class="text-xs">
+                                    $$\text{Low RH condition } (R < 13\%): \text{Inactive} \quad | \quad \text{High RH condition } (R > 85\%): \text{Inactive}$$
+                                    $$\text{Total Boundary Adjustment } \Delta \text{HI}_{\text{adj}} = 0.00^{\circ}\text{F}$$
+                                </div>
+                            </div>
+
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Step 4: Incorporate Solar &amp; Workwear Adjustments for Final Apparent Temperature:</span>
+                                <div id="mathStep4" class="text-sm font-bold text-brand-600 dark:text-brand-400">
+                                    $$\text{HI}_{\text{final}} = \text{HI}_{\text{base}} + \Delta \text{HI}_{\text{adj}} + \Delta \text{Sun} + \text{CAF} = 108.41 + 0.00 + 0.00 + 0.00 = 108.4^{\circ}\text{F} \quad (42.4^{\circ}\text{C})$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2D Heat Index Matrix Color Heatmap -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Interactive 2D Heat Index Matrix Heatmap</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Official NOAA matrix color-coded by OSHA hazard level. Click any cell to test those atmospheric conditions in the calculator.</p>
+                            </div>
+                            <div class="flex items-center gap-2 text-[10px] font-bold">
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-300 dark:bg-yellow-500 inline-block"></span> Caution</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400 dark:bg-amber-500 inline-block"></span> Ext Caution</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-400 dark:bg-red-500 inline-block"></span> Danger</span>
+                                <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-purple-500 dark:bg-purple-600 inline-block text-white"></span> Ext Danger</span>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-center text-[11px] font-mono border-collapse" id="matrixHeatmapTable">
+                                <!-- Populated dynamically by JS -->
+                            </table>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2 text-right">Values calculated using official NOAA Rothfusz formulation without direct sunlight or clothing additions.</p>
+                    </div>
+
+                </div>
+
+                <!-- Tab 2: OSHA Workplace Heat Stress Standards -->
+                <div id="tab-osha" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">OSHA / NIOSH Workplace Heat Stress Evaluation</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Occupational Safety and Health Administration compliance rules for outdoor and indoor hot environments.</p>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">OSHA Technical Manual</span>
+                        </div>
+
+                        <!-- Interactive Work-to-Rest Ratio Generator -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">Customized Work-to-Rest Ratio Solver</h4>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 text-xs">
+                                <div>
+                                    <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Workload Physical Intensity</label>
+                                    <select id="workloadIntensity" onchange="updateOshaCalculations()" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                        <option value="light">Light (&lt; 200 W): Machine operation, driving, light inspection</option>
+                                        <option value="moderate" selected>Moderate (200-350 W): Carpentry, walking, persistent lifting</option>
+                                        <option value="heavy">Heavy (&gt; 350 W): Shoveling, roofing, concrete placement, carrying loads</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Worker Acclimatization Status</label>
+                                    <select id="workerAcclimatized" onchange="updateOshaCalculations()" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200">
+                                        <option value="acclimatized" selected>Acclimatized (Regular exposure for &gt; 7-14 days)</option>
+                                        <option value="unacclimatized">Unacclimatized (New hire or returning from &gt; 3 days off)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-center">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Work Period</span>
+                                    <div class="text-xl font-extrabold text-slate-900 dark:text-white font-mono mt-0.5" id="oshaWorkMin">30 min</div>
+                                    <span class="text-[10px] text-slate-500">per operating hour</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Mandatory Rest Period</span>
+                                    <div class="text-xl font-extrabold text-brand-600 dark:text-brand-400 font-mono mt-0.5" id="oshaRestMin">30 min</div>
+                                    <span class="text-[10px] text-slate-500">in shaded/air-conditioned area</span>
+                                </div>
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Hourly Hydration Minimum</span>
+                                    <div class="text-xl font-extrabold text-sky-600 dark:text-sky-400 font-mono mt-0.5" id="oshaWaterOz">32 oz (4 cups)</div>
+                                    <span class="text-[10px] text-slate-500">cool water + electrolytes</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- NIOSH 5-Day Acclimatization Schedule Table -->
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">NIOSH 5-Day Physiological Acclimatization Schedule</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Nearly 75% of occupational heat-related fatalities occur during the first week on the job. Full cardiovascular and eccrine sweat gland acclimatization takes 7 to 14 days of progressive exposure.</p>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left">
+                                    <thead>
+                                        <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 font-bold uppercase">
+                                            <th class="py-2 px-3">Work Day</th>
+                                            <th class="py-2 px-3">New Workers (0% Baseline)</th>
+                                            <th class="py-2 px-3">Returning Workers (Experienced)</th>
+                                            <th class="py-2 px-3">Key Physiological Adaptation</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-bold font-mono text-slate-800 dark:text-slate-200">Day 1</td>
+                                            <td class="py-2.5 px-3 font-semibold text-brand-600 dark:text-brand-400">20% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">50% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-500">Initiation of cutaneous vasodilation response.</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-bold font-mono text-slate-800 dark:text-slate-200">Day 2</td>
+                                            <td class="py-2.5 px-3 font-semibold text-brand-600 dark:text-brand-400">40% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">60% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-500">Blood plasma expansion begins; heart rate drops.</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-bold font-mono text-slate-800 dark:text-slate-200">Day 3</td>
+                                            <td class="py-2.5 px-3 font-semibold text-brand-600 dark:text-brand-400">60% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">80% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-500">Sweat production initiates at lower core temp.</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-bold font-mono text-slate-800 dark:text-slate-200">Day 4</td>
+                                            <td class="py-2.5 px-3 font-semibold text-brand-600 dark:text-brand-400">80% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">100% Normal Shift Duration</td>
+                                            <td class="py-2.5 px-3 text-slate-500">Sweat becomes more dilute (conserves sodium chloride).</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-bold font-mono text-slate-800 dark:text-slate-200">Day 5+</td>
+                                            <td class="py-2.5 px-3 font-semibold text-emerald-600 dark:text-emerald-400">100% Full Work Capacity</td>
+                                            <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400">100% Full Work Capacity</td>
+                                            <td class="py-2.5 px-3 text-slate-500">Full thermoregulatory stability achieved.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Engineering vs Administrative Safety Controls Checklist -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                                <h5 class="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                    <span>Engineering Controls</span>
+                                </h5>
+                                <ul class="space-y-1.5 text-slate-600 dark:text-slate-300">
+                                    <li>&bull; Erect canopy structures providing full shade blocking direct solar radiance.</li>
+                                    <li>&bull; Position portable misting fans and high-velocity evaporative blowers.</li>
+                                    <li>&bull; Provide air-conditioned mobile cooling trailers or break rooms ($< 76^{\circ}\text{F}$).</li>
+                                    <li>&bull; use mechanical lifting hoists to reduce physical metabolic workload.</li>
+                                </ul>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                                <h5 class="font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"/></svg>
+                                    <span>Administrative Controls</span>
+                                </h5>
+                                <ul class="space-y-1.5 text-slate-600 dark:text-slate-300">
+                                    <li>&bull; Reschedule heavy physical tasks to early morning hours (before 10:00 AM).</li>
+                                    <li>&bull; Enforce mandatory buddy monitoring system (check each other for confusion/slurred speech).</li>
+                                    <li>&bull; Mandate 1 cup of fluid every 15-20 minutes; do not wait until thirst manifests.</li>
+                                    <li>&bull; Maintain accessible emergency ice water bath and transport plan on site.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab 3: Heat Stroke Emergency Guide -->
+                <div id="tab-emergency" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Clinical Triage: Heat Exhaustion vs. Heat Stroke</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Emergency recognition guide derived from CDC NIOSH and American College of Emergency Physicians standards.</p>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 border border-red-300 dark:border-red-800 flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                                Emergency Protocol
+                            </span>
+                        </div>
+
+                        <!-- Side-by-Side Comparison Table -->
+                        <div class="overflow-x-auto mb-6">
+                            <table class="w-full text-xs text-left">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700">
+                                        <th class="py-2.5 px-3 text-slate-400 font-bold uppercase w-1/4">Clinical Feature</th>
+                                        <th class="py-2.5 px-3 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 font-bold uppercase w-3/8 rounded-t-lg">
+                                            Heat Exhaustion (Urgent)
+                                        </th>
+                                        <th class="py-2.5 px-3 bg-red-50 dark:bg-red-950/40 text-red-900 dark:text-red-200 font-bold uppercase w-3/8 rounded-t-lg">
+                                            Heat Stroke (Fatal Emergency!)
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Core Body Temperature</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300 font-mono">
+                                            $< 104^{\circ}\text{F} \ (< 40.0^{\circ}\text{C})$
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-600 dark:text-red-400 font-mono font-bold">
+                                            $\ge 104^{\circ}\text{F} \ (\ge 40.0^{\circ}\text{C})$ Spike!
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Central Nervous System (CNS)</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300">
+                                            Intact. Dizziness, mild headache, fatigue. Patient is coherent and oriented.
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-semibold">
+                                            Severely impaired! Confusion, slurred speech, delirium, seizures, loss of consciousness, coma.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Skin &amp; Sweating Status</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300">
+                                            Profuse sweating. Skin is cool, pale, clammy, and moist.
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300">
+                                            Hot and red. May be completely dry (classic heat stroke) or still sweating profusely (exertional heat stroke).
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Pulse &amp; Blood Pressure</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300">
+                                            Fast, weak, thready pulse. Orthostatic hypotension (fainting upon standing).
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-semibold">
+                                            Rapid, strong, bounding pulse. Severe circulatory strain.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Gastrointestinal</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-700 dark:text-slate-300">
+                                            Nausea, loss of appetite, occasional vomiting, muscle cramps.
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300">
+                                            Persistent severe vomiting, diarrhea, gastrointestinal bleeding.
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 font-bold text-slate-700 dark:text-slate-300">Immediate Action Required</td>
+                                        <td class="py-3 px-3 bg-amber-50/50 dark:bg-amber-950/20 text-slate-800 dark:text-slate-200 font-medium">
+                                            Move to shade or AC. Loosen clothing. Sip cool fluids. Apply cold packs to neck/armpits. If no improvement in 15 min &rarr; Seek medical evaluation.
+                                        </td>
+                                        <td class="py-3 px-3 bg-red-50/50 dark:bg-red-950/20 text-red-700 dark:text-red-300 font-bold">
+                                            CALL 911 IMMEDIATELY! Do NOT delay. Initiate rapid cold-water immersion bath on site until body temp drops below 102&deg;F.
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Rapid Cooling Hierarchy (Gold Standard) -->
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                                <span>Emergency Rapid Cooling Hierarchy for Heat Stroke</span>
+                            </h4>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-emerald-300 dark:border-emerald-800/80">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Rank 1: Gold Standard</div>
+                                    <h5 class="font-bold text-slate-900 dark:text-white mt-1">Cold-Water Immersion (CWI)</h5>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Submerge victim up to clavicles in tub filled with ice and water ($35-59^{\circ}\text{F}$). Provides fastest cooling rate: $0.15-0.20^{\circ}\text{C/min}$. 100% survival rate when applied within 30 min.</p>
+                                </div>
+                                <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-amber-300 dark:border-amber-800/80">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Rank 2: Field Alternative</div>
+                                    <h5 class="font-bold text-slate-900 dark:text-white mt-1">Tarp-Assisted Cooling (TACO)</h5>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Place victim in heavy vinyl tarp. Add 4-5 bags of ice and cold water. 4-6 individuals hold edges, oscillating tarp back and forth to circulate water over trunk.</p>
+                                </div>
+                                <div class="p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-300 dark:border-slate-700">
+                                    <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Rank 3: Secondary Method</div>
+                                    <h5 class="font-bold text-slate-900 dark:text-white mt-1">Evaporative Misting &amp; Ice Packs</h5>
+                                    <p class="text-slate-500 dark:text-slate-400 mt-1">Continuous misting with tepid water while fanning with high-velocity blower. Apply ice packs to major arterial sites: carotid arteries, axillae (armpits), and groin.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab 4: Print Compliance Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700" id="printReportContainer">
+                        
+                        <!-- Print Document Header -->
+                        <div class="flex items-start justify-between border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6">
+                            <div>
+                                <div class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono">OSHA FORM 300 / BIOMETEOROLOGICAL RECORD</div>
+                                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">Workplace Heat Stress Hazard Assessment</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Official meteorological evaluation generated by CalcWorld NOAA NWS Engine</p>
+                            </div>
+                            <div class="text-right text-xs font-mono text-slate-500 dark:text-slate-400">
+                                <div>Date: <span id="reportDate" class="font-bold text-slate-900 dark:text-white">--</span></div>
+                                <div>Time: <span id="reportTime" class="font-bold text-slate-900 dark:text-white">--</span></div>
+                                <div>Station Status: <span class="text-emerald-600 font-bold">CALIBRATED</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Atmospheric Environmental Audit Data -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 mb-6 font-mono text-xs">
+                            <div>
+                                <span class="text-slate-400 font-sans block text-[10px] uppercase font-bold">Dry-Bulb Air Temp</span>
+                                <span id="repAirTemp" class="text-base font-bold text-slate-900 dark:text-white">92.0 &deg;F</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-sans block text-[10px] uppercase font-bold">Relative Humidity</span>
+                                <span id="repRh" class="text-base font-bold text-slate-900 dark:text-white">65.0 %</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-sans block text-[10px] uppercase font-bold">Dew Point</span>
+                                <span id="repDewPoint" class="text-base font-bold text-slate-900 dark:text-white">78.5 &deg;F</span>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-sans block text-[10px] uppercase font-bold">Wet-Bulb Temp</span>
+                                <span id="repWetBulb" class="text-base font-bold text-slate-900 dark:text-white">82.3 &deg;F</span>
+                            </div>
+                        </div>
+
+                        <!-- Primary Safety Risk Findings -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl p-5 mb-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Effective Apparent Heat Index</span>
+                                <span id="repRiskBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300">STAGE 3: DANGER</span>
+                            </div>
+                            <div class="flex items-baseline gap-2 mb-2">
+                                <span id="repHIVal" class="text-4xl font-extrabold font-mono text-slate-900 dark:text-white">108.4</span>
+                                <span class="text-xl font-bold font-mono text-slate-500">&deg;F</span>
+                                <span class="text-sm font-mono text-slate-400">(<span id="repHICel">42.4</span> &deg;C)</span>
+                            </div>
+                            <p id="repRiskSummary" class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">Atmospheric moisture content severely inhibits cutaneous perspiration evaporation. Exertional heat illness probability is high under sustained physical exertion.</p>
+                        </div>
+
+                        <!-- Mandatory Compliance Directives -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs mb-6">
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                                <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 text-[11px]">1. Mandatory Work-to-Rest Schedule</h4>
+                                <ul class="space-y-1 text-slate-600 dark:text-slate-300 font-mono">
+                                    <li>Work Duration: <strong id="repWorkTime" class="text-slate-900 dark:text-white">30 minutes</strong></li>
+                                    <li>Rest Duration: <strong id="repRestTime" class="text-brand-600 dark:text-brand-400">30 minutes in shade</strong></li>
+                                    <li>Maximum Cycle: Continuous cycles per standard 8-hour shift</li>
+                                </ul>
+                            </div>
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
+                                <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2 text-[11px]">2. Mandatory Hydration Protocol</h4>
+                                <ul class="space-y-1 text-slate-600 dark:text-slate-300 font-mono">
+                                    <li>Intake Frequency: 1 cup (8 oz) every 15 minutes</li>
+                                    <li>Hourly Minimum: <strong id="repHydration" class="text-slate-900 dark:text-white">32 oz (1 quart)</strong></li>
+                                    <li>Electrolyte Supplementation: Mandatory for work &gt; 2 hrs</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <!-- Signature & Verification Sign-Off -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-6 mt-6 grid grid-cols-2 gap-8 text-xs font-mono">
+                            <div>
+                                <div class="border-b border-slate-400 dark:border-slate-600 pb-6 mb-1"></div>
+                                <div class="text-slate-500">Site Safety Officer / Supervisor Signature</div>
+                            </div>
+                            <div>
+                                <div class="border-b border-slate-400 dark:border-slate-600 pb-6 mb-1"></div>
+                                <div class="text-slate-500">Facility / Project Location Identifier</div>
+                            </div>
+                        </div>
+
+                        <!-- Print Action Button (Hidden during print) -->
+                        <div class="mt-8 text-center no-print">
+                            <button type="button" onclick="window.print()" class="px-6 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs shadow-md transition flex items-center gap-2 mx-auto">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Official Safety Compliance Report</span>
+                            </button>
+                            <p class="text-[10px] text-slate-400 mt-2">Outputs a clean single-page compliance audit formatted for legal and occupational records.</p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Content Banner -->
+        <div class="ad-slot no-print mt-12" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Technical & Biometeorology Guide -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700" id="guide-section">
+            
+<article class="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base space-y-8">
+
+    <header class="border-b border-slate-200 dark:border-slate-700 pb-6">
+        <div class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400 font-mono mb-1">Technical Treatise &amp; Reference Manual</div>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">The Biometeorology of Heat Stress: Evaporative Physics, Rothfusz Regression, and Occupational Standards</h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2">A comprehensive scientific guide to atmospheric vapor pressure, cutaneous thermodynamics, the Steadman model, Wet-Bulb Globe Temperature differences, and cellular thermoregulatory failure mechanisms.</p>
+    </header>
+
+    <!-- Section 1: Evaporative Cooling Physics & Latent Heat -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">1. The Thermodynamics of Cutaneous Heat Transfer</h3>
+        <p>
+            The human biological engine operates within an exceptionally narrow internal thermal equilibrium. Deep core body temperature ($T_{\text{core}}$) is tightly maintained near $37.0^{\circ}\text{C} \pm 0.5^{\circ}\text{C}$ ($98.6^{\circ}\text{F}$). When external environmental temperatures approach or exceed mean skin temperature ($T_{\text{skin}} \approx 35.0^{\circ}\text{C} \ / \ 95.0^{\circ}\text{F}$), the conventional dry heat exchange pathways—conduction, convection, and net infrared radiation—reverse direction. Instead of transferring heat away from the body, the surrounding hot atmosphere begins pumping thermal energy into human tissues.
+        </p>
+        <p>
+            Under these conditions, cutaneous perspiration serves as the human body's sole physical mechanism for shedding metabolic heat. This physiological defense depends entirely upon the <strong>latent heat of vaporization</strong> of water ($h_{fg}$ or $\lambda$). At standard human skin temperature, the phase change of liquid water into water vapor requires approximately:
+        </p>
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 font-mono text-center text-sm border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400">
+            $$h_{fg} \approx 2,420 \text{ to } 2,450 \text{ kJ/kg} \quad (\approx 580 \text{ kcal per liter of sweat})$$
+        </div>
+        <p>
+            For every milliliter of sweat successfully evaporated from the cutaneous surface, approximately $2.43 \text{ kJ}$ of heat energy is extracted directly from superficial capillaries. However, sweat that simply rolls off the skin or drips onto clothing yields zero cooling effect; it wastes vital fluid and electrolytes without removing latent heat.
+        </p>
+        <p>
+            The physical rate of sweat evaporation is governed by <strong>Dalton's Law of Partial Pressures</strong> and mass transfer boundary layer dynamics. Evaporation occurs only when there is a positive vapor pressure gradient between the liquid film on the skin ($e_{\text{skin}}$) and the ambient atmosphere ($e_{\text{air}}$):
+        </p>
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 font-mono text-center text-sm border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+            $$\dot{m}_{\text{evap}} = h_m \cdot A_{\text{wet}} \cdot (e_{\text{skin}} - e_{\text{air}})$$
+        </div>
+        <p>
+            Where $h_m$ is the convective mass transfer coefficient (which increases with ambient air velocity), $A_{\text{wet}}$ is wetted skin surface area, $e_{\text{skin}}$ is the saturation vapor pressure at skin temperature (approximately $56.2\text{ hPa}$ at $35^{\circ}\text{C}$), and $e_{\text{air}}$ is ambient actual vapor pressure. When relative humidity is high, ambient vapor pressure $e_{\text{air}}$ rises toward $56\text{ hPa}$. As this vapor pressure differential diminishes toward zero, evaporation decelerates and ultimately halts, inducing rapid biological heat accumulation.
+        </p>
+    </section>
+
+    <!-- Section 2: Steadman's 1979 Biometeorological Model -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">2. Robert G. Steadman's 1979 Human Energy Balance Model</h3>
+        <p>
+            The theoretical foundation of the modern Heat Index was established in 1979 by atmospheric physicist <strong>Robert G. Steadman</strong> in his seminal papers, <em>The Assessment of Sultriness. Part I: A Temperature-Humidity Index Based on Human Physiology and Clothing Science</em>. Steadman departed from older empirical heat indices (such as Thom's Discomfort Index) by constructing a rigorous, steady-state biometeorological heat budget based on human physiology:
+        </p>
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 font-mono text-center text-sm border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">
+            $$M - W = q_{\text{rad}} + q_{\text{conv}} + q_{\text{evap}} + q_{\text{resp}} + S$$
+        </div>
+        <p>
+            Where:
+        </p>
+        <ul class="list-disc pl-6 space-y-1 text-xs sm:text-sm">
+            <li>$M$ = Metabolic rate of an average human walking at $1.4\text{ m/s}$ ($3.1\text{ mph}$), generating $180\text{ W/m}^2$ of heat ($M \approx 324\text{ W}$ total).</li>
+            <li>$W$ = Mechanical work accomplished (assumed $0$ for level walking).</li>
+            <li>$q_{\text{rad}}$ = Net radiative heat transfer between body surface and environment.</li>
+            <li>$q_{\text{conv}}$ = Convective sensible heat exchange with air currents.</li>
+            <li>$q_{\text{evap}}$ = Latent heat loss via cutaneous perspiration ($E_{\text{skin}}$).</li>
+            <li>$q_{\text{resp}}$ = Respiratory heat exchange (sensible warming of inhaled air plus latent humidification).</li>
+            <li>$S$ = Body heat storage rate (which must equal zero for long-term physiological homeostasis).</li>
+        </ul>
+        <p>
+            Steadman defined the <strong>Heat Index</strong> as the equivalent dry-bulb temperature of a standard reference environment (specified as a moderate relative humidity of $20\%$ with vapor pressure of $1.6\text{ kPa}$, in the shade, with light wind velocity of $2.57\text{ m/s}$ or $5\text{ knots}$) that would produce the identical physiological sensation of heat stress and require the identical sweating rate to maintain thermal equilibrium.
+        </p>
+    </section>
+
+    <!-- Section 3: Rothfusz 9-Parameter Regression Formulation -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">3. Lans P. Rothfusz's 9-Parameter Multivariate Equation (NOAA NWS)</h3>
+        <p>
+            Because Steadman's original mathematical formulation required solving non-linear differential heat budget equations iteratively, it was computationally prohibitive for operational weather forecasting in the 1980s. In 1990, <strong>Lans P. Rothfusz</strong> of the National Weather Service Southern Region Headquarters performed a comprehensive multivariate regression analysis on Steadman's physiological tables, documented in <em>NOAA Technical Attachment SR 90-23</em>.
+        </p>
+        <p>
+            Rothfusz produced the celebrated 9-parameter polynomial equation, which models apparent temperature with remarkable fidelity when ambient temperature $T \ge 80^{\circ}\text{F}$ and relative humidity $R \ge 40\%$:
+        </p>
+        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 font-mono text-center text-xs sm:text-sm border border-slate-200 dark:border-slate-700 text-brand-600 dark:text-brand-400 overflow-x-auto">
+            $$\begin{aligned}
+            \text{HI} = &amp; -42.379 + 2.04901523\,T + 10.14333127\,R - 0.22475541\,T\,R \
+            &amp; - 6.83783 \times 10^{-3}\,T^2 - 5.481717 \times 10^{-2}\,R^2 + 1.22874 \times 10^{-3}\,T^2\,R \
+            &amp; + 8.5282 \times 10^{-4}\,T\,R^2 - 1.99 \times 10^{-6}\,T^2\,R^2
+            \end{aligned}$$
+        </div>
+        <p>
+            To handle physical boundary conditions where the multivariate curve diverges from human physiological data, the National Weather Service mandates a two-tier screening process and two empirical adjustments:
+        </p>
+        <div class="space-y-3 pl-4 border-l-2 border-brand-500 text-xs sm:text-sm">
+            <div>
+                <strong>A. Preliminary Screening (Steadman Simple Equation):</strong>
+                <p>Before executing the 9-parameter regression, the algorithm evaluates Steadman's linear approximation:</p>
+                <p class="font-mono text-slate-800 dark:text-slate-200">$$\text{HI}_{\text{simple}} = 0.5 \times \left(T + 61.0 + [(T - 68.0) \times 1.2] + [R \times 0.094]
+ight)$$</p>
+                <p>If $\text{HI}_{\text{simple}} < 80.0^{\circ}\text{F}$, heat index is reported directly as $\text{HI}_{\text{simple}}$, indicating negligible moisture-induced thermal strain.</p>
+            </div>
+            <div>
+                <strong>B. Low Relative Humidity Adjustment ($R < 13\%$ and $80^{\circ}\text{F} \le T \le 112^{\circ}\text{F}$):</strong>
+                <p>In hot, arid desert air masses, hyper-efficient evaporation provides slightly superior skin cooling than predicted by the unadjusted regression. The equation subtracts a correction factor:</p>
+                <p class="font-mono text-slate-800 dark:text-slate-200">$$\Delta \text{HI}_{\text{low}} = -\left(\frac{13 - R}{4}
+ight) \times \sqrt{\frac{17 - |T - 95|}{17}}$$</p>
+            </div>
+            <div>
+                <strong>C. High Relative Humidity Adjustment ($R > 85\%$ and $80^{\circ}\text{F} \le T \le 87^{\circ}\text{F}$):</strong>
+                <p>In warm, extremely saturated air (such as tropical rain squalls), sweating reaches saturation rapidly, requiring an upward correction:</p>
+                <p class="font-mono text-slate-800 dark:text-slate-200">$$\Delta \text{HI}_{\text{high}} = +\left(\frac{R - 85}{10}
+ight) \times \left(\frac{87 - T}{5}
+ight)$$</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Heat Index vs WBGT -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">4. Wet-Bulb Globe Temperature (WBGT) vs. Heat Index</h3>
+        <p>
+            In athletic medicine, military operations, and heavy industrial settings, safety managers frequently encounter both Heat Index and <strong>Wet-Bulb Globe Temperature (WBGT)</strong>. While both quantify heat stress, they serve distinct operational roles and rely on fundamentally different sensory inputs:
+        </p>
+        <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700">
+                <thead class="bg-slate-100 dark:bg-slate-900">
+                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 font-bold uppercase">
+                        <th class="py-2.5 px-3">Parameter</th>
+                        <th class="py-2.5 px-3">Heat Index (HI)</th>
+                        <th class="py-2.5 px-3">Wet-Bulb Globe Temp (WBGT)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Sensors Measured</td>
+                        <td class="py-2.5 px-3">Air Temperature ($T$) + Relative Humidity ($R$)</td>
+                        <td class="py-2.5 px-3">Natural Wet-Bulb ($T_{nw}$) + Black Globe ($T_g$) + Dry-Bulb ($T_d$)</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Radiant Solar Energy</td>
+                        <td class="py-2.5 px-3 text-red-600 dark:text-red-400 font-semibold">Assumes shade (+15&deg;F manual addition needed for sun)</td>
+                        <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">Directly measured by 6-inch copper black globe ($T_g$)</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Wind Velocity Impact</td>
+                        <td class="py-2.5 px-3">Fixed at 5 knots ($2.57\text{ m/s}$) baseline</td>
+                        <td class="py-2.5 px-3">Dynamically measured; accounts for forced convective cooling</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Standard Formula</td>
+                        <td class="py-2.5 px-3 font-mono">Rothfusz 9-parameter regression</td>
+                        <td class="py-2.5 px-3 font-mono">$$\text{WBGT} = 0.7\,T_{nw} + 0.2\,T_g + 0.1\,T_d$$</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2.5 px-3 font-bold text-slate-800 dark:text-slate-200">Primary Application</td>
+                        <td class="py-2.5 px-3">Public weather alerts, shaded outdoor work, general population</td>
+                        <td class="py-2.5 px-3">Military field exercises, NCAA athletics, marathon racing, OSHA foundry audits</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p>
+            Because WBGT accounts heavily for solar radiation ($T_g$) and natural air movement, its numerical threshold values are lower than Heat Index. For example, an outdoor WBGT of $90^{\circ}\text{F}$ represents extreme danger where all physical conditioning must cease, whereas a Heat Index of $90^{\circ}\text{F}$ is categorized merely as moderate caution.
+        </p>
+    </section>
+
+    <!-- Section 5: Thermoregulatory Failure Pathophysiology -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">5. Pathophysiology of Human Thermoregulatory Collapse</h3>
+        <p>
+            When environmental heat load exceeds physiological heat dissipation capacity, the body enters a state of progressive homeostatic decompensation. The cascade from thermal discomfort to fatal heat stroke follows well-documented physiological stages:
+        </p>
+        <div class="space-y-3 text-xs sm:text-sm">
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-1">A. Cutaneous Vasodilation and Cardiovascular Divergence</h4>
+                <p>
+                    The preoptic anterior hypothalamus stimulates massive sympathetic vasodilation of cutaneous arterioles, increasing skin blood flow from a baseline of $0.5\text{ L/min}$ up to $7.0-8.0\text{ L/min}$ (diverting up to $60\%$ of total cardiac output directly to the skin surface). This dramatic vascular redistribution causes blood pooling in peripheral vascular beds, reducing venous return and end-diastolic volume. To sustain arterial blood pressure, heart rate rises sharply ($140-180\text{ bpm}$), placing enormous workload on the myocardium.
+                </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-1">B. Hypovolemia and Splanchnic Ischemia</h4>
+                <p>
+                    Sweat rates in unacclimatized workers can exceed $1.5\text{ to } 2.5\text{ liters per hour}$. Without rapid, balanced fluid replacement, extracellular fluid volume contracts, inducing hypovolemic shock. To maintain perfusion to the brain and heart, the autonomic nervous system triggers compensatory vasoconstriction in splanchnic (gastrointestinal) and renal arteries. This prolonged intestinal hypoperfusion causes ischemic breakdown of the mucosal epithelial barrier, permitting gram-negative bacterial endotoxins (lipopolysaccharides) to leak into the systemic portal circulation.
+                </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-1">C. Cellular Cytotoxicity and Heat Shock Response</h4>
+                <p>
+                    When internal core temperature surpasses $40.0^{\circ}\text{C}$ ($104.0^{\circ}\text{F}$), hyperthermia exerts direct cytotoxic effects. Cell membrane fluidity destabilizes, mitochondrial oxidative phosphorylation decouples, and intracellular enzymes undergo thermal denaturation. While protective <strong>Heat Shock Proteins (HSP70, HSP90)</strong> attempt to chaperone refolding of damaged proteins, the overwhelming thermal burden exhausts cellular defenses, triggering widespread apoptosis (programmed cell death).
+                </p>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-slate-900 dark:text-white mb-1">D. Systemic Inflammatory Response Syndrome (SIRS) and Multiorgan Dysfunction</h4>
+                <p>
+                    The confluence of circulating endotoxins, cellular debris, and inflammatory cytokines (TNF-$\alpha$, IL-1$\beta$, IL-6) initiates a catastrophic <strong>Systemic Inflammatory Response Syndrome (SIRS)</strong>. This triggers microvascular thrombosis and <strong>Disseminated Intravascular Coagulation (DIC)</strong>. Complications accelerate into acute kidney injury (amplified by rhabdomyolysis and myoglobinuria from skeletal muscle necrosis), acute hepatic failure, cerebral edema, cerebellar Purkinje cell degradation, and fatal cardiac arrest.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 6: Authoritative Standards Citations -->
+    <section class="space-y-4">
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">6. Authoritative Standards and Regulatory Citations</h3>
+        <p>
+            The analytical formulations and safety operational directives incorporated in this engine adhere to standards published by leading meteorological and occupational safety organizations:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 text-xs sm:text-sm">
+            <li>
+                <strong>National Oceanic and Atmospheric Administration (NOAA) / National Weather Service (NWS):</strong> <em>Technical Attachment SR 90-23 (The Heat Index Equation)</em> by Lans P. Rothfusz (1990); and NWS Instruction 10-515, <em>WFO Severe Weather Watch and Warning Operations (Excessive Heat Warnings and Heat Advisories)</em>.
+            </li>
+            <li>
+                <strong>Occupational Safety and Health Administration (OSHA):</strong> <em>OSHA Technical Manual (OTM) Section III: Chapter 4 — Heat Stress</em>; and OSHA's National Emphasis Program (NEP) on Outdoor and Indoor Heat-Related Hazards (Directive CPL 03-00-024).
+            </li>
+            <li>
+                <strong>National Institute for Occupational Safety and Health (NIOSH / CDC):</strong> <em>Criteria for a Recommended Standard: Occupational Exposure to Heat and Hot Environments</em>, DHHS (NIOSH) Publication No. 2016-106.
+            </li>
+            <li>
+                <strong>American Conference of Governmental Industrial Hygienists (ACGIH):</strong> <em>Threshold Limit Values (TLVs) and Biological Exposure Indices (BEIs) for Heat Stress and Strain</em> (2024 Edition).
+            </li>
+            <li>
+                <strong>American College of Sports Medicine (ACSM):</strong> Position Stand: <em>Exertional Heat Illness during Training and Competition</em>, Medicine &amp; Science in Sports &amp; Exercise (2007).
+            </li>
+        </ul>
+    </section>
+
+</article>
+
+        </section>
+
+        <!-- Technical FAQ Accordion Section -->
+        <section class="mt-12">
+            <div class="mb-6 text-center max-w-2xl mx-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Frequently Asked Questions</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Peer-reviewed answers to meteorological, biometeorological, and workplace occupational safety questions.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-3" id="faqAccordion">
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(0)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the Heat Index and how does it differ from actual air temperature?</span>
+                        <svg id="faqIcon_0" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_0" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Heat Index (HI), sometimes called apparent temperature or feels like temperature, measures how hot weather feels to the human body when relative humidity is combined with ambient air temperature. While a standard thermometer records dry-bulb temperature independent of moisture, human skin cools primarily through sweat evaporation. When humidity is high, moisture cannot evaporate readily into saturated air, inhibiting the release of latent heat and making the perceived temperature much hotter than the physical air temperature.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What equation does the National Weather Service use to calculate Heat Index?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The National Weather Service (NWS) calculates Heat Index using Lans P. Rothfusz's 9-parameter multivariate regression equation, derived from Robert G. Steadman's 1979 human biometeorological model: HI = -42.379 + 2.04901523*T + 10.14333127*R - 0.22475541*T*R - 0.00683783*T^2 - 0.05481717*R^2 + 0.00122874*T^2*R + 0.00085282*T*R^2 - 0.00000199*T^2*R^2, where T is temperature in degrees Fahrenheit and R is relative humidity percentage. Specialized adjustments are applied for conditions with low relative humidity (under 13%) and high relative humidity (over 85%).
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why does direct sunlight increase the Heat Index value?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The standard NOAA Heat Index equation assumes shaded conditions with a light 5-knot (approx. 5.7 mph) breeze. Exposure to direct full sunshine adds substantial solar shortwave radiation to the body, increasing the effective Heat Index by up to 15 degrees Fahrenheit (8.3 degrees Celsius). When assessing outdoor occupational safety, supervisors must add this solar surcharge to ensure accurate risk staging.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What are the four OSHA heat stress hazard levels?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        OSHA categorizes heat risk into four stages: 1) Caution (80°F to 90°F / 26.7°C to 32.2°C): Fatigue possible with prolonged exposure. 2) Extreme Caution (91°F to 103°F / 32.8°C to 39.4°C): Heat stroke, cramps, and exhaustion possible; mandatory hydration and shade breaks advised. 3) Danger (104°F to 124°F / 40.0°C to 51.1°C): Heat cramps or exhaustion likely, heat stroke possible; aggressive work-rest cycles required. 4) Extreme Danger (125°F+ / 51.7°C+): Heat stroke imminent; stop non-essential outdoor heavy physical work.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between Heat Index and Wet-Bulb Globe Temperature (WBGT)?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Heat Index is calculated strictly from dry-bulb air temperature and relative humidity under shaded, calm conditions. Wet-Bulb Globe Temperature (WBGT) is a comprehensive environmental heat measure derived from three sensors: natural wet-bulb temperature (70%), black globe temperature measuring radiant solar energy (20%), and dry-bulb air temperature (10%), with natural wind speed integrated. WBGT is preferred by the military, athletic organizations, and industrial hygienists for evaluating direct outdoor solar heat load.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does evaporative cooling work through latent heat of vaporization?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Evaporative cooling relies on the latent heat of vaporization of water, which is approximately 2,420 to 2,450 kilojoules per kilogram (about 580 calories per gram) at human skin temperature. When liquid sweat vaporizes into atmospheric water vapor, it absorbs this large quantity of thermal energy directly from the cutaneous blood vessels, cooling the body. If ambient vapor pressure is high (high relative humidity), the vapor pressure gradient between skin and air diminishes, halting evaporation and causing sweat to roll off without cooling.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What are the key differences between heat exhaustion and heat stroke?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Heat exhaustion presents with heavy sweating, cold pale clammy skin, weakness, dizziness, and a core body temperature below 104°F (40°C), with normal mental alertness. Heat stroke is a catastrophic medical emergency marked by a core temperature exceeding 104°F (40°C), altered mental status (confusion, delirium, seizures, or coma), rapid bounding pulse, and hot skin (which can be dry or moist in exertional heat stroke). Heat stroke requires immediate 911 emergency services and rapid cold-water immersion cooling.
+                    </div>
+                </div>
+
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the recommended hydration rate for workers under high heat stress?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        OSHA and NIOSH recommend drinking approximately 1 cup (8 ounces or 240 milliliters) of cool water every 15 to 20 minutes during moderate work in hot conditions, totaling about 1 quart (32 ounces) per hour. Drinking smaller amounts frequently is far more effective than drinking large volumes infrequently. For prolonged work exceeding two hours, electrolyte-replacement beverages should be provided to replace sodium and potassium lost in perspiration and avoid exertional hyponatremia.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Biometeorology Sciences. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Occupational &amp; Metrological Notice:</strong> CalcWorld Heat Index and Biometeorological Engine computes apparent temperatures using equations established by the National Oceanic and Atmospheric Administration (NOAA) National Weather Service (NWS) and workplace hazard criteria defined by the Occupational Safety and Health Administration (OSHA Technical Manual Section III Chapter 4) and the National Institute for Occupational Safety and Health (NIOSH). This web application is intended for educational, occupational safety, and meteorological planning purposes. In critical industrial, athletic, or medical emergencies, consult certified occupational safety specialists and local emergency medical services (911).</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Shortcuts:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="switchTab('calculator')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Curve</button>
+        <button type="button" onclick="switchTab('osha')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">OSHA Standards</button>
+        <button type="button" onclick="switchTab('emergency')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Emergency</button>
+        <button type="button" onclick="copyFormattedSummary()" class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Data copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- 1. Global State & Configuration ---
+    let tempUnit = 'F'; // 'F' | 'C'
+    let currentTempF = 92.0;
+    let currentRh = 65.0;
+    let currentHeatIndexF = 108.4;
+    let currentPressureHpa = 1013.25;
+    let currentSunExposure = 'shade'; // 'shade' | 'sun'
+    let currentClothingCaf = 0.0;
+    
+    let chartInstance = null;
+
+    // --- 2. Unit Conversion Helpers ---
+    function fToC(f) { return (f - 32) * 5 / 9; }
+    function cToF(c) { return c * 9 / 5 + 32; }
+
+    // --- 3. NOAA NWS Rothfusz 9-Parameter Heat Index Engine ---
+    function computeNoaaHeatIndex(T_f, R_pct, regressionMode = 'noaa') {
+        // Steadman's preliminary simple equation
+        const hi_simple = 0.5 * (T_f + 61.0 + ((T_f - 68.0) * 1.2) + (R_pct * 0.094));
+        
+        // If simple heat index is less than 80F, heat stress is negligible
+        if (hi_simple < 80.0 && regressionMode === 'noaa') {
+            return {
+                hi: hi_simple,
+                isSimple: true,
+                baseHI: hi_simple,
+                adjustment: 0.0
+            };
+        }
+
+        // Full Rothfusz 9-parameter multivariate polynomial regression
+        const c1 = -42.379;
+        const c2 = 2.04901523;
+        const c3 = 10.14333127;
+        const c4 = -0.22475541;
+        const c5 = -0.00683783;
+        const c6 = -0.05481717;
+        const c7 = 0.00122874;
+        const c8 = 0.00085282;
+        const c9 = -0.00000199;
+
+        const T = T_f;
+        const R = R_pct;
+        const T2 = T * T;
+        const R2 = R * R;
+
+        let baseHI = c1 + (c2 * T) + (c3 * R) + (c4 * T * R) + (c5 * T2) + (c6 * R2) +
+                     (c7 * T2 * R) + (c8 * T * R2) + (c9 * T2 * R2);
+
+        let adjustment = 0.0;
+
+        if (regressionMode === 'noaa') {
+            // Low RH Adjustment: R < 13% and 80 <= T <= 112
+            if (R < 13.0 && T >= 80.0 && T <= 112.0) {
+                const term1 = (13.0 - R) / 4.0;
+                const term2 = Math.sqrt((17.0 - Math.abs(T - 95.0)) / 17.0);
+                adjustment = - (term1 * term2);
+            }
+            // High RH Adjustment: R > 85% and 80 <= T <= 87
+            else if (R > 85.0 && T >= 80.0 && T <= 87.0) {
+                const term1 = (R - 85.0) / 10.0;
+                const term2 = (87.0 - T) / 5.0;
+                adjustment = term1 * term2;
+            }
+        }
+
+        const finalHI = baseHI + adjustment;
+        return {
+            hi: finalHI,
+            isSimple: false,
+            baseHI: baseHI,
+            adjustment: adjustment
+        };
+    }
+
+    // --- 4. Auxiliary Psychrometrics (Dew Point, Wet Bulb, Vapor Pressure) ---
+    // Sonntag (1990) Saturation Vapor Pressure (hPa)
+    function calcSatVaporPressureHpa(Tc) {
+        return 6.112 * Math.exp((17.62 * Tc) / (243.12 + Tc));
+    }
+
+    // Dew Point via Magnus Inversion (C)
+    function calcDewPointC(Tc, rh) {
+        const es = calcSatVaporPressureHpa(Tc);
+        const e = es * (Math.max(0.1, Math.min(100.0, rh)) / 100.0);
+        const a = 17.62;
+        const b = 243.12;
+        const y = Math.log(e / 6.112);
+        return (b * y) / (a - y);
+    }
+
+    // Stull (2011) Wet-Bulb Temperature (C)
+    function calcWetBulbC(Tc, rh) {
+        const t = Tc;
+        const r = rh;
+        return t * Math.atan(0.151977 * Math.pow(r + 8.313659, 0.5)) +
+               Math.atan(t + r) -
+               Math.atan(r - 1.676331) +
+               0.00391838 * Math.pow(r, 1.5) * Math.atan(0.023101 * r) -
+               4.686035;
+    }
+
+    // --- 5. OSHA Heat Stress Hazard Staging ---
+    function evaluateOshaStage(heatIndexF) {
+        if (heatIndexF < 80.0) {
+            return {
+                stage: 0,
+                tierName: 'NORMAL / MINIMAL RISK',
+                badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+                dotClass: 'bg-emerald-500',
+                label: 'Normal / Low Risk',
+                gaugePos: Math.max(5, (heatIndexF / 80) * 16),
+                description: 'Conditions are generally comfortable. Basic heat safety education; encourage workers to drink water freely.',
+                workRestRatio: 'Continuous / Standard Breaks',
+                hydrationRate: '16-24 oz/hr'
+            };
+        } else if (heatIndexF <= 90.0) {
+            return {
+                stage: 1,
+                tierName: 'STAGE 1: CAUTION',
+                badgeClass: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-950 dark:text-yellow-300 border-yellow-300 dark:border-yellow-800',
+                dotClass: 'bg-yellow-500',
+                label: 'Caution',
+                gaugePos: 16 + ((heatIndexF - 80) / 10) * 20,
+                description: 'Fatigue possible with prolonged exposure and physical activity. Provide adequate cool drinking water, schedule routine breaks, and monitor unacclimatized workers.',
+                workRestRatio: '45-50 min work / 10-15 min rest',
+                hydrationRate: '24 oz/hr (3 cups)'
+            };
+        } else if (heatIndexF <= 103.0) {
+            return {
+                stage: 2,
+                tierName: 'STAGE 2: EXTREME CAUTION',
+                badgeClass: 'bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800',
+                dotClass: 'bg-amber-500',
+                label: 'Extreme Caution',
+                gaugePos: 36 + ((heatIndexF - 91) / 12) * 26,
+                description: 'Heat cramps, heat exhaustion, and heat stroke possible with prolonged exposure. Enforce scheduled hydration (1 cup every 15-20 min), provide shaded rest areas, and maintain buddy observation.',
+                workRestRatio: '40 min work / 20 min rest',
+                hydrationRate: '32 oz/hr (4 cups / 1 quart)'
+            };
+        } else if (heatIndexF <= 124.0) {
+            return {
+                stage: 3,
+                tierName: 'STAGE 3: DANGER',
+                badgeClass: 'bg-red-100 text-red-900 dark:bg-red-950 dark:text-red-300 border-red-300 dark:border-red-800',
+                dotClass: 'bg-red-500',
+                label: 'Danger',
+                gaugePos: 62 + ((heatIndexF - 104) / 20) * 24,
+                description: 'Heat cramps or heat exhaustion likely; heat stroke possible with continuing exertion. Implement strict work-to-rest rotations, active physiological monitoring, and emergency ice bath readiness.',
+                workRestRatio: '30 min work / 30 min rest',
+                hydrationRate: '32-40 oz/hr'
+            };
+        } else {
+            return {
+                stage: 4,
+                tierName: 'STAGE 4: EXTREME DANGER',
+                badgeClass: 'bg-purple-100 text-purple-900 dark:bg-purple-950 dark:text-purple-300 border-purple-300 dark:border-purple-800',
+                dotClass: 'bg-purple-600',
+                label: 'Extreme Danger',
+                gaugePos: Math.min(96, 86 + ((heatIndexF - 125) / 15) * 10),
+                description: 'Heat stroke is imminent! Cease all non-essential heavy physical work. If critical tasks must proceed, rotate workers in short 15-minute bursts with active cooling gear.',
+                workRestRatio: '15 min work / 45 min rest or STOP',
+                hydrationRate: '32-48 oz/hr'
+            };
+        }
+    }
+
+    // --- 6. Primary Calculation & UI Synchronization ---
+    function calculate() {
+        const rawTemp = parseFloat(document.getElementById('tempInput').value) || 0;
+        currentTempF = tempUnit === 'F' ? rawTemp : cToF(rawTemp);
+        currentRh = parseFloat(document.getElementById('rhInput').value) || 0;
+        currentRh = Math.max(0, Math.min(100, currentRh));
+
+        // Sun exposure selection
+        const sunRadios = document.getElementsByName('sunExposure');
+        for (let r of sunRadios) {
+            if (r.checked) currentSunExposure = r.value;
+        }
+        const sunSurcharge = currentSunExposure === 'sun' ? 15.0 : 0.0;
+
+        // Clothing adjustment
+        currentClothingCaf = parseFloat(document.getElementById('clothingFactor').value) || 0;
+
+        // Regression mode
+        const regMode = document.getElementById('regressionMode').value;
+
+        // Execute NOAA Calculation
+        const noaaRes = computeNoaaHeatIndex(currentTempF, currentRh, regMode);
+        
+        // Effective Heat Index including Sun & Clothing
+        currentHeatIndexF = noaaRes.hi + sunSurcharge + currentClothingCaf;
+        const heatIndexC = fToC(currentHeatIndexF);
+        const heatIndexK = heatIndexC + 273.15;
+
+        // Psychrometric Auxiliaries
+        const tempC = fToC(currentTempF);
+        const dewPointC = calcDewPointC(tempC, currentRh);
+        const dewPointF = cToF(dewPointC);
+        const wetBulbC = calcWetBulbC(tempC, currentRh);
+        const wetBulbF = cToF(wetBulbC);
+
+        const es = calcSatVaporPressureHpa(tempC);
+        const e = es * (currentRh / 100.0);
+
+        // Evaporative cooling efficiency relative to skin saturation at 35C (56.2 hPa)
+        const skinSatVaporPress = 56.2;
+        const evapEff = Math.max(0, Math.min(100, ((skinSatVaporPress - e) / skinSatVaporPress) * 100));
+
+        // Evaluate OSHA Hazard
+        const oshaData = evaluateOshaStage(currentHeatIndexF);
+
+        // --- Render UI Displays ---
+
+        // Main Readouts
+        document.getElementById('resHeatIndexPrimary').textContent = (tempUnit === 'F' ? currentHeatIndexF : heatIndexC).toFixed(1);
+        document.getElementById('resHeatIndexUnit').innerHTML = tempUnit === 'F' ? '&deg;F' : '&deg;C';
+        document.getElementById('resHeatIndexSecondary').innerHTML = (tempUnit === 'F' ? heatIndexC.toFixed(1) + ' &deg;C' : currentHeatIndexF.toFixed(1) + ' &deg;F');
+        document.getElementById('resHeatIndexKelvin').textContent = heatIndexK.toFixed(2) + ' K';
+
+        // Thermal surcharge
+        const thermalDelta = currentHeatIndexF - currentTempF;
+        const sign = thermalDelta >= 0 ? '+' : '';
+        document.getElementById('resThermalDelta').textContent = `${sign}${thermalDelta.toFixed(1)}°F ${thermalDelta >= 0 ? 'surcharge over air temp' : 'below air temp'}`;
+
+        // Sun & Clothing Badges
+        document.getElementById('sunActiveBadge').classList.toggle('hidden', currentSunExposure !== 'sun');
+        document.getElementById('sunSurchargeBadge').textContent = currentSunExposure === 'sun' ? '+15°F Direct Sun' : 'Shade Base';
+        document.getElementById('clothingAdjustmentBadge').textContent = `+${currentClothingCaf.toFixed(1)}°F`;
+
+        // OSHA Badge & Alert
+        const badge = document.getElementById('oshaHazardBadge');
+        badge.className = `text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-sm ${oshaData.badgeClass}`;
+        badge.innerHTML = `<span class="w-2 h-2 rounded-full ${oshaData.dotClass} animate-pulse"></span><span>${oshaData.label}</span>`;
+        document.getElementById('oshaRiskTier').textContent = oshaData.tierName;
+        document.getElementById('oshaHazardDescription').textContent = oshaData.description;
+
+        // Gauge Pointer
+        document.getElementById('gaugePointer').style.left = `${oshaData.gaugePos}%`;
+
+        // 6 Metrics
+        document.getElementById('resDewPoint').textContent = (tempUnit === 'F' ? dewPointF : dewPointC).toFixed(1);
+        document.getElementById('resDewPointUnit').innerHTML = tempUnit === 'F' ? '&deg;F' : '&deg;C';
+        document.getElementById('resDewPointAlt').textContent = `${(tempUnit === 'F' ? dewPointC.toFixed(1) + ' °C' : dewPointF.toFixed(1) + ' °F')} (${dewPointF >= 70 ? 'Muggy' : dewPointF >= 60 ? 'Humid' : 'Comfortable'})`;
+
+        document.getElementById('resWetBulb').textContent = (tempUnit === 'F' ? wetBulbF : wetBulbC).toFixed(1);
+        document.getElementById('resWetBulbUnit').innerHTML = tempUnit === 'F' ? '&deg;F' : '&deg;C';
+        document.getElementById('resWetBulbAlt').textContent = `${(tempUnit === 'F' ? wetBulbC.toFixed(1) + ' °C' : wetBulbF.toFixed(1) + ' °F')}`;
+
+        document.getElementById('resEvapEfficiency').textContent = evapEff.toFixed(1);
+        document.getElementById('resEvapEfficiencyLabel').textContent = evapEff < 35 ? 'Severely Impaired' : evapEff < 60 ? 'Moderately Impaired' : 'Optimal Evaporation';
+
+        document.getElementById('resVaporPress').textContent = e.toFixed(1);
+        document.getElementById('resSatVaporPress').textContent = `Sat es: ${es.toFixed(1)} hPa`;
+
+        document.getElementById('resWorkRestCycle').textContent = oshaData.workRestRatio.split(' ')[0] || '45/15';
+        document.getElementById('resHydrationTarget').textContent = oshaData.hydrationRate.split(' ')[0] || '32';
+
+        // Update MathJax Step-by-Step Breakdown
+        updateMathJaxDerivation(currentTempF, currentRh, noaaRes, sunSurcharge, currentClothingCaf, currentHeatIndexF);
+
+        // Update OSHA Standards Tab solver
+        updateOshaCalculations();
+
+        // Update Print Report tab
+        updatePrintReport(currentTempF, currentRh, dewPointF, wetBulbF, currentHeatIndexF, heatIndexC, oshaData);
+
+        // Update Chart
+        renderChart();
+
+        // Highlight Matrix Cell
+        highlightMatrixCoordinate(currentTempF, currentRh);
+    }
+
+    // --- 7. MathJax Formula Derivation Updater ---
+    function updateMathJaxDerivation(T, R, res, sunAdj, caf, finalHI) {
+        const step1El = document.getElementById('mathStep1');
+        const step2El = document.getElementById('mathStep2');
+        const step3El = document.getElementById('mathStep3');
+        const step4El = document.getElementById('mathStep4');
+
+        const simpleHI = 0.5 * (T + 61.0 + ((T - 68.0) * 1.2) + (R * 0.094));
+        step1El.innerHTML = `$$\text{HI}_{\text{simple}} = 0.5 \times \left(${T.toFixed(1)} + 61.0 + (${T.toFixed(1)} - 68.0) \times 1.2 + ${R.toFixed(1)} \times 0.094\right) = ${simpleHI.toFixed(2)}^{\circ}\text{F} ${simpleHI >= 80 ? '\ge 80^{\circ}\text{F}' : '< 80^{\circ}\text{F}'}$$`;
+
+        step2El.innerHTML = `$$\begin{aligned}
+        \text{HI}_{\text{base}} = & -42.379 + 2.04901523(${T.toFixed(1)}) + 10.14333127(${R.toFixed(0)}) - 0.22475541(${T.toFixed(1)})(${R.toFixed(0)}) \\
+        & - 0.00683783(${T.toFixed(1)})^2 - 0.05481717(${R.toFixed(0)})^2 + 0.00122874(${T.toFixed(1)})^2(${R.toFixed(0)}) \\
+        & + 0.00085282(${T.toFixed(1)})(${R.toFixed(0)})^2 - 0.00000199(${T.toFixed(1)})^2(${R.toFixed(0)})^2 = ${res.baseHI.toFixed(2)}^{\circ}\text{F}
+        \end{aligned}$$`;
+
+        const lowCondition = (R < 13 && T >= 80 && T <= 112);
+        const highCondition = (R > 85 && T >= 80 && T <= 87);
+        step3El.innerHTML = `$$\text{Low RH condition } (R < 13\%): ${lowCondition ? '\mathbf{Active}' : '\text{Inactive}'} \quad | \quad \text{High RH condition } (R > 85\%): ${highCondition ? '\mathbf{Active}' : '\text{Inactive}'}$$
+        $$\text{Total Boundary Adjustment } \Delta \text{HI}_{\text{adj}} = ${res.adjustment >= 0 ? '+' : ''}${res.adjustment.toFixed(2)}^{\circ}\text{F}$$`;
+
+        const finalC = fToC(finalHI);
+        step4El.innerHTML = `$$\text{HI}_{\text{effective}} = ${res.baseHI.toFixed(2)} + (${res.adjustment.toFixed(2)}) + ${sunAdj.toFixed(1)}\text{ (Sun)} + ${caf.toFixed(1)}\text{ (CAF)} = ${finalHI.toFixed(1)}^{\circ}\text{F} \quad (${finalC.toFixed(1)}^{\circ}\text{C})$$`;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([step1El, step2El, step3El, step4El]).catch(() => {});
+        }
+    }
+
+    // --- 8. OSHA Tab Calculations ---
+    function updateOshaCalculations() {
+        const intensity = document.getElementById('workloadIntensity').value;
+        const acclim = document.getElementById('workerAcclimatized').value === 'acclimatized';
+        const hi = currentHeatIndexF;
+
+        let workMin = 45;
+        let restMin = 15;
+        let waterOz = 32;
+
+        if (hi < 91.0) {
+            if (intensity === 'light') { workMin = 60; restMin = 0; waterOz = 24; }
+            else if (intensity === 'moderate') { workMin = 50; restMin = 10; waterOz = 24; }
+            else { workMin = 45; restMin = 15; waterOz = 32; }
+        } else if (hi <= 103.0) {
+            if (intensity === 'light') { workMin = 50; restMin = 10; waterOz = 32; }
+            else if (intensity === 'moderate') { workMin = 40; restMin = 20; waterOz = 32; }
+            else { workMin = 30; restMin = 30; waterOz = 40; }
+        } else if (hi <= 115.0) {
+            if (intensity === 'light') { workMin = 40; restMin = 20; waterOz = 32; }
+            else if (intensity === 'moderate') { workMin = 30; restMin = 30; waterOz = 40; }
+            else { workMin = 20; restMin = 40; waterOz = 48; }
+        } else if (hi <= 124.0) {
+            if (intensity === 'light') { workMin = 30; restMin = 30; waterOz = 40; }
+            else if (intensity === 'moderate') { workMin = 20; restMin = 40; waterOz = 48; }
+            else { workMin = 15; restMin = 45; waterOz = 48; }
+        } else {
+            // Extreme Danger
+            if (intensity === 'light') { workMin = 20; restMin = 40; waterOz = 48; }
+            else { workMin = 10; restMin = 50; waterOz = 48; }
+        }
+
+        // Unacclimatized penalty
+        if (!acclim && workMin > 15) {
+            workMin = Math.max(15, workMin - 10);
+            restMin = 60 - workMin;
+        }
+
+        document.getElementById('oshaWorkMin').textContent = workMin === 60 ? 'Normal Continuous' : `${workMin} min`;
+        document.getElementById('oshaRestMin').textContent = restMin === 0 ? 'Standard Scheduled' : `${restMin} min`;
+        document.getElementById('oshaWaterOz').textContent = `${waterOz} oz (${Math.round(waterOz/8)} cups)`;
+    }
+
+    // --- 9. Print Report Tab Synchronization ---
+    function updatePrintReport(Tf, R, dpF, wbF, hiF, hiC, oshaData) {
+        const now = new Date();
+        document.getElementById('reportDate').textContent = now.toLocaleDateString();
+        document.getElementById('reportTime').textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+
+        document.getElementById('repAirTemp').textContent = `${Tf.toFixed(1)} °F (${fToC(Tf).toFixed(1)} °C)`;
+        document.getElementById('repRh').textContent = `${R.toFixed(1)} %`;
+        document.getElementById('repDewPoint').textContent = `${dpF.toFixed(1)} °F (${fToC(dpF).toFixed(1)} °C)`;
+        document.getElementById('repWetBulb').textContent = `${wbF.toFixed(1)} °F (${fToC(wbF).toFixed(1)} °C)`;
+
+        document.getElementById('repHIVal').textContent = hiF.toFixed(1);
+        document.getElementById('repHICel').textContent = hiC.toFixed(1);
+        document.getElementById('repRiskBadge').textContent = oshaData.tierName;
+        document.getElementById('repRiskBadge').className = `text-xs font-bold px-3 py-1 rounded-full ${oshaData.badgeClass}`;
+        document.getElementById('repRiskSummary').textContent = oshaData.description;
+
+        const workTime = document.getElementById('oshaWorkMin').textContent;
+        const restTime = document.getElementById('oshaRestMin').textContent;
+        document.getElementById('repWorkTime').textContent = workTime;
+        document.getElementById('repRestTime').textContent = `${restTime} in shade/AC`;
+        document.getElementById('repHydration').textContent = document.getElementById('oshaWaterOz').textContent;
+    }
+
+    // --- 10. Chart.js Curve Visualization ---
+    function renderChart() {
+        const ctx = document.getElementById('heatIndexChart').getContext('2d');
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        // Generate data points across RH 10% to 100% at current air temperature
+        const rhLabels = [];
+        const hiPoints = [];
+        const hiMinus10 = [];
+        const hiPlus10 = [];
+
+        for (let r = 10; r <= 100; r += 5) {
+            rhLabels.push(`${r}%`);
+            hiPoints.push(computeNoaaHeatIndex(currentTempF, r).hi);
+            hiMinus10.push(computeNoaaHeatIndex(currentTempF - 10, r).hi);
+            hiPlus10.push(computeNoaaHeatIndex(currentTempF + 10, r).hi);
+        }
+
+        document.getElementById('chartCoordPoint').textContent = `${currentTempF.toFixed(1)}°F @ ${currentRh.toFixed(0)}% RH → ${currentHeatIndexF.toFixed(1)}°F`;
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: rhLabels,
+                datasets: [
+                    {
+                        label: `Current Air Temp (${currentTempF.toFixed(0)}°F)`,
+                        data: hiPoints,
+                        borderColor: '#ea580c',
+                        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.3,
+                        pointRadius: 2,
+                        pointHoverRadius: 6,
+                        fill: true
+                    },
+                    {
+                        label: `Cooler (${(currentTempF - 10).toFixed(0)}°F)`,
+                        data: hiMinus10,
+                        borderColor: '#0284c7',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        tension: 0.3,
+                        pointRadius: 0
+                    },
+                    {
+                        label: `Warmer (${(currentTempF + 10).toFixed(0)}°F)`,
+                        data: hiPlus10,
+                        borderColor: '#dc2626',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        tension: 0.3,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 11, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${context.parsed.y.toFixed(1)}°F`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Relative Humidity (%)',
+                            color: textColor,
+                            font: { family: 'Inter', size: 11, weight: 'bold' }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Heat Index (°F)',
+                            color: textColor,
+                            font: { family: 'Inter', size: 11, weight: 'bold' }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 11. 2D Heat Index Matrix Color Heatmap Generator ---
+    function buildHeatmapMatrix() {
+        const table = document.getElementById('matrixHeatmapTable');
+        const temps = [80, 84, 88, 92, 96, 100, 104, 108, 112];
+        const rhs = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+
+        let html = '<thead><tr class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 text-slate-500 font-bold"><th class="p-2 border-r border-slate-200 dark:border-slate-700">T \ RH</th>';
+        for (let r of rhs) {
+            html += `<th class="p-2">${r}%</th>`;
+        }
+        html += '</tr></thead><tbody>';
+
+        for (let t of temps) {
+            html += `<tr class="border-b border-slate-100 dark:border-slate-800"><td class="p-2 font-bold bg-slate-50 dark:bg-slate-900/80 border-r border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">${t}&deg;F</td>`;
+            for (let r of rhs) {
+                const hi = computeNoaaHeatIndex(t, r).hi;
+                const roundedHI = Math.round(hi);
+                let colorClass = 'bg-yellow-200 dark:bg-yellow-600/60 text-slate-900 dark:text-white'; // Caution
+                if (roundedHI >= 125) {
+                    colorClass = 'bg-purple-400 dark:bg-purple-800 text-white'; // Ext Danger
+                } else if (roundedHI >= 104) {
+                    colorClass = 'bg-red-300 dark:bg-red-700/80 text-slate-900 dark:text-white'; // Danger
+                } else if (roundedHI >= 91) {
+                    colorClass = 'bg-amber-300 dark:bg-amber-600/70 text-slate-900 dark:text-white'; // Ext Caution
+                }
+
+                html += `<td class="p-2 heat-cell ${colorClass}" data-temp="${t}" data-rh="${r}" onclick="setAtmosphericPoint(${t}, ${r})">${roundedHI}</td>`;
+            }
+            html += '</tr>';
+        }
+        html += '</tbody>';
+        table.innerHTML = html;
+    }
+
+    function highlightMatrixCoordinate(tF, rh) {
+        const cells = document.querySelectorAll('.heat-cell');
+        let closestCell = null;
+        let minDiff = 9999;
+
+        cells.forEach(c => {
+            c.classList.remove('selected-cell');
+            const ct = parseFloat(c.getAttribute('data-temp'));
+            const cr = parseFloat(c.getAttribute('data-rh'));
+            const diff = Math.abs(ct - tF) + Math.abs(cr - rh);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestCell = c;
+            }
+        });
+
+        if (closestCell && minDiff < 15) {
+            closestCell.classList.add('selected-cell');
+        }
+    }
+
+    function setAtmosphericPoint(tempF, rhVal) {
+        if (tempUnit === 'F') {
+            document.getElementById('tempInput').value = tempF.toFixed(1);
+            document.getElementById('tempSlider').value = tempF;
+        } else {
+            const tc = fToC(tempF);
+            document.getElementById('tempInput').value = tc.toFixed(1);
+            document.getElementById('tempSlider').value = tc;
+        }
+        document.getElementById('rhInput').value = rhVal;
+        document.getElementById('rhSlider').value = rhVal;
+        document.getElementById('rhBadge').textContent = rhVal + '%';
+        calculate();
+        showToast(`Set atmospheric point: ${tempF}°F @ ${rhVal}% RH`);
+    }
+
+    // --- 12. Input Event Handlers & Sliders ---
+    function handleTempNumberInput() {
+        const val = parseFloat(document.getElementById('tempInput').value) || 0;
+        document.getElementById('tempSlider').value = val;
+        calculate();
+    }
+
+    function handleTempSliderInput() {
+        const val = parseFloat(document.getElementById('tempSlider').value);
+        document.getElementById('tempInput').value = val.toFixed(1);
+        calculate();
+    }
+
+    function handleRhNumberInput() {
+        const val = parseFloat(document.getElementById('rhInput').value) || 0;
+        document.getElementById('rhSlider').value = val;
+        document.getElementById('rhBadge').textContent = Math.round(val) + '%';
+        calculate();
+    }
+
+    function handleRhSliderInput() {
+        const val = parseFloat(document.getElementById('rhSlider').value);
+        document.getElementById('rhInput').value = val;
+        document.getElementById('rhBadge').textContent = val + '%';
+        calculate();
+    }
+
+    function handleTempUnitChange() {
+        const newUnit = document.getElementById('tempUnit').value;
+        const currentVal = parseFloat(document.getElementById('tempInput').value) || 0;
+
+        if (newUnit === 'C' && tempUnit === 'F') {
+            const valC = fToC(currentVal);
+            document.getElementById('tempInput').value = valC.toFixed(1);
+            document.getElementById('tempSlider').min = 20;
+            document.getElementById('tempSlider').max = 52;
+            document.getElementById('tempSlider').value = valC;
+            document.getElementById('tempSliderMin').innerHTML = '20&deg;C';
+            document.getElementById('tempSliderMid').innerHTML = '35&deg;C';
+            document.getElementById('tempSliderMax').innerHTML = '52&deg;C';
+            document.getElementById('tempUnitSuffix').innerHTML = '&deg;C';
+        } else if (newUnit === 'F' && tempUnit === 'C') {
+            const valF = cToF(currentVal);
+            document.getElementById('tempInput').value = valF.toFixed(1);
+            document.getElementById('tempSlider').min = 70;
+            document.getElementById('tempSlider').max = 125;
+            document.getElementById('tempSlider').value = valF;
+            document.getElementById('tempSliderMin').innerHTML = '70&deg;F';
+            document.getElementById('tempSliderMid').innerHTML = '95&deg;F';
+            document.getElementById('tempSliderMax').innerHTML = '125&deg;F';
+            document.getElementById('tempUnitSuffix').innerHTML = '&deg;F';
+        }
+        tempUnit = newUnit;
+        calculate();
+    }
+
+    function applyPreset(tempF, rh, sun, caf) {
+        if (tempUnit === 'F') {
+            document.getElementById('tempInput').value = tempF.toFixed(1);
+            document.getElementById('tempSlider').value = tempF;
+        } else {
+            const valC = fToC(tempF);
+            document.getElementById('tempInput').value = valC.toFixed(1);
+            document.getElementById('tempSlider').value = valC;
+        }
+        document.getElementById('rhInput').value = rh;
+        document.getElementById('rhSlider').value = rh;
+        document.getElementById('rhBadge').textContent = rh + '%';
+
+        const sunRadios = document.getElementsByName('sunExposure');
+        sunRadios[0].checked = !sun;
+        sunRadios[1].checked = sun;
+
+        document.getElementById('clothingFactor').value = caf.toString();
+
+        calculate();
+        showToast('Preset loaded successfully!');
+    }
+
+    function resetCalculatorDefaults() {
+        applyPreset(92, 65, false, 0);
+        showToast('Calculator reset to default baseline.');
+    }
+
+    function toggleAdvancedSettings() {
+        const content = document.getElementById('advSettingsContent');
+        const chevron = document.getElementById('advSettingsChevron');
+        content.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+
+    // --- 13. Tab Navigation System ---
+    function switchTab(tabId) {
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(p => p.classList.remove('active'));
+
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        if (targetPanel) {
+            targetPanel.classList.add('active');
+        }
+
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(btn => {
+            btn.classList.remove('active', 'bg-brand-600', 'text-white');
+            btn.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        });
+
+        const activeBtn = document.getElementById(`tabBtn_${tabId}`);
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+            activeBtn.classList.add('active', 'bg-brand-600', 'text-white');
+        }
+
+        if (tabId === 'calculator' && chartInstance) {
+            setTimeout(() => { chartInstance.resize(); }, 50);
+        }
+    }
+
+    // --- 14. Theme Toggle ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        renderChart();
+    }
+
+    // --- 15. Clipboard Copy & Toast Feedback ---
+    function copyFormattedSummary() {
+        const summary = `CalcWorld Heat Index & OSHA Safety Report
+-----------------------------------------
+Air Temperature: ${currentTempF.toFixed(1)}°F (${fToC(currentTempF).toFixed(1)}°C)
+Relative Humidity: ${currentRh.toFixed(1)}%
+Direct Sun Exposure: ${currentSunExposure === 'sun' ? 'Yes (+15°F Solar Radiant Load)' : 'In Shade (+0°F)'}
+Clothing Factor: +${currentClothingCaf.toFixed(1)}°F
+
+Calculated Heat Index: ${currentHeatIndexF.toFixed(1)}°F (${fToC(currentHeatIndexF).toFixed(1)}°C)
+OSHA Hazard Level: ${document.getElementById('oshaRiskTier').textContent}
+Recommended Work-to-Rest: ${document.getElementById('oshaWorkMin').textContent} work / ${document.getElementById('oshaRestMin').textContent} rest
+Hydration Requirement: ${document.getElementById('oshaWaterOz').textContent}
+
+Computed via NOAA NWS Rothfusz 9-Parameter Engine
+Reference: https://calcworld.net/other/heat-index-calculator`;
+
+        navigator.clipboard.writeText(summary).then(() => {
+            showToast('Heat Index data copied to clipboard!');
+        }).catch(() => {
+            showToast('Unable to copy to clipboard.');
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMessage').textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3200);
+    }
+
+    // --- 16. FAQ Accordion Toggles ---
+    function toggleFaq(index) {
+        const ans = document.getElementById(`faqAns_${index}`);
+        const icon = document.getElementById(`faqIcon_${index}`);
+        if (!ans) return;
+        const isHidden = ans.classList.contains('hidden');
+        ans.classList.toggle('hidden', !isHidden);
+        if (icon) {
+            icon.classList.toggle('rotate-180', isHidden);
+        }
+    }
+
+    // --- 17. Lead Capture Handler ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        const btn = document.getElementById('leadSubmitBtn');
+        btn.textContent = 'Generating PDF Package...';
+        btn.disabled = true;
+
+        setTimeout(() => {
+            btn.textContent = 'Compliance Guide Sent!';
+            showToast(`OSHA Heat Compliance PDF dispatched to ${email}`);
+            setTimeout(() => {
+                btn.textContent = 'Download Reference PDF';
+                btn.disabled = false;
+                document.getElementById('leadEmailInput').value = '';
+            }, 4000);
+        }, 1200);
+    }
+
+    // --- 18. Initialization ---
+    window.addEventListener('DOMContentLoaded', () => {
+        buildHeatmapMatrix();
+        calculate();
+
+        // AdBlock Detection simulation check
+        setTimeout(() => {
+            const ad1 = document.getElementById('ad-slot-1');
+            if (!ad1 || ad1.offsetHeight === 0 || window.getComputedStyle(ad1).display === 'none') {
+                document.getElementById('adblockRecovery').classList.remove('hidden');
+            }
+        }, 1500);
+    });
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

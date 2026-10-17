@@ -1,0 +1,2124 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Card Payoff Calculator | APR, Minimum Payment Trap & Savings</title>
+    <meta name="description" content="Calculate your credit card payoff timeline, compare minimum payments versus accelerated payoff, and see exact interest savings with debt avalanche presets.">
+    
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: {
+                            light: '#F8FAFC',
+                            dark: '#0B0F19'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#111827'
+                        },
+                        txt: {
+                            light: '#0F172A',
+                            dark: '#F9FAFB'
+                        },
+                        sub: {
+                            light: '#64748B',
+                            dark: '#9CA3AF'
+                        },
+                        brd: {
+                            light: '#E2E8F0',
+                            dark: '#1F2937'
+                        },
+                        accent: {
+                            DEFAULT: '#3B82F6',
+                            hover: '#2563EB',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Styles -->
+    <style>
+        body {
+            @apply bg-canvas-light text-txt-light dark:bg-canvas-dark dark:text-txt-dark transition-colors duration-200;
+        }
+        .card-panel {
+            @apply bg-card-light border border-brd-light dark:bg-card-dark dark:border-brd-dark rounded-xl shadow-sm;
+        }
+        .input-field {
+            @apply w-full bg-canvas-light border border-brd-light dark:bg-canvas-dark dark:border-brd-dark rounded-lg px-4 py-2.5 text-txt-light dark:text-txt-dark focus:ring-2 focus:ring-accent focus:border-accent outline-none transition-all;
+        }
+        .btn-primary {
+            @apply bg-accent hover:bg-accent-hover text-white font-medium py-2.5 px-4 rounded-lg transition-colors shadow-sm;
+        }
+        .btn-secondary {
+            @apply bg-card-light border border-brd-light dark:bg-card-dark dark:border-brd-dark hover:bg-canvas-light dark:hover:bg-canvas-dark font-medium py-2 px-4 rounded-lg transition-colors text-txt-light dark:text-txt-dark;
+        }
+        .preset-btn {
+            @apply px-3 py-1.5 text-xs font-semibold rounded-md border border-brd-light dark:border-brd-dark bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark hover:text-accent hover:border-accent transition-all cursor-pointer;
+        }
+        .preset-btn.active {
+            @apply bg-accent text-white border-accent;
+        }
+        .tab-btn {
+            @apply px-4 py-3 font-medium text-sm border-b-2 border-transparent text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition-colors cursor-pointer;
+        }
+        .tab-btn.active {
+            @apply border-accent text-accent dark:text-accent font-semibold;
+        }
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.25) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 0.8s infinite;
+        }
+        .dark .shimmer::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.05) 20%,
+                rgba(255, 255, 255, 0.12) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 800px;
+            opacity: 1;
+        }
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.25s, visibility 0.25s, transform 0.25s;
+            transform: translateY(10px);
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Credit Card Payoff Calculator",
+          "url": "https://calcworld.net/credit-card-calculator",
+          "description": "Calculate your credit card payoff time, monthly interest cost, minimum payment traps, and total savings under debt avalanche strategies.",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Financial Calculators",
+              "item": "https://calcworld.net/financial-calculators"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Credit Card Calculator",
+              "item": "https://calcworld.net/credit-card-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Why does making only minimum payments keep borrowers in debt for decades?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Credit card issuers typically set minimum monthly payments at the accumulated interest plus 1% of the principal balance, or a flat percentage between 2% and 3%. As the principal slowly drops, the required minimum payment decreases alongside it. This decelerating repayment schedule extends the balance over 15 to 30 years and costs multiple times the original debt in cumulative finance charges."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the mathematical difference between APR and APY on credit cards?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "APR (Annual Percentage Rate) is the nominal interest rate quoted by credit card companies based on simple daily multiplication (APR divided by 365 days). APY (Annual Percentage Yield) or EAR (Effective Annual Rate) accounts for daily compounding interest over an entire year. For example, a card with a 24.99% nominal APR compounded daily creates an effective annual yield of 28.36%."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the Debt Avalanche method differ from the Debt Snowball?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Debt Avalanche orders debts by interest rate from highest to lowest, allocating all discretionary extra funds to the highest APR account. This method saves the maximum amount of money in interest and shortens total payoff time. The Debt Snowball orders debts from smallest balance to largest balance regardless of APR to generate fast behavioral milestones."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is trailing or residual interest?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Residual interest (also called trailing interest) is the finance charge that accrues between the date your billing statement closes and the exact date your full payment posts. When you carry a balance from month to month, you lose your interest-free grace period, meaning interest accumulates daily until the account achieves two consecutive zero-balance statement cycles."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does credit card utilization affect credit scores?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Revolving credit utilization accounts for approximately 30% of standard FICO and VantageScore models. Credit bureaus evaluate both individual card utilization and aggregate utilization across all revolving accounts. Maintaining utilization below 30% avoids severe score penalties, while keeping utilization under 10% maximizes credit scoring profiles."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Are 0% balance transfer credit cards worth the upfront fee?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Balance transfer cards typically charge a one-time fee of 3% to 5% of the transferred amount. If your current card charges 22% APR, paying a 3% fee to eliminate interest for 15 to 21 months yields substantial net savings, provided you pay off the balance before the promotional period ends and avoid new retail charges on the transfer account."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+    <link rel="canonical" href="https://calcworld.net/calculators/credit-card-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Credit Card Payoff Calculator | APR, Minimum Payment Trap & Savings">
+    <meta property="og:description" content="Calculate your credit card payoff timeline, compare minimum payments versus accelerated payoff, and see exact interest savings with debt avalanche presets.">
+    <meta property="og:url" content="https://calcworld.net/calculators/credit-card-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Credit Card Payoff Calculator | APR, Minimum Payment Trap & Savings">
+    <meta name="twitter:description" content="Calculate your credit card payoff timeline, compare minimum payments versus accelerated payoff, and see exact interest savings with debt avalanche presets.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Top Leaderboard Ad Slot #1 -->
+    <div id="ad-top" class="max-w-7xl mx-auto px-4 mt-4 w-full">
+        <div class="w-full min-h-[90px] bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark rounded-xl flex items-center justify-center p-3 relative overflow-hidden text-center">
+            <!-- AdSense Unit Simulation -->
+            <div class="ad-unit-slot flex flex-col items-center justify-center">
+                <span class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark opacity-60">Sponsored Advertisement (Leaderboard 728x90)</span>
+                <p class="text-xs text-sub-light dark:text-sub-dark mt-1">Compare Top Low-APR Balance Transfer Credit Cards with 0% Intro Rates</p>
+            </div>
+            <!-- AdBlock Fallback -->
+            <div class="adblock-fallback hidden absolute inset-0 bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-4 items-center justify-between">
+                <div class="text-left">
+                    <p class="font-bold text-sm">Cut Your Credit Card Interest to 0%</p>
+                    <p class="text-xs text-blue-200">Consolidate high-interest debt with zero-fee balance transfer options.</p>
+                </div>
+                <span class="text-xs font-semibold bg-white text-blue-900 px-3 py-1.5 rounded-lg shadow-sm">Explore Solutions</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-grow w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-sm text-sub-light dark:text-sub-dark mb-4" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-accent transition-colors flex items-center">
+                        <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path></svg>
+                        Home
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <a href="../index.html" class="ml-1 hover:text-accent transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <span class="ml-1 font-semibold text-txt-light dark:text-txt-dark">Credit Card Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Page Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2 text-txt-light dark:text-txt-dark">
+                Credit Card Payoff Calculator
+            </h1>
+            <p class="text-sub-light dark:text-sub-dark text-base md:text-lg max-w-3xl">
+                Break free from the credit card minimum payment trap. Calculate your exact debt payoff date, explore interest savings with extra payments, and evaluate debt avalanche schedules.
+            </p>
+        </div>
+
+        <!-- Calculator Workstation Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs Panel (5 cols) -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="card-panel p-6">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-lg font-bold flex items-center text-txt-light dark:text-txt-dark">
+                            <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+                            </svg>
+                            Card Parameters
+                        </h2>
+                        <button id="btn-reset" class="text-xs text-sub-light dark:text-sub-dark hover:text-accent transition-colors flex items-center">
+                            <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            Reset
+                        </button>
+                    </div>
+
+                    <!-- Presets Selection Bar -->
+                    <div id="presets-container" class="mb-5 p-3 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                        <span class="block text-xs font-semibold text-sub-light dark:text-sub-dark mb-2 uppercase tracking-wider">Quick Strategy Presets:</span>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" class="preset-btn active" id="preset-min" data-preset="min">
+                                Minimum Only
+                            </button>
+                            <button type="button" class="preset-btn" id="preset-2yr" data-preset="2yr">
+                                Pay in 2 Years
+                            </button>
+                            <button type="button" class="preset-btn" id="preset-avalanche" data-preset="avalanche">
+                                Avalanche Boost
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Input Controls -->
+                    <div class="space-y-4">
+                        <!-- Current Balance -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-balance" class="text-sm font-semibold text-txt-light dark:text-txt-dark">Current Balance</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark">Total statement debt</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-2.5 text-sub-light dark:text-sub-dark font-medium cur-symbol">$</span>
+                                <input type="number" id="in-balance" value="5000" min="50" max="1000000" step="50" class="input-field pl-8 font-semibold text-lg">
+                            </div>
+                            <input type="range" id="range-balance" min="500" max="30000" step="100" value="5000" class="w-full mt-1.5 accent-accent cursor-pointer">
+                        </div>
+
+                        <!-- APR / Interest Rate -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-apr" class="text-sm font-semibold text-txt-light dark:text-txt-dark">Annual Percentage Rate (APR)</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark">Average US APR: ~21.5%</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="in-apr" value="22.5" min="0" max="60" step="0.1" class="input-field pr-8 font-semibold text-lg">
+                                <span class="absolute right-3.5 top-2.5 text-sub-light dark:text-sub-dark font-medium">%</span>
+                            </div>
+                            <input type="range" id="range-apr" min="0" max="36" step="0.25" value="22.5" class="w-full mt-1.5 accent-accent cursor-pointer">
+                        </div>
+
+                        <!-- Minimum Payment Formula -->
+                        <div>
+                            <label for="in-min-rule" class="block text-sm font-semibold mb-1 text-txt-light dark:text-txt-dark">Minimum Payment Calculation Rule</label>
+                            <select id="in-min-rule" class="input-field text-sm font-medium cursor-pointer">
+                                <option value="standard" selected>Standard Issuer Rule (Interest + 1% balance, Min $25)</option>
+                                <option value="pct2">Flat 2.0% of Balance (Floor $25)</option>
+                                <option value="pct3">Flat 3.0% of Balance (Floor $35)</option>
+                                <option value="fixed">Fixed Monthly Budget Payment</option>
+                            </select>
+                        </div>
+
+                        <!-- Fixed Monthly Budget Payment (Hidden unless 'fixed' selected) -->
+                        <div id="wrapper-fixed-payment" class="hidden">
+                            <label for="in-fixed-pmt" class="block text-sm font-semibold mb-1 text-txt-light dark:text-txt-dark">Fixed Total Monthly Payment</label>
+                            <div class="relative">
+                                <span class="absolute left-3.5 top-2.5 text-sub-light dark:text-sub-dark font-medium cur-symbol">$</span>
+                                <input type="number" id="in-fixed-pmt" value="250" min="25" step="10" class="input-field pl-8 font-semibold text-base">
+                            </div>
+                        </div>
+
+                        <!-- Extra Monthly Payment -->
+                        <div class="pt-3 border-t border-brd-light dark:border-brd-dark">
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-extra" class="text-sm font-bold text-accent">Extra Monthly Payment</label>
+                                <span class="text-xs font-medium text-emerald-600 dark:text-emerald-400">Accelerates Payoff</span>
+                            </div>
+                            <div class="relative mb-2">
+                                <span class="absolute left-3.5 top-2.5 text-accent font-bold cur-symbol">$</span>
+                                <input type="number" id="in-extra" value="0" min="0" step="10" class="input-field pl-8 font-bold text-lg text-accent border-accent focus:ring-accent">
+                            </div>
+
+                            <!-- Quick Add Buttons for Extra Payment -->
+                            <div class="flex items-center space-x-2">
+                                <span class="text-xs text-sub-light dark:text-sub-dark">Quick Add:</span>
+                                <button type="button" class="btn-quick-add px-2 py-1 rounded text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark hover:border-accent text-txt-light dark:text-txt-dark transition-colors" data-amt="25">+$25</button>
+                                <button type="button" class="btn-quick-add px-2 py-1 rounded text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark hover:border-accent text-txt-light dark:text-txt-dark transition-colors" data-amt="50">+$50</button>
+                                <button type="button" class="btn-quick-add px-2 py-1 rounded text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark hover:border-accent text-txt-light dark:text-txt-dark transition-colors" data-amt="100">+$100</button>
+                                <button type="button" class="btn-quick-add px-2 py-1 rounded text-xs bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark hover:border-accent text-txt-light dark:text-txt-dark transition-colors" data-amt="250">+$250</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Sidebar Ad Slot #3 (Desktop) -->
+                <div id="ad-sidebar" class="hidden lg:block card-panel p-4 text-center min-h-[300px] flex flex-col justify-center items-center relative overflow-hidden">
+                    <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark opacity-60 mb-2">Advertisement (Half Page 300x600 / 300x250)</span>
+                    <div class="ad-unit-slot text-sm text-sub-light dark:text-sub-dark py-12">
+                        <p class="font-bold text-txt-light dark:text-txt-dark text-base mb-1">Looking for Debt Consolidation?</p>
+                        <p class="text-xs mb-3">Compare personal loan APRs starting from 6.99% fixed.</p>
+                        <span class="inline-block px-3 py-1.5 rounded-lg bg-accent text-white text-xs font-semibold shadow-sm">View Top Rates</span>
+                    </div>
+                    <!-- AdBlock Fallback -->
+                    <div class="adblock-fallback hidden absolute inset-0 bg-card-light dark:bg-card-dark p-6 flex flex-col justify-center items-center border border-accent/20">
+                        <span class="text-xs font-bold text-accent uppercase tracking-wider mb-2">Debt Freedom Partner</span>
+                        <h4 class="font-bold text-base mb-2">Lower Your Interest by 60%</h4>
+                        <p class="text-xs text-sub-light dark:text-sub-dark mb-4">Consolidate multiple credit card accounts into one predictable, single monthly payment.</p>
+                        <a href="#guide-avalanche" class="text-xs font-semibold text-accent underline">Learn More in Our Guide &darr;</a>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Outputs, Tabs & Visualizations (7 cols) -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Primary Results Card -->
+                <div class="card-panel p-6 border-accent/30 relative">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-brd-light dark:border-brd-dark">
+                        <div>
+                            <span class="text-xs uppercase font-bold tracking-wider text-accent">Plan Projection</span>
+                            <h3 class="text-xl font-bold text-txt-light dark:text-txt-dark">Debt Elimination Summary</h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="btn-copy-summary" class="btn-secondary text-xs flex items-center py-1.5 px-3">
+                                <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                📋 Copy Summary
+                            </button>
+                            <button id="btn-print-tab" class="btn-secondary text-xs flex items-center py-1.5 px-3">
+                                <svg class="w-4 h-4 mr-1 text-sub-light dark:text-sub-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 4 Big Metric Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                        <!-- Metric 1: Months / Time to Pay Off -->
+                        <div class="calc-res p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                            <span class="block text-xs font-semibold text-sub-light dark:text-sub-dark mb-1">Time to Pay Off</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-accent">
+                                <span id="out-months" class="num-counter">0</span>
+                                <span class="text-xs font-medium text-sub-light dark:text-sub-dark">mo</span>
+                            </div>
+                            <span id="out-years-desc" class="text-[11px] text-sub-light dark:text-sub-dark font-medium block mt-0.5">0 yrs, 0 mo</span>
+                        </div>
+
+                        <!-- Metric 2: Total Interest -->
+                        <div class="calc-res p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                            <span class="block text-xs font-semibold text-sub-light dark:text-sub-dark mb-1">Total Interest</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-amber-500">
+                                <span class="cur-symbol">$</span><span id="out-interest" class="num-counter">0</span>
+                            </div>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark font-medium block mt-0.5">Finance charges</span>
+                        </div>
+
+                        <!-- Metric 3: Total Paid -->
+                        <div class="calc-res p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                            <span class="block text-xs font-semibold text-sub-light dark:text-sub-dark mb-1">Total Amount Paid</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-txt-light dark:text-txt-dark">
+                                <span class="cur-symbol">$</span><span id="out-total-paid" class="num-counter">0</span>
+                            </div>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark font-medium block mt-0.5">Principal + Interest</span>
+                        </div>
+
+                        <!-- Metric 4: Interest Saved -->
+                        <div class="calc-res p-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-emerald-500/30">
+                            <span class="block text-xs font-semibold text-emerald-600 dark:text-emerald-400 mb-1">Interest Saved</span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                                <span class="cur-symbol">$</span><span id="out-interest-saved" class="num-counter">0</span>
+                            </div>
+                            <span id="out-time-saved" class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium block mt-0.5">vs. Min payments</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Warning Banner if Minimum payment only takes forever -->
+                    <div id="warning-min-trap" class="hidden p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs flex items-start space-x-2.5">
+                        <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <div>
+                            <span class="font-bold">Minimum Payment Trap Detected:</span> At this minimum repayment rate, you will pay multiple times your original debt in interest and remain in debt for over a decade. Adding even $50/mo slashes years off your schedule!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabbed Outputs Interface -->
+                <div class="card-panel overflow-hidden">
+                    <!-- Tab Navigation Header -->
+                    <div class="flex border-b border-brd-light dark:border-brd-dark px-4 bg-canvas-light/50 dark:bg-canvas-dark/50 overflow-x-auto">
+                        <button class="tab-btn active whitespace-nowrap" data-tab="summary">Plan Comparison</button>
+                        <button class="tab-btn whitespace-nowrap" data-tab="amortization">Amortization Table</button>
+                        <button class="tab-btn whitespace-nowrap" data-tab="charts">Visual Charts</button>
+                        <button class="tab-btn whitespace-nowrap" data-tab="print">Print Report</button>
+                    </div>
+
+                    <!-- Tab 1: Plan Comparison -->
+                    <div id="tab-summary" class="tab-content p-6 block">
+                        <h4 class="text-base font-bold mb-3 text-txt-light dark:text-txt-dark">Head-to-Head Comparison</h4>
+                        <p class="text-xs text-sub-light dark:text-sub-dark mb-4">See exactly how your accelerated strategy compares against paying only the card issuer's minimum requirement.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm border-collapse">
+                                <thead>
+                                    <tr class="border-b border-brd-light dark:border-brd-dark text-xs uppercase font-semibold text-sub-light dark:text-sub-dark">
+                                        <th class="py-2.5 px-3">Metric</th>
+                                        <th class="py-2.5 px-3">Minimum Only</th>
+                                        <th class="py-2.5 px-3 text-accent">Your Strategy</th>
+                                        <th class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400">Your Advantage</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-brd-light dark:divide-brd-dark text-txt-light dark:text-txt-dark font-medium">
+                                    <tr>
+                                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark">Time to Complete Payoff</td>
+                                        <td class="py-3 px-3" id="cmp-min-time">--</td>
+                                        <td class="py-3 px-3 text-accent font-bold" id="cmp-strat-time">--</td>
+                                        <td class="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-bold" id="cmp-diff-time">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark">Starting Monthly Payment</td>
+                                        <td class="py-3 px-3"><span class="cur-symbol">$</span><span id="cmp-min-start-pmt">--</span></td>
+                                        <td class="py-3 px-3 text-accent font-bold"><span class="cur-symbol">$</span><span id="cmp-strat-start-pmt">--</span></td>
+                                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark" id="cmp-diff-pmt">--</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark">Total Interest Paid</td>
+                                        <td class="py-3 px-3 text-amber-500 font-bold"><span class="cur-symbol">$</span><span id="cmp-min-interest">--</span></td>
+                                        <td class="py-3 px-3 text-accent font-bold"><span class="cur-symbol">$</span><span id="cmp-strat-interest">--</span></td>
+                                        <td class="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-extrabold"><span class="cur-symbol">$</span><span id="cmp-diff-interest">--</span> saved</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark">Total Cash Out of Pocket</td>
+                                        <td class="py-3 px-3"><span class="cur-symbol">$</span><span id="cmp-min-total">--</span></td>
+                                        <td class="py-3 px-3 text-accent font-bold"><span class="cur-symbol">$</span><span id="cmp-strat-total">--</span></td>
+                                        <td class="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-bold"><span class="cur-symbol">$</span><span id="cmp-diff-total">--</span> lower</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab 2: Amortization Table -->
+                    <div id="tab-amortization" class="tab-content p-6 hidden">
+                        <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+                            <div>
+                                <h4 class="text-base font-bold text-txt-light dark:text-txt-dark">Full Repayment Schedule</h4>
+                                <p class="text-xs text-sub-light dark:text-sub-dark">Month-by-month breakdown of principal reduction and interest charges.</p>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <button id="btn-download-csv" class="btn-secondary text-xs py-1.5 px-3 flex items-center">
+                                    <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Export CSV
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto max-h-[420px] overflow-y-auto border border-brd-light dark:border-brd-dark rounded-lg">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead class="bg-canvas-light dark:bg-canvas-dark sticky top-0 border-b border-brd-light dark:border-brd-dark">
+                                    <tr class="font-semibold text-sub-light dark:text-sub-dark uppercase">
+                                        <th class="py-2.5 px-3">Mo #</th>
+                                        <th class="py-2.5 px-3">Start Bal</th>
+                                        <th class="py-2.5 px-3">Payment</th>
+                                        <th class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400">Principal</th>
+                                        <th class="py-2.5 px-3 text-amber-500">Interest</th>
+                                        <th class="py-2.5 px-3">Ending Bal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="amortization-table-body" class="divide-y divide-brd-light dark:divide-brd-dark font-medium text-txt-light dark:text-txt-dark">
+                                    <!-- Dynamic rows inserted via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tab 3: Visual Charts -->
+                    <div id="tab-charts" class="tab-content p-6 hidden">
+                        <div class="space-y-6">
+                            <!-- Balance Decay Line Chart -->
+                            <div>
+                                <h4 class="text-sm font-bold text-txt-light dark:text-txt-dark mb-1">Balance Decay Over Time</h4>
+                                <p class="text-xs text-sub-light dark:text-sub-dark mb-3">Comparing declining principal between Minimum Payments vs Your Strategy.</p>
+                                <div class="relative h-[260px] w-full">
+                                    <canvas id="chart-decay"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Principal vs Interest Doughnut Chart -->
+                            <div class="pt-4 border-t border-brd-light dark:border-brd-dark">
+                                <h4 class="text-sm font-bold text-txt-light dark:text-txt-dark mb-1">Total Payment Allocation</h4>
+                                <p class="text-xs text-sub-light dark:text-sub-dark mb-3">Portion of total payments going toward principal vs finance charges.</p>
+                                <div class="relative h-[220px] w-full flex items-center justify-center">
+                                    <canvas id="chart-doughnut"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tab 4: Print Report -->
+                    <div id="tab-print" class="tab-content p-6 hidden">
+                        <div id="print-report-container" class="space-y-4">
+                            <div class="flex justify-between items-start border-b border-brd-light dark:border-brd-dark pb-4">
+                                <div>
+                                    <h3 class="text-xl font-bold">Credit Card Debt Elimination Statement</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Prepared with CalcWorld Financial Analytics</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-xs font-semibold px-2.5 py-1 bg-accent/10 text-accent rounded-full" id="rpt-date">October 2026</span>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4 text-xs">
+                                <div class="p-3 bg-canvas-light dark:bg-canvas-dark rounded-lg">
+                                    <span class="text-sub-light dark:text-sub-dark block">Starting Principal:</span>
+                                    <span class="text-base font-bold text-txt-light dark:text-txt-dark" id="rpt-balance">$5,000.00</span>
+                                </div>
+                                <div class="p-3 bg-canvas-light dark:bg-canvas-dark rounded-lg">
+                                    <span class="text-sub-light dark:text-sub-dark block">Assessed APR:</span>
+                                    <span class="text-base font-bold text-txt-light dark:text-txt-dark" id="rpt-apr">22.50%</span>
+                                </div>
+                                <div class="p-3 bg-canvas-light dark:bg-canvas-dark rounded-lg">
+                                    <span class="text-sub-light dark:text-sub-dark block">Extra Payment Added:</span>
+                                    <span class="text-base font-bold text-accent" id="rpt-extra">$0.00 / month</span>
+                                </div>
+                                <div class="p-3 bg-canvas-light dark:bg-canvas-dark rounded-lg">
+                                    <span class="text-sub-light dark:text-sub-dark block">Projected Total Interest:</span>
+                                    <span class="text-base font-bold text-amber-500" id="rpt-interest">$0.00</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-accent/30 rounded-lg bg-accent/5">
+                                <p class="text-xs text-txt-light dark:text-txt-dark leading-relaxed" id="rpt-summary-text">
+                                    By following this accelerated repayment schedule, this card account will be fully paid off in 0 months, saving a projected $0.00 in total interest charges.
+                                </p>
+                            </div>
+
+                            <div class="pt-2">
+                                <button type="button" onclick="window.print()" class="btn-primary w-full text-sm font-semibold flex items-center justify-center py-2.5">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Official Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PDF Email Lead Box -->
+                <div id="lead-gen-box" class="card-panel p-6 bg-gradient-to-r from-blue-700 to-indigo-800 text-white relative overflow-hidden shadow-lg">
+                    <div class="absolute -right-8 -bottom-8 opacity-15 pointer-events-none">
+                        <svg class="w-48 h-48" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <div class="flex items-center space-x-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884zM18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" clip-rule="evenodd"></path></svg>
+                            <span>Official Payoff Plan Document</span>
+                        </div>
+                        <h3 class="text-xl font-extrabold mb-1.5">Download Your Custom Debt Payoff Roadmap</h3>
+                        <p class="text-blue-100 mb-4 text-xs max-w-lg leading-relaxed">
+                            Receive an official PDF containing your complete monthly amortization schedule, avalanche priority checklist, and debt elimination benchmarks.
+                        </p>
+                        <form id="lead-form" class="flex flex-col sm:flex-row gap-2 max-w-md">
+                            <input type="email" id="lead-email" placeholder="Enter your email address" required class="flex-1 rounded-lg px-4 py-2.5 text-txt-light text-sm border-none outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="bg-card-light text-accent hover:bg-canvas-light font-bold text-sm px-5 py-2.5 rounded-lg transition-colors whitespace-nowrap shadow">
+                                Send Free PDF
+                            </button>
+                        </form>
+                        <p id="lead-status" class="hidden text-xs text-blue-200 mt-2 font-medium">✓ Plan dispatched! Check your inbox momentarily.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- High-CTR Under-Result Ad Slot #2 -->
+        <div id="ad-middle" class="my-10 w-full min-h-[100px] bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark rounded-xl flex items-center justify-center p-4 relative overflow-hidden text-center">
+            <div class="ad-unit-slot flex flex-col items-center justify-center">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark opacity-60">Sponsored Advertisement (Leaderboard 728x90)</span>
+                <p class="text-sm font-semibold text-txt-light dark:text-txt-dark mt-1">Consolidate High-APR Cards with Fixed-Rate Personal Loans</p>
+                <p class="text-xs text-sub-light dark:text-sub-dark">Check loan rates with no impact on your credit score.</p>
+            </div>
+            <!-- AdBlock Fallback -->
+            <div class="adblock-fallback hidden absolute inset-0 bg-gradient-to-r from-slate-800 to-slate-900 text-white p-4 items-center justify-between">
+                <div class="text-left">
+                    <p class="font-bold text-sm">Eliminate High-Interest Revolving Balances</p>
+                    <p class="text-xs text-slate-300">Lock in a fixed interest rate and slash monthly charges with accredited lenders.</p>
+                </div>
+                <span class="text-xs font-semibold bg-accent text-white px-3 py-1.5 rounded-lg shadow-sm">Compare Loans</span>
+            </div>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide Section -->
+        <article class="card-panel p-8 md:p-12 mt-8 mb-12">
+            <header class="mb-8 border-b border-brd-light dark:border-brd-dark pb-6">
+                <span class="text-xs uppercase font-bold tracking-wider text-accent">Educational Resource</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-txt-light dark:text-txt-dark mt-1">
+                    The Mechanics of Credit Card Debt: APR Mathematics, Payoff Engineering, and Legal Protections
+                </h2>
+                <p class="text-sm text-sub-light dark:text-sub-dark mt-2">
+                    An in-depth manual on interest calculation algorithms, repayment math, and regulatory consumer rights.
+                </p>
+            </header>
+
+            <div class="space-y-8 text-txt-light dark:text-txt-dark leading-relaxed text-sm md:text-base">
+                
+                <!-- Section 1 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        1. How Credit Card Interest Really Works: The Average Daily Balance Method
+                    </h3>
+                    <p class="mb-3">
+                        Unlike fixed installment loans (such as standard mortgages or auto loans) where interest is amortized smoothly across equal monthly periods, credit cards represent open-end revolving credit lines. Finance charges compound on a daily basis using what financial institutions define as the <strong>Average Daily Balance (ADB)</strong> calculation method.
+                    </p>
+                    <p class="mb-3">
+                        Each day of your monthly billing cycle, the card issuer computes a daily periodic rate (DPR) by dividing your annual percentage rate by 365 days (or in some institutional contracts, 360 days):
+                    </p>
+                    <div class="p-4 bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark font-mono text-xs md:text-sm my-4 overflow-x-auto">
+                        Daily Periodic Rate (DPR) = Stated APR &divide; 365<br>
+                        Daily Finance Charge = Daily Ending Balance &times; DPR<br>
+                        Monthly Interest Charge = &sum; (Daily Ending Balance &times; DPR) for all cycle days
+                    </div>
+                    <p class="mb-3">
+                        If a consumer maintains a \$5,000 balance across a 30-day billing cycle under a 24% APR, the daily periodic rate is approximately 0.065753%. Each day, roughly \$3.29 in finance charges accrues to the account. Over a full 30-day billing period, this simple calculation produces approximately \$98.63 in pure interest, before a single dollar reduces the underlying principal purchase.
+                    </p>
+                    <p>
+                        Understanding this daily accrual highlights the power of <em>grace periods</em>. Under federal banking regulations, if you pay your statement balance in full before the monthly payment due date, card issuers do not assess interest on new retail purchases. However, the moment you carry even one dollar past the due date, that grace period vanishes, and interest begins compounding on every transaction from the day of purchase.
+                    </p>
+                </section>
+
+                <!-- Section 2 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        2. APR vs. APY: The Compounding Multiplier Effect
+                    </h3>
+                    <p class="mb-3">
+                        Financial institutions advertise credit cards using the <strong>Annual Percentage Rate (APR)</strong> because it represents a nominal, simple annualized figure. However, because credit card balances compound daily rather than annually, the actual economic cost of borrowing is measured by the <strong>Annual Percentage Yield (APY)</strong>, also designated as the Effective Annual Rate (EAR).
+                    </p>
+                    <p class="mb-3">
+                        The mathematical formula converting nominal credit card APR to effective compounding yield is:
+                    </p>
+                    <div class="p-4 bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark font-mono text-xs md:text-sm my-4 overflow-x-auto">
+                        EAR = (1 + (APR &divide; 365))^365 - 1
+                    </div>
+                    <p class="mb-3">
+                        Consider the practical mathematical differences across typical market interest brackets:
+                    </p>
+                    <div class="overflow-x-auto my-4">
+                        <table class="w-full text-left text-xs md:text-sm border-collapse">
+                            <thead>
+                                <tr class="border-b border-brd-light dark:border-brd-dark font-semibold text-sub-light dark:text-sub-dark uppercase">
+                                    <th class="py-2.5 px-3">Nominal APR</th>
+                                    <th class="py-2.5 px-3">Compounding Frequency</th>
+                                    <th class="py-2.5 px-3">Effective Annual Rate (APY)</th>
+                                    <th class="py-2.5 px-3">True Cost Premium</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brd-light dark:divide-brd-dark font-medium">
+                                <tr>
+                                    <td class="py-2.5 px-3 font-semibold">14.99%</td>
+                                    <td class="py-2.5 px-3">Daily (365 days)</td>
+                                    <td class="py-2.5 px-3 text-accent font-bold">16.17%</td>
+                                    <td class="py-2.5 px-3 text-sub-light dark:text-sub-dark">+1.18%</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-3 font-semibold">21.99%</td>
+                                    <td class="py-2.5 px-3">Daily (365 days)</td>
+                                    <td class="py-2.5 px-3 text-accent font-bold">24.57%</td>
+                                    <td class="py-2.5 px-3 text-sub-light dark:text-sub-dark">+2.58%</td>
+                                </tr>
+                                <tr>
+                                    <td class="py-2.5 px-3 font-semibold">28.99%</td>
+                                    <td class="py-2.5 px-3">Daily (365 days)</td>
+                                    <td class="py-2.5 px-3 text-accent font-bold">33.59%</td>
+                                    <td class="py-2.5 px-3 text-sub-light dark:text-sub-dark">+4.60%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p>
+                        As rates climb higher, the gap between the stated APR and actual compounded cost widens dramatically. For retail store cards carrying 29% to 32% APRs, borrowers face true compounding charges exceeding 35% annually, making rapid repayment an absolute financial priority.
+                    </p>
+                </section>
+
+                <!-- Section 3 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        3. The Minimum Payment Trap: Why 2% Payments Take Decades to Clear
+                    </h3>
+                    <p class="mb-3">
+                        Credit card contracts specify a minimum monthly payment requirement designed to protect the bank's liquidity while keeping the borrower indebted for the longest mathematically viable duration. A typical issuer minimum payment formula is structured as:
+                    </p>
+                    <div class="p-4 bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark font-mono text-xs md:text-sm my-4 overflow-x-auto">
+                        Minimum Payment = MAX( Flat Floor (e.g., \$25 or \$35), Accrued Interest + 1% of Principal )
+                    </div>
+                    <p class="mb-3">
+                        This formula creates an engineered mathematical trap known as the <em>declining payment treadmill</em>. Because the payment is pegged to 1% of the principal balance plus interest, the absolute dollar amount of your monthly payment drops as your principal declines:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mb-4">
+                        <li><strong>Month 1 (\$5,000 balance at 22% APR):</strong> Accrued monthly interest is \$91.67. One percent of principal is \$50.00. The required minimum payment is \$141.67. Exactly \$50 goes to principal, reducing the balance to \$4,950.</li>
+                        <li><strong>Month 36 (\$3,600 remaining balance):</strong> Monthly interest is \$66.00. One percent of principal is now only \$36.00. The required payment drops to \$102.00. Principal reduction slows down to \$36.</li>
+                        <li><strong>Month 120 (\$1,200 remaining balance):</strong> The payment reaches the \$25 flat floor, where interest consumes \$22 and barely \$3 touches the actual debt.</li>
+                    </ul>
+                    <p>
+                        The mathematical outcome of this structure is staggering: paying only the minimum on a \$5,000 balance at 22% APR requires <strong>262 months (nearly 22 years)</strong> to eliminate, producing over <strong>\$7,200 in total interest charges</strong>. The cardholder pays more than \$12,200 total for a \$5,000 purchase.
+                    </p>
+                </section>
+
+                <!-- Section 4 -->
+                <section id="guide-avalanche">
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        4. Payoff Engineering: Debt Avalanche vs. Debt Snowball
+                    </h3>
+                    <p class="mb-3">
+                        When tackling multiple revolving balances, two primary methodologies dominate empirical personal finance:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                        <div class="p-4 rounded-xl border border-brd-light dark:border-brd-dark bg-canvas-light/60 dark:bg-canvas-dark/60">
+                            <h4 class="font-bold text-accent text-base mb-1">Debt Avalanche (Mathematical Optimum)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark mb-2">Order debts by APR from highest to lowest.</p>
+                            <p class="text-xs">
+                                Direct all surplus monthly cash flow toward the single card with the highest interest rate, while paying strict minimums on the others. Once the top card reaches zero, roll its entire monthly payment into the next highest rate card.
+                            </p>
+                            <span class="inline-block mt-3 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">Minimizes Total Interest Paid</span>
+                        </div>
+                        <div class="p-4 rounded-xl border border-brd-light dark:border-brd-dark bg-canvas-light/60 dark:bg-canvas-dark/60">
+                            <h4 class="font-bold text-txt-light dark:text-txt-dark text-base mb-1">Debt Snowball (Behavioral Momentum)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark mb-2">Order debts by balance size from smallest to largest.</p>
+                            <p class="text-xs">
+                                Direct surplus cash toward the account with the smallest outstanding balance regardless of APR. Eliminating smaller balances quickly provides immediate psychological milestones and reduces the total number of open monthly bills.
+                            </p>
+                            <span class="inline-block mt-3 text-[11px] font-bold text-accent">Maximizes Behavioral Adherence</span>
+                        </div>
+                    </div>
+                    <p>
+                        While both methods yield identical outcomes if strictly followed to zero, the Debt Avalanche produces mathematically superior dollar savings whenever there is a substantial interest rate disparity between cards (such as a 26% retail credit line versus a 14% bank card).
+                    </p>
+                </section>
+
+                <!-- Section 5 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        5. Credit Utilization Ratios & The FICO Scoring Algorithm
+                    </h3>
+                    <p class="mb-3">
+                        Credit card debt does not merely carry high interest expense; it directly suppresses personal credit scores. Under the FICO scoring model, <strong>amounts owed accounts for 30% of your total credit score</strong>, with revolving credit utilization serving as the primary variable.
+                    </p>
+                    <p class="mb-3">
+                        Utilization is calculated as your aggregate outstanding balance divided by total available credit limits:
+                    </p>
+                    <div class="p-4 bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark font-mono text-xs md:text-sm my-4 overflow-x-auto">
+                        Utilization Ratio = Total Revolving Balances &divide; Total Credit Limits
+                    </div>
+                    <p class="mb-3">
+                        Key utilization thresholds observed by scoring models include:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mb-4">
+                        <li><strong>Above 50% Utilization:</strong> Severe credit score drag. Lenders interpret high utilization as financial strain, triggering potential credit line cuts or rate increases.</li>
+                        <li><strong>Between 30% and 50%:</strong> Moderate negative scoring impact. Many consumers mistakenly believe keeping a balance under 30% is sufficient, but 30% is a ceiling, not an ideal target.</li>
+                        <li><strong>Between 1% and 9%:</strong> Optimal tier for FICO scores. Zero balance reporting can occasionally produce a minor temporary scoring dip compared to having a nominal 1% reported balance.</li>
+                    </ul>
+                    <p>
+                        <strong>Reporting Date Secret:</strong> Credit card issuers report balances to consumer reporting agencies (Equifax, Experian, TransUnion) on your <em>statement closing date</em>, not your payment due date. If you pay your balance down right before the statement closing date, your credit bureau file reflects low utilization even if you spend heavily during the month.
+                    </p>
+                </section>
+
+                <!-- Section 6 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        6. Balance Transfers and 0% APR Traps
+                    </h3>
+                    <p class="mb-3">
+                        Transferring balances to an account offering 0% promotional APR for 12 to 21 months can save substantial interest. However, borrowers must navigate specific economic mechanics:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mb-4">
+                        <li><strong>Transfer Fees:</strong> Lenders typically assess a 3% to 5% upfront fee. On a \$10,000 balance, a 3% fee immediately adds \$300 to your principal. If you intend to pay off the balance in 2 months, paying a 3% fee costs more than the interest saved. Use a breakeven analysis before initiating a transfer.</li>
+                        <li><strong>Deferred Interest vs. 0% APR:</strong> True 0% APR cards do not charge interest during the promotional window. Retail store cards, however, frequently market "no interest if paid in full within 12 months" (deferred interest). Under deferred interest contracts, if a balance of even \$1 remains on day 366, interest is retroactively assessed on the full purchase amount back to day 1.</li>
+                        <li><strong>New Purchase Blending:</strong> Making new retail purchases on a balance transfer card without a separate 0% purchase promotion exposes new transactions to immediate daily finance charges.</li>
+                    </ul>
+                </section>
+
+                <!-- Section 7 -->
+                <section>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">
+                        7. Official Regulatory Disclosures: The CARD Act and Federal Reserve Benchmarks
+                    </h3>
+                    <p class="mb-3">
+                        Consumer credit cards in the United States are governed by the landmark <strong>Credit Card Accountability Responsibility and Disclosure Act of 2009 (Credit CARD Act)</strong>, enforced by the <strong>Consumer Financial Protection Bureau (CFPB)</strong> under 12 CFR Part 1026 (Regulation Z).
+                    </p>
+                    <p class="mb-3">
+                        Prior to the CARD Act, issuers were not required to illustrate how long payoff took when paying minimums. Today, federal law mandates that every monthly credit card billing statement include the statutory <em>Minimum Payment Warning Box</em>, detailing:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mb-4">
+                        <li>The exact number of years and months required to eliminate the current balance paying only minimums.</li>
+                        <li>The cumulative total amount paid (principal plus finance charges) under the minimum payment schedule.</li>
+                        <li>The 36-Month Payoff Benchmark: The exact monthly payment required to clear the debt in exactly three years (36 months), along with the resulting interest savings.</li>
+                    </ul>
+                    <p class="mb-3">
+                        According to historical data published in the <strong>Federal Reserve G.19 Consumer Credit Release</strong>, aggregate revolving credit in the United States exceeds \$1.3 trillion, with the average commercial bank interest rate on assessed credit card accounts climbing past 21.5% in recent economic cycles. Understanding the mathematics of revolving amortization enables consumers to eliminate high-interest liabilities systematically.
+                    </p>
+                    <p class="text-xs text-sub-light dark:text-sub-dark italic mt-4">
+                        Statutory citations: 15 U.S. Code &sect; 1637 (Truth in Lending Act), 12 CFR &sect; 1026.7 (Periodic Statement Disclosures), and the Consumer Financial Protection Bureau Consumer Credit Database.
+                    </p>
+                </section>
+
+            </div>
+        </article>
+
+        <!-- Interactive FAQ Accordion -->
+        <div class="mb-12">
+            <div class="mb-6">
+                <span class="text-xs uppercase font-bold tracking-wider text-accent">Answers & Clarifications</span>
+                <h2 class="text-2xl md:text-3xl font-extrabold text-txt-light dark:text-txt-dark mt-1">Frequently Asked Questions</h2>
+            </div>
+
+            <div class="space-y-3" id="faq-accordion-group">
+                
+                <!-- FAQ Item 1 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>Why does my credit card balance barely decrease when I pay the monthly minimum?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Card issuers formulate minimum payments to cover the month's accrued finance charges plus approximately 1% of the principal balance. At a 22% APR on a $5,000 balance, the first payment of roughly $142 allocates $92 directly to interest and only $50 to principal. Because the required minimum drops as the balance falls, principal reduction slows down, keeping you in debt for 15 to 25 years unless you make fixed or extra payments.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>What is residual interest (trailing interest) after paying off a balance?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Residual interest represents the finance charges that accumulate daily between the day your statement is generated and the day your payment is received and processed. Even if you pay the full statement balance, you may notice a small charge of a few dollars on the subsequent statement reflecting those interim days. Once you pay two consecutive billing cycles in full, the standard grace period resets.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>How does adding just $50 or $100 per month reduce debt so quickly?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Every single cent paid above the required minimum payment bypasses monthly finance charges and directly reduces the underlying principal debt. A smaller principal immediately generates lower daily interest accrual during the following billing cycle. This compounding interest reduction shortens repayment timelines from two decades down to two or three years and saves thousands of dollars.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>What is the practical difference between the Debt Avalanche and Debt Snowball methods?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The Debt Avalanche prioritizes debt accounts by annual interest rate from highest to lowest. It is mathematically optimal because it eliminates high-cost borrowing first. The Debt Snowball prioritizes debts by balance from smallest to largest, targeting psychological wins to help people maintain momentum. If you are disciplined, the Avalanche saves the most money.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>Will paying off my credit card immediately improve my credit score?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Yes. Revolving credit utilization accounts for 30% of standard credit scores. Unlike late payment marks which persist for seven years, credit utilization has no historical memory in standard scoring models like FICO 8. As soon as your card issuer reports the updated zero or low balance at the statement closing date, your credit score can increase within 30 days.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 6 -->
+                <div class="card-panel overflow-hidden border border-brd-light dark:border-brd-dark">
+                    <button class="accordion-btn w-full px-6 py-4 text-left flex justify-between items-center font-semibold text-txt-light dark:text-txt-dark hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors focus:outline-none">
+                        <span>Is a 0% balance transfer credit card always a smart move?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-6 bg-canvas-light/30 dark:bg-canvas-dark/30">
+                        <p class="py-4 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            A balance transfer makes sense when you have a structured plan to eliminate the debt before the 0% promotional window closes, and when the interest saved exceeds the 3% to 5% balance transfer fee. However, if you continue charging new purchases to the card or fail to clear the debt before the standard variable APR kicks in, the transfer provides little long-term benefit.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Multiplex Native Ad Grid Slot #4 -->
+        <div id="ad-multiplex" class="mb-12">
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark opacity-60 block mb-2">Recommended Financial Guides & Tools</span>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="card-panel p-4 flex flex-col justify-between hover:border-accent transition-colors cursor-pointer">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-accent">Debt Consolidation</span>
+                        <h4 class="text-xs font-bold mt-1 text-txt-light dark:text-txt-dark">Personal Loan vs Credit Card: Which is Better?</h4>
+                    </div>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark mt-3 block">3 min read &rarr;</span>
+                </div>
+                <div class="card-panel p-4 flex flex-col justify-between hover:border-accent transition-colors cursor-pointer">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400">Score Strategy</span>
+                        <h4 class="text-xs font-bold mt-1 text-txt-light dark:text-txt-dark">How to Drop Credit Utilization to Single Digits</h4>
+                    </div>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark mt-3 block">4 min read &rarr;</span>
+                </div>
+                <div class="card-panel p-4 flex flex-col justify-between hover:border-accent transition-colors cursor-pointer">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-amber-500">Interest Math</span>
+                        <h4 class="text-xs font-bold mt-1 text-txt-light dark:text-txt-dark">The Truth About Deferred Interest Store Cards</h4>
+                    </div>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark mt-3 block">5 min read &rarr;</span>
+                </div>
+                <div class="card-panel p-4 flex flex-col justify-between hover:border-accent transition-colors cursor-pointer">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-purple-500">Legal Rights</span>
+                        <h4 class="text-xs font-bold mt-1 text-txt-light dark:text-txt-dark">What the Credit CARD Act Requires on Statements</h4>
+                    </div>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark mt-3 block">4 min read &rarr;</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Banner Ad Slot #5 -->
+        <div id="ad-bottom" class="mb-12 w-full min-h-[90px] bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark rounded-xl flex items-center justify-center p-3 relative overflow-hidden text-center">
+            <div class="ad-unit-slot flex flex-col items-center justify-center">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark opacity-60">Sponsored Advertisement (Banner 728x90)</span>
+                <p class="text-xs text-sub-light dark:text-sub-dark mt-1">Get Free Credit Monitoring and Customized Debt Payoff Alerts</p>
+            </div>
+            <!-- AdBlock Fallback -->
+            <div class="adblock-fallback hidden absolute inset-0 bg-card-light dark:bg-card-dark p-4 flex items-center justify-between border border-accent/20">
+                <span class="text-xs font-bold text-accent">Support Free Tools</span>
+                <p class="text-xs text-sub-light dark:text-sub-dark">Bookmark CalcWorld and share our financial tools with friends.</p>
+                <button type="button" class="btn-secondary text-xs py-1 px-3">Share Tool</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark py-10 text-center text-xs text-sub-light dark:text-sub-dark pb-24 md:pb-10">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <div class="flex flex-wrap justify-center gap-6 font-medium text-txt-light dark:text-txt-dark">
+                <a href="../index.html" class="hover:text-accent transition-colors">Financial Calculators</a>
+                <a href="../index.html" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="#" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="#" class="hover:text-accent transition-colors">Editorial Guidelines</a>
+                <a href="#" class="hover:text-accent transition-colors">Contact Support</a>
+            </div>
+            <p>&copy; 2026 CalcWorld.net. All rights reserved. Hardware-accelerated client-side financial analytics.</p>
+            <p class="max-w-2xl mx-auto text-[11px] opacity-75">
+                Disclaimer: The calculations provided by this tool are for educational and planning purposes only and do not constitute formal lending, legal, or investment advice. Exact charges depend on specific cardholder agreement terms and billing cycles.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating Quick Switcher Bar (Mobile & Responsive) -->
+    <div id="floating-bar" class="fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark p-2.5 flex justify-around shadow-[0_-4px_10px_rgba(0,0,0,0.12)] z-40 md:hidden">
+        <button type="button" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="flex flex-col items-center text-accent text-[11px] font-bold">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            Calculator
+        </button>
+        <button type="button" onclick="document.querySelector('[data-tab=\'charts\']').click(); document.querySelector('[data-tab=\'charts\']').scrollIntoView({behavior: 'smooth'})" class="flex flex-col items-center text-sub-light dark:text-sub-dark hover:text-accent text-[11px] font-medium transition-colors">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path></svg>
+            Charts
+        </button>
+        <button type="button" onclick="document.querySelector('[data-tab=\'amortization\']').click(); document.querySelector('[data-tab=\'amortization\']').scrollIntoView({behavior: 'smooth'})" class="flex flex-col items-center text-sub-light dark:text-sub-dark hover:text-accent text-[11px] font-medium transition-colors">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+            Schedule
+        </button>
+        <button type="button" onclick="document.querySelector('article').scrollIntoView({behavior: 'smooth'})" class="flex flex-col items-center text-sub-light dark:text-sub-dark hover:text-accent text-[11px] font-medium transition-colors">
+            <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+            Guide
+        </button>
+    </div>
+
+    <!-- 2-Second Toast Notification -->
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-6 bg-gray-900 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center space-x-2.5 z-50 border border-gray-700 text-xs md:text-sm font-medium">
+        <svg class="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-message">Summary copied to clipboard!</span>
+    </div>
+
+    <!-- Application Script Section -->
+    <script>
+        // State variables
+        let decayChart = null;
+        let doughnutChart = null;
+        let currentSchedule = [];
+        let minSchedule = [];
+        let toastTimeout = null;
+
+        // DOM elements
+        const currencySwitcher = document.getElementById('currency-switcher');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        
+        const inBalance = document.getElementById('in-balance');
+        const rangeBalance = document.getElementById('range-balance');
+        const inApr = document.getElementById('in-apr');
+        const rangeApr = document.getElementById('range-apr');
+        const inMinRule = document.getElementById('in-min-rule');
+        const inFixedPmt = document.getElementById('in-fixed-pmt');
+        const wrapperFixedPayment = document.getElementById('wrapper-fixed-payment');
+        const inExtra = document.getElementById('in-extra');
+        
+        const outMonths = document.getElementById('out-months');
+        const outYearsDesc = document.getElementById('out-years-desc');
+        const outInterest = document.getElementById('out-interest');
+        const outTotalPaid = document.getElementById('out-total-paid');
+        const outInterestSaved = document.getElementById('out-interest-saved');
+        const outTimeSaved = document.getElementById('out-time-saved');
+        const warningMinTrap = document.getElementById('warning-min-trap');
+
+        // Number Formatting
+        function getCurrencySymbol() {
+            return currencySwitcher.value || '$';
+        }
+
+        function formatMoney(num) {
+            return Number(num).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function formatInteger(num) {
+            return Math.round(num).toLocaleString('en-US');
+        }
+
+        function parseMoney(str) {
+            if (typeof str === 'number') return str;
+            return parseFloat(String(str).replace(/[^0-9.-]+/g, '')) || 0;
+        }
+
+        // Animated Number Counter
+        function animateValue(elem, start, end, duration = 500, isCurrency = true) {
+            if (!elem) return;
+            const startTime = performance.now();
+            const startVal = parseMoney(start);
+            const endVal = parseMoney(end);
+
+            function update(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // ease-out cubic
+                const ease = 1 - Math.pow(1 - progress, 3);
+                const current = startVal + (endVal - startVal) * ease;
+                elem.innerText = isCurrency ? formatMoney(current) : Math.round(current);
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    elem.innerText = isCurrency ? formatMoney(endVal) : Math.round(endVal);
+                    elem.closest('.calc-res')?.classList.remove('shimmer');
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Show Toast Function
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.innerText = message;
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Sync Currency Symbols across the UI
+        function updateCurrencySymbols() {
+            const sym = getCurrencySymbol();
+            document.querySelectorAll('.cur-symbol').forEach(el => el.innerText = sym);
+            recalculate();
+        }
+
+        // Tab Switching Logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                btn.classList.add('active');
+                const targetTab = document.getElementById('tab-' + btn.getAttribute('data-tab'));
+                if (targetTab) {
+                    targetTab.classList.remove('hidden');
+                    if (btn.getAttribute('data-tab') === 'charts') {
+                        renderCharts();
+                    }
+                }
+            });
+        });
+
+        // FAQ Accordion Logic
+        document.querySelectorAll('.accordion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('.acc-icon');
+                const isOpen = content.classList.contains('active');
+                
+                // Close others if desired, or toggle current
+                if (isOpen) {
+                    content.classList.remove('active');
+                    icon.classList.remove('rotate-180');
+                } else {
+                    content.classList.add('active');
+                    icon.classList.add('rotate-180');
+                }
+            });
+        });
+
+        // Theme Toggle Logic
+        function syncThemeIcon() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            }
+        }
+        syncThemeIcon();
+
+        themeToggleBtn.addEventListener('click', () => {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+            syncThemeIcon();
+            if (decayChart || doughnutChart) {
+                renderCharts();
+            }
+        });
+
+        // Presets Handlers
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                applyPreset(btn.getAttribute('data-preset'));
+            });
+        });
+
+        function applyPreset(presetType) {
+            const bal = parseFloat(inBalance.value) || 5000;
+            const apr = parseFloat(inApr.value) || 22.5;
+            const monthlyRate = (apr / 100) / 12;
+
+            if (presetType === 'min') {
+                inMinRule.value = 'standard';
+                wrapperFixedPayment.classList.add('hidden');
+                inExtra.value = 0;
+            } else if (presetType === '2yr') {
+                // Fixed payment for 24 months: P = [r * B] / [1 - (1 + r)^(-24)]
+                let targetPmt = 0;
+                if (monthlyRate === 0) {
+                    targetPmt = bal / 24;
+                } else {
+                    targetPmt = (bal * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -24));
+                }
+                // Minimum rule standard initial payment
+                const initialInterest = bal * monthlyRate;
+                const baseMin = Math.max(25, initialInterest + bal * 0.01);
+                const extraNeeded = Math.max(0, targetPmt - baseMin);
+                inMinRule.value = 'standard';
+                wrapperFixedPayment.classList.add('hidden');
+                inExtra.value = Math.round(extraNeeded);
+            } else if (presetType === 'avalanche') {
+                // Avalanche boost: Add aggressive extra payment ($150 or 3% of balance)
+                inMinRule.value = 'standard';
+                wrapperFixedPayment.classList.add('hidden');
+                inExtra.value = Math.max(100, Math.round(bal * 0.03));
+            }
+            recalculate();
+        }
+
+        // Quick add buttons for extra payment
+        document.querySelectorAll('.btn-quick-add').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const amt = parseFloat(btn.getAttribute('data-amt')) || 0;
+                const current = parseFloat(inExtra.value) || 0;
+                inExtra.value = current + amt;
+                document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+                recalculate();
+            });
+        });
+
+        // Minimum Rule change handler
+        inMinRule.addEventListener('change', () => {
+            if (inMinRule.value === 'fixed') {
+                wrapperFixedPayment.classList.remove('hidden');
+            } else {
+                wrapperFixedPayment.classList.add('hidden');
+            }
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            recalculate();
+        });
+
+        // Sliders & Number Input Synchronization
+        inBalance.addEventListener('input', () => {
+            rangeBalance.value = inBalance.value;
+            recalculate();
+        });
+        rangeBalance.addEventListener('input', () => {
+            inBalance.value = rangeBalance.value;
+            recalculate();
+        });
+        inApr.addEventListener('input', () => {
+            rangeApr.value = inApr.value;
+            recalculate();
+        });
+        rangeApr.addEventListener('input', () => {
+            inApr.value = rangeApr.value;
+            recalculate();
+        });
+        inFixedPmt.addEventListener('input', recalculate);
+        inExtra.addEventListener('input', () => {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            recalculate();
+        });
+        currencySwitcher.addEventListener('change', updateCurrencySymbols);
+
+        // Core Calculation Engine
+        function calculateSchedule(balance, apr, rule, fixedBudget, extraMonthly) {
+            const schedule = [];
+            let currentBal = balance;
+            const monthlyRate = (apr / 100) / 12;
+            let totalInterest = 0;
+            let month = 0;
+            const maxMonths = 600; // 50 years max limit
+
+            while (currentBal > 0.01 && month < maxMonths) {
+                month++;
+                const startingBal = currentBal;
+                const interestCharge = currentBal * monthlyRate;
+                totalInterest += interestCharge;
+
+                let minPayment = 0;
+                if (rule === 'standard') {
+                    minPayment = Math.max(25, interestCharge + (currentBal * 0.01));
+                } else if (rule === 'pct2') {
+                    minPayment = Math.max(25, currentBal * 0.02);
+                } else if (rule === 'pct3') {
+                    minPayment = Math.max(35, currentBal * 0.03);
+                } else if (rule === 'fixed') {
+                    minPayment = fixedBudget;
+                }
+
+                // If min payment does not even cover interest, force payment to cover interest + $10 to avoid negative amortization
+                if (minPayment <= interestCharge) {
+                    minPayment = interestCharge + 10;
+                }
+
+                let totalPayment = minPayment + extraMonthly;
+
+                // Cannot pay more than balance + current interest
+                if (totalPayment >= currentBal + interestCharge) {
+                    totalPayment = currentBal + interestCharge;
+                }
+
+                const principalPaid = Math.max(0, totalPayment - interestCharge);
+                currentBal = Math.max(0, currentBal - principalPaid);
+
+                schedule.push({
+                    month,
+                    startBalance: startingBal,
+                    payment: totalPayment,
+                    principal: principalPaid,
+                    interest: interestCharge,
+                    endBalance: currentBal,
+                    cumInterest: totalInterest
+                });
+            }
+
+            return {
+                months: month,
+                totalInterest,
+                totalPaid: balance + totalInterest,
+                startingPayment: schedule.length > 0 ? schedule[0].payment : 0,
+                schedule
+            };
+        }
+
+        // Main Recalculate Function
+        function recalculate() {
+            const bal = parseFloat(inBalance.value) || 0;
+            const apr = parseFloat(inApr.value) || 0;
+            const rule = inMinRule.value;
+            const fixedBudget = parseFloat(inFixedPmt.value) || 0;
+            const extra = parseFloat(inExtra.value) || 0;
+
+            // Update URL Parameters without page reload
+            const params = new URLSearchParams();
+            params.set('bal', bal);
+            params.set('apr', apr);
+            params.set('rule', rule);
+            if (rule === 'fixed') params.set('fixed', fixedBudget);
+            params.set('extra', extra);
+            params.set('cur', currencySwitcher.value);
+            window.history.replaceState({}, '', `${window.location.pathname}?${params}`);
+
+            // Compute baseline Minimum Payments Only schedule
+            const baseline = calculateSchedule(bal, apr, 'standard', 0, 0);
+            minSchedule = baseline.schedule;
+
+            // Compute active strategy schedule
+            const strategy = calculateSchedule(bal, apr, rule, fixedBudget, extra);
+            currentSchedule = strategy.schedule;
+
+            // Trigger Shimmer Effect
+            document.querySelectorAll('.calc-res').forEach(el => el.classList.add('shimmer'));
+
+            // Key Outputs Updates with Number Animation
+            const oldMonths = parseMoney(outMonths.innerText);
+            animateValue(outMonths, oldMonths, strategy.months, 400, false);
+
+            const years = Math.floor(strategy.months / 12);
+            const remainingMo = strategy.months % 12;
+            outYearsDesc.innerText = `${years} yrs, ${remainingMo} mo`;
+
+            const oldInt = parseMoney(outInterest.innerText);
+            animateValue(outInterest, oldInt, strategy.totalInterest, 500, true);
+
+            const oldTotal = parseMoney(outTotalPaid.innerText);
+            animateValue(outTotalPaid, oldTotal, strategy.totalPaid, 500, true);
+
+            const interestSaved = Math.max(0, baseline.totalInterest - strategy.totalInterest);
+            const oldSaved = parseMoney(outInterestSaved.innerText);
+            animateValue(outInterestSaved, oldSaved, interestSaved, 500, true);
+
+            const monthsSaved = Math.max(0, baseline.months - strategy.months);
+            const yearsSaved = Math.floor(monthsSaved / 12);
+            const moSavedRem = monthsSaved % 12;
+            outTimeSaved.innerText = monthsSaved > 0 ? `${yearsSaved}y ${moSavedRem}m saved vs. min` : 'Baseline schedule';
+
+            // Warning Banner for Minimum Payment Trap
+            if (strategy.months > 120 && extra === 0) {
+                warningMinTrap.classList.remove('hidden');
+            } else {
+                warningMinTrap.classList.add('hidden');
+            }
+
+            // Update Summary Comparison Tab
+            document.getElementById('cmp-min-time').innerText = `${baseline.months} mo (${Math.floor(baseline.months / 12)}y ${baseline.months % 12}m)`;
+            document.getElementById('cmp-strat-time').innerText = `${strategy.months} mo (${years}y ${remainingMo}m)`;
+            document.getElementById('cmp-diff-time').innerText = monthsSaved > 0 ? `-${monthsSaved} mo` : 'Same';
+
+            document.getElementById('cmp-min-start-pmt').innerText = formatMoney(baseline.startingPayment);
+            document.getElementById('cmp-strat-start-pmt').innerText = formatMoney(strategy.startingPayment);
+            const pmtDiff = strategy.startingPayment - baseline.startingPayment;
+            document.getElementById('cmp-diff-pmt').innerText = pmtDiff > 0 ? `+${getCurrencySymbol()}${formatMoney(pmtDiff)}/mo` : 'Baseline';
+
+            document.getElementById('cmp-min-interest').innerText = formatMoney(baseline.totalInterest);
+            document.getElementById('cmp-strat-interest').innerText = formatMoney(strategy.totalInterest);
+            document.getElementById('cmp-diff-interest').innerText = formatMoney(interestSaved);
+
+            document.getElementById('cmp-min-total').innerText = formatMoney(baseline.totalPaid);
+            document.getElementById('cmp-strat-total').innerText = formatMoney(strategy.totalPaid);
+            document.getElementById('cmp-diff-total').innerText = formatMoney(interestSaved);
+
+            // Populate Amortization Table
+            renderAmortizationTable(currentSchedule);
+
+            // Populate Print Report Tab
+            document.getElementById('rpt-balance').innerText = `${getCurrencySymbol()}${formatMoney(bal)}`;
+            document.getElementById('rpt-apr').innerText = `${apr.toFixed(2)}%`;
+            document.getElementById('rpt-extra').innerText = `${getCurrencySymbol()}${formatMoney(extra)} / month`;
+            document.getElementById('rpt-interest').innerText = `${getCurrencySymbol()}${formatMoney(strategy.totalInterest)}`;
+            document.getElementById('rpt-summary-text').innerText = `By executing this accelerated strategy, this credit card account will be fully cleared in ${strategy.months} months (${years} years, ${remainingMo} months), saving ${getCurrencySymbol()}${formatMoney(interestSaved)} in unnecessary finance charges compared to paying issuer minimums.`;
+
+            // Render Charts if chart tab is active
+            if (!document.getElementById('tab-charts').classList.contains('hidden')) {
+                renderCharts();
+            }
+        }
+
+        // Render Amortization Table Rows
+        function renderAmortizationTable(schedule) {
+            const tbody = document.getElementById('amortization-table-body');
+            const sym = getCurrencySymbol();
+            
+            // Limit render to 360 months max for DOM performance, adding note if longer
+            const rowsToRender = schedule.slice(0, 360);
+            let html = '';
+
+            rowsToRender.forEach(row => {
+                html += `
+                    <tr class="hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors">
+                        <td class="py-2 px-3 font-semibold text-sub-light dark:text-sub-dark">${row.month}</td>
+                        <td class="py-2 px-3">${sym}${formatMoney(row.startBalance)}</td>
+                        <td class="py-2 px-3 font-semibold">${sym}${formatMoney(row.payment)}</td>
+                        <td class="py-2 px-3 text-emerald-600 dark:text-emerald-400">${sym}${formatMoney(row.principal)}</td>
+                        <td class="py-2 px-3 text-amber-500">${sym}${formatMoney(row.interest)}</td>
+                        <td class="py-2 px-3 font-bold">${sym}${formatMoney(row.endBalance)}</td>
+                    </tr>
+                `;
+            });
+
+            if (schedule.length > 360) {
+                html += `<tr><td colspan="6" class="p-3 text-center text-xs text-sub-light dark:text-sub-dark italic">Schedule truncated at 360 months for display. Use CSV export for full data.</td></tr>`;
+            }
+
+            tbody.innerHTML = html;
+        }
+
+        // Render Chart.js Visualizations
+        function renderCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9CA3AF' : '#64748B';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)';
+            const sym = getCurrencySymbol();
+
+            // Sample points for line chart (max 40 points)
+            const maxPoints = 36;
+            const step = Math.max(1, Math.ceil(Math.max(currentSchedule.length, minSchedule.length) / maxPoints));
+            
+            const labels = [];
+            const dataStrategy = [];
+            const dataMin = [];
+
+            const totalDuration = Math.max(currentSchedule.length, minSchedule.length);
+
+            for (let i = 0; i <= totalDuration; i += step) {
+                labels.push(`Mo ${i}`);
+
+                // Strategy balance
+                if (i === 0) {
+                    dataStrategy.push(parseFloat(inBalance.value) || 0);
+                } else if (i <= currentSchedule.length) {
+                    dataStrategy.push(currentSchedule[i - 1].endBalance);
+                } else {
+                    dataStrategy.push(0);
+                }
+
+                // Minimum balance
+                if (i === 0) {
+                    dataMin.push(parseFloat(inBalance.value) || 0);
+                } else if (i <= minSchedule.length) {
+                    dataMin.push(minSchedule[i - 1].endBalance);
+                } else {
+                    dataMin.push(0);
+                }
+            }
+
+            // 1. Balance Decay Line Chart
+            const ctxDecay = document.getElementById('chart-decay')?.getContext('2d');
+            if (ctxDecay) {
+                if (decayChart) decayChart.destroy();
+                decayChart = new Chart(ctxDecay, {
+                    type: 'line',
+                    data: {
+                        labels,
+                        datasets: [
+                            {
+                                label: 'Your Strategy',
+                                data: dataStrategy,
+                                borderColor: '#3B82F6',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                fill: true,
+                                tension: 0.3,
+                                borderWidth: 2.5,
+                                pointRadius: 1.5
+                            },
+                            {
+                                label: 'Minimum Only',
+                                data: dataMin,
+                                borderColor: '#F59E0B',
+                                borderDash: [5, 5],
+                                backgroundColor: 'transparent',
+                                fill: false,
+                                tension: 0.3,
+                                borderWidth: 2,
+                                pointRadius: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { intersect: false, mode: 'index' },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '500' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.dataset.label}: ${sym}${formatMoney(context.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { color: textColor, font: { size: 10 } }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { size: 10 },
+                                    callback: (val) => `${sym}${formatInteger(val)}`
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Doughnut Chart: Principal vs Total Interest
+            const ctxDoughnut = document.getElementById('chart-doughnut')?.getContext('2d');
+            if (ctxDoughnut) {
+                if (doughnutChart) doughnutChart.destroy();
+                const bal = parseFloat(inBalance.value) || 0;
+                const totalInterest = currentSchedule.length > 0 ? currentSchedule[currentSchedule.length - 1].cumInterest : 0;
+
+                doughnutChart = new Chart(ctxDoughnut, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Original Principal', 'Total Finance Charges'],
+                        datasets: [{
+                            data: [bal, totalInterest],
+                            backgroundColor: ['#3B82F6', '#F59E0B'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '500' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const val = context.raw;
+                                        const pct = ((val / (bal + totalInterest)) * 100).toFixed(1);
+                                        return ` ${context.label}: ${sym}${formatMoney(val)} (${pct}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '68%'
+                    }
+                });
+            }
+        }
+
+        // CSV Export Functionality
+        document.getElementById('btn-download-csv').addEventListener('click', () => {
+            if (!currentSchedule.length) return;
+            const sym = getCurrencySymbol();
+            let csv = 'Month,Starting Balance,Payment,Principal,Interest,Ending Balance,Cumulative Interest\n';
+            currentSchedule.forEach(r => {
+                csv += `${r.month},${r.startBalance.toFixed(2)},${r.payment.toFixed(2)},${r.principal.toFixed(2)},${r.interest.toFixed(2)},${r.endBalance.toFixed(2)},${r.cumInterest.toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', `credit-card-payoff-schedule-${Date.now()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast('Amortization schedule exported to CSV!');
+        });
+
+        // Copy Summary to Clipboard
+        document.getElementById('btn-copy-summary').addEventListener('click', () => {
+            const sym = getCurrencySymbol();
+            const bal = formatMoney(inBalance.value);
+            const apr = inApr.value;
+            const mo = outMonths.innerText;
+            const int = outInterest.innerText;
+            const paid = outTotalPaid.innerText;
+            const saved = outInterestSaved.innerText;
+            const url = window.location.href;
+
+            const text = `Credit Card Payoff Plan (${sym}):\n` +
+                         `• Current Balance: ${sym}${bal} at ${apr}% APR\n` +
+                         `• Payoff Duration: ${mo} months\n` +
+                         `• Total Interest: ${sym}${int}\n` +
+                         `• Total Paid: ${sym}${paid}\n` +
+                         `• Total Interest Saved: ${sym}${saved}\n` +
+                         `Calculated via CalcWorld: ${url}`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy. Please allow clipboard permissions.');
+            });
+        });
+
+        // Print tab button trigger
+        document.getElementById('btn-print-tab').addEventListener('click', () => {
+            document.querySelector('[data-tab="print"]').click();
+            window.print();
+        });
+
+        // Reset Defaults
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            inBalance.value = 5000;
+            rangeBalance.value = 5000;
+            inApr.value = 22.5;
+            rangeApr.value = 22.5;
+            inMinRule.value = 'standard';
+            wrapperFixedPayment.classList.add('hidden');
+            inFixedPmt.value = 250;
+            inExtra.value = 0;
+            currencySwitcher.value = '$';
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('preset-min').classList.add('active');
+            updateCurrencySymbols();
+            showToast('Parameters reset to default values.');
+        });
+
+        // Lead Generation Form Handler
+        document.getElementById('lead-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('lead-email').value;
+            if (email) {
+                document.getElementById('lead-status').classList.remove('hidden');
+                document.getElementById('lead-email').value = '';
+                showToast('Payoff plan PDF dispatched to your email!');
+            }
+        });
+
+        // AdBlock Detection & Recovery
+        function checkAdBlock() {
+            setTimeout(() => {
+                const ads = document.querySelectorAll('.ad-unit-slot');
+                ads.forEach(ad => {
+                    if (ad.offsetHeight === 0 || window.getComputedStyle(ad).display === 'none') {
+                        const fallback = ad.parentElement.querySelector('.adblock-fallback');
+                        if (fallback) {
+                            fallback.classList.remove('hidden');
+                            fallback.classList.add('flex');
+                        }
+                    }
+                });
+            }, 1200);
+        }
+
+        // Initialize from URL State on Load
+        function initFromUrl() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('bal')) {
+                inBalance.value = params.get('bal');
+                rangeBalance.value = params.get('bal');
+            }
+            if (params.has('apr')) {
+                inApr.value = params.get('apr');
+                rangeApr.value = params.get('apr');
+            }
+            if (params.has('rule')) {
+                inMinRule.value = params.get('rule');
+                if (params.get('rule') === 'fixed') wrapperFixedPayment.classList.remove('hidden');
+            }
+            if (params.has('fixed')) inFixedPmt.value = params.get('fixed');
+            if (params.has('extra')) inExtra.value = params.get('extra');
+            if (params.has('cur')) {
+                currencySwitcher.value = params.get('cur');
+                updateCurrencySymbols();
+            } else {
+                recalculate();
+            }
+            checkAdBlock();
+        }
+
+        window.addEventListener('DOMContentLoaded', initFromUrl);
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,2330 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Engine Horsepower Calculator | Displacement, Boost &amp; Quarter-Mile Drag Strip Suite</title>
+    <meta name="description" content="Calculate naturally aspirated engine horsepower from displacement and volumetric efficiency, forced induction manifold boost gains, quarter-mile elapsed times (ET), trap speeds, and fuel injector sizing for gasoline and E85.">
+    <link rel="canonical" href="https://calcworld.net/calculators/engine-horsepower-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            200: '#fecaca',
+                            300: '#fca5a5',
+                            400: '#f87171',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            800: '#991b1b',
+                            900: '#7f1d1d',
+                            950: '#450a0a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical & Engineering Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(220, 38, 38, 0.08) 20%,
+                rgba(220, 38, 38, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5rem;
+            right: 1.5rem;
+            z-index: 50;
+            transform: translateY(150%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Engine Horsepower Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Engine Horsepower Calculator",
+          "url": "https://calcworld.net/other/engine-horsepower-calculator",
+          "applicationCategory": "EngineeringApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate internal combustion engine brake horsepower (BHP), boosted forced induction power scaling, quarter-mile elapsed time and trap speed using Fox and Hale formulas, and fuel injector sizing for gasoline and E85."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How is naturally aspirated engine horsepower calculated from displacement?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Naturally aspirated horsepower is calculated using displacement, engine speed, and volumetric efficiency: BHP = (CID * RPM * VE) / 5660, where CID is cubic inch displacement, RPM is engine revolutions per minute, and VE is volumetric efficiency expressed as a fraction (typically 0.80 to 0.95 for production engines)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does manifold boost pressure increase engine power?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Boost pressure increases intake air density above standard atmospheric pressure (14.7 PSI at sea level). The theoretical power scaling equals base naturally aspirated horsepower multiplied by the pressure ratio ((14.7 + Boost_PSI) / 14.7), corrected for intercooler thermal efficiency and charge air temperature density."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the Fox and Hale drag strip formulas for quarter-mile times?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Fox and Hale formulas estimate quarter-mile performance from vehicle weight and wheel horsepower (WHP). Elapsed Time (ET) in seconds equals 5.825 * (Weight / WHP)^0.333. Trap speed in miles per hour (MPH) equals 234 * (WHP / Weight)^0.333."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is Brake Mean Effective Pressure (BMEP)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Brake Mean Effective Pressure (BMEP) is the average theoretical pressure exerted on the pistons throughout the power stroke that produces the measured brake torque output. Computed as BMEP (PSI) = (150.8 * Torque) / CID, it serves as the ultimate benchmark of an engine design efficiency independent of displacement."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why do E85 fuel systems require larger fuel injectors than gasoline?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "E85 ethanol fuel contains a stoichiometric air-fuel ratio of approximately 9.765:1 compared to 14.7:1 for pump gasoline. Because ethanol contains lower energy density per unit mass, the engine requires approximately 30% to 35% more fuel mass flow to produce equivalent power."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between Brake Horsepower (BHP) and Wheel Horsepower (WHP)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Brake horsepower (BHP) is the mechanical power output measured directly at the engine crankshaft or flywheel. Wheel horsepower (WHP) is the power delivered to the racing surface after parasitic friction losses across the transmission, driveshaft, differential, axles, and tires (typically 12% to 22% loss depending on drivetrain layout)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is Volumetric Efficiency (VE) in a four-stroke internal combustion engine?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Volumetric efficiency (VE) is the ratio of the actual mass of air inducted into the cylinders during the intake stroke to the theoretical mass of air that would fill the swept cylinder volume under standard atmospheric temperature and pressure."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is fuel injector flow rate sized for target horsepower?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Required injector flow rate per cylinder in pounds per hour (lb/hr) equals (Target BHP * BSFC) / (Number of Injectors * Max Duty Cycle), where BSFC is Brake Specific Fuel Consumption (typically 0.45 to 0.65 lb/hp-hr) and maximum duty cycle is kept at 80% to 85% to maintain injector coil reliability."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Engine Horsepower Calculator | Displacement, Boost &amp; Quarter-Mile Drag Strip Suite">
+    <meta property="og:description" content="Calculate naturally aspirated engine horsepower from displacement and volumetric efficiency, forced induction manifold boost gains, quarter-mile elapsed times (ET), trap speeds, and fuel injector sizing for gasoline and E85.">
+    <meta property="og:url" content="https://calcworld.net/calculators/engine-horsepower-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Engine Horsepower Calculator | Displacement, Boost &amp; Quarter-Mile Drag Strip Suite">
+    <meta name="twitter:description" content="Calculate naturally aspirated engine horsepower from displacement and volumetric efficiency, forced induction manifold boost gains, quarter-mile elapsed times (ET), trap speeds, and fuel injector sizing for gasoline and E85.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Engineering Engine:</strong> CalcWorld provides peer-reviewed powertrain calculation software 100% free with zero registration. Please safelist our domain to support ongoing mechanical engineering software development.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Engine Horsepower Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Engine Horsepower Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Powertrain and drag strip engineering suite. Compute naturally aspirated brake horsepower (BHP) from engine displacement and volumetric efficiency, turbocharger/supercharger boost multiplier curves, quarter-mile drag strip elapsed times and trap speeds, and precision fuel injector sizing for gasoline and E85.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Powertrain Parameters</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">Interactive</span>
+                    </h2>
+
+                    <!-- Empirical Automotive Presets -->
+                    <div class="mb-5">
+                        <label for="enginePresetSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Automotive Presets</label>
+                        <select id="enginePresetSelect" onchange="loadEnginePreset()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Select Real-World Production Platform --</option>
+                            <option value="preset_coyote" selected>Ford Coyote 5.0L V8 (307 CID NA, 7500 RPM, 3,750 lbs RWD)</option>
+                            <option value="preset_sbc350">Chevy Small Block 350 (5.7L V8 NA, 5800 RPM, 3,450 lbs RWD)</option>
+                            <option value="preset_2jz">Toyota 2JZ-GTE 3.0L I6 (183 CID, Turbo @ 22 PSI, 3,450 lbs RWD)</option>
+                            <option value="preset_ls3sc">GM LS3 6.2L V8 (376 CID, Supercharged @ 10 PSI, 3,900 lbs RWD)</option>
+                            <option value="preset_gtr">Nissan VR38DETT 3.8L V6 (232 CID, Twin Turbo @ 18 PSI, 3,850 lbs AWD)</option>
+                            <option value="preset_k20">Honda K20A2 2.0L I4 (122 CID VTEC NA, 8200 RPM, 2,750 lbs FWD)</option>
+                            <option value="preset_hellcat">Dodge Hellcat 6.2L V8 (376 CID, Supercharged @ 11.6 PSI, 4,450 lbs RWD)</option>
+                        </select>
+                    </div>
+
+                    <!-- Induction System Selection -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Induction Method</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="relative flex items-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="inductionMode" value="na" onchange="switchInductionMode('na')" class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-2.5 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Naturally Aspirated</span>
+                                    <span class="text-slate-500 dark:text-slate-400 text-[11px]">Atmospheric intake</span>
+                                </div>
+                            </label>
+
+                            <label class="relative flex items-center p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition">
+                                <input type="radio" name="inductionMode" value="boosted" checked onchange="switchInductionMode('boosted')" class="w-4 h-4 text-brand-600 border-slate-300 focus:ring-brand-500">
+                                <div class="ml-2.5 text-xs">
+                                    <span class="font-bold text-slate-900 dark:text-white block">Forced Induction</span>
+                                    <span class="text-slate-500 dark:text-slate-400 text-[11px]">Turbo / Supercharged</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Engine Displacement Inputs -->
+                    <div class="space-y-4 mb-5">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="dispInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Engine Displacement</label>
+                                <div class="flex items-center gap-1 text-[11px]">
+                                    <button type="button" id="dispUnit_cid" onclick="setDisplacementUnit('cid')" class="px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">CID</button>
+                                    <button type="button" id="dispUnit_liters" onclick="setDisplacementUnit('liters')" class="px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">Liters</button>
+                                    <button type="button" id="dispUnit_cc" onclick="setDisplacementUnit('cc')" class="px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">cc</button>
+                                </div>
+                            </div>
+                            <input type="number" id="dispInput" step="any" min="1" value="307" oninput="syncDisplacementFromInput(); calculatePowertrain();" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block" id="dispConversionsText">307.0 CID = 5.03 Liters = 5,031 cc</span>
+                        </div>
+
+                        <!-- Peak Power RPM -->
+                        <div>
+                            <label for="rpmInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Engine Speed at Peak Power (RPM)</label>
+                            <input type="number" id="rpmInput" step="50" min="1000" max="18000" value="7500" oninput="calculatePowertrain()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block">Typical redline / peak power window: 5,500 – 8,500 RPM</span>
+                        </div>
+
+                        <!-- Volumetric Efficiency (VE) -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="veInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Volumetric Efficiency (VE %)</label>
+                                <span id="veValueDisplay" class="text-xs font-bold text-brand-600 dark:text-brand-400">98%</span>
+                            </div>
+                            <input type="range" id="veInput" min="70" max="120" value="98" oninput="document.getElementById('veValueDisplay').textContent=this.value+'%'; calculatePowertrain();" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>80% (Stock OEM)</span>
+                                <span>90-98% (High Performance)</span>
+                                <span>105%+ (Race / Ram-Tuned)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Forced Induction Block (Visible when Boosted) -->
+                    <div id="boostFieldsContainer" class="space-y-4 mb-5 p-3.5 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Forced Induction Settings</span>
+                            <div class="flex items-center gap-1 text-[11px]">
+                                <button type="button" id="boostUnit_psi" onclick="setBoostUnit('psi')" class="px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">PSI</button>
+                                <button type="button" id="boostUnit_bar" onclick="setBoostUnit('bar')" class="px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">Bar</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="boostInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1" id="boostInputLabel">Manifold Boost Pressure (PSI)</label>
+                            <input type="number" id="boostInput" step="0.5" min="0" max="65" value="12" oninput="calculatePowertrain()" class="w-full px-3 py-2 text-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block" id="pressureRatioDisplay">Pressure Ratio: 1.82:1 (Atmosphere = 14.70 PSI)</span>
+                        </div>
+
+                        <div>
+                            <label for="intercoolerSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Intercooler System &amp; Thermal Efficiency</label>
+                            <select id="intercoolerSelect" onchange="calculatePowertrain()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="0.95">Air-to-Water / High Efficiency (95%)</option>
+                                <option value="0.90" selected>Standard Air-to-Air Intercooler (90%)</option>
+                                <option value="0.82">Compact OEM / Top-Mount Cooler (82%)</option>
+                                <option value="0.75">Non-Intercooled / High Heat Soak (75%)</option>
+                                <option value="0.98">Ice Water Reservoir / Race Chiller (98%)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Drag Strip & Vehicle Dynamics -->
+                    <div class="space-y-4 mb-5 pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Chassis &amp; Drivetrain</span>
+                        
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="weightInput" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Total Race Weight (Car + Driver)</label>
+                                <div class="flex items-center gap-1 text-[11px]">
+                                    <button type="button" id="weightUnit_lbs" onclick="setWeightUnit('lbs')" class="px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300">lbs</button>
+                                    <button type="button" id="weightUnit_kg" onclick="setWeightUnit('kg')" class="px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white">kg</button>
+                                </div>
+                            </div>
+                            <input type="number" id="weightInput" step="10" min="500" max="12000" value="3750" oninput="calculatePowertrain()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                            <span class="text-[11px] text-slate-400 mt-1 block" id="weightConvertedDisplay">3,750 lbs = 1,701 kg</span>
+                        </div>
+
+                        <div>
+                            <label for="drivetrainSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Drivetrain Layout &amp; Mechanical Parasitic Loss</label>
+                            <select id="drivetrainSelect" onchange="calculatePowertrain()" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                                <option value="0.12">Front-Wheel Drive Manual (12% loss)</option>
+                                <option value="0.15" selected>Rear-Wheel Drive Manual (15% loss)</option>
+                                <option value="0.18">Rear-Wheel Drive Automatic (18% loss)</option>
+                                <option value="0.22">All-Wheel Drive (AWD / 4WD) (22% loss)</option>
+                                <option value="0.08">Electric Direct Reduction Gear (8% loss)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                        <button type="button" onclick="calculatePowertrain()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>Compute Dyno &amp; Drag Strip Results</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetEngineDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share Setup</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-slate-900 to-rose-950 text-white p-5 rounded-2xl shadow-md border border-rose-900/50">
+                    <div class="flex items-center gap-2 mb-2 text-rose-400 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Dyno Calibration Handbook</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Engine Tuning &amp; Drag Strip Formulas</h3>
+                    <p class="text-xs text-rose-200 mb-3">Download our technical calibration handbook covering BMEP formulas, turbo compressor map matching, and E85 fueling tables (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="tuner@motorsports.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-rose-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-lg transition shadow">Download Free PDF Guide</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">✓ Transmission confirmed. Your calibration guide is dispatched.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Powertrain Output Summary</span>
+                        <div class="flex items-center gap-2">
+                            <span id="nhraLicenseBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">NHRA Street Legal (&gt;11.49s)</span>
+                        </div>
+                    </div>
+
+                    <!-- Dual Primary Metrics (BHP & WHP) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Crankshaft Flywheel Power (BHP)</span>
+                            <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="flywheelBhpDisplay">
+                                655 HP
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="bhpBreakdownDisplay">Base NA: 400 HP + Boost Gain: 255 HP</span>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                            <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Wheel Horsepower (WHP to Ground)</span>
+                            <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white font-mono" id="wheelHpDisplay">
+                                557 WHP
+                            </div>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 block" id="whpLossDisplay">15% RWD Drivetrain Friction Loss</span>
+                        </div>
+                    </div>
+
+                    <!-- 4 Powertrain & Quarter-Mile Metric Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">1/4-Mile ET</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono text-brand-600 dark:text-brand-400" id="quarterMileEtVal">10.99 s</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Trap Speed</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="trapSpeedVal">124.8 MPH</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Peak Torque</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="torqueVal">458 lb-ft</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">BMEP Pressure</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="bmepVal">225.1 PSI</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="powerToWeightSummary">Power-to-Weight: 6.73 lbs/WHP</span>
+                            <span>&bull;</span>
+                            <span id="dispSpecificSummary">130.2 HP/Liter</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Dyno Certificate</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('displacement')" id="tabBtn_displacement" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Engine Displacement &amp; Boost Calculator
+                        </button>
+                        <button onclick="switchTab('dragstrip')" id="tabBtn_dragstrip" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Quarter-Mile Drag Strip ET Estimator
+                        </button>
+                        <button onclick="switchTab('injectors')" id="tabBtn_injectors" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Fuel Injector Sizing Tool
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Engine Displacement & Boost Calculator -->
+                <div id="tab-displacement" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart.js Visualization Container (Boost vs HP Scaling) -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Boost Pressure vs. Horsepower Scaling</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Theoretical manifold pressure scaling curve from 0 to 35 PSI boost.</p>
+                            </div>
+                            <span class="text-xs font-mono text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-brand-950 px-2.5 py-1 rounded-md border border-brand-200/50">Active: <span id="chartActivePointLabel">12 PSI Boost</span></span>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full">
+                            <canvas id="boostChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Powertrain Mathematical Derivation</span>
+                        </h3>
+                        
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div class="text-center py-2 text-slate-400">Computing powertrain equations...</div>
+                        </div>
+                    </div>
+
+                    <!-- Boost Sensitivity Matrix Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3">Manifold Pressure Sensitivity Matrix</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Observe how incremental stages of boost modify torque output, BMEP pressure, and quarter-mile acceleration.</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Boost (PSI)</th>
+                                        <th class="px-3 py-2.5">Pressure Ratio</th>
+                                        <th class="px-3 py-2.5">Flywheel BHP</th>
+                                        <th class="px-3 py-2.5">Wheel WHP</th>
+                                        <th class="px-3 py-2.5">BMEP (PSI)</th>
+                                        <th class="px-3 py-2.5">1/4-Mile ET</th>
+                                        <th class="px-3 py-2.5">Trap Speed</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="boostMatrixBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Quarter-Mile Drag Strip ET Estimator -->
+                <div id="tab-dragstrip" class="tab-panel space-y-6">
+                    
+                    <!-- Chart.js Quarter-Mile Performance Matrix (ET vs Weight) -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Quarter-Mile ET vs. Vehicle Weight Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Fox &amp; Hale acceleration curves comparing your current build against horsepower tiers.</p>
+                            </div>
+                        </div>
+
+                        <div class="relative h-64 sm:h-72 w-full">
+                            <canvas id="dragChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Split Times & Acceleration Breakdown -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3">Drag Strip Split Increments &amp; Performance Indexes</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Estimated track timing increments based on standard NHRA friction surfaces and drag radial traction.</p>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">60-Foot (Launch)</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="split60ftVal">1.62 s</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">330-Foot Split</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="split330ftVal">4.58 s</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">1/8-Mile ET</span>
+                                <span class="text-base font-bold text-brand-600 dark:text-brand-400 font-mono" id="splitEighthEtVal">7.19 s</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/50 p-3 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">1/8-Mile Speed</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="splitEighthMphVal">101.1 MPH</span>
+                            </div>
+                        </div>
+
+                        <!-- NHRA Safety Rule Thresholds -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden text-xs">
+                            <div class="bg-slate-100 dark:bg-slate-800/80 px-4 py-2.5 font-bold text-slate-900 dark:text-white">
+                                National Hot Rod Association (NHRA) Safety Mandate Tracker
+                            </div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800" id="nhraRulesContainer">
+                                <!-- Populated dynamically based on ET -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: Fuel Injector Sizing Tool -->
+                <div id="tab-injectors" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Fuel Injector Sizing &amp; Duty Cycle Engine</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Compute required static mass flow rate per cylinder for gasoline and high-octane E85 ethanol.</p>
+                            </div>
+                        </div>
+
+                        <!-- Injector Controls Grid -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div>
+                                <label for="injCountSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Number of Injectors</label>
+                                <select id="injCountSelect" onchange="calculatePowertrain()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                    <option value="4">4 Cylinders (4 Injectors)</option>
+                                    <option value="6">6 Cylinders (6 Injectors)</option>
+                                    <option value="8" selected>8 Cylinders (8 Injectors)</option>
+                                    <option value="10">10 Cylinders (10 Injectors)</option>
+                                    <option value="12">12 Cylinders (12 Injectors)</option>
+                                    <option value="16">V8 Dual Stage (16 Injectors)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="injDutySelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Maximum Safe Duty Cycle</label>
+                                <select id="injDutySelect" onchange="calculatePowertrain()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                    <option value="0.80">80% Duty Cycle (Conservative OEM)</option>
+                                    <option value="0.85" selected>85% Duty Cycle (Recommended Safe Ceiling)</option>
+                                    <option value="0.90">90% Duty Cycle (Aggressive Racing)</option>
+                                    <option value="1.00">100% Static (Open Valve Limit)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="injPressureSelect" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Fuel Rail Base Pressure</label>
+                                <select id="injPressureSelect" onchange="calculatePowertrain()" class="w-full px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white">
+                                    <option value="43.5" selected>43.5 PSI (3.0 Bar - Industry Standard)</option>
+                                    <option value="50.0">50.0 PSI (3.45 Bar)</option>
+                                    <option value="58.0">58.0 PSI (4.0 Bar - GM LS / Modern EFI)</option>
+                                    <option value="65.0">65.0 PSI (4.48 Bar - High Pressure)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Fuel Comparison Matrix (Pump Gas vs E85) -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- Pump Gasoline Card -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Pump Gasoline (91-93 Octane)</span>
+                                    <span class="text-[11px] font-mono text-slate-500">BSFC: <span id="gasBsfcDisplay">0.55</span></span>
+                                </div>
+                                <div class="space-y-2 font-mono text-xs">
+                                    <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                        <span class="text-slate-500">Flow Rate (lbs/hr):</span>
+                                        <span class="font-bold text-slate-900 dark:text-white" id="gasFlowLbHr">53.0 lbs/hr</span>
+                                    </div>
+                                    <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                        <span class="text-slate-500">Flow Rate (cc/min):</span>
+                                        <span class="font-bold text-brand-600 dark:text-brand-400 text-sm" id="gasFlowCcMin">556 cc/min</span>
+                                    </div>
+                                    <div class="flex justify-between py-1">
+                                        <span class="text-slate-500">Total Fuel System Flow:</span>
+                                        <span class="text-slate-700 dark:text-slate-300" id="gasTotalFlowDisplay">70.7 GPH (267 LPH)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- E85 Flex Fuel Card -->
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">E85 Ethanol Blend (~105 Octane)</span>
+                                    <span class="text-[11px] font-mono text-slate-500">BSFC: <span id="e85BsfcDisplay">0.78</span></span>
+                                </div>
+                                <div class="space-y-2 font-mono text-xs">
+                                    <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                        <span class="text-slate-500">Flow Rate (lbs/hr):</span>
+                                        <span class="font-bold text-slate-900 dark:text-white" id="e85FlowLbHr">75.1 lbs/hr</span>
+                                    </div>
+                                    <div class="flex justify-between py-1 border-b border-slate-200/60 dark:border-slate-700/60">
+                                        <span class="text-slate-500">Flow Rate (cc/min):</span>
+                                        <span class="font-bold text-emerald-600 dark:text-emerald-400 text-sm" id="e85FlowCcMin">789 cc/min</span>
+                                    </div>
+                                    <div class="flex justify-between py-1">
+                                        <span class="text-slate-500">Total Fuel System Flow:</span>
+                                        <span class="text-slate-700 dark:text-slate-300" id="e85TotalFlowDisplay">100.2 GPH (379 LPH)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Effective Boost Compression Calculator -->
+                        <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/30">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2">Dynamic Boost Compression Ratio</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Manifold boost pressure multiplies cylinder trapped density, dramatically expanding effective compression.</p>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-mono text-xs">
+                                <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 block text-[10px]">Static Compression Ratio:</span>
+                                    <span class="font-bold text-slate-900 dark:text-white text-sm" id="staticCrDisplay">10.0:1</span>
+                                </div>
+                                <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 block text-[10px]">Manifold Pressure Ratio:</span>
+                                    <span class="font-bold text-slate-900 dark:text-white text-sm" id="crPrDisplay">1.82:1</span>
+                                </div>
+                                <div class="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 block text-[10px]">Effective Compression under Boost:</span>
+                                    <span class="font-bold text-rose-600 dark:text-rose-400 text-sm" id="effectiveCrDisplay">13.49:1</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100" id="printableReportSection">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Internal Combustion Powertrain Dyno &amp; Drag Strip Audit</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Generated by CalcWorld Automotive Engine Suite &bull; SAE J1349 Standard Alignment</p>
+                            </div>
+                            <div class="text-right text-xs text-slate-500 dark:text-slate-400 font-mono" id="reportTimestamp">
+                                Oct 16, 2026
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 text-xs">
+                            <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl">
+                                <div>
+                                    <span class="text-slate-500 block">Induction Configuration</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="reportInductionConfig">Forced Induction (12.0 PSI Boost)</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 block">Vehicle Race Mass</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="reportRaceMass">3,750 lbs (1,701 kg)</span>
+                                </div>
+                            </div>
+
+                            <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold w-1/2">Engine Displacement</td>
+                                        <td class="p-2.5 font-bold" id="reportDisplacement">307.0 CID (5.03 Liters)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Engine Speed at Peak Power</td>
+                                        <td class="p-2.5" id="reportRpm">7,500 RPM</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Volumetric Efficiency (VE)</td>
+                                        <td class="p-2.5" id="reportVe">98.0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Naturally Aspirated Base Power</td>
+                                        <td class="p-2.5" id="reportNaPower">400.0 BHP</td>
+                                    </tr>
+                                    <tr class="bg-rose-50/40 dark:bg-rose-950/20">
+                                        <td class="p-2.5 font-bold text-slate-900 dark:text-white">Total Flywheel Brake Horsepower (BHP)</td>
+                                        <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400 text-sm" id="reportTotalBhp">655.0 BHP</td>
+                                    </tr>
+                                    <tr class="bg-rose-50/40 dark:bg-rose-950/20">
+                                        <td class="p-2.5 font-bold text-slate-900 dark:text-white">Wheel Horsepower (WHP to Pavement)</td>
+                                        <td class="p-2.5 font-bold text-brand-600 dark:text-brand-400 text-sm" id="reportTotalWhp">556.7 WHP</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Brake Peak Torque</td>
+                                        <td class="p-2.5 font-bold" id="reportTorque">458.7 lb-ft</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Brake Mean Effective Pressure (BMEP)</td>
+                                        <td class="p-2.5" id="reportBmep">225.3 PSI</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Quarter-Mile Elapsed Time (Fox &amp; Hale)</td>
+                                        <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400" id="reportQuarterEt">10.99 s</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Quarter-Mile Trap Speed</td>
+                                        <td class="p-2.5 font-bold" id="reportQuarterMph">124.8 MPH</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Required Injector Size (Gasoline 85% DC)</td>
+                                        <td class="p-2.5 font-mono" id="reportGasInjector">53.0 lb/hr (556 cc/min)</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Required Injector Size (E85 85% DC)</td>
+                                        <td class="p-2.5 font-mono" id="reportE85Injector">75.1 lb/hr (789 cc/min)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                <h4 class="font-bold text-slate-900 dark:text-white">Powertrain Engineering Appraisal</h4>
+                                <p class="text-slate-600 dark:text-slate-300 leading-relaxed" id="reportConclusion">
+                                    At a curb-plus-driver mass of 3,750 lbs, this 307.0 CID powertrain generates 655 BHP and delivers 557 WHP. The modeled power-to-weight ratio of 6.73 lbs/WHP yields an estimated quarter-mile trajectory of 10.99 seconds at 124.8 MPH. Under NHRA competition regulations, vehicles crossing below the 11.49-second threshold require an SFI-approved roll bar and five-point driver restraint safety belt system.
+                                </p>
+                            </div>
+
+                            <div class="pt-4 flex justify-end no-print">
+                                <button type="button" onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-bold transition flex items-center gap-2 shadow">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    <span>Print Audit Certificate / Export PDF</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 2: Under-Result Display Ad -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide (Strictly Clean & Authoritative) -->
+        <article class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose prose-slate dark:prose-invert max-w-none">
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Internal combustion engine power determination represents a core discipline within automotive and mechanical engineering. Whether building a high-compression naturally aspirated road race powerplant, matching a twin-scroll turbocharger system for street competition, or predicting quarter-mile drag strip elapsed time from chassis mass, accurate calculations require combining thermodynamic gas laws, fluid mechanics, and vehicle dynamics.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Horsepower itself is a derived measurement rather than a directly observed quantity. Dynamometers measure torque through a load absorption unit and compute brake horsepower by factoring angular rotational speed. By understanding how cylinder swept displacement, air-fuel mass flow, manifold boost density, and drivetrain mechanical friction interact, powertrain engineers calibrate engines to achieve target performance without exceeding component stress limits.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">1. Thermodynamic Foundations of the Four-Stroke Otto Cycle</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The four-stroke spark-ignition internal combustion engine operates around the idealized thermodynamic Otto cycle. Conceptualized by Nikolaus August Otto in 1876, the theoretical cycle comprises four distinct states across two complete revolutions ($720^\circ$) of the crankshaft: isentropic compression, constant-volume (isochoric) heat addition, isentropic expansion, and constant-volume heat rejection.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The thermal efficiency of an idealized Otto cycle ($\eta_{\text{th}}$) depends fundamentally on the static geometric compression ratio ($r$):</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\eta_{\text{th}} = 1 - \frac{1}{r^{\gamma - 1}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In this relationship, $\gamma = c_p / c_v$ represents the ratio of specific heats for the working fluid (approximately $1.4$ for ambient dry air, dropping to approximately $1.28$ to $1.32$ for hot combusted fuel-air products). Raising static compression from $8.5:1$ to $11.5:1$ improves theoretical thermal efficiency from $57.5\%$ to $62.3\%$, yielding higher work output per unit of consumed fuel.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Real-world four-stroke cycles deviate from theoretical models because of throttling losses across the intake valve, heat transfer through the cylinder head and cylinder walls, finite combustion burn duration, and blowdown energy expelled through the exhaust valve prior to bottom dead center. Maximizing brake thermal efficiency demands precise synchronization between valve lift profiles, spark discharge timing, and combustion chamber flame propagation velocity.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">2. Naturally Aspirated Power &amp; Volumetric Efficiency (VE) Dynamics</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In a naturally aspirated engine, the pistons act as an air pump. Power output is governed directly by the engine displacement, operational rotational speed, and volumetric efficiency (VE). The classical engineering relationship used to calculate naturally aspirated brake horsepower is:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{BHP}_{\text{NA}} = \frac{\text{CID} \times \text{RPM} \times (\text{VE} / 100)}{5660}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In this formulation, $\text{CID}$ represents total cylinder swept displacement in cubic inches, $\text{RPM}$ denotes crankshaft rotational velocity at peak power, and $\text{VE}$ represents the percentage of theoretical cylinder volume successfully filled with ambient density air. The empirical denominator of $5660$ incorporates the physical constant of air density at standard temperature and pressure ($0.0765 \text{ lb/ft}^3$) alongside typical brake specific fuel consumption ($0.45 \text{ to } 0.50 \text{ lb/(hp}\cdot\text{hr)}$).</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Volumetric efficiency is not a fixed constant across an engine operating range; it forms an acoustic curve dictated by intake manifold runner geometry, plenum volume, camshaft duration, and valve overlap. Standard passenger car engines equipped with restrictive air filtration and mild camshafts typically achieve peak VE between $80\%$ and $85\%$. High-performance production engines (such as the Ford Coyote 5.0L or GM LT1) achieve $95\%$ to $100\%$ VE.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Purpose-built racing engines equipped with tuned intake trumpet lengths use Helmholtz resonance and inertial ram charging. As the intake valve closes, the kinetic inertia of the incoming air column creates a localized pressure spike directly behind the valve face. This wave dynamic packs extra air mass into the combustion chamber, allowing naturally aspirated racing engines to achieve volumetric efficiencies exceeding $105\%$ to $115\%$.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">3. Brake Mean Effective Pressure (BMEP): The Universal Powertrain Benchmark</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Comparing engines of differing displacement through absolute horsepower or torque figures can be misleading. A 7.0-liter V8 generating 500 horsepower appears impressive until compared against a 2.0-liter turbocharged four-cylinder generating 400 horsepower. To evaluate how efficiently an engine extracts mechanical work from each cubic inch of swept displacement, powertrain engineers calculate **Brake Mean Effective Pressure (BMEP)**.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">BMEP represents the theoretical average pressure that, if applied constantly to the piston face throughout the power stroke, would produce the measured brake torque output. For a four-stroke internal combustion engine:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{BMEP (PSI)} = \frac{150.8 \times \text{Torque (lb-ft)}}{\text{CID}} = \frac{792,000 \times \text{BHP}}{\text{CID} \times \text{RPM}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Standard production naturally aspirated gasoline engines operate with peak BMEP levels between $140$ and $165 \text{ PSI}$. Highly tuned, high-octane naturally aspirated racing engines reach $185$ to $215 \text{ PSI}$. Forced induction engines operate at significantly elevated cylinder pressures: moderate street turbo setups produce $220$ to $320 \text{ PSI}$ BMEP, while professional racing powertrains (such as Formula 1 turbocharged engines or NHRA Pro Mod drag racing units) surpass $450$ to $700+ \text{ PSI}$ BMEP.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">4. Forced Induction Thermodynamics: Supercharging vs. Turbocharging Density Ratios</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When naturally aspirated volumetric efficiency reaches its atmospheric ceiling, increasing horsepower requires forced induction. By compressing ambient air before inducting it into the intake manifold, turbochargers and superchargers raise intake manifold air density, allowing a proportional increase in fuel mass to be combusted.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The fundamental pressure ratio ($PR$) of a forced induction system is defined against ambient atmospheric pressure ($14.70 \text{ PSI}$ at sea level):</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$PR = \frac{14.70 + P_{\text{boost}}}{14.70}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Under ideal isothermal conditions, doubling absolute manifold pressure ($14.7 \text{ PSI}$ boost, $PR = 2.0$) would double engine power output. However, real-world compression is adiabatic and irreversible, generating substantial thermal heat according to the ideal gas law ($PV = nRT$). The theoretical temperature rise across a compressor wheel is governed by compressor adiabatic efficiency ($\eta_c$, typically $65\%$ to $78\%$):</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$T_{\text{discharge}} = T_{\text{ambient}} \times \left[ 1 + \frac{PR^{\frac{\gamma - 1}{\gamma}} - 1}{\eta_c} \right]$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Uncooled compressed air expands, decreasing density and increasing the risk of uncontrolled pre-ignition (engine knock). Intercoolers (charge air coolers) reject thermal energy to ambient air or liquid coolant before charge air enters the cylinders. Factoring intercooler heat exchanger efficiency ($\eta_{\text{IC}}$, typically $80\%$ to $95\%$), the boosted horsepower model is expressed as:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{HP}_{\text{boost}} = \text{HP}_{\text{NA}} \times \left(\frac{14.70 + P_{\text{boost}}}{14.70}\right) \times \eta_{\text{IC}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Superchargers differ from turbochargers in parasitic mechanical drive overhead. While a turbocharger recovers waste thermal energy and gas velocity from the exhaust stream, a belt-driven roots or centrifugal supercharger extracts mechanical work directly from the crankshaft nose. A supercharger producing $15 \text{ PSI}$ of boost may consume $60$ to $120$ mechanical horsepower simply to spin its compressor rotors, reducing net brake power compared to an equivalent turbocharger installation.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">5. Air-Fuel Stoichiometry: Lambda 1.0 vs. Rich Power Calibration and E85 Fueling</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Combustion chemistry dictates that power production depends on maintaining correct mass proportions between oxygen atoms and hydrocarbon fuel molecules. Air-fuel ratio (AFR) defines the mass ratio of air to liquid fuel inducting into the cylinders. The equivalence ratio, denoted as Lambda ($\lambda$), expresses actual AFR relative to chemical stoichiometry:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\lambda = \frac{\text{AFR}_{\text{actual}}}{\text{AFR}_{\text{stoichiometric}}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">For standard unleaded pump gasoline, chemical stoichiometry occurs at $14.7:1$ ($\lambda = 1.0$). At $\lambda = 1.0$, exactly enough oxygen exists to completely oxidize all fuel molecules into carbon dioxide ($CO_2$) and water ($H_2O$). While $\lambda = 1.0$ minimizes exhaust emissions across a three-way catalytic converter, it does not produce maximum engine power.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Maximum engine power output occurs in a rich fuel state, where excess fuel molecules accelerate flame front speed and ensure all available oxygen atoms are consumed. Naturally aspirated racing engines achieve peak brake torque around $\lambda = 0.85 \text{ to } 0.88$ (approximately $12.5:1 \text{ to } 12.9:1$ AFR on gasoline). Forced induction engines run richer at $\lambda = 0.78 \text{ to } 0.82$ ($11.5:1 \text{ to } 12.0:1$ AFR), using the latent heat of vaporization of excess fuel droplets to cool cylinder valves and combustion chamber surfaces against knock.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">High-performance engine calibration frequently adopts E85 fuel (an ethanol blend containing up to $85\%$ denatured ethanol and $15\%$ gasoline). Ethanol brings distinct thermodynamic characteristics:
+- **Stoichiometric AFR:** $9.765:1$ on pure E85 (requiring approximately $30\%$ to $35\%$ more fuel mass by weight than gasoline for equivalent air mass).
+- **High Octane Rating:** $105+$ research octane number (RON), providing exceptional resistance to abnormal detonation under heavy boost.
+- **High Latent Heat of Vaporization:** $840 \text{ kJ/kg}$ for ethanol compared to only $305 \text{ kJ/kg}$ for gasoline. Evaporating ethanol within the intake charge draws out thermal heat, dramatically lowering intake charge temperature and increasing in-cylinder air density.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">6. Power Measurement Standards: SAE J1349 Net vs. SAE J607 Gross Ratings</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">To ensure reported engine horsepower values are consistent, modern automotive manufacturers and testing laboratories adhere to standardized dynamometer correction procedures established by the Society of Automotive Engineers (SAE).</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Prior to 1972, American automakers rated engines according to **SAE J607 (Gross Horsepower)**. Under gross testing protocols, engines were mounted on dynamometer test stands with open headers, zero exhaust restriction, no cooling fan, no alternator or power steering pump, and air induction unrestricted by production filter housings. Dynamometer atmospheric conditions were corrected to $60^\circ\text{F}$ ($15.6^\circ\text{C}$) and $29.92 \text{ inHg}$ barometric pressure with dry air. This produced inflated laboratory power figures that never reached production vehicle tires.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In 1972, the industry adopted **SAE J1349 (Net Horsepower)**. Under SAE J1349, the engine must be evaluated in complete production configuration, including standard air cleaner housing, catalytic converters, production mufflers, water pump, alternator under simulated charging load, and production engine control calibrations. Atmospheric standard conditions were updated to $77^\circ\text{F}$ ($25^\circ\text{C}$), $29.23 \text{ inHg}$ ($990 \text{ mbar}$) pressure, and $0.00 \text{ inHg}$ water vapor pressure. A 1970 engine rated at 400 gross horsepower commonly registered 300 to 320 SAE net horsepower under J1349 guidelines.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In 2005, SAE further refined testing rigor by establishing **SAE J2723 (Certified Power)**. Under J2723, manufacturers can claim "SAE Certified" horsepower only if dyno test sequences are independently witnessed and audited by an authorized third-party SAE inspector, eliminating laboratory inflation.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">7. Quarter-Mile Drag Strip Modeling: Fox and Hale Acceleration Physics</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Translating dyno-measured horsepower into straight-line track performance requires modeling vehicle inertia, mass distribution, and tire traction limits. In drag racing, the standing quarter-mile ($1,320 \text{ feet}$ or $402.3 \text{ meters}$) serves as the worldwide metric of vehicle performance.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">In empirical vehicle testing across decades of National Hot Rod Association (NHRA) data, automotive researchers Fox and Hale established classical power-to-weight regression equations. The Fox and Hale formulas correlate total vehicle race mass (including driver, fuel, and equipment) and wheel horsepower ($\text{WHP}$) against elapsed time and final trap speed:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{Trap Speed (MPH)} = 234 \times \left(\frac{\text{WHP}}{\text{Weight (lbs)}}\right)^{0.333}$$</div>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{Elapsed Time (ET, seconds)} = 5.825 \times \left(\frac{\text{Weight (lbs)}}{\text{WHP}}\right)^{0.333}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Examining these equations reveals that trap speed and elapsed time scale inversely with the cube root ($0.333$ exponent) of the power-to-weight ratio. This cubic power relationship stems from fundamental physics: as vehicle speed increases along the track, the aerodynamic drag force increases with the square of velocity ($F_d = \frac{1}{2} \rho v^2 C_d A$), meaning the engine power required to overcome air resistance scales with the cube of velocity ($P = F_d \cdot v \propto v^3$).</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Consequently, cutting half a second off an eleven-second drag car requires significantly more horsepower than cutting half a second off a fourteen-second street vehicle. Trap speed indicates raw power-to-weight capability, whereas elapsed time depends heavily on launch traction, sixty-foot times, tire compound deflection, and driver reaction time.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">8. Fuel Injector Hydraulics &amp; Duty Cycle Safety Calculations</h3>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Fuel injection systems must deliver the precise volume of fuel commanded by the engine control module within milliseconds during each intake cycle. If an injector is undersized, it will reach $100\%$ duty cycle (held continuously open), leading to fuel starvation, lean air-fuel mixtures, and rapid cylinder piston melting.</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">To size fuel injectors properly, powertrain builders calculate static flow requirements using target brake horsepower, Brake Specific Fuel Consumption (BSFC), injector count, and maximum safe duty cycle:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{Flow Rate (lbs/hr)} = \frac{\text{Target BHP} \times \text{BSFC}}{\text{Number of Injectors} \times \text{Max Duty Cycle}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">To convert pounds per hour ($\text{lbs/hr}$ or $\text{lb/hr}$) into cubic centimeters per minute ($\text{cc/min}$), standard petroleum density yields an industry multiplier of $10.5$ ($\text{cc/min} = \text{lbs/hr} \times 10.5$).</p>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Engineers target a maximum duty cycle between $80\%$ and $85\%$ ($0.80 \text{ to } 0.85$). Operating solenoid injectors beyond an $85\%$ duty cycle causes electromagnetic coil overheating and leads to unpredictable fuel metering, as the pintle valve lacks sufficient settling time between opening and closing events. If base fuel rail pressure is modified from standard $43.5 \text{ PSI}$ ($3.0 \text{ bar}$) to $58.0 \text{ PSI}$ ($4.0 \text{ bar}$), actual injector flow scales according to Bernoulli's orifice principle:</p>
+<div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">$$\text{Flow}_{\text{actual}} = \text{Flow}_{\text{rated}} \times \sqrt{\frac{P_{\text{actual}}}{P_{\text{rated}}}}$$</div>
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Accurate calculations across these mechanical principles prevent catastrophic fuel starvation while ensuring the powertrain delivers reliable performance across its entire operational envelope.</p>
+        </article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print" id="faq-section">
+            <div class="mb-8">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Expert Powertrain Insights</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Answers to common engineering questions regarding engine horsepower calculation, boost dynamics, drag strip modeling, and fuel system calibration.</p>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is naturally aspirated engine horsepower calculated from displacement?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Naturally aspirated horsepower is calculated using cylinder displacement, engine rotational speed, and volumetric efficiency: \(\text{BHP} = \frac{\text{CID} \times \text{RPM} \times (\text{VE} / 100)}{5660}\). In this formula, CID is cubic inch displacement, RPM is engine speed at peak power, and VE is volumetric efficiency (typically 80% to 95% for production engines).
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does manifold boost pressure scale engine horsepower?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Boost pressure increases intake air density above standard atmospheric pressure (14.7 PSI at sea level). The boosted horsepower equals base naturally aspirated horsepower multiplied by the absolute pressure ratio \(\frac{14.7 + P_{\text{boost}}}{14.7}\) and adjusted for intercooler thermal efficiency (typically 85% to 95%).
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What are the Fox and Hale drag strip quarter-mile formulas?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        The Fox and Hale formulas predict quarter-mile drag strip performance from total race weight (in pounds) and wheel horsepower (WHP). Elapsed Time (ET) in seconds equals \(5.825 \times \left(\frac{\text{Weight}}{\text{WHP}}\right)^{0.333}\), and final trap speed in MPH equals \(234 \times \left(\frac{\text{WHP}}{\text{Weight}}\right)^{0.333}\).
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is Brake Mean Effective Pressure (BMEP)?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Brake Mean Effective Pressure (BMEP) is the theoretical average pressure exerted on the pistons throughout the power stroke to generate the measured brake torque. Calculated as \(\text{BMEP (PSI)} = \frac{150.8 \times \text{Torque}}{\text{CID}}\), it allows engineers to compare the structural efficiency of different engines independently of physical displacement.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why do E85 fuel systems require larger fuel injectors than pump gasoline?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Pure E85 ethanol has a stoichiometric air-fuel ratio of approximately 9.765:1, compared to 14.7:1 for pump gasoline. Because ethanol contains lower energy density per unit mass, an engine requires approximately 30% to 35% higher mass flow rate to maintain stoichiometric and rich power fuel mixtures.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between Brake Horsepower (BHP) and Wheel Horsepower (WHP)?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Brake horsepower (BHP) is the raw mechanical power generated directly at the engine crankshaft or flywheel. Wheel horsepower (WHP) is the net power delivered to the racing surface after parasitic frictional drag across the transmission gears, driveshaft, differential, bearings, and tires (typically 12% to 22% loss).
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How is fuel injector sizing calculated?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Required fuel injector flow rate per cylinder in pounds per hour is calculated as \(\text{Flow (lb/hr)} = \frac{\text{Target BHP} \times \text{BSFC}}{\text{Number of Injectors} \times \text{Duty Cycle}}\). Multiplying lb/hr by 10.5 converts flow to cc/min. To prevent solenoid coil overheating, maximum duty cycle is kept at 80% to 85%.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What NHRA safety regulations apply to cars running under 11.50 seconds?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Under National Hot Rod Association (NHRA) drag racing safety rules, any vehicle running a 1/4-mile elapsed time of 11.49 seconds or quicker (or exceeding 135 MPH) must be fitted with an SFI-approved 5-point driver restraint safety belt system, an SFI roll bar or full roll cage, and an approved transmission protective shield or blanket.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">HP</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Powertrain Engineering. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Engineering &amp; Methodological Notice:</strong> CalcWorld Engine Horsepower Calculator applies verified mechanical formulas in accordance with Society of Automotive Engineers (SAE J1349 / J2723) standards, thermodynamics of the Otto cycle, and NHRA competition timing methodologies. Predictions assume standard sea-level atmosphere ($14.7 \text{ PSI}$, $59^\circ\text{F}$ / $15^\circ\text{C}$) and adequate tire traction. Real-world vehicle dynamic results vary based on barometric pressure, density altitude, track surface temperature, clutch slippage, and driver reaction time.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Suite Nav:</span>
+        <button onclick="switchTab('displacement')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Displacement &amp; Boost</button>
+        <button onclick="switchTab('dragstrip')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">1/4-Mile ET</button>
+        <button onclick="switchTab('injectors')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Injector Sizing</button>
+        <button onclick="switchTab('print'); window.print();" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Print Certificate</button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Dyno summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global Application State ---
+    let inductionMode = 'boosted'; // 'na', 'boosted'
+    let dispUnit = 'cid'; // 'cid', 'liters', 'cc'
+    let boostUnit = 'psi'; // 'psi', 'bar'
+    let weightUnit = 'lbs'; // 'lbs', 'kg'
+
+    // Cached Current Physical State in Base Units (CID, PSI, Lbs)
+    let currentCid = 307.0;
+    let currentRpm = 7500;
+    let currentVe = 98;
+    let currentBoostPsi = 12.0;
+    let currentIcEff = 0.90;
+    let currentWeightLbs = 3750;
+    let currentDrivetrainLoss = 0.15;
+    let currentInjectorCount = 8;
+    let currentDutyCycle = 0.85;
+    let currentFuelPressure = 43.5;
+
+    // Output Storage Object
+    let lastCalc = {};
+
+    // Chart References
+    let boostChart = null;
+    let dragChart = null;
+
+    // Active Operating Point Marker Plugin for Chart.js
+    const operatingPointPlugin = {
+        id: 'operatingPointMarker',
+        afterDraw(chart) {
+            if (!lastCalc.boostPsi && lastCalc.boostPsi !== 0) return;
+            if (chart.canvas.id === 'boostChart') {
+                const xAxis = chart.scales.x;
+                const yAxis = chart.scales.y;
+                if (!xAxis || !yAxis) return;
+                const xVal = lastCalc.isNa ? 0 : lastCalc.boostPsi;
+                const yVal = lastCalc.flywheelBhp;
+                const xPos = xAxis.getPixelForValue(xVal);
+                const yPos = yAxis.getPixelForValue(yVal);
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(xPos, yPos, 6, 0, 2 * Math.PI);
+                ctx.fillStyle = '#dc2626';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#dc2626';
+                ctx.font = 'bold 11px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${Math.round(yVal)} BHP @ ${xVal.toFixed(1)} PSI`, xPos, yPos - 10);
+                ctx.restore();
+            }
+        }
+    };
+    Chart.register(operatingPointPlugin);
+
+    // Document Ready Initialization
+    window.addEventListener('DOMContentLoaded', () => {
+        parseUrlParams();
+        calculatePowertrain();
+
+        // AdBlock Detection Recovery
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Unit Converters ---
+    function setDisplacementUnit(unit) {
+        dispUnit = unit;
+        ['cid', 'liters', 'cc'].forEach(u => {
+            const btn = document.getElementById('dispUnit_' + u);
+            if (u === unit) {
+                btn.className = "px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300";
+            } else {
+                btn.className = "px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white";
+            }
+        });
+
+        const input = document.getElementById('dispInput');
+        if (unit === 'cid') input.value = currentCid.toFixed(1);
+        else if (unit === 'liters') input.value = (currentCid / 61.023744).toFixed(2);
+        else if (unit === 'cc') input.value = Math.round(currentCid * 16.387064);
+        updateDisplacementLabel();
+    }
+
+    function syncDisplacementFromInput() {
+        const val = parseFloat(document.getElementById('dispInput').value) || 0;
+        if (dispUnit === 'cid') currentCid = val;
+        else if (dispUnit === 'liters') currentCid = val * 61.023744;
+        else if (dispUnit === 'cc') currentCid = val / 16.387064;
+        updateDisplacementLabel();
+    }
+
+    function updateDisplacementLabel() {
+        const liters = currentCid / 61.023744;
+        const cc = currentCid * 16.387064;
+        document.getElementById('dispConversionsText').textContent = 
+            `${currentCid.toFixed(1)} CID = ${liters.toFixed(2)} Liters = ${Math.round(cc).toLocaleString()} cc`;
+    }
+
+    function setBoostUnit(unit) {
+        boostUnit = unit;
+        ['psi', 'bar'].forEach(u => {
+            const btn = document.getElementById('boostUnit_' + u);
+            if (u === unit) {
+                btn.className = "px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300";
+            } else {
+                btn.className = "px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white";
+            }
+        });
+
+        const input = document.getElementById('boostInput');
+        const label = document.getElementById('boostInputLabel');
+        if (unit === 'psi') {
+            label.textContent = "Manifold Boost Pressure (PSI)";
+            input.value = currentBoostPsi.toFixed(1);
+            input.step = "0.5";
+            input.max = "65";
+        } else {
+            label.textContent = "Manifold Boost Pressure (Bar)";
+            input.value = (currentBoostPsi / 14.50377).toFixed(2);
+            input.step = "0.05";
+            input.max = "4.5";
+        }
+    }
+
+    function setWeightUnit(unit) {
+        weightUnit = unit;
+        ['lbs', 'kg'].forEach(u => {
+            const btn = document.getElementById('weightUnit_' + u);
+            if (u === unit) {
+                btn.className = "px-1.5 py-0.5 rounded font-bold bg-brand-100 dark:bg-brand-900/60 text-brand-700 dark:text-brand-300";
+            } else {
+                btn.className = "px-1.5 py-0.5 rounded text-slate-500 hover:text-slate-900 dark:hover:text-white";
+            }
+        });
+
+        const input = document.getElementById('weightInput');
+        if (unit === 'lbs') {
+            input.value = Math.round(currentWeightLbs);
+        } else {
+            input.value = Math.round(currentWeightLbs / 2.20462);
+        }
+        updateWeightLabel();
+    }
+
+    function updateWeightLabel() {
+        const kg = currentWeightLbs / 2.20462;
+        document.getElementById('weightConvertedDisplay').textContent = 
+            `${Math.round(currentWeightLbs).toLocaleString()} lbs = ${Math.round(kg).toLocaleString()} kg`;
+    }
+
+    function switchInductionMode(mode) {
+        inductionMode = mode;
+        const boostContainer = document.getElementById('boostFieldsContainer');
+        if (mode === 'na') {
+            boostContainer.classList.add('hidden');
+        } else {
+            boostContainer.classList.remove('hidden');
+        }
+        calculatePowertrain();
+    }
+
+    // --- Automotive Preset Loader ---
+    const ENGINE_PRESETS = {
+        preset_coyote: { cid: 307.0, rpm: 7500, ve: 98, mode: 'boosted', boostPsi: 12.0, icEff: 0.90, weightLbs: 3750, loss: 0.15, inj: 8 },
+        preset_sbc350: { cid: 350.0, rpm: 5800, ve: 88, mode: 'na', boostPsi: 0, icEff: 0.90, weightLbs: 3450, loss: 0.15, inj: 8 },
+        preset_2jz: { cid: 183.0, rpm: 7200, ve: 92, mode: 'boosted', boostPsi: 22.0, icEff: 0.92, weightLbs: 3450, loss: 0.15, inj: 6 },
+        preset_ls3sc: { cid: 376.0, rpm: 6500, ve: 94, mode: 'boosted', boostPsi: 10.0, icEff: 0.88, weightLbs: 3900, loss: 0.18, inj: 8 },
+        preset_gtr: { cid: 232.0, rpm: 6800, ve: 95, mode: 'boosted', boostPsi: 18.0, icEff: 0.95, weightLbs: 3850, loss: 0.22, inj: 6 },
+        preset_k20: { cid: 122.0, rpm: 8200, ve: 104, mode: 'na', boostPsi: 0, icEff: 0.90, weightLbs: 2750, loss: 0.12, inj: 4 },
+        preset_hellcat: { cid: 376.0, rpm: 6200, ve: 96, mode: 'boosted', boostPsi: 11.6, icEff: 0.90, weightLbs: 4450, loss: 0.18, inj: 8 }
+    };
+
+    function loadEnginePreset() {
+        const val = document.getElementById('enginePresetSelect').value;
+        if (!val || val === 'custom' || !ENGINE_PRESETS[val]) return;
+        const p = ENGINE_PRESETS[val];
+        currentCid = p.cid;
+        currentRpm = p.rpm;
+        currentVe = p.ve;
+        inductionMode = p.mode;
+        currentBoostPsi = p.boostPsi;
+        currentIcEff = p.icEff;
+        currentWeightLbs = p.weightLbs;
+        currentDrivetrainLoss = p.loss;
+        currentInjectorCount = p.inj;
+
+        // Sync Form Elements
+        setDisplacementUnit('cid');
+        document.getElementById('rpmInput').value = currentRpm;
+        document.getElementById('veInput').value = currentVe;
+        document.getElementById('veValueDisplay').textContent = currentVe + '%';
+
+        const radio = document.querySelector(`input[name="inductionMode"][value="${p.mode}"]`);
+        if (radio) radio.checked = true;
+        switchInductionMode(p.mode);
+
+        if (p.mode === 'boosted') {
+            setBoostUnit('psi');
+            document.getElementById('boostInput').value = currentBoostPsi;
+            document.getElementById('intercoolerSelect').value = p.icEff.toString();
+        }
+
+        setWeightUnit('lbs');
+        document.getElementById('drivetrainSelect').value = p.loss.toString();
+        document.getElementById('injCountSelect').value = p.inj.toString();
+
+        calculatePowertrain();
+        showToast(`Loaded ${val.replace('preset_', '').toUpperCase()} preset platform.`);
+    }
+
+    function resetEngineDefaults() {
+        document.getElementById('enginePresetSelect').value = 'preset_coyote';
+        loadEnginePreset();
+    }
+
+    // --- Core Mechanical & Powertrain Math Engine ---
+    function calculatePowertrain() {
+        // Read Inputs
+        syncDisplacementFromInput();
+        currentRpm = parseFloat(document.getElementById('rpmInput').value) || 6000;
+        currentVe = parseFloat(document.getElementById('veInput').value) || 90;
+
+        if (inductionMode === 'boosted') {
+            const rawBoost = parseFloat(document.getElementById('boostInput').value) || 0;
+            currentBoostPsi = boostUnit === 'psi' ? rawBoost : rawBoost * 14.50377;
+            currentIcEff = parseFloat(document.getElementById('intercoolerSelect').value) || 0.90;
+        } else {
+            currentBoostPsi = 0;
+            currentIcEff = 1.0;
+        }
+
+        const rawWeight = parseFloat(document.getElementById('weightInput').value) || 3500;
+        currentWeightLbs = weightUnit === 'lbs' ? rawWeight : rawWeight * 2.20462;
+        updateWeightLabel();
+
+        currentDrivetrainLoss = parseFloat(document.getElementById('drivetrainSelect').value) || 0.15;
+        currentInjectorCount = parseInt(document.getElementById('injCountSelect').value, 10) || 8;
+        currentDutyCycle = parseFloat(document.getElementById('injDutySelect').value) || 0.85;
+        currentFuelPressure = parseFloat(document.getElementById('injPressureSelect').value) || 43.5;
+
+        // 1. Naturally Aspirated Base Horsepower
+        // Formula: BHP_NA = (CID * RPM * (VE / 100)) / 5660
+        const naBhp = (currentCid * currentRpm * (currentVe / 100)) / 5660;
+
+        // 2. Forced Induction Multiplier
+        // Pressure Ratio: PR = (14.7 + Boost_PSI) / 14.7
+        const pressureRatio = (14.70 + currentBoostPsi) / 14.70;
+        let flywheelBhp = naBhp;
+        let boostGainHp = 0;
+
+        if (inductionMode === 'boosted' && currentBoostPsi > 0) {
+            // HP_boost = HP_NA * PR * Intercooler_Eff
+            flywheelBhp = naBhp * pressureRatio * currentIcEff;
+            boostGainHp = flywheelBhp - naBhp;
+        }
+
+        // 3. Wheel Horsepower (WHP)
+        // WHP = FlywheelBHP * (1 - Loss)
+        const wheelHp = flywheelBhp * (1.0 - currentDrivetrainLoss);
+
+        // 4. Torque at Peak RPM
+        // Torque = (BHP * 5252) / RPM
+        const torque = (flywheelBhp * 5252) / currentRpm;
+
+        // 5. Brake Mean Effective Pressure (BMEP)
+        // BMEP (PSI) = (150.8 * Torque) / CID = (792,000 * BHP) / (CID * RPM)
+        const bmep = (150.8 * torque) / currentCid;
+
+        // 6. Quarter-Mile Drag Strip Formulas (Fox & Hale)
+        // Trap Speed: MPH = 234 * (WHP / Weight)^0.333
+        // Elapsed Time: ET = 5.825 * (Weight / WHP)^0.333
+        const powerToWeightRatio = wheelHp / currentWeightLbs;
+        const weightToPowerRatio = currentWeightLbs / wheelHp;
+        const quarterMph = 234.0 * Math.pow(powerToWeightRatio, 0.33333);
+        const quarterEt = 5.825 * Math.pow(weightToPowerRatio, 0.33333);
+
+        // Track Splits (1/8th mile approximations & standard 60ft scaling)
+        const eighthEt = quarterEt * 0.655;
+        const eighthMph = quarterMph * 0.810;
+        const split60ft = Math.max(1.20, (quarterEt * 0.147));
+        const split330ft = quarterEt * 0.416;
+
+        // 7. Fuel Injector Flow Sizing
+        // Flow (lb/hr) = (Target BHP * BSFC) / (N_inj * DutyCycle)
+        // Pressure compensation: sqrt(P_actual / 43.5)
+        const pressureComp = Math.sqrt(currentFuelPressure / 43.5);
+        const gasBsfc = inductionMode === 'boosted' ? 0.60 : 0.48;
+        const e85Bsfc = inductionMode === 'boosted' ? 0.82 : 0.68;
+
+        const gasFlowLbHr = ((flywheelBhp * gasBsfc) / (currentInjectorCount * currentDutyCycle)) / pressureComp;
+        const gasFlowCcMin = gasFlowLbHr * 10.5;
+        const gasTotalGph = (gasFlowLbHr * currentInjectorCount) / 6.0; // Gasoline is ~6.0 lb/gal
+        const gasTotalLph = gasTotalGph * 3.78541;
+
+        const e85FlowLbHr = ((flywheelBhp * e85Bsfc) / (currentInjectorCount * currentDutyCycle)) / pressureComp;
+        const e85FlowCcMin = e85FlowLbHr * 10.5;
+        const e85TotalGph = (e85FlowLbHr * currentInjectorCount) / 6.5; // E85 is ~6.5 lb/gal
+        const e85TotalLph = e85TotalGph * 3.78541;
+
+        // 8. Compression Ratio Dynamics
+        const staticCr = 10.0;
+        const effectiveCr = staticCr * Math.sqrt(pressureRatio);
+
+        // Store active calculation
+        lastCalc = {
+            cid: currentCid,
+            liters: currentCid / 61.023744,
+            rpm: currentRpm,
+            ve: currentVe,
+            isNa: inductionMode === 'na',
+            boostPsi: currentBoostPsi,
+            pressureRatio: pressureRatio,
+            icEff: currentIcEff,
+            weightLbs: currentWeightLbs,
+            drivetrainLoss: currentDrivetrainLoss,
+            naBhp: naBhp,
+            flywheelBhp: flywheelBhp,
+            wheelHp: wheelHp,
+            torque: torque,
+            bmep: bmep,
+            quarterEt: quarterEt,
+            quarterMph: quarterMph,
+            eighthEt: eighthEt,
+            eighthMph: eighthMph,
+            gasFlowLbHr: gasFlowLbHr,
+            gasFlowCcMin: gasFlowCcMin,
+            e85FlowLbHr: e85FlowLbHr,
+            e85FlowCcMin: e85FlowCcMin,
+            effectiveCr: effectiveCr
+        };
+
+        // Update DOM Displays
+        updateDomDisplays(lastCalc);
+        updateDerivationMath(lastCalc);
+        updateBoostMatrix(lastCalc);
+        updateNhraSafetyRules(lastCalc);
+        updateCharts(lastCalc);
+        updatePrintReport(lastCalc);
+        updateShareUrl(lastCalc);
+    }
+
+    // --- DOM Update Orchestrator ---
+    function updateDomDisplays(c) {
+        document.getElementById('flywheelBhpDisplay').textContent = `${Math.round(c.flywheelBhp)} HP`;
+        document.getElementById('wheelHpDisplay').textContent = `${Math.round(c.wheelHp)} WHP`;
+
+        if (c.isNa) {
+            document.getElementById('bhpBreakdownDisplay').textContent = `Naturally Aspirated @ ${c.ve}% VE`;
+        } else {
+            document.getElementById('bhpBreakdownDisplay').textContent = 
+                `Base NA: ${Math.round(c.naBhp)} HP + Boost Gain: ${Math.round(c.flywheelBhp - c.naBhp)} HP`;
+        }
+
+        const lossPct = Math.round(c.drivetrainLoss * 100);
+        document.getElementById('whpLossDisplay').textContent = `${lossPct}% Drivetrain Mechanical Loss`;
+
+        document.getElementById('quarterMileEtVal').textContent = `${c.quarterEt.toFixed(2)} s`;
+        document.getElementById('trapSpeedVal').textContent = `${c.quarterMph.toFixed(1)} MPH`;
+        document.getElementById('torqueVal').textContent = `${Math.round(c.torque)} lb-ft`;
+        document.getElementById('bmepVal').textContent = `${c.bmep.toFixed(1)} PSI`;
+
+        const lbsPerWhp = (c.weightLbs / c.wheelHp).toFixed(2);
+        const hpPerL = (c.flywheelBhp / c.liters).toFixed(1);
+        document.getElementById('powerToWeightSummary').textContent = `Power-to-Weight: ${lbsPerWhp} lbs/WHP`;
+        document.getElementById('dispSpecificSummary').textContent = `${hpPerL} HP/Liter`;
+
+        // Splits
+        document.getElementById('split60ftVal').textContent = `${(c.quarterEt * 0.147).toFixed(2)} s`;
+        document.getElementById('split330ftVal').textContent = `${(c.quarterEt * 0.416).toFixed(2)} s`;
+        document.getElementById('splitEighthEtVal').textContent = `${c.eighthEt.toFixed(2)} s`;
+        document.getElementById('splitEighthMphVal').textContent = `${c.eighthMph.toFixed(1)} MPH`;
+
+        // Fueling
+        document.getElementById('gasBsfcDisplay').textContent = (c.isNa ? 0.48 : 0.60).toFixed(2);
+        document.getElementById('e85BsfcDisplay').textContent = (c.isNa ? 0.68 : 0.82).toFixed(2);
+        document.getElementById('gasFlowLbHr').textContent = `${c.gasFlowLbHr.toFixed(1)} lb/hr`;
+        document.getElementById('gasFlowCcMin').textContent = `${Math.round(c.gasFlowCcMin)} cc/min`;
+        document.getElementById('e85FlowLbHr').textContent = `${c.e85FlowLbHr.toFixed(1)} lb/hr`;
+        document.getElementById('e85FlowCcMin').textContent = `${Math.round(c.e85FlowCcMin)} cc/min`;
+
+        // Compression
+        document.getElementById('crPrDisplay').textContent = `${c.pressureRatio.toFixed(2)}:1`;
+        document.getElementById('effectiveCrDisplay').textContent = `${c.effectiveCr.toFixed(2)}:1`;
+
+        // Pressure ratio label
+        const prLabel = document.getElementById('pressureRatioDisplay');
+        if (prLabel) {
+            prLabel.textContent = `Pressure Ratio: ${c.pressureRatio.toFixed(2)}:1 (Atmosphere = 14.70 PSI)`;
+        }
+
+        // Active Chart point label
+        const chartLbl = document.getElementById('chartActivePointLabel');
+        if (chartLbl) {
+            chartLbl.textContent = c.isNa ? 'Naturally Aspirated' : `${c.boostPsi.toFixed(1)} PSI Boost`;
+        }
+
+        // NHRA Top Badge
+        const nhraBadge = document.getElementById('nhraLicenseBadge');
+        if (c.quarterEt < 8.50) {
+            nhraBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50";
+            nhraBadge.textContent = "NHRA Advanced ET (<8.50s / SFI Cage)";
+        } else if (c.quarterEt < 9.99) {
+            nhraBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200/50";
+            nhraBadge.textContent = "NHRA Competition License (<9.99s)";
+        } else if (c.quarterEt < 11.49) {
+            nhraBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50";
+            nhraBadge.textContent = "NHRA Roll Bar Required (<11.49s)";
+        } else {
+            nhraBadge.className = "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50";
+            nhraBadge.textContent = "NHRA Street Legal (>11.49s)";
+        }
+    }
+
+    // --- MathJax Derivation Block ---
+    function updateDerivationMath(c) {
+        const block = document.getElementById('mathJaxDerivationBlock');
+        if (!block) return;
+
+        let html = `
+            <div class="space-y-3">
+                <div class="border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <span class="text-slate-400 block mb-1">Step 1: Naturally Aspirated Swept Displacement Power</span>
+                    <div>$$\\text{BHP}_{\\text{NA}} = \\frac{\\text{CID} \\times \\text{RPM} \\times (\\text{VE}/100)}{5660} = \\frac{${c.cid.toFixed(1)} \\times ${c.rpm} \\times (${c.ve}/100)}{5660} = ${c.naBhp.toFixed(1)} \\text{ BHP}$$</div>
+                </div>
+        `;
+
+        if (!c.isNa && c.boostPsi > 0) {
+            html += `
+                <div class="border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <span class="text-slate-400 block mb-1">Step 2: Manifold Boost Pressure Ratio &amp; Density Gain</span>
+                    <div>$$PR = \\frac{14.70 + P_{\\text{boost}}}{14.70} = \\frac{14.70 + ${c.boostPsi.toFixed(1)}}{14.70} = ${c.pressureRatio.toFixed(3)}$$</div>
+                    <div>$$\\text{HP}_{\\text{boost}} = \\text{BHP}_{\\text{NA}} \\times PR \\times \\eta_{\\text{IC}} = ${c.naBhp.toFixed(1)} \\times ${c.pressureRatio.toFixed(3)} \\times ${c.icEff.toFixed(2)} = ${c.flywheelBhp.toFixed(1)} \\text{ BHP}$$</div>
+                </div>
+            `;
+        }
+
+        html += `
+                <div class="border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <span class="text-slate-400 block mb-1">Step 3: Wheel Horsepower &amp; Drivetrain Friction</span>
+                    <div>$$\\text{WHP} = \\text{Flywheel BHP} \\times (1 - \\text{Loss}) = ${c.flywheelBhp.toFixed(1)} \\times (1 - ${c.drivetrainLoss.toFixed(2)}) = ${c.wheelHp.toFixed(1)} \\text{ WHP}$$</div>
+                </div>
+                <div class="border-b border-slate-200 dark:border-slate-800 pb-2">
+                    <span class="text-slate-400 block mb-1">Step 4: Brake Mean Effective Pressure (BMEP)</span>
+                    <div>$$\\text{Torque} = \\frac{\\text{BHP} \\times 5252}{\\text{RPM}} = \\frac{${c.flywheelBhp.toFixed(1)} \\times 5252}{${c.rpm}} = ${c.torque.toFixed(1)} \\text{ lb-ft}$$</div>
+                    <div>$$\\text{BMEP} = \\frac{150.8 \\times \\text{Torque}}{\\text{CID}} = \\frac{150.8 \\times ${c.torque.toFixed(1)}}{${c.cid.toFixed(1)}} = ${c.bmep.toFixed(1)} \\text{ PSI}$$</div>
+                </div>
+                <div>
+                    <span class="text-slate-400 block mb-1">Step 5: Fox &amp; Hale Quarter-Mile Drag Strip Modeling</span>
+                    <div>$$\\text{ET} = 5.825 \\times \\left( \\frac{\\text{Weight}}{\\text{WHP}} \\right)^{0.333} = 5.825 \\times \\left( \\frac{${Math.round(c.weightLbs)}}{${c.wheelHp.toFixed(1)}} \\right)^{0.333} = ${c.quarterEt.toFixed(2)} \\text{ seconds}$$</div>
+                    <div>$$\\text{MPH} = 234 \\times \\left( \\frac{\\text{WHP}}{\\text{Weight}} \\right)^{0.333} = 234 \\times \\left( \\frac{${c.wheelHp.toFixed(1)}}{${Math.round(c.weightLbs)}} \\right)^{0.333} = ${c.quarterMph.toFixed(1)} \\text{ MPH}$$</div>
+                </div>
+            </div>
+        `;
+
+        block.innerHTML = html;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([block]);
+        }
+    }
+
+    // --- Boost Sensitivity Table ---
+    function updateBoostMatrix(c) {
+        const tbody = document.getElementById('boostMatrixBody');
+        if (!tbody) return;
+
+        const boostLevels = [0, 5, 8, 10, 12, 15, 18, 22, 26, 30];
+        tbody.innerHTML = boostLevels.map(psi => {
+            const pr = (14.7 + psi) / 14.7;
+            const bhp = psi === 0 ? c.naBhp : c.naBhp * pr * c.icEff;
+            const whp = bhp * (1 - c.drivetrainLoss);
+            const trq = (bhp * 5252) / c.rpm;
+            const b = (150.8 * trq) / c.cid;
+            const et = 5.825 * Math.pow(c.weightLbs / whp, 0.33333);
+            const mph = 234.0 * Math.pow(whp / c.weightLbs, 0.33333);
+
+            const isCurrent = Math.abs(psi - c.boostPsi) < 1.0 && !c.isNa;
+            const rowClass = isCurrent 
+                ? "bg-brand-50/70 dark:bg-brand-950/40 font-bold text-brand-700 dark:text-brand-300" 
+                : "hover:bg-slate-50 dark:hover:bg-slate-800/40";
+
+            return `
+                <tr class="${rowClass}">
+                    <td class="px-3 py-2">${psi === 0 ? '0.0 (NA)' : psi.toFixed(1)}</td>
+                    <td class="px-3 py-2">${pr.toFixed(2)}:1</td>
+                    <td class="px-3 py-2">${Math.round(bhp)} HP</td>
+                    <td class="px-3 py-2">${Math.round(whp)} WHP</td>
+                    <td class="px-3 py-2">${b.toFixed(1)} PSI</td>
+                    <td class="px-3 py-2">${et.toFixed(2)} s</td>
+                    <td class="px-3 py-2">${mph.toFixed(1)} MPH</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // --- NHRA Safety Tracker ---
+    function updateNhraSafetyRules(c) {
+        const container = document.getElementById('nhraRulesContainer');
+        if (!container) return;
+
+        const rules = [
+            {
+                threshold: 11.49,
+                title: "11.49 Seconds or Quicker (or >135 MPH)",
+                items: [
+                    "SFI 45.1 roll bar required (minimum 6-point installation on convertibles, 5-point on hardtops)",
+                    "SFI 16.1 or 16.5 driver restraint safety belts (5-point minimum with sub-strap)",
+                    "Snell SA2015 or newer automotive full-face helmet",
+                    "SFI 3.2A/1 certified fire jacket"
+                ],
+                met: c.quarterEt <= 11.49
+            },
+            {
+                threshold: 9.99,
+                title: "9.99 Seconds or Quicker (or >135 MPH)",
+                items: [
+                    "NHRA Level 4 / Competition Driver License mandatory",
+                    "Full SFI 25.1 through 25.5 certified welded roll cage",
+                    "SFI certified transmission shield or ballistic Kevlar transmission blanket",
+                    "SFI 3.2A/5 multi-layer fire suit, fire boots, and Nomex gloves",
+                    "Aftermarket harmonic balancer meeting SFI Spec 18.1"
+                ],
+                met: c.quarterEt <= 9.99
+            },
+            {
+                threshold: 8.50,
+                title: "8.50 Seconds or Quicker (or >180 MPH)",
+                items: [
+                    "SFI 25.1 / 25.2 full tube chassis certification with biannual sonic tag audit",
+                    "Parachute deployment system mandatory (dual chutes required beyond 200 MPH)",
+                    "SFI 3.3 neck collar or SFI 38.1 Head and Neck Restraint Device (HANS)",
+                    "Onboard SFI 17.1 cockpit fire suppression system"
+                ],
+                met: c.quarterEt <= 8.50
+            }
+        ];
+
+        container.innerHTML = rules.map(r => {
+            const statusClass = r.met 
+                ? "bg-rose-50/50 dark:bg-rose-950/30 text-rose-800 dark:text-rose-200 border-l-4 border-rose-600" 
+                : "bg-slate-50/30 dark:bg-slate-900/30 text-slate-500 border-l-4 border-slate-300 dark:border-slate-700";
+            const badge = r.met 
+                ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-200">Mandatory Active</span>`
+                : `<span class="px-2 py-0.5 rounded text-[10px] text-slate-400">Exempt</span>`;
+
+            return `
+                <div class="p-3.5 ${statusClass}">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-xs">${r.title}</span>
+                        ${badge}
+                    </div>
+                    <ul class="list-disc list-inside space-y-1 text-[11px] leading-relaxed opacity-90">
+                        ${r.items.map(i => `<li>${i}</li>`).join('')}
+                    </ul>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // --- Chart.js Visualizations ---
+    function updateCharts(c) {
+        // Chart 1: Boost PSI vs HP
+        const ctxBoost = document.getElementById('boostChart');
+        if (ctxBoost) {
+            const psiPoints = [];
+            const hpIntercooled = [];
+            const hpNonIntercooled = [];
+            const whpCurve = [];
+
+            for (let p = 0; p <= 35; p += 2.5) {
+                psiPoints.push(p);
+                const pr = (14.7 + p) / 14.7;
+                const icHp = c.naBhp * pr * c.icEff;
+                const rawHp = c.naBhp * pr * 0.75;
+                const whp = icHp * (1 - c.drivetrainLoss);
+                hpIntercooled.push(Math.round(icHp));
+                hpNonIntercooled.push(Math.round(rawHp));
+                whpCurve.push(Math.round(whp));
+            }
+
+            if (boostChart) boostChart.destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            boostChart = new Chart(ctxBoost, {
+                type: 'line',
+                data: {
+                    labels: psiPoints,
+                    datasets: [
+                        {
+                            label: 'Intercooled Flywheel BHP',
+                            data: hpIntercooled,
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 2.5,
+                            fill: true,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Wheel Horsepower (WHP)',
+                            data: whpCurve,
+                            borderColor: '#3b82f6',
+                            borderWidth: 2,
+                            borderDash: [4, 4],
+                            fill: false,
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Non-Intercooled Heat Soaked BHP',
+                            data: hpNonIntercooled,
+                            borderColor: '#94a3b8',
+                            borderWidth: 1.5,
+                            borderDash: [2, 2],
+                            fill: false,
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor, font: { family: 'Inter', size: 11 } }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                title: (items) => `Boost: ${items[0].label} PSI`,
+                                label: (item) => `${item.dataset.label}: ${item.raw} HP`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Manifold Boost Pressure (PSI)', color: textColor, font: { family: 'Inter', size: 11, weight: 'bold' } },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            title: { display: true, text: 'Horsepower (HP)', color: textColor, font: { family: 'Inter', size: 11, weight: 'bold' } },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Chart 2: Quarter-Mile ET vs Weight
+        const ctxDrag = document.getElementById('dragChart');
+        if (ctxDrag) {
+            const weights = [2000, 2500, 3000, 3500, 4000, 4500, 5000];
+            const currentWhpEt = weights.map(w => +(5.825 * Math.pow(w / c.wheelHp, 0.33333)).toFixed(2));
+            const benchmark300 = weights.map(w => +(5.825 * Math.pow(w / 300, 0.33333)).toFixed(2));
+            const benchmark500 = weights.map(w => +(5.825 * Math.pow(w / 500, 0.33333)).toFixed(2));
+            const benchmark800 = weights.map(w => +(5.825 * Math.pow(w / 800, 0.33333)).toFixed(2));
+
+            if (dragChart) dragChart.destroy();
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            dragChart = new Chart(ctxDrag, {
+                type: 'line',
+                data: {
+                    labels: weights.map(w => w + ' lbs'),
+                    datasets: [
+                        {
+                            label: `Your Build (${Math.round(c.wheelHp)} WHP)`,
+                            data: currentWhpEt,
+                            borderColor: '#dc2626',
+                            backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                            borderWidth: 3,
+                            tension: 0.3
+                        },
+                        {
+                            label: '300 WHP Benchmark',
+                            data: benchmark300,
+                            borderColor: '#94a3b8',
+                            borderWidth: 1.5,
+                            borderDash: [3, 3],
+                            tension: 0.3
+                        },
+                        {
+                            label: '500 WHP Benchmark',
+                            data: benchmark500,
+                            borderColor: '#3b82f6',
+                            borderWidth: 1.5,
+                            borderDash: [3, 3],
+                            tension: 0.3
+                        },
+                        {
+                            label: '800 WHP Benchmark',
+                            data: benchmark800,
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderDash: [3, 3],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor, font: { family: 'Inter', size: 11 } }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: (item) => `${item.dataset.label}: ${item.raw} seconds`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Total Vehicle Race Mass (lbs)', color: textColor, font: { family: 'Inter', size: 11, weight: 'bold' } },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        },
+                        y: {
+                            reverse: true, // Lower ET is better
+                            title: { display: true, text: '1/4-Mile Elapsed Time (Seconds)', color: textColor, font: { family: 'Inter', size: 11, weight: 'bold' } },
+                            grid: { color: gridColor },
+                            ticks: { color: textColor }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    // --- Tab 4: Print Dyno Certificate Synchronizer ---
+    function updatePrintReport(c) {
+        document.getElementById('reportTimestamp').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        document.getElementById('reportInductionConfig').textContent = c.isNa 
+            ? 'Naturally Aspirated (1.00 Atmosphere)' 
+            : `Forced Induction (${c.boostPsi.toFixed(1)} PSI Boost, ${c.pressureRatio.toFixed(2)}:1 PR)`;
+
+        document.getElementById('reportRaceMass').textContent = `${Math.round(c.weightLbs).toLocaleString()} lbs (${Math.round(c.weightLbs / 2.20462).toLocaleString()} kg)`;
+        document.getElementById('reportDisplacement').textContent = `${c.cid.toFixed(1)} CID (${c.liters.toFixed(2)} Liters)`;
+        document.getElementById('reportRpm').textContent = `${c.rpm.toLocaleString()} RPM`;
+        document.getElementById('reportVe').textContent = `${c.ve.toFixed(1)}%`;
+        document.getElementById('reportNaPower').textContent = `${c.naBhp.toFixed(1)} BHP`;
+        document.getElementById('reportTotalBhp').textContent = `${Math.round(c.flywheelBhp)} BHP`;
+        document.getElementById('reportTotalWhp').textContent = `${Math.round(c.wheelHp)} WHP`;
+        document.getElementById('reportTorque').textContent = `${Math.round(c.torque)} lb-ft`;
+        document.getElementById('reportBmep').textContent = `${c.bmep.toFixed(1)} PSI`;
+        document.getElementById('reportQuarterEt').textContent = `${c.quarterEt.toFixed(2)} s`;
+        document.getElementById('reportQuarterMph').textContent = `${c.quarterMph.toFixed(1)} MPH`;
+        document.getElementById('reportGasInjector').textContent = `${c.gasFlowLbHr.toFixed(1)} lb/hr (${Math.round(c.gasFlowCcMin)} cc/min)`;
+        document.getElementById('reportE85Injector').textContent = `${c.e85FlowLbHr.toFixed(1)} lb/hr (${Math.round(c.e85FlowCcMin)} cc/min)`;
+
+        const conclusion = `At a curb-plus-driver mass of ${Math.round(c.weightLbs).toLocaleString()} lbs, this ${c.cid.toFixed(1)} CID powertrain generates ${Math.round(c.flywheelBhp)} BHP and delivers ${Math.round(c.wheelHp)} WHP. The modeled power-to-weight ratio of ${(c.weightLbs / c.wheelHp).toFixed(2)} lbs/WHP yields an estimated quarter-mile trajectory of ${c.quarterEt.toFixed(2)} seconds at ${c.quarterMph.toFixed(1)} MPH. Under NHRA competition regulations, vehicles crossing below the 11.49-second threshold require an SFI-approved roll bar and five-point driver restraint safety belt system.`;
+        document.getElementById('reportConclusion').textContent = conclusion;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([document.getElementById('printableReportSection')]);
+        }
+    }
+
+    // --- Tab Switching Navigation ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'dragstrip' && dragChart) {
+            dragChart.resize();
+        } else if (tabId === 'displacement' && boostChart) {
+            boostChart.resize();
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const answer = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!answer) return;
+        if (answer.classList.contains('hidden')) {
+            answer.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            answer.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Deep Linking & URL State ---
+    function updateShareUrl(c) {
+        const params = new URLSearchParams();
+        params.set('cid', c.cid);
+        params.set('rpm', c.rpm);
+        params.set('ve', c.ve);
+        params.set('mode', c.isNa ? 'na' : 'boosted');
+        if (!c.isNa) params.set('boost', c.boostPsi);
+        params.set('weight', Math.round(c.weightLbs));
+        params.set('loss', c.drivetrainLoss);
+
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('cid') && !params.has('rpm')) return;
+
+        if (params.has('cid')) currentCid = parseFloat(params.get('cid'));
+        if (params.has('rpm')) currentRpm = parseFloat(params.get('rpm'));
+        if (params.has('ve')) currentVe = parseFloat(params.get('ve'));
+
+        if (params.has('mode')) {
+            inductionMode = params.get('mode');
+            const radio = document.querySelector(`input[name="inductionMode"][value="${inductionMode}"]`);
+            if (radio) radio.checked = true;
+            switchInductionMode(inductionMode);
+        }
+
+        if (params.has('boost')) currentBoostPsi = parseFloat(params.get('boost'));
+        if (params.has('weight')) currentWeightLbs = parseFloat(params.get('weight'));
+        if (params.has('loss')) currentDrivetrainLoss = parseFloat(params.get('loss'));
+
+        // Populate controls
+        document.getElementById('dispInput').value = currentCid;
+        document.getElementById('rpmInput').value = currentRpm;
+        document.getElementById('veInput').value = currentVe;
+        document.getElementById('veValueDisplay').textContent = currentVe + '%';
+        document.getElementById('boostInput').value = currentBoostPsi;
+        document.getElementById('weightInput').value = Math.round(currentWeightLbs);
+        document.getElementById('drivetrainSelect').value = currentDrivetrainLoss.toString();
+    }
+
+    function copyShareUrl() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast("Deep-linked calibration URL copied to clipboard!");
+        });
+    }
+
+    // --- Copy Formatted Summary & Toast ---
+    function copyFormattedSummary() {
+        const c = lastCalc;
+        const text = `CalcWorld Engine Powertrain Summary:\n` +
+            `Displacement: ${c.cid.toFixed(1)} CID (${c.liters.toFixed(2)} L) @ ${c.rpm} RPM (VE: ${c.ve}%)\n` +
+            `Configuration: ${c.isNa ? 'Naturally Aspirated' : c.boostPsi.toFixed(1) + ' PSI Boost'}\n` +
+            `Flywheel Power: ${Math.round(c.flywheelBhp)} BHP | Wheel Power: ${Math.round(c.wheelHp)} WHP\n` +
+            `Torque: ${Math.round(c.torque)} lb-ft | BMEP: ${c.bmep.toFixed(1)} PSI\n` +
+            `1/4-Mile ET: ${c.quarterEt.toFixed(2)} s @ ${c.quarterMph.toFixed(1)} MPH (${Math.round(c.weightLbs)} lbs)\n` +
+            `Fuel Injectors (85% DC): Gas: ${c.gasFlowLbHr.toFixed(1)} lb/hr (${Math.round(c.gasFlowCcMin)} cc/min) | E85: ${c.e85FlowLbHr.toFixed(1)} lb/hr (${Math.round(c.e85FlowCcMin)} cc/min)\n` +
+            `URL: ${window.location.href}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Powertrain summary copied to clipboard!");
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast) return;
+        if (toastMsg) toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // --- Dark Mode Engine ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+        if (boostChart || dragChart) updateCharts(lastCalc);
+    }
+
+    // --- Lead Gen Submission ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const msg = document.getElementById('leadSuccessMsg');
+        const btn = document.getElementById('leadSubmitBtn');
+        if (input && input.value) {
+            btn.disabled = true;
+            btn.textContent = 'Transmitting...';
+            setTimeout(() => {
+                btn.classList.add('hidden');
+                input.classList.add('hidden');
+                msg.classList.remove('hidden');
+            }, 800);
+        }
+    }
+</script>
+
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

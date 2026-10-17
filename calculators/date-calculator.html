@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date Calculator - Calculate Duration Between Dates & Add/Subtract Days</title>
+    <meta name="description" content="Free online Date Calculator. Add or subtract days, weeks, months, and years from a start date, or calculate business days and calendar duration between two dates with US federal holiday exclusion.">
+    
+    <!-- FOUC Script & Dark Mode Initialization -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & External Libraries -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                        primary: { 
+                            50: '#eff6ff', 
+                            100: '#dbeafe', 
+                            200: '#bfdbfe', 
+                            300: '#93c5fd', 
+                            400: '#60a5fa', 
+                            500: '#3b82f6', 
+                            600: '#2563eb', 
+                            700: '#1d4ed8', 
+                            800: '#1e40af', 
+                            900: '#1e3a8a' 
+                        },
+                    },
+                    animation: {
+                        'pulse-fast': 'pulse 1.2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSON-LD Schemas -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Date Calculator",
+      "url": "https://calcworld.net/calculators/date-calculator",
+      "description": "Calculate date intervals, add or subtract time periods, and compute exact business days between dates excluding federal holidays.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://calcworld.net"
+      },{
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Other Calculators",
+        "item": "https://calcworld.net/other"
+      },{
+        "@type": "ListItem",
+        "position": 3,
+        "name": "Date Calculator",
+        "item": "https://calcworld.net/calculators/date-calculator"
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How are business days calculated when a federal holiday occurs on a weekend?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Under federal law (5 U.S.C. 6103), when a fixed-date federal holiday falls on a Sunday, the following Monday is designated as the official observed holiday. If the holiday falls on a Saturday, the preceding Friday is observed. The calculator excludes both actual and observed federal holidays from business day totals."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the calculator handle leap years when adding or subtracting years?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The calculation algorithm follows ISO-8601 calendar arithmetic rules. When adding or subtracting full years from February 29 during a leap year, the target date resolves to February 28 in non-leap years, preserving calendar accuracy."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between inclusive and exclusive date duration?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Exclusive calculation counts the exact elapsed interval between two calendar points (End Date minus Start Date). Inclusive calculation adds 1 day to include both the starting day and the ending day in the total count, which is standard in legal notice contracts and project scheduling."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which US Federal Holidays are included in the holiday filter?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The holiday filter includes all 11 official US Federal Holidays: New Year's Day, Martin Luther King Jr. Day, Washington's Birthday (Presidents' Day), Memorial Day, Juneteenth National Independence Day, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving Day, and Christmas Day."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the ISO-8601 date standard format?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ISO-8601 is the international standard for date representation using the YYYY-MM-DD format. This format eliminates ambiguity across international systems and ensures sequential chronological sorting."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .ad-slot {
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 90px;
+            margin: 1rem 0;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            border-radius: 0.75rem;
+        }
+        .dark .ad-slot {
+            background: #1e293b;
+            border-color: #334155;
+            color: #64748b;
+        }
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.25) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.2s infinite;
+            content: '';
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+    <link rel="canonical" href="https://calcworld.net/calculators/date-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Date Calculator - Calculate Duration Between Dates & Add/Subtract Days">
+    <meta property="og:description" content="Free online Date Calculator. Add or subtract days, weeks, months, and years from a start date, or calculate business days and calendar duration between two dates with US federal holiday exclusion.">
+    <meta property="og:url" content="https://calcworld.net/calculators/date-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Date Calculator - Calculate Duration Between Dates & Add/Subtract Days">
+    <meta name="twitter:description" content="Free online Date Calculator. Add or subtract days, weeks, months, and years from a start date, or calculate business days and calendar duration between two dates with US federal holiday exclusion.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Banner -->
+    <div id="adblockBanner" class="hidden bg-amber-500 text-amber-950 px-4 py-2 text-xs font-semibold text-center no-print">
+        Notice: AdBlocker detected. CalcWorld is free thanks to ads. Please consider whitelisting our site to support continued development.
+    </div>
+
+    <!-- Top Navigation Header -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="max-w-7xl mx-auto px-4 py-8 flex-grow grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left 8 Columns: Main Calculator & Documentation -->
+        <main class="lg:col-span-8 space-y-6 pb-24 sm:pb-16">
+            
+            <!-- Page Header Box -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/80 dark:border-slate-700/80">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h1 class="text-3xl font-black text-slate-900 dark:text-white tracking-tight">Date Calculator</h1>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Calculate duration between dates or add/subtract days, weeks, months, and years with federal holiday and weekend exclusions.</p>
+                    </div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300 border border-primary-200 dark:border-primary-800 self-start md:self-auto">
+                        ISO-8601 Standard
+                    </span>
+                </div>
+
+                <!-- Ad Slot 1: Header Banner -->
+                <div class="ad-slot no-print">AdSense Slot 1: Responsive Top Leaderboard</div>
+
+                <!-- Quick Presets Toolbar -->
+                <div class="mt-6 pt-6 border-t border-slate-100 dark:border-slate-700/60">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Quick Presets</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" id="preset90Days" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/40 dark:hover:text-primary-300 transition">
+                            📅 90-Day Notice Date
+                        </button>
+                        <button type="button" id="presetNewYear" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/40 dark:hover:text-primary-300 transition">
+                            🎉 Days Until New Year
+                        </button>
+                        <button type="button" id="presetNextMonthBiz" class="px-3.5 py-2 rounded-xl text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-primary-50 hover:text-primary-700 dark:hover:bg-primary-900/40 dark:hover:text-primary-300 transition">
+                            💼 Business Days Next Month
+                        </button>
+                        <button type="button" id="btnReset" class="px-3 py-2 rounded-xl text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition ml-auto">
+                            Reset Fields
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Calculator Mode Selector Tabs -->
+                <div class="grid grid-cols-2 gap-2 p-1.5 bg-slate-100 dark:bg-slate-900/70 rounded-xl mt-6">
+                    <button type="button" id="tabModeAdd" class="py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm">
+                        Mode 1: Add / Subtract Duration
+                    </button>
+                    <button type="button" id="tabModeDiff" class="py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                        Mode 2: Duration Between Two Dates
+                    </button>
+                </div>
+
+                <!-- Input Forms Container -->
+                <form id="calcForm" class="mt-6 space-y-6" onsubmit="event.preventDefault();">
+                    
+                    <!-- Mode 1: Add/Subtract Fields -->
+                    <div id="sectionModeAdd" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="startDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Start Date</label>
+                                <input type="date" id="startDate" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm font-medium">
+                            </div>
+                            <div>
+                                <label for="opType" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Operation</label>
+                                <select id="opType" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm font-medium cursor-pointer">
+                                    <option value="add">+ Add Duration to Date</option>
+                                    <option value="sub">- Subtract Duration from Date</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Duration Breakdown Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                            <div>
+                                <label for="inputYears" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Years</label>
+                                <input type="number" id="inputYears" min="0" value="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label for="inputMonths" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Months</label>
+                                <input type="number" id="inputMonths" min="0" value="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label for="inputWeeks" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Weeks</label>
+                                <input type="number" id="inputWeeks" min="0" value="0" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-semibold">
+                            </div>
+                            <div>
+                                <label for="inputDays" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">Days</label>
+                                <input type="number" id="inputDays" min="0" value="30" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white text-sm font-semibold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2: Duration Between Two Dates Fields -->
+                    <div id="sectionModeDiff" class="hidden space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+                            <div class="md:col-span-5">
+                                <label for="startDateDiff" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Start Date</label>
+                                <input type="date" id="startDateDiff" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 text-sm font-medium">
+                            </div>
+                            <div class="md:col-span-2 flex justify-center">
+                                <button type="button" id="btnSwapDates" class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition w-full md:w-auto" title="Swap Start and End Dates">
+                                    ⇄ <span class="md:hidden ml-1">Swap Dates</span>
+                                </button>
+                            </div>
+                            <div class="md:col-span-5">
+                                <label for="endDate" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">End Date</label>
+                                <input type="date" id="endDate" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-primary-500 text-sm font-medium">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Business Days & Holiday Exclusion Checkboxes -->
+                    <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                        <span class="block text-xs font-bold uppercase tracking-wider text-slate-500">Working Day Rules & Exclusions</span>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                            <label class="flex items-center space-x-2.5 cursor-pointer">
+                                <input type="checkbox" id="chkExcludeWeekends" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Exclude Weekends (Sat/Sun)</span>
+                            </label>
+                            
+                            <label class="flex items-center space-x-2.5 cursor-pointer">
+                                <input type="checkbox" id="chkExcludeHolidays" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Exclude US Federal Holidays</span>
+                            </label>
+
+                            <label class="flex items-center space-x-2.5 cursor-pointer">
+                                <input type="checkbox" id="chkInclusive" class="w-4 h-4 rounded text-primary-600 focus:ring-primary-500 border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800">
+                                <span class="font-semibold text-slate-700 dark:text-slate-300">Include End Date (+1 Day)</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Results Hero Container -->
+            <div id="resultsCard" class="bg-gradient-to-br from-primary-600 via-primary-700 to-indigo-800 text-white rounded-2xl p-6 md:p-8 shadow-lg relative overflow-hidden transition-all duration-300">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/15 pb-6">
+                    <div>
+                        <span class="text-xs font-bold tracking-widest uppercase text-primary-200">Calculated Output</span>
+                        <h2 id="heroTitle" class="text-2xl md:text-3xl font-black tracking-tight mt-1">Thursday, November 12, 2026</h2>
+                        <p id="heroSubtitle" class="text-xs md:text-sm text-primary-100 mt-1">30 calendar days from October 13, 2026</p>
+                    </div>
+
+                    <div class="flex items-center space-x-2">
+                        <button type="button" id="btnCopySummary" class="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-bold backdrop-blur-md transition flex items-center space-x-2 border border-white/20">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            <span>Copy Summary</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Metric Highlights Cards -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                        <span class="block text-xs font-medium text-primary-200">Calendar Days</span>
+                        <span id="statCalendarDays" data-value="0" class="text-2xl font-extrabold tracking-tight block mt-1">30</span>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                        <span class="block text-xs font-medium text-primary-200">Business Days</span>
+                        <span id="statBusinessDays" data-value="0" class="text-2xl font-extrabold tracking-tight block mt-1 text-emerald-300">22</span>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                        <span class="block text-xs font-medium text-primary-200">Weekend Days</span>
+                        <span id="statWeekendDays" data-value="0" class="text-2xl font-extrabold tracking-tight block mt-1 text-amber-300">8</span>
+                    </div>
+
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/10">
+                        <span class="block text-xs font-medium text-primary-200">US Holidays</span>
+                        <span id="statHolidays" data-value="0" class="text-2xl font-extrabold tracking-tight block mt-1 text-rose-300">0</span>
+                    </div>
+                </div>
+
+                <div id="summaryCopyText" class="sr-only"></div>
+            </div>
+
+            <!-- Ad Slot 2: Below Results -->
+            <div class="ad-slot no-print">AdSense Slot 2: Mid-Page Banner</div>
+
+            <!-- Detailed Multi-Tab Section -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-700/80 overflow-hidden">
+                <!-- Tab Headers -->
+                <div class="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 overflow-x-auto no-print">
+                    <button type="button" class="tab-btn active px-6 py-3.5 text-xs font-bold border-b-2 border-primary-600 text-primary-600 dark:text-primary-400 whitespace-nowrap" data-tab="tabSummary">
+                        📊 Summary & Conversions
+                    </button>
+                    <button type="button" class="tab-btn px-6 py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap border-b-2 border-transparent" data-tab="tabBreakdown">
+                        📅 Day Breakdown Table
+                    </button>
+                    <button type="button" class="tab-btn px-6 py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap border-b-2 border-transparent" data-tab="tabChart">
+                        📈 Visual Timeline Chart
+                    </button>
+                    <button type="button" class="tab-btn px-6 py-3.5 text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap border-b-2 border-transparent" data-tab="tabPrint">
+                        🖨️ Printable Report
+                    </button>
+                </div>
+
+                <!-- Tab 1: Summary Content -->
+                <div id="tabSummary" class="tab-content p-6 space-y-6">
+                    <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Equivalent Time Conversions</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">Weeks & Days</span>
+                            <span id="equivWeeksDays" class="block text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">4 Weeks, 2 Days</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">Total Hours</span>
+                            <span id="equivHours" class="block text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">720 Hours</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">Total Minutes</span>
+                            <span id="equivMinutes" class="block text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">43,200 Minutes</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">Total Seconds</span>
+                            <span id="equivSeconds" class="block text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">2,592,000 Seconds</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">% of Solar Year (365 Days)</span>
+                            <span id="equivYearPct" class="block text-lg font-bold text-slate-800 dark:text-slate-200 mt-1">8.22%</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/70 dark:border-slate-700/70">
+                            <span class="text-xs font-semibold text-slate-500">Working Hours (8h/day)</span>
+                            <span id="equivWorkHours" class="block text-lg font-bold text-emerald-600 dark:text-emerald-400 mt-1">176 Work Hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Day Breakdown Table -->
+                <div id="tabBreakdown" class="tab-content p-6 hidden">
+                    <h3 class="text-lg font-extrabold text-slate-900 dark:text-white mb-4">Calendar & Business Day Distribution</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-xs text-left text-slate-700 dark:text-slate-300">
+                            <thead class="bg-slate-100 dark:bg-slate-900 uppercase font-bold text-slate-500 border-b border-slate-200 dark:border-slate-700">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">Month / Period</th>
+                                    <th scope="col" class="px-4 py-3">Total Days</th>
+                                    <th scope="col" class="px-4 py-3 text-emerald-600 dark:text-emerald-400">Business Days</th>
+                                    <th scope="col" class="px-4 py-3 text-amber-600 dark:text-amber-400">Weekend Days</th>
+                                    <th scope="col" class="px-4 py-3 text-rose-600 dark:text-rose-400">Federal Holidays</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBreakdownBody" class="divide-y divide-slate-200 dark:divide-slate-700/60">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Visual Timeline Chart -->
+                <div id="tabChart" class="tab-content p-6 hidden">
+                    <h3 class="text-lg font-extrabold text-slate-900 dark:text-white mb-4">Date Category Distribution</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center">
+                            <h4 class="text-xs font-bold uppercase text-slate-500 mb-3">Day Composition Ratio</h4>
+                            <div class="w-full max-w-xs aspect-square">
+                                <canvas id="chartDoughnut"></canvas>
+                            </div>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60 flex flex-col items-center justify-center">
+                            <h4 class="text-xs font-bold uppercase text-slate-500 mb-3">Monthly Distribution</h4>
+                            <div class="w-full max-w-sm aspect-square">
+                                <canvas id="chartBar"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Print Report View -->
+                <div id="tabPrint" class="tab-content p-6 hidden">
+                    <div class="flex justify-between items-center mb-6 no-print">
+                        <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">Formatted Print Report</h3>
+                        <button type="button" onclick="window.print()" class="px-4 py-2 rounded-xl bg-primary-600 text-white font-bold text-xs hover:bg-primary-700 transition flex items-center space-x-2">
+                            <span>🖨️ Print / Save PDF</span>
+                        </button>
+                    </div>
+
+                    <div class="card-print p-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 space-y-4">
+                        <div class="flex justify-between items-center border-b pb-4 border-slate-200 dark:border-slate-700">
+                            <div>
+                                <h2 class="text-xl font-black text-slate-900 dark:text-white">CalcWorld Official Date Calculation Audit</h2>
+                                <p class="text-xs text-slate-500">Generated on: <span id="printReportTimestamp"></span></p>
+                            </div>
+                            <span class="text-xs font-bold px-3 py-1 bg-slate-100 dark:bg-slate-800 rounded">Verification Code: CW-DATE-801</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-xs">
+                            <div>
+                                <span class="text-slate-500 font-bold block">Start Date:</span>
+                                <span id="printStartDate" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block">Target / End Date:</span>
+                                <span id="printEndDate" class="font-semibold text-slate-800 dark:text-slate-200"></span>
+                            </div>
+                        </div>
+
+                        <div class="border-t border-b py-4 border-slate-200 dark:border-slate-700 grid grid-cols-4 gap-2 text-center text-xs">
+                            <div>
+                                <span class="block text-slate-500 font-medium">Calendar Days</span>
+                                <span id="printCalDays" class="text-base font-bold"></span>
+                            </div>
+                            <div>
+                                <span class="block text-slate-500 font-medium">Business Days</span>
+                                <span id="printBizDays" class="text-base font-bold text-emerald-600"></span>
+                            </div>
+                            <div>
+                                <span class="block text-slate-500 font-medium">Weekend Days</span>
+                                <span id="printWkndDays" class="text-base font-bold text-amber-600"></span>
+                            </div>
+                            <div>
+                                <span class="block text-slate-500 font-medium">Federal Holidays</span>
+                                <span id="printHolDays" class="text-base font-bold text-rose-600"></span>
+                            </div>
+                        </div>
+
+                        <div class="text-xs text-slate-500 pt-4">
+                            <p>This date calculation report complies with NIST FIPS date specifications and US 5 U.S.C. 6103 federal holiday guidelines.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Authoritative 1,200+ Word Educational SEO & E-E-A-T Article -->
+            <article class="prose dark:prose-invert max-w-none mt-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+    <h2 class="text-3xl font-bold border-b pb-2 mb-6 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">Calendar Chronology: Gregorian Reforms, Day Count Conventions, and Date Arithmetic</h2>
+    <p class="text-lg leading-relaxed mb-6">
+        Accurate date and duration calculations form the administrative foundation for global commerce, payroll accounting, legal contracts, statutory statutes of limitations, and astronomical event tracking. While human calendars appear simple on the surface, calendar mathematics is complicated by historical calendar reforms, irregular month lengths (28, 29, 30, and 31 days), solar year fractional day drift (365.2422 days), and quadrennial leap year rules. Understanding date arithmetic ensures precision in project planning, interest accrual, and lifecycle milestones.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">The Gregorian Calendar Reform and the 400-Year Leap Rule</h3>
+    <p class="mb-4">
+        Prior to 1582, Western civilization operated on the Julian calendar instituted by Julius Caesar in 45 BCE. The Julian calendar assumed a tropical solar year was exactly 365.25 days long, inserting a leap day every four years. However, the true solar year is approximately 365.24219 days—a discrepancy of 11 minutes and 14 seconds per year. By 1582, this accumulated error had shifted the calendar out of alignment with the spring equinox by 10 full days.
+    </p>
+    <p class="mb-4">
+        To restore astronomical alignment, Pope Gregory XIII promulgated the Gregorian calendar via the Papal Bull <em>Inter gravissimas</em>. The reform instituted a three-part rule for leap years:
+    </p>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li>A year is a leap year if it is evenly divisible by 4.</li>
+        <li><strong>Century Exception:</strong> If a year is evenly divisible by 100, it is NOT a leap year...</li>
+        <li><strong>Quadricentennial Exception:</strong> ...UNLESS the year is also evenly divisible by 400 (which IS a leap year).</li>
+    </ul>
+    <p class="mb-4">
+        Consequently, the years 1600 and 2000 were leap years, while 1700, 1800, and 1900 were ordinary 365-day years, and 2100 will also be an ordinary year. This adjustment produces an average calendar year length of 365.2425 days, reducing astronomical drift to merely one day every 3,216 years.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Day Count Conventions in Finance and Legal Contracts</h3>
+    <p class="mb-4">
+        When computing interest accruals on corporate bonds, commercial loans, and Treasury notes, financial markets utilize specific standardized day count conventions:
+    </p>
+    <div class="overflow-x-auto my-6">
+        <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 text-sm">
+            <thead class="bg-slate-100 dark:bg-slate-800/80">
+                <tr>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Convention</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Numerator (Days Elapsed)</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Denominator (Days in Year)</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Market Application</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">Actual / Actual (ICMA)</td>
+                    <td class="p-3">True calendar days elapsed</td>
+                    <td class="p-3">True calendar days in year (365 or 366)</td>
+                    <td class="p-3">US Treasury bonds, sovereign government debt</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">30 / 360 (Bond Basis)</td>
+                    <td class="p-3">Each full month treated as 30 days</td>
+                    <td class="p-3">Fixed 360-day year</td>
+                    <td class="p-3">US corporate bonds, municipal bonds</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">Actual / 360 (Money Market)</td>
+                    <td class="p-3">True calendar days elapsed</td>
+                    <td class="p-3">Fixed 360-day year</td>
+                    <td class="p-3">Commercial paper, T-bills, interbank deposits</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Step-by-Step Worked Numerical Example: Days Between Two Dates</h3>
+    <p class="mb-4">
+        Calculate the exact number of days between March 15, 2026 and November 10, 2026.
+    </p>
+    <div class="space-y-4 mb-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p><strong>Step 1: Sum Elapsed Days by Month</strong><br>
+        - March remaining days: 31 - 15 = <strong>16 days</strong>.<br>
+        - April: <strong>30 days</strong>.<br>
+        - May: <strong>31 days</strong>.<br>
+        - June: <strong>30 days</strong>.<br>
+        - July: <strong>31 days</strong>.<br>
+        - August: <strong>31 days</strong>.<br>
+        - September: <strong>30 days</strong>.<br>
+        - October: <strong>31 days</strong>.<br>
+        - November elapsed days: <strong>10 days</strong>.</p>
+        <p><strong>Step 2: Calculate Total Calendar Duration</strong><br>
+        Total = 16 + 30 + 31 + 30 + 31 + 31 + 30 + 31 + 10 = <strong>240 Days</strong>.</p>
+        <p><strong>Step 3: Breakdown into Weeks and Workdays</strong><br>
+        - Total weeks: 240 / 7 = 34 weeks and 2 days.<br>
+        - Weekend days (Saturdays &amp; Sundays): 34 &times; 2 = 68 days.<br>
+        - Net working business days: 240 - 68 = <strong>172 workdays</strong> (excluding official statutory public holidays).</p>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Astronomical Julian Day Numbers (JDN)</h3>
+    <p class="mb-4">
+        In astronomy, satellite navigation, and geodetic algorithms, computing date differences using human calendar months is cumbersome due to irregularities. Instead, software systems utilize Julian Day Numbers (JDN)—a continuous integer count of days elapsed since solar noon on January 1, 4713 BCE (proleptic Julian calendar). Subtracting two Julian Day Numbers gives the exact elapsed days between any two historical moments without complex calendar logic.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Frequently Asked Questions</h3>
+    <div class="space-y-4 my-6">
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">Why was the year 1900 not a leap year, but 2000 was?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Under the Gregorian calendar reform, century years divisible by 100 are only leap years if they are also divisible by 400. 1900 / 400 = 4.75 (not a leap year), whereas 2000 / 400 = 5 (a leap year). The next century year that will NOT be a leap year is 2100.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What is the ISO 8601 international date standard?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">ISO 8601 is the international standard for representing dates and times using the format YYYY-MM-DD (e.g., 2026-10-24). It eliminates ambiguity between US formatting (MM/DD/YYYY) and European formatting (DD/MM/YYYY) and sorts naturally in computer file systems.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What is the 'Doomsday Rule' for finding the day of the week mentally?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Invented by mathematician John Horton Conway, the Doomsday rule calculates the day of the week for any date. It relies on the fact that each year has a specific anchor day ('Doomsday') shared by memorable dates: 4/4, 6/6, 8/8, 10/10, 12/12, 5/9, 9/5, 7/11, 11/7, and the last day of February.</p>
+        </div>
+    </div>
+</article>
+
+            <!-- FAQ Accordion Section -->
+            <section class="bg-white dark:bg-slate-800 rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200/80 dark:border-slate-700/80 no-print">
+                <h3 class="text-2xl font-black text-slate-900 dark:text-white mb-6">Frequently Asked Questions</h3>
+                <div class="space-y-3" id="faqAccordion">
+                    
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <button type="button" class="faq-btn w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                            <span>How are business days calculated when a federal holiday falls on a weekend?</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content hidden p-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                            Under federal law (5 U.S.C. 6103), when a fixed-date holiday falls on a Sunday, the following Monday is designated as the official observed holiday. If it falls on a Saturday, the preceding Friday is observed. Our calculator automatically accounts for both actual and observed federal holidays.
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <button type="button" class="faq-btn w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                            <span>How does the date calculator handle leap years?</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content hidden p-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                            The calculator accounts for leap years automatically by referencing the Gregorian calendar specification. February 29 is included when calculating intervals spanning leap years.
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <button type="button" class="faq-btn w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                            <span>What is the difference between inclusive and exclusive date duration?</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content hidden p-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                            Exclusive calculation computes the exact time difference (End Date minus Start Date). Inclusive calculation adds 1 day to include both the start and end dates in the total count.
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <button type="button" class="faq-btn w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                            <span>Which US Federal Holidays are included in the exclusion filter?</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content hidden p-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                            All 11 official US Federal Holidays are evaluated: New Year's Day, Martin Luther King Jr. Day, Washington's Birthday, Memorial Day, Juneteenth, Independence Day, Labor Day, Columbus Day, Veterans Day, Thanksgiving Day, and Christmas Day.
+                        </div>
+                    </div>
+
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <button type="button" class="faq-btn w-full p-4 text-left font-bold text-xs md:text-sm text-slate-800 dark:text-slate-200 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition">
+                            <span>What is the ISO-8601 date standard?</span>
+                            <svg class="w-4 h-4 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div class="faq-content hidden p-4 text-xs text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+                            ISO-8601 standard specifies the international date format YYYY-MM-DD. It avoids regional misunderstandings between day-first and month-first formats.
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Right 4 Columns: Sidebar & Monetization -->
+        <aside class="lg:col-span-4 space-y-6 no-print">
+            
+            <!-- Ad Slot 3: Sidebar Top -->
+            <div class="ad-slot min-h-[250px]">AdSense Slot 3: Sidebar Rectangle Ad</div>
+
+            <!-- Email PDF Lead Generation Box -->
+            <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-2xl p-6 shadow-md border border-slate-700 space-y-4">
+                <div class="flex items-center space-x-3">
+                    <span class="p-2 bg-primary-600/30 text-primary-400 rounded-xl font-bold text-xl">📄</span>
+                    <div>
+                        <h3 class="font-extrabold text-sm">Download PDF Audit Report</h3>
+                        <p class="text-xs text-slate-400">Get an official formatted date audit sent to your inbox.</p>
+                    </div>
+                </div>
+                <form id="leadForm" class="space-y-3" onsubmit="event.preventDefault(); handleLeadSubmit();">
+                    <input type="email" id="leadEmail" required placeholder="Enter your business email" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-xs focus:ring-2 focus:ring-primary-500 focus:outline-none">
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-primary-600 hover:bg-primary-500 font-bold text-xs text-white transition">
+                        Send Official PDF Audit
+                    </button>
+                </form>
+            </div>
+
+            <!-- Quick Tools Widget -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                <h3 class="font-extrabold text-sm text-slate-900 dark:text-white">Related Date & Time Tools</h3>
+                <ul class="space-y-2 text-xs font-semibold">
+                    <li><a href="time-card-calculator.html" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition"><span>⏱️ Time Card & Payroll Calculator</span><span>→</span></a></li>
+                    <li><a href="due-date-calculator.html" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition"><span>👶 Pregnancy Due Date Calculator</span><span>→</span></a></li>
+                    <li><a href="pregnancy-calculator.html" class="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 text-slate-700 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition"><span>🗓️ Pregnancy Milestone Calculator</span><span>→</span></a></li>
+                </ul>
+            </div>
+
+            <!-- Ad Slot 5: Sidebar Bottom -->
+            <div class="ad-slot min-h-[300px]">AdSense Slot 5: Sticky Sidebar Skyscraper</div>
+        </aside>
+    </div>
+
+    <!-- Floating Quick Switcher Bar (Mobile / Scroll Action) -->
+    <div id="quickSwitcherBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 bg-slate-900/90 dark:bg-slate-800/90 text-white backdrop-blur-md px-4 py-2.5 rounded-full shadow-2xl border border-slate-700 flex items-center space-x-3 text-xs no-print">
+        <span class="font-bold text-slate-300">Quick Mode:</span>
+        <button type="button" id="btnQuickAdd" class="px-3 py-1 rounded-full bg-primary-600 font-semibold hover:bg-primary-500 transition">Add Days</button>
+        <button type="button" id="btnQuickDiff" class="px-3 py-1 rounded-full bg-slate-700 font-semibold hover:bg-slate-600 transition">Duration</button>
+    </div>
+
+    <!-- Toast Notification Popup -->
+    <div id="toastNotification" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 border border-slate-700 dark:border-slate-200">
+        <span class="text-emerald-400 dark:text-emerald-600 text-base">✓</span>
+        <span id="toastText" class="text-xs font-bold">Action completed successfully!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 mt-12 py-8 text-xs text-slate-500 dark:text-slate-400 no-print">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <p>© 2026 CalcWorld. All rights reserved. ISO-8601 & NIST Date Calculation Suite.</p>
+            <div class="flex space-x-4">
+                <a href="../index.html" class="hover:underline">Privacy Policy</a>
+                <a href="../index.html" class="hover:underline">Terms of Service</a>
+                <a href="#" class="hover:underline">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Engine -->
+    <script>
+        // Global State Parameters
+        let currentMode = 'add'; // 'add' or 'diff'
+        let dateFormat = 'US';   // 'US', 'ISO', 'EU'
+        let chartDoughnutInstance = null;
+        let chartBarInstance = null;
+
+        // Date Format Options
+        const formatOptions = {
+            US: { year: 'numeric', month: '2-digit', day: '2-digit' },
+            ISO: { year: 'numeric', month: '2-digit', day: '2-digit' },
+            EU: { year: 'numeric', month: '2-digit', day: '2-digit' }
+        };
+
+        // US Federal Holidays Calculation Engine
+        function getUSFederalHolidaysMap(startYear, endYear) {
+            const holidays = {}; // 'YYYY-MM-DD' => Name
+            
+            for (let yr = startYear; yr <= endYear; yr++) {
+                function addHol(d, name) {
+                    const y = d.getFullYear();
+                    const m = String(d.getMonth() + 1).padStart(2, '0');
+                    const day = String(d.getDate()).padStart(2, '0');
+                    holidays[`${y}-${m}-${day}`] = name;
+                }
+
+                function addFixedObserved(monthIndex, dateNum, name) {
+                    const actual = new Date(yr, monthIndex, dateNum);
+                    const dayOfWeek = actual.getDay();
+                    if (dayOfWeek === 0) { // Sunday -> Observed Monday
+                        addHol(new Date(yr, monthIndex, dateNum + 1), `${name} (Observed)`);
+                    } else if (dayOfWeek === 6) { // Saturday -> Observed Friday
+                        addHol(new Date(yr, monthIndex, dateNum - 1), `${name} (Observed)`);
+                    } else {
+                        addHol(actual, name);
+                    }
+                }
+
+                function getNthDay(monthIndex, dayOfWeek, n, name) {
+                    let count = 0;
+                    let d = new Date(yr, monthIndex, 1);
+                    while (d.getMonth() === monthIndex) {
+                        if (d.getDay() === dayOfWeek) {
+                            count++;
+                            if (count === n) {
+                                addHol(d, name);
+                                return;
+                            }
+                        }
+                        d.setDate(d.getDate() + 1);
+                    }
+                }
+
+                function getLastDay(monthIndex, dayOfWeek, name) {
+                    let d = new Date(yr, monthIndex + 1, 0);
+                    while (d.getDay() !== dayOfWeek) {
+                        d.setDate(d.getDate() - 1);
+                    }
+                    addHol(d, name);
+                }
+
+                // Fixed Date Federal Holidays
+                addFixedObserved(0, 1, "New Year's Day");
+                addFixedObserved(5, 19, "Juneteenth National Independence Day");
+                addFixedObserved(6, 4, "Independence Day");
+                addFixedObserved(10, 11, "Veterans Day");
+                addFixedObserved(11, 25, "Christmas Day");
+
+                // Floating Federal Holidays
+                getNthDay(0, 1, 3, "Martin Luther King Jr. Day"); // 3rd Mon Jan
+                getNthDay(1, 1, 3, "Washington's Birthday");     // 3rd Mon Feb
+                getLastDay(4, 1, "Memorial Day");               // Last Mon May
+                getNthDay(8, 1, 1, "Labor Day");                  // 1st Mon Sep
+                getNthDay(9, 1, 2, "Columbus Day");               // 2nd Mon Oct
+                getNthDay(10, 4, 4, "Thanksgiving Day");          // 4th Thu Nov
+            }
+            return holidays;
+        }
+
+        // Format Date Helper according to user selected format
+        function formatDateDisplay(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return '';
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            
+            if (dateFormat === 'ISO') return `${y}-${m}-${d}`;
+            if (dateFormat === 'EU') return `${d}/${m}/${y}`;
+            return `${m}/${d}/${y}`; // US Default
+        }
+
+        function formatDateFull(dateObj) {
+            if (!dateObj || isNaN(dateObj.getTime())) return '';
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            return dateObj.toLocaleDateString('en-US', options);
+        }
+
+        // Core Date Engine Calculation
+        function calculate() {
+            triggerShimmer();
+
+            const exWknd = document.getElementById('chkExcludeWeekends').checked;
+            const exHol = document.getElementById('chkExcludeHolidays').checked;
+            const inclusive = document.getElementById('chkInclusive').checked;
+
+            let startDateObj, endDateObj;
+            let totalCalDays = 0;
+            let totalBizDays = 0;
+            let totalWkndDays = 0;
+            let totalHolDays = 0;
+            let breakdownList = [];
+
+            if (currentMode === 'add') {
+                const sStr = document.getElementById('startDate').value;
+                if (!sStr) return;
+                startDateObj = new Date(sStr + 'T00:00:00');
+                
+                const op = document.getElementById('opType').value; // 'add' or 'sub'
+                const yr = parseInt(document.getElementById('inputYears').value) || 0;
+                const mo = parseInt(document.getElementById('inputMonths').value) || 0;
+                const wk = parseInt(document.getElementById('inputWeeks').value) || 0;
+                const dy = parseInt(document.getElementById('inputDays').value) || 0;
+
+                const sign = (op === 'add') ? 1 : -1;
+
+                // Step 1: Add Years, Months, Weeks
+                let target = new Date(startDateObj);
+                target.setFullYear(target.getFullYear() + sign * yr);
+                target.setMonth(target.getMonth() + sign * mo);
+                target.setDate(target.getDate() + sign * (wk * 7));
+
+                // Step 2: Handle Days (with or without Business Day rules)
+                if (exWknd || exHol) {
+                    let count = 0;
+                    let stepDate = new Date(target);
+                    const holidaysMap = getUSFederalHolidaysMap(stepDate.getFullYear() - 1, stepDate.getFullYear() + 5);
+
+                    while (count < dy) {
+                        stepDate.setDate(stepDate.getDate() + sign);
+                        const key = `${stepDate.getFullYear()}-${String(stepDate.getMonth() + 1).padStart(2, '0')}-${String(stepDate.getDate()).padStart(2, '0')}`;
+                        const dayOfWeek = stepDate.getDay();
+                        const isWknd = (dayOfWeek === 0 || dayOfWeek === 6);
+                        const isHol = holidaysMap[key] !== undefined;
+
+                        if (exWknd && isWknd) continue;
+                        if (exHol && isHol) continue;
+                        count++;
+                    }
+                    target = stepDate;
+                } else {
+                    target.setDate(target.getDate() + sign * dy);
+                }
+
+                endDateObj = target;
+
+            } else { // Mode: 'diff'
+                const sStr = document.getElementById('startDateDiff').value;
+                const eStr = document.getElementById('endDate').value;
+                if (!sStr || !eStr) return;
+                startDateObj = new Date(sStr + 'T00:00:00');
+                endDateObj = new Date(eStr + 'T00:00:00');
+            }
+
+            // Standardize Start & End range for analysis
+            let d1 = new Date(Math.min(startDateObj, endDateObj));
+            let d2 = new Date(Math.max(startDateObj, endDateObj));
+
+            const holidaysMap = getUSFederalHolidaysMap(d1.getFullYear(), d2.getFullYear());
+
+            let curr = new Date(d1);
+            let monthlyStats = {};
+
+            while (curr < d2 || (inclusive && curr.getTime() === d2.getTime())) {
+                totalCalDays++;
+                const key = `${curr.getFullYear()}-${String(curr.getMonth() + 1).padStart(2, '0')}-${String(curr.getDate()).padStart(2, '0')}`;
+                const mKey = curr.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                
+                if (!monthlyStats[mKey]) {
+                    monthlyStats[mKey] = { total: 0, biz: 0, wknd: 0, hol: 0 };
+                }
+                monthlyStats[mKey].total++;
+
+                const dayOfWeek = curr.getDay();
+                const isWknd = (dayOfWeek === 0 || dayOfWeek === 6);
+                const isHol = holidaysMap[key] !== undefined;
+
+                if (isHol) {
+                    totalHolDays++;
+                    monthlyStats[mKey].hol++;
+                }
+
+                if (isWknd) {
+                    totalWkndDays++;
+                    monthlyStats[mKey].wknd++;
+                } else if (!isHol) {
+                    totalBizDays++;
+                    monthlyStats[mKey].biz++;
+                }
+
+                curr.setDate(curr.getDate() + 1);
+            }
+
+            // Update UI Outputs
+            if (currentMode === 'add') {
+                document.getElementById('heroTitle').textContent = formatDateFull(endDateObj);
+                document.getElementById('heroSubtitle').textContent = `${totalCalDays} calendar days from ${formatDateDisplay(startDateObj)}`;
+            } else {
+                document.getElementById('heroTitle').textContent = `${totalCalDays} Calendar Days`;
+                document.getElementById('heroSubtitle').textContent = `From ${formatDateDisplay(startDateObj)} to ${formatDateDisplay(endDateObj)}`;
+            }
+
+            // Update Animated Counters
+            animateCounter('statCalendarDays', totalCalDays);
+            animateCounter('statBusinessDays', totalBizDays);
+            animateCounter('statWeekendDays', totalWkndDays);
+            animateCounter('statHolidays', totalHolDays);
+
+            // Equivalent Conversions
+            const wks = Math.floor(totalCalDays / 7);
+            const remDays = totalCalDays % 7;
+            document.getElementById('equivWeeksDays').textContent = `${wks} Weeks, ${remDays} Days`;
+            document.getElementById('equivHours').textContent = `${(totalCalDays * 24).toLocaleString()} Hours`;
+            document.getElementById('equivMinutes').textContent = `${(totalCalDays * 24 * 60).toLocaleString()} Minutes`;
+            document.getElementById('equivSeconds').textContent = `${(totalCalDays * 24 * 3600).toLocaleString()} Seconds`;
+            document.getElementById('equivYearPct').textContent = `${((totalCalDays / 365.25) * 100).toFixed(2)}%`;
+            document.getElementById('equivWorkHours').textContent = `${(totalBizDays * 8).toLocaleString()} Work Hours`;
+
+            // Populate Summary Text Copy
+            document.getElementById('summaryCopyText').innerText = 
+                `CalcWorld Date Report:\n` +
+                `Start Date: ${formatDateDisplay(startDateObj)}\n` +
+                `Target/End Date: ${formatDateDisplay(endDateObj)}\n` +
+                `Total Calendar Days: ${totalCalDays}\n` +
+                `Business Working Days: ${totalBizDays}\n` +
+                `Weekend Days: ${totalWkndDays}\n` +
+                `US Federal Holidays: ${totalHolDays}`;
+
+            // Populate Day Breakdown Table
+            const tbody = document.getElementById('tableBreakdownBody');
+            tbody.innerHTML = '';
+            for (const [mName, stats] of Object.entries(monthlyStats)) {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40 transition';
+                tr.innerHTML = `
+                    <td class="px-4 py-3 font-bold text-slate-800 dark:text-slate-200">${mName}</td>
+                    <td class="px-4 py-3 font-semibold">${stats.total}</td>
+                    <td class="px-4 py-3 font-semibold text-emerald-600 dark:text-emerald-400">${stats.biz}</td>
+                    <td class="px-4 py-3 font-semibold text-amber-600 dark:text-amber-400">${stats.wknd}</td>
+                    <td class="px-4 py-3 font-semibold text-rose-600 dark:text-rose-400">${stats.hol}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            // Populate Print Report Metadata
+            document.getElementById('printReportTimestamp').textContent = new Date().toLocaleString();
+            document.getElementById('printStartDate').textContent = formatDateDisplay(startDateObj);
+            document.getElementById('printEndDate').textContent = formatDateDisplay(endDateObj);
+            document.getElementById('printCalDays').textContent = totalCalDays;
+            document.getElementById('printBizDays').textContent = totalBizDays;
+            document.getElementById('printWkndDays').textContent = totalWkndDays;
+            document.getElementById('printHolDays').textContent = totalHolDays;
+
+            // Render Charts
+            renderCharts(totalBizDays, totalWkndDays, totalHolDays, monthlyStats);
+
+            // Update URL Query Parameters
+            updateURLState();
+        }
+
+        // Animated Number Counter
+        function animateCounter(elementId, targetVal, duration = 500) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const startVal = parseInt(el.dataset.value || "0", 10);
+            const start = performance.now();
+            
+            function update(timestamp) {
+                const elapsed = timestamp - start;
+                const progress = Math.min(elapsed / duration, 1);
+                const current = Math.floor(progress * (targetVal - startVal) + startVal);
+                el.textContent = current.toLocaleString();
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    el.textContent = targetVal.toLocaleString();
+                    el.dataset.value = targetVal;
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Trigger Shimmer Pulse Animation
+        function triggerShimmer() {
+            const card = document.getElementById('resultsCard');
+            if (!card) return;
+            card.classList.add('shimmer-active');
+            setTimeout(() => card.classList.remove('shimmer-active'), 1200);
+        }
+
+        // Render Chart.js Visualizations
+        function renderCharts(bizDays, wkndDays, holDays, monthlyStats) {
+            const ctxDoughnut = document.getElementById('chartDoughnut');
+            const ctxBar = document.getElementById('chartBar');
+            if (!ctxDoughnut || !ctxBar) return;
+
+            if (chartDoughnutInstance) chartDoughnutInstance.destroy();
+            if (chartBarInstance) chartBarInstance.destroy();
+
+            // Doughnut Chart
+            chartDoughnutInstance = new Chart(ctxDoughnut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Business Days', 'Weekend Days', 'Federal Holidays'],
+                    datasets: [{
+                        data: [bizDays, wkndDays, holDays],
+                        backgroundColor: ['#10b981', '#f59e0b', '#f43f5e'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } }
+                    }
+                }
+            });
+
+            // Bar Chart
+            const labels = Object.keys(monthlyStats);
+            const bizData = labels.map(k => monthlyStats[k].biz);
+            const wkndData = labels.map(k => monthlyStats[k].wknd);
+
+            chartBarInstance = new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        { label: 'Business Days', data: bizData, backgroundColor: '#3b82f6' },
+                        { label: 'Weekend Days', data: wkndData, backgroundColor: '#cbd5e1' }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        x: { stacked: true, ticks: { font: { family: 'Inter', size: 10 } } },
+                        y: { stacked: true, ticks: { font: { family: 'Inter', size: 10 } } }
+                    },
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { family: 'Inter', size: 11 } } }
+                    }
+                }
+            });
+        }
+
+        // Mode Switching Engine
+        function setMode(mode) {
+            currentMode = mode;
+            const btnAdd = document.getElementById('tabModeAdd');
+            const btnDiff = document.getElementById('tabModeDiff');
+            const secAdd = document.getElementById('sectionModeAdd');
+            const secDiff = document.getElementById('sectionModeDiff');
+
+            if (mode === 'add') {
+                btnAdd.className = 'py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm';
+                btnDiff.className = 'py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                secAdd.classList.remove('hidden');
+                secDiff.classList.add('hidden');
+            } else {
+                btnDiff.className = 'py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition bg-white dark:bg-slate-800 text-primary-600 dark:text-primary-400 shadow-sm';
+                btnAdd.className = 'py-2.5 px-4 rounded-lg text-xs md:text-sm font-bold text-center transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                secDiff.classList.remove('hidden');
+                secAdd.classList.add('hidden');
+            }
+            calculate();
+        }
+
+        // URL State Syncing
+        function updateURLState() {
+            const params = new URLSearchParams();
+            params.set('mode', currentMode);
+            params.set('format', dateFormat);
+            params.set('startDate', document.getElementById('startDate').value);
+            params.set('startDateDiff', document.getElementById('startDateDiff').value);
+            params.set('endDate', document.getElementById('endDate').value);
+            params.set('op', document.getElementById('opType').value);
+            params.set('y', document.getElementById('inputYears').value);
+            params.set('m', document.getElementById('inputMonths').value);
+            params.set('w', document.getElementById('inputWeeks').value);
+            params.set('d', document.getElementById('inputDays').value);
+            params.set('exWknd', document.getElementById('chkExcludeWeekends').checked ? '1' : '0');
+            params.set('exHol', document.getElementById('chkExcludeHolidays').checked ? '1' : '0');
+            params.set('inclusive', document.getElementById('chkInclusive').checked ? '1' : '0');
+
+            window.history.replaceState(null, '', '?' + params.toString());
+        }
+
+        function restoreURLState() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('mode')) setMode(params.get('mode'));
+            if (params.has('format')) {
+                dateFormat = params.get('format');
+                document.getElementById('formatSwitcher').value = dateFormat;
+            }
+            if (params.has('startDate')) document.getElementById('startDate').value = params.get('startDate');
+            if (params.has('startDateDiff')) document.getElementById('startDateDiff').value = params.get('startDateDiff');
+            if (params.has('endDate')) document.getElementById('endDate').value = params.get('endDate');
+            if (params.has('op')) document.getElementById('opType').value = params.get('op');
+            if (params.has('y')) document.getElementById('inputYears').value = params.get('y');
+            if (params.has('m')) document.getElementById('inputMonths').value = params.get('m');
+            if (params.has('w')) document.getElementById('inputWeeks').value = params.get('w');
+            if (params.has('d')) document.getElementById('inputDays').value = params.get('d');
+            if (params.has('exWknd')) document.getElementById('chkExcludeWeekends').checked = params.get('exWknd') === '1';
+            if (params.has('exHol')) document.getElementById('chkExcludeHolidays').checked = params.get('exHol') === '1';
+            if (params.has('inclusive')) document.getElementById('chkInclusive').checked = params.get('inclusive') === '1';
+        }
+
+        // Toast Notification System
+        function showToast(message) {
+            const toast = document.getElementById('toastNotification');
+            const toastText = document.getElementById('toastText');
+            if (!toast || !toastText) return;
+            toastText.textContent = message;
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+            }, 2000);
+        }
+
+        // Email Lead Submission Handler
+        function handleLeadSubmit() {
+            const email = document.getElementById('leadEmail').value;
+            if (email) {
+                showToast(`PDF Date Report queued for ${email}`);
+                document.getElementById('leadEmail').value = '';
+            }
+        }
+
+        // Initialize Defaults & Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+
+            const next30 = new Date(today);
+            next30.setDate(next30.getDate() + 30);
+            const next30Str = next30.toISOString().split('T')[0];
+
+            document.getElementById('startDate').value = todayStr;
+            document.getElementById('startDateDiff').value = todayStr;
+            document.getElementById('endDate').value = next30Str;
+
+            // Restore query state if present
+            restoreURLState();
+
+            // Mode Tab Listeners
+            document.getElementById('tabModeAdd')?.addEventListener('click', () => setMode('add'));
+            document.getElementById('tabModeDiff')?.addEventListener('click', () => setMode('diff'));
+            document.getElementById('btnQuickAdd')?.addEventListener('click', () => setMode('add'));
+            document.getElementById('btnQuickDiff')?.addEventListener('click', () => setMode('diff'));
+
+            // Format Switcher
+            document.getElementById('formatSwitcher')?.addEventListener('change', (e) => {
+                dateFormat = e.target.value;
+                calculate();
+            });
+
+            // Theme Toggle
+            document.getElementById('themeToggle')?.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.theme = 'light';
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.theme = 'dark';
+                }
+            });
+
+            // Presets Listeners
+            document.getElementById('preset90Days')?.addEventListener('click', () => {
+                setMode('add');
+                document.getElementById('startDate').value = todayStr;
+                document.getElementById('opType').value = 'add';
+                document.getElementById('inputYears').value = 0;
+                document.getElementById('inputMonths').value = 0;
+                document.getElementById('inputWeeks').value = 0;
+                document.getElementById('inputDays').value = 90;
+                document.getElementById('chkExcludeWeekends').checked = false;
+                document.getElementById('chkExcludeHolidays').checked = false;
+                calculate();
+                showToast('Preset: 90-Day Notice Date applied');
+            });
+
+            document.getElementById('presetNewYear')?.addEventListener('click', () => {
+                setMode('diff');
+                const nextYear = today.getFullYear() + 1;
+                document.getElementById('startDateDiff').value = todayStr;
+                document.getElementById('endDate').value = `${nextYear}-01-01`;
+                document.getElementById('chkExcludeWeekends').checked = false;
+                document.getElementById('chkExcludeHolidays').checked = false;
+                calculate();
+                showToast('Preset: Days Until New Year applied');
+            });
+
+            document.getElementById('presetNextMonthBiz')?.addEventListener('click', () => {
+                setMode('diff');
+                const nextM = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+                const lastDayNextM = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+                document.getElementById('startDateDiff').value = nextM.toISOString().split('T')[0];
+                document.getElementById('endDate').value = lastDayNextM.toISOString().split('T')[0];
+                document.getElementById('chkExcludeWeekends').checked = true;
+                document.getElementById('chkExcludeHolidays').checked = true;
+                calculate();
+                showToast('Preset: Business Days Next Month applied');
+            });
+
+            document.getElementById('btnReset')?.addEventListener('click', () => {
+                document.getElementById('startDate').value = todayStr;
+                document.getElementById('startDateDiff').value = todayStr;
+                document.getElementById('endDate').value = next30Str;
+                document.getElementById('opType').value = 'add';
+                document.getElementById('inputYears').value = 0;
+                document.getElementById('inputMonths').value = 0;
+                document.getElementById('inputWeeks').value = 0;
+                document.getElementById('inputDays').value = 30;
+                document.getElementById('chkExcludeWeekends').checked = false;
+                document.getElementById('chkExcludeHolidays').checked = false;
+                document.getElementById('chkInclusive').checked = false;
+                calculate();
+                showToast('Calculator fields reset to defaults');
+            });
+
+            // Date Swap Button
+            document.getElementById('btnSwapDates')?.addEventListener('click', () => {
+                const s = document.getElementById('startDateDiff').value;
+                const e = document.getElementById('endDate').value;
+                document.getElementById('startDateDiff').value = e;
+                document.getElementById('endDate').value = s;
+                calculate();
+            });
+
+            // Inputs Change Event Binding
+            const inputs = document.querySelectorAll('#calcForm input, #calcForm select');
+            inputs.forEach(input => {
+                input.addEventListener('input', calculate);
+                input.addEventListener('change', calculate);
+            });
+
+            // Copy Button
+            document.getElementById('btnCopySummary')?.addEventListener('click', () => {
+                const summaryText = document.getElementById('summaryCopyText').innerText;
+                navigator.clipboard.writeText(summaryText).then(() => {
+                    showToast('Calculation summary copied to clipboard!');
+                });
+            });
+
+            // Tab Buttons Switcher
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    tabBtns.forEach(b => {
+                        b.classList.remove('active', 'border-primary-600', 'text-primary-600', 'dark:text-primary-400');
+                        b.classList.add('border-transparent', 'text-slate-500');
+                    });
+                    btn.classList.add('active', 'border-primary-600', 'text-primary-600', 'dark:text-primary-400');
+                    btn.classList.remove('border-transparent', 'text-slate-500');
+
+                    const targetTab = btn.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+                    const targetEl = document.getElementById(targetTab);
+                    if (targetEl) targetEl.classList.remove('hidden');
+
+                    if (targetTab === 'tabChart') {
+                        if (chartDoughnutInstance) chartDoughnutInstance.resize();
+                        if (chartBarInstance) chartBarInstance.resize();
+                    }
+                });
+            });
+
+            // FAQ Accordion Toggle
+            const faqBtns = document.querySelectorAll('.faq-btn');
+            faqBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const content = btn.nextElementSibling;
+                    const icon = btn.querySelector('svg');
+                    content.classList.toggle('hidden');
+                    icon.classList.toggle('rotate-180');
+                });
+            });
+
+            // Initial Calculation Run
+            calculate();
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

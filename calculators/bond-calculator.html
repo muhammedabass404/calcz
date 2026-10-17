@@ -1,0 +1,2248 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bond Calculator - Yield to Maturity (YTM), Duration & Convexity | CalcWorld</title>
+    <meta name="description" content="Calculate bond yield to maturity (YTM), current yield, Macaulay duration, modified duration, and convexity. Interactive price-yield convexity curve, cash flow payment schedule, and interest rate sensitivity matrix.">
+    <link rel="canonical" href="https://calcworld.net/calculators/bond-calculator.html">
+
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        },
+                        emerald: {
+                            450: '#10b981',
+                            550: '#059669'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Bond Calculator & Fixed Income Valuation Engine",
+          "url": "https://calcworld.net/financial/bond-calculator",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate bond Yield to Maturity (YTM) using an iterative numerical solver, current yield, Macaulay and modified duration, bond convexity, dirty price with accrued interest, and price sensitivity duration stress test."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Financial Calculators",
+              "item": "https://calcworld.net/financial"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Bond Calculator",
+              "item": "https://calcworld.net/financial/bond-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Yield to Maturity (YTM) and how is it calculated?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yield to Maturity (YTM) is the internal rate of return (IRR) earned by an investor who purchases a bond at its current market price and holds it until maturity, assuming all scheduled coupon payments are reinvested at the same rate. Because YTM cannot be solved algebraically when a bond has multiple coupon periods, financial analysts and pricing engines calculate it using iterative numerical methods, such as the Newton-Raphson method or bisection."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between clean price and dirty price?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The clean price is the quoted market price of a bond excluding any accrued interest earned since the previous coupon distribution date. The dirty price (also called the invoice price or full price) is the total amount the buyer pays the seller upon settlement, consisting of the clean price plus accrued interest."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is Macaulay duration and how does it differ from Modified duration?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Macaulay duration measures the weighted-average time, in years, an investor must wait to receive the present value of all cash flows (coupons and principal repayment). Modified duration adjusts Macaulay duration by dividing it by (1 + YTM/m), translating duration from units of time into a direct measure of interest rate sensitivity: the approximate percentage change in bond price for every 100-basis-point (1.00%) shift in yield."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is bond convexity and why is it important?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Convexity is the second derivative of a bond's price with respect to interest rates, measuring the curvature of the price-yield relationship. While duration offers a linear estimate of price changes, actual bond prices curve upward. Positive convexity means that as market interest rates decline, bond prices rise by more than duration predicts; conversely, as interest rates increase, bond prices drop by less than duration predicts."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why do bond prices and interest rates move in opposite directions?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Fixed-rate bonds pay fixed periodic coupon payments established at issuance. When prevailing market interest rates rise, newly issued bonds offer higher coupons, making older bonds with lower coupon rates less attractive. Consequently, the market price of older bonds must decline until their yield matches the prevailing market rate. When interest rates fall, existing bonds with higher coupon rates command a market premium."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What determines whether a bond trades at par, a discount, or a premium?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A bond trades at par when its market price equals its face value (coupon rate equals YTM). A bond trades at a discount when its market price is below face value (coupon rate is lower than prevailing YTM). A bond trades at a premium when its market price exceeds face value (coupon rate is higher than prevailing YTM)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do credit rating agencies assess bond default risk?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Credit rating agencies—primarily Moody's, Standard & Poor's (S&P), and Fitch Ratings—evaluate an issuer's financial stability, apply, cash flow coverage, and default probability. Bonds rated Baa3/BBB- or higher represent investment grade, whereas bonds rated Ba1/BB+ or lower are classified as high yield (speculative or junk bonds), carrying elevated credit spreads to compensate investors for default risk."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What regulatory frameworks govern secondary market bond trading and reporting?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "In the United States, secondary market corporate and agency bond transactions are regulated by the Securities and Exchange Commission (SEC) and the Financial Industry Regulatory Authority (FINRA). Broker-dealers must report executed trades within 15 minutes through FINRA's Trade Reporting and Compliance Engine (TRACE). Municipal bonds are regulated by the Municipal Securities Rulemaking Board (MSRB) through its Electronic Municipal Market Access (EMMA) system."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { height: 7px; width: 7px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(59, 130, 246, 0.4); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(59, 130, 246, 0.7); }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Bond Calculator - Yield to Maturity (YTM), Duration & Convexity | CalcWorld">
+    <meta property="og:description" content="Calculate bond yield to maturity (YTM), current yield, Macaulay duration, modified duration, and convexity. Interactive price-yield convexity curve, cash flow payment schedule, and interest rate sensitivity matrix.">
+    <meta property="og:url" content="https://calcworld.net/calculators/bond-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Bond Calculator - Yield to Maturity (YTM), Duration & Convexity | CalcWorld">
+    <meta name="twitter:description" content="Calculate bond yield to maturity (YTM), current yield, Macaulay duration, modified duration, and convexity. Interactive price-yield convexity curve, cash flow payment schedule, and interest rate sensitivity matrix.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2.5 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Ad-supported financial engine:</strong> CalcWorld delivers institutional-grade fixed income analytics at zero cost. Please safelist our domain to support continuous updates.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">✕</button>
+    </div>
+
+    <!-- Floating Quick-Switcher Bar -->
+    <div id="floatingBar" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-[0_-4px_15px_rgba(0,0,0,0.08)] border-t border-slate-200 dark:border-slate-700 py-2.5 px-4 z-40 flex justify-between items-center text-xs">
+        <div class="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300">CALCWORLD</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-300 hidden sm:inline">Bond Valuation Engine:</span>
+            </div>
+            <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar py-0.5">
+                <a href="bond-calculator.html" class="px-2.5 py-1 bg-brand-600 text-white font-medium rounded-md whitespace-nowrap shadow-xs">Bond Engine</a>
+                <a href="annuity-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Annuity Engine</a>
+                <a href="amortization-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Amortization</a>
+                <a href="compound-interest-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Compound Interest</a>
+                <a href="#guide-section" class="px-2.5 py-1 text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors hidden md:inline">Fixed Income Guide ↓</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copySummary()" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-brand-600 hover:text-white dark:hover:bg-brand-600 rounded-md font-medium transition-colors flex items-center gap-1 cursor-pointer">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    <span>Copy Summary</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (2 seconds) -->
+    <div id="toast" class="fixed top-5 right-5 bg-slate-900 text-white dark:bg-brand-600 dark:text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 translate-y-[-160%] opacity-0 z-50 pointer-events-none">
+        <svg class="w-5 h-5 text-brand-400 dark:text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-message" class="text-sm font-medium">Bond valuation summary copied to clipboard!</span>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-24">
+        
+        <!-- Header Bar -->
+                <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="my-4 text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 sm:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <a href="https://calcworld.net/financial" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold">Bond Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Title Section -->
+        <div class="mb-6">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 mb-2 border border-blue-200 dark:border-blue-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-ping"></span>
+                Fixed Income Valuation & Numerical YTM Engine
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Bond Calculator: Yield to Maturity, Duration & Convexity
+            </h1>
+            <p class="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+                Compute bond Yield to Maturity (YTM) through high-precision iterative modeling, quantify Macaulay and Modified duration, evaluate second-order convexity curvature, and stress-test interest rate shifts across cash flow timelines.
+            </p>
+        </div>
+
+        <!-- AD SLOT 1: Header Responsive Leaderboard -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-6 ad-slot" data-ad-slot="header-leaderboard">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Responsive Leaderboard (728x90 / 320x50)</span>
+            </div>
+        </div>
+
+        <!-- Calculator Interactive Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Inputs Panel (5 Columns) -->
+            <section class="lg:col-span-5 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5" aria-labelledby="bond-inputs-heading">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <h2 id="bond-inputs-heading" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        Bond Parameters
+                    </h2>
+                    <button type="button" onclick="resetDefaults()" class="text-xs text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors cursor-pointer">Reset</button>
+                </div>
+
+                <!-- Presets Bar -->
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Benchmark Market Presets
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="applyPreset('treasury-10y')" class="px-2 py-2 text-xs font-medium bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 transition-colors text-center leading-tight cursor-pointer">
+                            US Treasury 10-Yr Benchmark
+                        </button>
+                        <button type="button" onclick="applyPreset('corporate-discount')" class="px-2 py-2 text-xs font-medium bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/40 dark:hover:bg-amber-900/60 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-200 dark:border-amber-800 transition-colors text-center leading-tight cursor-pointer">
+                            Corporate Bond (Discount)
+                        </button>
+                        <button type="button" onclick="applyPreset('muni-premium')" class="px-2 py-2 text-xs font-medium bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors text-center leading-tight cursor-pointer">
+                            Municipal Bond (Premium)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-4 pt-1">
+                    
+                    <!-- Face / Par Value -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="par-value" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Bond Face / Par Value (<span class="currency-symbol">$</span>)
+                            </label>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Redemption Value</span>
+                        </div>
+                        <div class="relative rounded-lg shadow-xs">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 font-semibold currency-symbol">$</div>
+                            <input type="number" id="par-value" min="100" step="100" value="1000" oninput="handleParChange()" class="pl-8 w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Annual Coupon Rate -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="coupon-rate" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Annual Coupon Rate: <span id="coupon-rate-display" class="text-brand-600 dark:text-brand-400 font-extrabold">5.00%</span>
+                            </label>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Stated Nominal Rate</span>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-8">
+                                <input type="range" id="coupon-rate-slider" min="0" max="15" step="0.125" value="5.00" oninput="syncCouponFromSlider(this.value)" class="w-full accent-brand-600 cursor-pointer">
+                            </div>
+                            <div class="col-span-4">
+                                <div class="relative">
+                                    <input type="number" id="coupon-rate" min="0" max="25" step="0.05" value="5.00" oninput="syncCouponFromInput(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-right text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <span class="absolute right-6 top-1.5 text-xs text-slate-400 font-bold">%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Coupon Payment Frequency -->
+                    <div>
+                        <label for="coupon-freq" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                            Coupon Payment Frequency
+                        </label>
+                        <select id="coupon-freq" onchange="calculate()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            <option value="2" selected>Semi-Annual (2x per year - Standard US Market)</option>
+                            <option value="1">Annual (1x per year - Eurobond / Sovereign)</option>
+                            <option value="4">Quarterly (4x per year - Floating / Structured)</option>
+                            <option value="12">Monthly (12x per year - Securitized Debt)</option>
+                        </select>
+                    </div>
+
+                    <!-- Current Market Price (Synchronized Dollar & % of Par) -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="market-price" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Current Market Price (<span class="currency-symbol">$</span>)
+                            </label>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Clean Quoted Price</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative rounded-lg shadow-xs">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500 font-semibold currency-symbol">$</div>
+                                <input type="number" id="market-price" min="1" step="5" value="950.00" oninput="syncPriceFromDollars(this.value)" class="pl-8 w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div class="relative rounded-lg shadow-xs">
+                                <input type="number" id="market-price-pct" min="0.1" step="0.25" value="95.00" oninput="syncPriceFromPercent(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <span class="absolute right-3 top-2 text-xs font-bold text-slate-400">% of Par</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Years to Maturity -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="years-maturity" class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                Years to Maturity: <span id="years-display" class="text-brand-600 dark:text-brand-400 font-extrabold">10 Years</span>
+                            </label>
+                            <span class="text-[11px] text-slate-500 dark:text-slate-400">Horizon to Redemption</span>
+                        </div>
+                        <div class="grid grid-cols-12 gap-2 items-center">
+                            <div class="col-span-8">
+                                <input type="range" id="years-slider" min="1" max="30" step="1" value="10" oninput="syncYearsFromSlider(this.value)" class="w-full accent-brand-600 cursor-pointer">
+                            </div>
+                            <div class="col-span-4">
+                                <div class="relative">
+                                    <input type="number" id="years-maturity" min="1" max="50" step="1" value="10" oninput="syncYearsFromInput(this.value)" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs font-bold text-right text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <span class="absolute right-6 top-1.5 text-xs text-slate-400 font-bold">Yrs</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settlement & Accrued Interest Accordion -->
+                    <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-slate-50 dark:bg-slate-900/50">
+                        <button type="button" onclick="toggleAccruedInterest()" class="w-full px-3 py-2 text-xs font-bold text-left text-slate-700 dark:text-slate-300 flex justify-between items-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Settlement & Accrued Interest (Clean vs Dirty Price)
+                            </span>
+                            <span id="accrued-chevron" class="text-slate-400 font-bold">▼</span>
+                        </button>
+                        <div id="accrued-panel" class="hidden p-3 border-t border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="days-accrued" class="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Days Since Last Coupon</label>
+                                    <input type="number" id="days-accrued" min="0" max="182" value="0" oninput="calculate()" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-white">
+                                </div>
+                                <div>
+                                    <label for="day-count-convention" class="block text-slate-500 dark:text-slate-400 text-[11px] mb-1">Day-Count Convention</label>
+                                    <select id="day-count-convention" onchange="calculate()" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs font-bold text-slate-900 dark:text-white">
+                                        <option value="30/360" selected>30/360 (Corporate / Muni)</option>
+                                        <option value="act/act">Actual/Actual (US Treasury)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="p-2 rounded bg-blue-50 dark:bg-blue-950/40 text-[11px] text-blue-700 dark:text-blue-300 flex justify-between">
+                                <span>Accrued Interest: <strong id="accrued-interest-display">$0.00</strong></span>
+                                <span>Dirty (Invoice) Price: <strong id="dirty-price-display">$950.00</strong></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Action Button -->
+                <div class="pt-2">
+                    <button type="button" onclick="calculate()" class="w-full py-2.5 px-4 bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm rounded-xl shadow-md shadow-brand-500/20 transition-all cursor-pointer flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Compute Bond Metrics & Sensitivity
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Results & Visualization Panel (7 Columns) -->
+            <section class="lg:col-span-7 space-y-6" aria-label="Bond Valuation Outputs and Visualizations">
+                
+                <!-- KPI Highlights Grid (4 Key Metrics) -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    
+                    <!-- KPI 1: Yield to Maturity (YTM) -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-brand-500"></div>
+                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Yield to Maturity (YTM)</span>
+                        <div id="kpi-ytm" class="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400 mt-1 truncate">5.67%</div>
+                        <span id="kpi-effective-yield" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block truncate">5.75% Effective Annual</span>
+                    </div>
+
+                    <!-- KPI 2: Current Yield -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-emerald-500"></div>
+                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Current Yield</span>
+                        <div id="kpi-current-yield" class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400 mt-1 truncate">5.26%</div>
+                        <span id="kpi-annual-coupon-subtext" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block truncate">$50.00 Annual Income</span>
+                    </div>
+
+                    <!-- KPI 3: Macaulay & Modified Duration -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-purple-500"></div>
+                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Modified Duration</span>
+                        <div id="kpi-modified-duration" class="text-xl sm:text-2xl font-black text-purple-600 dark:text-purple-400 mt-1 truncate">7.52 Yrs</div>
+                        <span id="kpi-macaulay-duration" class="text-[10px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5 block truncate">Mac: 7.73 Yrs</span>
+                    </div>
+
+                    <!-- KPI 4: Total Lifetime Coupon Cash Flows -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-xs relative overflow-hidden">
+                        <div class="absolute top-0 left-0 right-0 h-1 bg-amber-500"></div>
+                        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block uppercase tracking-wider">Lifetime Coupons</span>
+                        <div id="kpi-total-coupons" class="text-xl sm:text-2xl font-black text-amber-600 dark:text-amber-400 mt-1 truncate">$500.00</div>
+                        <span id="kpi-total-cashflow" class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 block truncate">Total Return: $1,500</span>
+                    </div>
+
+                </div>
+
+                <!-- Secondary Metric Pill Bar -->
+                <div class="bg-slate-100 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="font-bold text-slate-600 dark:text-slate-400">Pricing Status:</span>
+                        <span id="badge-bond-status" class="px-2.5 py-0.5 rounded-full font-bold text-xs bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                            Trading at a 5.00% Discount
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-4 text-slate-600 dark:text-slate-300">
+                        <div>Convexity: <strong id="metric-convexity" class="text-slate-900 dark:text-white font-mono">71.42</strong></div>
+                        <div>DV01 (per bond): <strong id="metric-dv01" class="text-slate-900 dark:text-white font-mono">$0.71</strong></div>
+                        <div>Capital Gain at Par: <strong id="metric-capital-gain" class="text-emerald-600 dark:text-emerald-400 font-mono">+$50.00</strong></div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 p-6 space-y-6">
+                    
+                    <div class="flex border-b border-slate-200 dark:border-slate-700 -mx-6 px-6 overflow-x-auto custom-scrollbar">
+                        <button type="button" onclick="switchTab('tab-summary')" class="tab-link pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 whitespace-nowrap cursor-pointer transition-colors" data-tab="tab-summary">
+                            Summary & Visual Charts
+                        </button>
+                        <button type="button" onclick="switchTab('tab-schedule')" class="tab-link pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap cursor-pointer transition-colors" data-tab="tab-schedule">
+                            Bond Cash Flow Amortization
+                        </button>
+                        <button type="button" onclick="switchTab('tab-sensitivity')" class="tab-link pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap cursor-pointer transition-colors" data-tab="tab-sensitivity">
+                            Price Sensitivity Matrix
+                        </button>
+                        <button type="button" onclick="switchTab('tab-report')" class="tab-link pb-3 px-3 text-xs sm:text-sm font-bold border-b-2 border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 whitespace-nowrap cursor-pointer transition-colors" data-tab="tab-report">
+                            Print Report
+                        </button>
+                    </div>
+
+                    <!-- TAB 1: Summary & Visual Charts -->
+                    <div id="tab-summary" class="tab-pane space-y-6">
+                        
+                        <!-- Analytical Breakdown Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            
+                            <!-- Box 1: Yield & Return Taxonomy -->
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
+                                <div class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex justify-between">
+                                    <span>Yield & Cash Flow Profile</span>
+                                    <span id="sum-frequency-label" class="text-brand-600 dark:text-brand-400 font-semibold">Semi-Annual</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Nominal Annual YTM:</span>
+                                    <span id="sum-nominal-ytm" class="font-bold text-slate-800 dark:text-slate-200">5.67%</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Effective Annual Yield (EAY):</span>
+                                    <span id="sum-effective-ytm" class="font-bold text-slate-800 dark:text-slate-200">5.75%</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Current Yield (Annual / Price):</span>
+                                    <span id="sum-current-yield" class="font-bold text-slate-800 dark:text-slate-200">5.26%</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Periodic Coupon Payment:</span>
+                                    <span id="sum-periodic-coupon" class="font-bold text-slate-800 dark:text-slate-200">$25.00 every 6 months</span>
+                                </div>
+                                <div class="flex justify-between py-1">
+                                    <span class="text-slate-500 dark:text-slate-400">Total Future Cash Flows:</span>
+                                    <span id="sum-total-cashflow" class="font-bold text-emerald-600 dark:text-emerald-400">$1,500.00</span>
+                                </div>
+                            </div>
+
+                            <!-- Box 2: Duration, Risk & Sensitivity -->
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 space-y-2.5 text-xs">
+                                <div class="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px] flex justify-between">
+                                    <span>Interest Rate Risk & Sensitivity</span>
+                                    <span class="text-purple-600 dark:text-purple-400 font-bold">Duration Analytics</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Macaulay Duration:</span>
+                                    <span id="sum-macaulay-duration" class="font-bold text-slate-800 dark:text-slate-200">7.73 Years</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Modified Duration:</span>
+                                    <span id="sum-modified-duration" class="font-bold text-slate-800 dark:text-slate-200">7.52 Years</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Convexity Measure:</span>
+                                    <span id="sum-convexity" class="font-bold text-slate-800 dark:text-slate-200">71.42</span>
+                                </div>
+                                <div class="flex justify-between py-1 border-b border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-500 dark:text-slate-400">Estimated ΔP for +100bps Shift:</span>
+                                    <span id="sum-delta-100bps" class="font-bold text-rose-600 dark:text-rose-400">-7.16% (-$68.04)</span>
+                                </div>
+                                <div class="flex justify-between py-1">
+                                    <span class="text-slate-500 dark:text-slate-400">Estimated ΔP for -100bps Shift:</span>
+                                    <span id="sum-delta-minus100bps" class="font-bold text-emerald-600 dark:text-emerald-400">+7.88% (+$74.83)</span>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- Chart 1: Price-Yield Convexity Curve -->
+                        <div>
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                    Bond Price vs. Yield Curve (Convexity & Duration Tangent)
+                                </h3>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Non-Linear Bond Pricing Mechanics</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                Demonstrates the inverse price-yield relationship. The blue curve illustrates exact bond valuation; the red dashed line reflects linear duration approximation; the purple marker indicates your current market position.
+                            </p>
+                            <div class="h-64 sm:h-72 w-full">
+                                <canvas id="convexityChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Cash Flow Timeline Bar Chart -->
+                        <div class="pt-2 border-t border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                    Cash Flow Payment Timeline (Coupons & Redemption Principal)
+                                </h3>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Maturity Horizon</span>
+                            </div>
+                            <div class="h-64 sm:h-72 w-full">
+                                <canvas id="cashflowChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- TAB 2: Bond Cash Flow Amortization Schedule Table -->
+                    <div id="tab-schedule" class="tab-pane hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+                            <div>
+                                <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                    Period-by-Period Cash Flow & Discounting Ledger
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">
+                                    Detailed amortization of scheduled coupon distributions, discount factors, present values, and principal redemption at final maturity.
+                                </p>
+                            </div>
+                            <button type="button" onclick="exportBondScheduleCSV()" class="self-start sm:self-auto px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                <span>Export CSV</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-wider">
+                                    <tr>
+                                        <th scope="col" class="py-2.5 px-3">Period</th>
+                                        <th scope="col" class="py-2.5 px-3">Timing (Yrs)</th>
+                                        <th scope="col" class="py-2.5 px-3">Coupon Cash Flow</th>
+                                        <th scope="col" class="py-2.5 px-3">Principal Repayment</th>
+                                        <th scope="col" class="py-2.5 px-3">Total Cash Flow</th>
+                                        <th scope="col" class="py-2.5 px-3">Discount Factor</th>
+                                        <th scope="col" class="py-2.5 px-3">Present Value (PV)</th>
+                                        <th scope="col" class="py-2.5 px-3">Cumulative PV</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-schedule-body" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <!-- Populated dynamically via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Price Sensitivity Duration Matrix -->
+                    <div id="tab-sensitivity" class="tab-pane hidden space-y-4">
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                                Institutional Price Sensitivity Stress Matrix (±50bps, ±100bps, ±200bps)
+                            </h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                                Compares exact discounted cash flow repricing against first-order Duration and second-order Duration + Convexity Taylor series estimates across parallel yield curve shocks.
+                            </p>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-wider">
+                                    <tr>
+                                        <th scope="col" class="py-2.5 px-3">Yield Shift</th>
+                                        <th scope="col" class="py-2.5 px-3">Adjusted YTM</th>
+                                        <th scope="col" class="py-2.5 px-3">Exact DCF Price</th>
+                                        <th scope="col" class="py-2.5 px-3">Duration Only Model</th>
+                                        <th scope="col" class="py-2.5 px-3">Duration + Convexity</th>
+                                        <th scope="col" class="py-2.5 px-3">% Price Shift</th>
+                                        <th scope="col" class="py-2.5 px-3">Dollar P&amp;L (1 Bond)</th>
+                                        <th scope="col" class="py-2.5 px-3">Portfolio Impact ($100k)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-sensitivity-body" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <!-- Populated dynamically via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="p-3 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-[11px] text-blue-700 dark:text-blue-300 leading-relaxed border border-blue-200 dark:border-blue-900">
+                            <strong>Convexity Advantage:</strong> Notice that for falling yields (-100bps, -200bps), the exact price is higher than predicted by duration alone. For rising yields (+100bps, +200bps), the bond loses less value than predicted by duration. This asymmetric cushioning represents positive convexity.
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Print Report -->
+                    <div id="tab-report" class="tab-pane hidden space-y-5">
+                        <div class="text-center py-6 px-4 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                            <svg class="w-12 h-12 mx-auto text-brand-600 dark:text-brand-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <h4 class="text-base font-bold text-slate-900 dark:text-white">Institutional Bond Valuation & Duration Audit</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-4 leading-relaxed">
+                                Generate a print-ready analytical dossier presenting bond contract terms, Yield to Maturity, cash flow schedules, interest rate sensitivity duration metrics, and convexity adjustments.
+                            </p>
+                            <div class="flex justify-center gap-3">
+                                <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer">
+                                    Print / Save as PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Print Preview Sheet -->
+                        <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900 text-xs border border-slate-200 dark:border-slate-700 space-y-3 font-mono">
+                            <div class="text-center font-bold text-sm border-b pb-2 border-slate-300 dark:border-slate-700">CALCWORLD FINANCIAL ENGINEERING • BOND VALUATION DOSSIER</div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px]" id="print-sheet-content">
+                                <!-- Dynamic details for printing populated via JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AD SLOT 2: Mid-Calculator Slot -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs ad-slot" data-ad-slot="mid-calculator">
+                    <div class="text-center p-3">
+                        <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-500">In-Engine Contextual (Responsive)</span>
+                    </div>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="lead-box p-5 rounded-2xl bg-gradient-to-r from-blue-500/10 via-brand-500/10 to-indigo-500/10 dark:from-blue-950/40 dark:via-brand-950/40 dark:to-indigo-950/40 border border-blue-500/20 dark:border-blue-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="space-y-1 text-center md:text-left">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 justify-center md:justify-start">
+                            <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            Receive Your Institutional Bond Valuation Audit
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                            Download an instant executive PDF summary featuring cash flow amortization schedules, YTM convergence proofs, duration stress tests, and convexity calculations.
+                        </p>
+                    </div>
+                    <form class="flex w-full md:w-auto shrink-0" onsubmit="event.preventDefault(); showLeadToast();">
+                        <label for="lead-email" class="sr-only">Email Address</label>
+                        <input type="email" id="lead-email" required placeholder="trader@fund.com" class="px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-l-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-slate-900 dark:text-white w-full md:w-56">
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-r-lg transition-colors cursor-pointer shrink-0">
+                            Get PDF
+                        </button>
+                    </form>
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- AD SLOT 3: Above Educational Guide -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-10 ad-slot" data-ad-slot="above-guide">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Horizontal Leaderboard (728x90 / 970x90)</span>
+            </div>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide -->
+        <article id="guide-section" class="max-w-4xl mx-auto space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base border-t border-slate-200 dark:border-slate-800 pt-10">
+            
+            <header class="space-y-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Fixed Income Engineering Reference</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    The Financial Architecture of Bond Pricing, Yield to Maturity, Duration, and Convexity
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">
+                    An authoritative reference manual covering discounted cash flow mechanics, iterative Yield to Maturity algorithms, clean versus dirty pricing conventions, duration metrics, second-order convexity curvature, credit risk taxonomies, and statutory market oversight under SEC and FINRA rules.
+                </p>
+            </header>
+
+            <!-- Section 1: Fundamental Mechanics of Fixed Income & Bond Pricing -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    1. Fundamental Mechanics of Fixed Income Valuation
+                </h3>
+                <p>
+                    A bond represents a legally binding debt instrument through which an investor loans capital to an entity—such as a national sovereign government, municipality, or corporation—that borrows the funds for a defined period at a stated interest rate. The foundational valuation of any fixed-income security is governed by the principles of discounted cash flow (DCF) analysis. The economic value of a bond equals the sum of the present values of all future contractual coupon payments plus the present value of the face or par value returned at maturity.
+                </p>
+                <p>
+                    The standard pricing equation for a fixed-rate bond paying periodic coupons is expressed as follows:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-brand-500">
+                    P = ∑ [ C / (1 + y)^t ] + [ F / (1 + y)^N ] &nbsp;&nbsp;(for t = 1 to N)
+                </div>
+                <p>
+                    In this formulation, <em>P</em> represents the market price of the bond, <em>C</em> is the periodic coupon payment, <em>F</em> designates the face value (redemption value at maturity, conventionally $1,000 for corporate and Treasury issues), <em>N</em> denotes the total number of compounding periods over the bond's lifespan, and <em>y</em> is the periodic market discount rate or yield per period (such that <em>y = YTM / m</em>, where <em>m</em> is the coupon payment frequency per year).
+                </p>
+                <p>
+                    When the periodic discount rate <em>y</em> remains constant across all maturities, the summation can be represented in closed form using the ordinary annuity formula:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-emerald-500">
+                    P = C · [ (1 - (1 + y)^(-N)) / y ] + F · (1 + y)^(-N)
+                </div>
+                <p>
+                    This fundamental mathematical relationship demonstrates why bond prices and market interest rates operate in an inverse relationship. Because the future cash flows (<em>C</em> and <em>F</em>) are legally fixed by contract, an increase in the prevailing market discount rate <em>y</em> reduces the present value of each future dollar, forcing the bond's market price downward. Conversely, when prevailing interest rates decline, those fixed future cash flows are discounted at a lower rate, causing the bond price to rise above its par value.
+                </p>
+            </section>
+
+            <!-- Section 2: Clean Price vs Dirty Price -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    2. Clean Price vs. Dirty Price and Accrued Interest Accounting
+                </h3>
+                <p>
+                    In professional secondary debt markets, bonds trade between scheduled coupon payment dates. Because the bond issuer delivers the full periodic coupon payment to whichever investor holds the bond on the record date, an accounting mechanism is required to compensate the seller for interest earned during the portion of the coupon period they held the bond. This distinction establishes the difference between the <strong>Clean Price</strong> and the <strong>Dirty Price</strong> (also known as the full price or invoice price).
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+                    <div class="flex justify-between items-center text-xs font-bold text-slate-900 dark:text-white">
+                        <span>Dirty Price Equation:</span>
+                        <span class="font-mono text-brand-600 dark:text-brand-400">Dirty Price = Clean Price + Accrued Interest</span>
+                    </div>
+                    <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        The <strong>Clean Price</strong> is the price quoted by financial news outlets, broker-dealer trading desks, and Bloomberg terminals. It isolates the capital value of the bond from the cyclical build-up of interest, preventing price charts from exhibiting artificial saw-tooth oscillations. The <strong>Dirty Price</strong> is the actual settlement amount wired from buyer to seller.
+                    </p>
+                </div>
+                <p>
+                    Accrued interest is computed using standardized institutional day-count conventions:
+                </p>
+                <ul class="list-disc pl-6 space-y-2 text-xs sm:text-sm">
+                    <li>
+                        <strong>Actual/Actual (ICMA / US Treasuries):</strong> Used for US Treasury bills, notes, and bonds. The accrued interest calculation uses the actual number of elapsed calendar days since the prior coupon date divided by the actual number of days in the current coupon period.
+                    </li>
+                    <li>
+                        <strong>30/360 (Bond Basis):</strong> Standard in US corporate bonds and municipal securities. Each month is assumed to contain exactly 30 days and each year 360 days. Accrued interest is defined as <em>C · (Days Elapsed / Days in Period)</em>.
+                    </li>
+                </ul>
+            </section>
+
+            <!-- Section 3: Yield to Maturity Numerical Solver -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    3. Yield to Maturity (YTM) Formulation and Iterative Numerical Solvers
+                </h3>
+                <p>
+                    Yield to Maturity (YTM) is the internal rate of return (IRR) of a bond. It represents the single annual discount rate that equates the present value of all remaining cash flows to the bond's current market price. When an investor purchases a bond at market price <em>P</em>, collects every coupon payment on its contractual date, reinvests all coupons at the exact YTM rate, and holds the debt to maturity, their annualized compound return will match the YTM.
+                </p>
+                <p>
+                    Unlike straightforward algebraic problems, the YTM cannot be isolated directly when <em>N &gt; 1</em> because the pricing formula is a high-degree polynomial equation:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-purple-500">
+                    f(y) = ∑ [ C / (1 + y)^t ] + [ F / (1 + y)^N ] - P = 0
+                </div>
+                <p>
+                    To determine <em>y</em>, institutional pricing libraries implement iterative root-finding algorithms. The CalcWorld engine uses the <strong>Newton-Raphson method</strong>, which begins with an initial financial approximation and iteratively refines the estimated yield by evaluating the function value and its first derivative:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-amber-500">
+                    y_(k+1) = y_k - [ f(y_k) / f'(y_k) ]
+                </div>
+                <p>
+                    The first derivative with respect to periodic yield <em>y</em> is the negative of the present-value-weighted time to payment:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-rose-500">
+                    f'(y) = - ∑ [ t · C / (1 + y)^(t+1) ] - [ N · F / (1 + y)^(N+1) ]
+                </div>
+                <p>
+                    Because this derivative is strictly negative for all positive yields (reflecting the monotonic downward slope of bond prices), Newton-Raphson achieves quadratic convergence within 4 to 7 iterations, yielding sub-penny precision. If market prices diverge into extreme territories, our engine includes a bisection guardrail to ensure convergence stability across all yield curve scenarios.
+                </p>
+            </section>
+
+            <!-- AD SLOT 4: In-Article AdSense -->
+            <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-6 ad-slot" data-ad-slot="in-article">
+                <div class="text-center p-3">
+                    <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500">In-Article Contextual Banner (Responsive)</span>
+                </div>
+            </div>
+
+            <!-- Section 4: Macaulay Duration vs Modified Duration -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    4. Macaulay Duration vs. Modified Duration and Interest Rate Sensitivity
+                </h3>
+                <p>
+                    While maturity identifies the exact calendar date upon which final principal is repaid, it does not reveal the timing of intermediate cash flows. A 10-year zero-coupon bond returns 100% of its capital at year 10, whereas a 10-year bond paying an 8% coupon returns substantial cash early in its life. To quantify this timing structure, Canadian economist Frederick Macaulay formulated <strong>Macaulay Duration</strong> in 1938.
+                </p>
+                <p>
+                    Macaulay duration measures the weighted-average time, in years, until all cash flows are received, where each cash flow's weight is its present value divided by the bond's total market price:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-blue-500">
+                    MacD = (1 / P) · ∑ [ t · CF_t / (1 + y)^t ] · (1 / m) &nbsp;&nbsp;(in years)
+                </div>
+                <p>
+                    While Macaulay duration is expressed in years, risk managers require a metric that directly quantifies percentage price volatility in response to interest rate changes. This is achieved by computing <strong>Modified Duration</strong>:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-emerald-500">
+                    ModD = MacD / (1 + y) = MacD / (1 + YTM / m)
+                </div>
+                <p>
+                    Modified duration serves as the first derivative linear approximation of price sensitivity:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-purple-500">
+                    ΔP / P ≈ - ModD · Δy
+                </div>
+                <p>
+                    For instance, if a corporate bond carries a Modified Duration of 7.50 years and benchmark yields increase by 100 basis points (+1.00%), the linear model estimates that the bond's price will decline by approximately 7.50%. If yields fall by 50 basis points (-0.50%), the price is estimated to gain 3.75%.
+                </p>
+            </section>
+
+            <!-- Section 5: Bond Convexity -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    5. Bond Convexity and the Second-Order Taylor Series Price Approximation
+                </h3>
+                <p>
+                    Modified duration provides a tangent linear approximation to the price-yield relationship. However, as illustrated in our interactive chart, the true relationship between bond prices and yields is distinctly non-linear and curved. This curvature is known as <strong>Convexity</strong>.
+                </p>
+                <p>
+                    Convexity is the second derivative of the bond price function with respect to yield, divided by the bond price:
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-amber-500">
+                    Convexity = [ 1 / (P · (1 + y)^2) ] · ∑ [ t · (t + 1) · CF_t / (1 + y)^t ] · (1 / m^2)
+                </div>
+                <p>
+                    By combining Modified Duration and Convexity through a second-order Taylor series expansion, fixed-income analysts achieve significantly higher pricing accuracy for large interest rate movements (such as 100bps or 200bps shifts):
+                </p>
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200 border-l-4 border-brand-500">
+                    ΔP / P ≈ [ - ModD · Δy ] + [ 0.5 · Convexity · (Δy)^2 ]
+                </div>
+                <p>
+                    Because <em>(Δy)^2</em> is always positive regardless of whether interest rates rise or fall, positive convexity delivers two structural advantages to bondholders:
+                </p>
+                <ol class="list-decimal pl-6 space-y-1.5 text-xs sm:text-sm">
+                    <li>When market interest rates fall, the positive convexity adjustment adds to the price increase, causing the bond to appreciate faster than duration estimates.</li>
+                    <li>When market interest rates rise, the positive convexity adjustment partially offsets the price decline, cushioning the bondholder's capital loss.</li>
+                </ol>
+            </section>
+
+            <!-- Section 6: Credit Risk Rating Agency Scale -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    6. Credit Risk Analysis and Credit Rating Agency Taxonomy
+                </h3>
+                <p>
+                    In addition to interest rate duration risk, corporate and municipal bonds expose investors to credit risk: the risk that an issuer defaults on scheduled coupon obligations or principal redemption. Globally, creditworthiness is independently evaluated by the three major Nationally Recognized Statistical Rating Organizations (NRSROs): Moody's Investors Service, Standard &amp; Poor's (S&amp;P) Global Ratings, and Fitch Ratings.
+                </p>
+                <p>
+                    The bond market enforces a strict demarcation between <strong>Investment Grade</strong> debt (high-quality balance sheets eligible for bank reserves and pension holdings) and <strong>High Yield / Speculative Debt</strong> (frequently referred to as junk bonds):
+                </p>
+                <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 uppercase font-semibold">
+                            <tr>
+                                <th class="py-2.5 px-3">Classification</th>
+                                <th class="py-2.5 px-3">Moody's</th>
+                                <th class="py-2.5 px-3">S&amp;P / Fitch</th>
+                                <th class="py-2.5 px-3">Institutional Credit Profile</th>
+                                <th class="py-2.5 px-3">Typical Spread Over Benchmark</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                            <tr>
+                                <td class="py-2 px-3 font-bold text-emerald-600">Prime / Super Sovereign</td>
+                                <td class="py-2 px-3 font-mono">Aaa</td>
+                                <td class="py-2 px-3 font-mono">AAA</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Virtually zero default risk; backed by sovereign taxation or immense corporate cash reserves.</td>
+                                <td class="py-2 px-3 font-mono">+10 to +40 bps</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-bold text-emerald-600">High Grade</td>
+                                <td class="py-2 px-3 font-mono">Aa1, Aa2, Aa3</td>
+                                <td class="py-2 px-3 font-mono">AA+, AA, AA-</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Exceptionally strong financial standing; minimal long-term susceptibility to adverse economic shocks.</td>
+                                <td class="py-2 px-3 font-mono">+40 to +80 bps</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-bold text-blue-600">Upper Medium Grade</td>
+                                <td class="py-2 px-3 font-mono">A1, A2, A3</td>
+                                <td class="py-2 px-3 font-mono">A+, A, A-</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Strong debt repayment capacity, though moderately vulnerable to industry downturns.</td>
+                                <td class="py-2 px-3 font-mono">+80 to +140 bps</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-bold text-blue-600">Lower Medium Grade</td>
+                                <td class="py-2 px-3 font-mono">Baa1, Baa2, Baa3</td>
+                                <td class="py-2 px-3 font-mono">BBB+, BBB, BBB-</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Lowest tier of Investment Grade. Adequate protections, but vulnerable to economic stress.</td>
+                                <td class="py-2 px-3 font-mono">+140 to +220 bps</td>
+                            </tr>
+                            <tr class="bg-amber-500/10">
+                                <td class="py-2 px-3 font-bold text-amber-600">Non-Investment Grade (Speculative)</td>
+                                <td class="py-2 px-3 font-mono">Ba1, Ba2, Ba3</td>
+                                <td class="py-2 px-3 font-mono">BB+, BB, BB-</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Highest tier of High Yield ("crossover"). Heightened exposure to ongoing financial uncertainties.</td>
+                                <td class="py-2 px-3 font-mono">+250 to +400 bps</td>
+                            </tr>
+                            <tr class="bg-rose-500/10">
+                                <td class="py-2 px-3 font-bold text-rose-600">Highly Speculative (Junk)</td>
+                                <td class="py-2 px-3 font-mono">B1, B2, B3</td>
+                                <td class="py-2 px-3 font-mono">B+, B, B-</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Vulnerable to default; current debt service maintained but capacity dependent on favorable business conditions.</td>
+                                <td class="py-2 px-3 font-mono">+400 to +650 bps</td>
+                            </tr>
+                            <tr class="bg-rose-500/10">
+                                <td class="py-2 px-3 font-bold text-rose-700">Substantial Risk / In Default</td>
+                                <td class="py-2 px-3 font-mono">Caa to C</td>
+                                <td class="py-2 px-3 font-mono">CCC to D</td>
+                                <td class="py-2 px-3 text-slate-600 dark:text-slate-400">Imminent bankruptcy risk or active payment default; recovery value analysis required.</td>
+                                <td class="py-2 px-3 font-mono">+800 to +2,000+ bps</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Section 7: Regulatory Protections & Market Transparency -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    7. Regulatory Oversight and Secondary Market Reporting Standards
+                </h3>
+                <p>
+                    Unlike exchange-traded equities, the majority of secondary debt market transactions occur over the counter (OTC) across interdealer networks. To protect institutional and retail investors, regulatory bodies mandate strict transparency and execution reporting rules.
+                </p>
+                <div class="space-y-3">
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">A. FINRA TRACE (Trade Reporting and Compliance Engine)</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            Under FINRA Rule 6700 series, registered broker-dealers are legally required to report executed secondary transactions in corporate bonds, agency debt, and asset-backed securities to TRACE within 15 minutes of trade execution. TRACE disseminates real-time price, volume, and yield data to the public, eliminating opaque pricing spreads.
+                        </p>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">B. SEC Rule 15c2-12 and MSRB EMMA for Municipal Bonds</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            The Securities and Exchange Commission (SEC) regulates municipal securities disclosures through Rule 15c2-12, requiring municipal bond underwriters to ensure issuers commit to ongoing financial filings, annual audits, and material event notices (such as rating changes or payment delinquencies). The Municipal Securities Rulemaking Board (MSRB) hosts the Electronic Municipal Market Access (EMMA) system, providing free public access to municipal bond prices and official statements.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ Section -->
+            <section class="space-y-4 border-t border-slate-200 dark:border-slate-800 pt-8">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    Frequently Asked Questions About Bond Valuation
+                </h3>
+                
+                <div class="space-y-3">
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">How does the iterative Newton-Raphson method calculate YTM?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            Because bond cash flow polynomials cannot be solved directly when there are multiple payment periods, the engine tests an initial estimated yield, measures the resulting error in price, and divides by the derivative of price with respect to yield. This produces a refined guess that converges to the exact yield to maturity within a few iterations.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">Why does Modified Duration differ from Macaulay Duration?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            Macaulay duration measures the cash-flow-weighted time to receipt in years. Modified duration divides Macaulay duration by (1 + y), translating that time metric into a percentage price sensitivity measure that tells investors approximately how much the bond's price will change per 100-basis-point movement in yield.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">What is the difference between clean price and dirty price?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            The clean price represents the bond price excluding accrued interest and is the standard quote displayed on financial market terminals. The dirty price (or invoice price) is the total settlement amount paid by the buyer to the seller, consisting of the clean price plus any interest that has accrued since the last coupon date.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">What is the DV01 of a bond?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            DV01 (Dollar Value of an 01) measures the absolute change in dollar price of a bond for a one-basis-point (0.01%) parallel shift in yield. It is calculated as <em>Market Price · Modified Duration · 0.0001</em> and is widely used by trading desks for interest rate hedging.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">Why do long-term bonds carry greater duration risk than short-term bonds?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            Long-term bonds have cash flows scheduled many years or decades in the future. Because those distant cash flows are discounted over long horizons, changes in the discount rate exert a compounding effect on their present value, resulting in higher percentage price volatility.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">What happens when a bond is called prior to maturity?</h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                            If a bond features a call provision, the issuer has the contractual right to redeem the debt before maturity at a pre-specified call price. In this scenario, investors calculate Yield to Call (YTC) rather than YTM. When prevailing interest rates drop, issuers frequently call high-coupon bonds to refinance debt at lower market rates.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- AD SLOT 5: Footer Responsive Slot -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-10 ad-slot" data-ad-slot="footer-leaderboard">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Footer Leaderboard (728x90 / 970x90)</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="pt-8 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
+            <div class="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Home</a>
+                <a href="https://calcworld.net/financial" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Suite</a>
+                <a href="bond-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors font-bold text-brand-600 dark:text-brand-400">Bond Calculator</a>
+                <a href="annuity-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Annuity Calculator</a>
+                <a href="amortization-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Amortization Calculator</a>
+                <a href="compound-interest-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Compound Interest</a>
+                <a href="investment-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Investment Calculator</a>
+            </div>
+            <p>© 2026 CalcWorld Financial Engineering Engines. All rights reserved. Calculations are for analytical modeling and financial education purposes only and do not constitute formal investment advice or an offer to buy or sell securities.</p>
+        </footer>
+
+    </div>
+
+    <!-- Interactive JavaScript Engine -->
+    <script>
+        // Currency State
+        let currencyCode = 'USD';
+        let currencySymbol = '$';
+        const currencyMap = {
+            'USD': '$',
+            'GBP': '£',
+            'CAD': '$',
+            'AUD': '$'
+        };
+
+        // Chart References
+        let convexityChart = null;
+        let cashflowChart = null;
+
+        // Cached Amortization Schedule & Metrics
+        let bondSchedule = [];
+        let currentCalculatedMetrics = {};
+
+        // Formatting Helpers
+        function formatCurrency(val, decimals = 2) {
+            if (isNaN(val) || val === null || val === undefined) return `${currencySymbol}0.00`;
+            return `${currencySymbol}${Number(val).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            })}`;
+        }
+
+        function formatPercent(val, decimals = 2) {
+            if (isNaN(val) || val === null || val === undefined) return '0.00%';
+            return `${Number(val).toFixed(decimals)}%`;
+        }
+
+        // Theme Initialization & Toggle
+        function initTheme() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+            if (isDark) {
+                if (darkIcon) darkIcon.classList.remove('hidden');
+                if (lightIcon) lightIcon.classList.add('hidden');
+            } else {
+                if (darkIcon) darkIcon.classList.add('hidden');
+                if (lightIcon) lightIcon.classList.remove('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            const html = document.documentElement;
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                html.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+            initTheme();
+            renderCharts();
+        }
+
+        // Currency Switching
+        function changeCurrency(code) {
+            currencyCode = code;
+            currencySymbol = currencyMap[code] || '$';
+            document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = currencySymbol);
+            calculate();
+            saveStateToURL();
+        }
+
+        // Synchronized Input Handlers
+        function handleParChange() {
+            const par = parseFloat(document.getElementById('par-value').value) || 1000;
+            const price = parseFloat(document.getElementById('market-price').value) || 1000;
+            const pct = (price / par) * 100;
+            document.getElementById('market-price-pct').value = pct.toFixed(2);
+            calculate();
+        }
+
+        function syncCouponFromSlider(val) {
+            const r = parseFloat(val) || 0;
+            document.getElementById('coupon-rate').value = r.toFixed(2);
+            document.getElementById('coupon-rate-display').textContent = `${r.toFixed(2)}%`;
+            calculate();
+        }
+
+        function syncCouponFromInput(val) {
+            let clamped = Math.max(0, Math.min(25, parseFloat(val) || 0));
+            document.getElementById('coupon-rate-slider').value = clamped;
+            document.getElementById('coupon-rate-display').textContent = `${clamped.toFixed(2)}%`;
+            calculate();
+        }
+
+        function syncPriceFromDollars(val) {
+            const p = parseFloat(val) || 0;
+            const par = parseFloat(document.getElementById('par-value').value) || 1000;
+            const pct = par > 0 ? (p / par) * 100 : 100;
+            document.getElementById('market-price-pct').value = pct.toFixed(2);
+            calculate();
+        }
+
+        function syncPriceFromPercent(val) {
+            const pct = parseFloat(val) || 100;
+            const par = parseFloat(document.getElementById('par-value').value) || 1000;
+            const p = (pct / 100) * par;
+            document.getElementById('market-price').value = p.toFixed(2);
+            calculate();
+        }
+
+        function syncYearsFromSlider(val) {
+            const y = parseInt(val) || 10;
+            document.getElementById('years-maturity').value = y;
+            document.getElementById('years-display').textContent = `${y} Years`;
+            calculate();
+        }
+
+        function syncYearsFromInput(val) {
+            let clamped = Math.max(1, Math.min(50, parseInt(val) || 10));
+            document.getElementById('years-slider').value = clamped <= 30 ? clamped : 30;
+            document.getElementById('years-display').textContent = `${clamped} Years`;
+            calculate();
+        }
+
+        function toggleAccruedInterest() {
+            const panel = document.getElementById('accrued-panel');
+            const chevron = document.getElementById('accrued-chevron');
+            if (panel.classList.contains('hidden')) {
+                panel.classList.remove('hidden');
+                chevron.textContent = '▲';
+            } else {
+                panel.classList.add('hidden');
+                chevron.textContent = '▼';
+            }
+        }
+
+        // Presets Implementation
+        function applyPreset(type) {
+            if (type === 'treasury-10y') {
+                document.getElementById('par-value').value = 1000;
+                document.getElementById('coupon-rate').value = 4.25;
+                document.getElementById('coupon-rate-slider').value = 4.25;
+                document.getElementById('coupon-rate-display').textContent = '4.25%';
+                document.getElementById('coupon-freq').value = '2';
+                document.getElementById('market-price').value = 1000.00;
+                document.getElementById('market-price-pct').value = 100.00;
+                document.getElementById('years-maturity').value = 10;
+                document.getElementById('years-slider').value = 10;
+                document.getElementById('years-display').textContent = '10 Years';
+                document.getElementById('days-accrued').value = 0;
+                showToast('Preset Loaded: US Treasury 10-Yr Benchmark (At Par)');
+            } else if (type === 'corporate-discount') {
+                document.getElementById('par-value').value = 1000;
+                document.getElementById('coupon-rate').value = 5.50;
+                document.getElementById('coupon-rate-slider').value = 5.50;
+                document.getElementById('coupon-rate-display').textContent = '5.50%';
+                document.getElementById('coupon-freq').value = '2';
+                document.getElementById('market-price').value = 920.00;
+                document.getElementById('market-price-pct').value = 92.00;
+                document.getElementById('years-maturity').value = 7;
+                document.getElementById('years-slider').value = 7;
+                document.getElementById('years-display').textContent = '7 Years';
+                document.getElementById('days-accrued').value = 45;
+                showToast('Preset Loaded: Corporate Bond (Discount)');
+            } else if (type === 'muni-premium') {
+                document.getElementById('par-value').value = 1000;
+                document.getElementById('coupon-rate').value = 4.00;
+                document.getElementById('coupon-rate-slider').value = 4.00;
+                document.getElementById('coupon-rate-display').textContent = '4.00%';
+                document.getElementById('coupon-freq').value = '2';
+                document.getElementById('market-price').value = 1060.00;
+                document.getElementById('market-price-pct').value = 106.00;
+                document.getElementById('years-maturity').value = 15;
+                document.getElementById('years-slider').value = 15;
+                document.getElementById('years-display').textContent = '15 Years';
+                document.getElementById('days-accrued').value = 30;
+                showToast('Preset Loaded: Municipal Bond (Premium)');
+            }
+            calculate();
+            saveStateToURL();
+        }
+
+        function resetDefaults() {
+            document.getElementById('par-value').value = 1000;
+            document.getElementById('coupon-rate').value = 5.00;
+            document.getElementById('coupon-rate-slider').value = 5.00;
+            document.getElementById('coupon-rate-display').textContent = '5.00%';
+            document.getElementById('coupon-freq').value = '2';
+            document.getElementById('market-price').value = 950.00;
+            document.getElementById('market-price-pct').value = 95.00;
+            document.getElementById('years-maturity').value = 10;
+            document.getElementById('years-slider').value = 10;
+            document.getElementById('years-display').textContent = '10 Years';
+            document.getElementById('days-accrued').value = 0;
+            document.getElementById('day-count-convention').value = '30/360';
+            calculate();
+            showToast('Parameters reset to default.');
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-link').forEach(btn => {
+                btn.classList.remove('border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+                btn.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+            });
+
+            const activePane = document.getElementById(tabId);
+            if (activePane) activePane.classList.remove('hidden');
+
+            const activeBtn = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+                activeBtn.classList.add('border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            }
+
+            if (tabId === 'tab-summary') {
+                renderCharts();
+            } else if (tabId === 'tab-schedule') {
+                renderScheduleTable();
+            } else if (tabId === 'tab-sensitivity') {
+                renderSensitivityTable();
+            }
+        }
+
+        // Bond Pricing Discounted Cash Flow Helper
+        function computeBondPrice(par, couponRate, freq, ytmPct, years) {
+            const m = freq;
+            const N = Math.round(years * m);
+            const C = (par * (couponRate / 100)) / m;
+            const y = (ytmPct / 100) / m;
+
+            if (N <= 0) return par;
+            if (y === 0) return (N * C) + par;
+
+            const pvCoupons = C * ((1 - Math.pow(1 + y, -N)) / y);
+            const pvPar = par * Math.pow(1 + y, -N);
+            return pvCoupons + pvPar;
+        }
+
+        // Newton-Raphson Iterative Yield to Maturity (YTM) Solver
+        function solveYTM(par, couponRate, freq, targetPrice, years) {
+            const m = freq;
+            const N = Math.round(years * m);
+            const C = (par * (couponRate / 100)) / m;
+            const P = targetPrice;
+            const F = par;
+
+            if (P <= 0 || N <= 0) return 0;
+
+            // Initial guess via standard bond approximation formula
+            let y = (C + (F - P) / N) / ((F + P) / 2);
+            if (y <= 0.0001) y = 0.02;
+
+            // Newton-Raphson refinement
+            let converged = false;
+            for (let iter = 0; iter < 100; iter++) {
+                let pv = 0;
+                let d_pv = 0; // derivative d(PV)/dy
+
+                for (let t = 1; t <= N; t++) {
+                    const df = Math.pow(1 + y, t);
+                    pv += C / df;
+                    d_pv -= (t * C) / (df * (1 + y));
+                }
+                const dfN = Math.pow(1 + y, N);
+                pv += F / dfN;
+                d_pv -= (N * F) / (dfN * (1 + y));
+
+                const diff = pv - P;
+                if (Math.abs(diff) < 1e-7) {
+                    converged = true;
+                    break;
+                }
+
+                if (Math.abs(d_pv) < 1e-12) break;
+
+                const step = diff / d_pv;
+                y = y - step;
+
+                // Safety bounding: periodic yield cannot be <= -1
+                if (y < -0.90) y = -0.90;
+                if (y > 2.0) y = 2.0;
+            }
+
+            // Fallback to bisection if Newton-Raphson did not converge
+            if (!converged || isNaN(y)) {
+                let low = -0.50;
+                let high = 2.00;
+                for (let b = 0; b < 60; b++) {
+                    const mid = (low + high) / 2;
+                    let pMid = 0;
+                    for (let t = 1; t <= N; t++) {
+                        pMid += C / Math.pow(1 + mid, t);
+                    }
+                    pMid += F / Math.pow(1 + mid, N);
+
+                    if (pMid > P) {
+                        low = mid;
+                    } else {
+                        high = mid;
+                    }
+                }
+                y = (low + high) / 2;
+            }
+
+            // Nominal annual YTM (Bond Equivalent Yield)
+            return y * m * 100;
+        }
+
+        // Core Financial Calculation Engine
+        function calculate() {
+            const par = parseFloat(document.getElementById('par-value').value) || 1000;
+            const couponRate = parseFloat(document.getElementById('coupon-rate').value) || 0;
+            const freq = parseInt(document.getElementById('coupon-freq').value) || 2;
+            const cleanPrice = parseFloat(document.getElementById('market-price').value) || 1000;
+            const years = parseInt(document.getElementById('years-maturity').value) || 10;
+            const daysAccrued = parseInt(document.getElementById('days-accrued').value) || 0;
+            const dayCount = document.getElementById('day-count-convention').value;
+
+            // Accrued Interest & Dirty Price
+            const periodicCoupon = (par * (couponRate / 100)) / freq;
+            const daysInPeriod = (dayCount === '30/360') ? (360 / freq) : (365 / freq);
+            const accruedInterest = Math.min(periodicCoupon, periodicCoupon * (daysAccrued / daysInPeriod));
+            const dirtyPrice = cleanPrice + accruedInterest;
+
+            document.getElementById('accrued-interest-display').textContent = formatCurrency(accruedInterest, 2);
+            document.getElementById('dirty-price-display').textContent = formatCurrency(dirtyPrice, 2);
+
+            // Compute YTM using clean price (standard institutional practice)
+            const nominalYTM = solveYTM(par, couponRate, freq, cleanPrice, years);
+            const periodicYield = (nominalYTM / 100) / freq;
+            const effectiveYTM = (Math.pow(1 + periodicYield, freq) - 1) * 100;
+
+            // Current Yield
+            const annualCouponPayment = par * (couponRate / 100);
+            const currentYield = cleanPrice > 0 ? (annualCouponPayment / cleanPrice) * 100 : 0;
+
+            // Lifetime totals
+            const totalPeriods = Math.round(years * freq);
+            const totalCouponPayments = periodicCoupon * totalPeriods;
+            const totalCashFlow = totalCouponPayments + par;
+            const capitalGainAtPar = par - cleanPrice;
+
+            // Duration and Convexity Calculations
+            let weightedTimeSum = 0;
+            let convexitySum = 0;
+            bondSchedule = [];
+            let cumulativePV = 0;
+
+            for (let t = 1; t <= totalPeriods; t++) {
+                const timeInYears = t / freq;
+                const isFinal = (t === totalPeriods);
+                const couponFlow = periodicCoupon;
+                const principalFlow = isFinal ? par : 0;
+                const totalFlow = couponFlow + principalFlow;
+
+                const discountFactor = Math.pow(1 + periodicYield, -t);
+                const pv = totalFlow * discountFactor;
+                cumulativePV += pv;
+
+                // Duration term: t * CF_t / (1+y)^t
+                weightedTimeSum += t * pv;
+                // Convexity term: t * (t + 1) * CF_t / (1+y)^t
+                convexitySum += t * (t + 1) * pv;
+
+                bondSchedule.push({
+                    period: t,
+                    timeYears: timeInYears.toFixed(2),
+                    coupon: couponFlow,
+                    principal: principalFlow,
+                    totalFlow: totalFlow,
+                    discountFactor: discountFactor,
+                    presentValue: pv,
+                    cumulativePV: cumulativePV
+                });
+            }
+
+            // Macaulay Duration (in years)
+            const macaulayDurationPeriods = cleanPrice > 0 ? (weightedTimeSum / cleanPrice) : 0;
+            const macaulayDurationYears = macaulayDurationPeriods / freq;
+
+            // Modified Duration (in years / %)
+            const modifiedDuration = macaulayDurationYears / (1 + periodicYield);
+
+            // Convexity (annualized)
+            const convexityMeasure = cleanPrice > 0 
+                ? (convexitySum / (cleanPrice * Math.pow(1 + periodicYield, 2))) / Math.pow(freq, 2)
+                : 0;
+
+            // DV01 (Dollar value of a 1 basis point decrease)
+            const dv01 = (cleanPrice * modifiedDuration * 0.0001);
+
+            // Price shift approximations for 100 bps
+            const deltaP_plus100_pct = (-modifiedDuration * 0.01 + 0.5 * convexityMeasure * Math.pow(0.01, 2)) * 100;
+            const deltaP_plus100_dlr = cleanPrice * (deltaP_plus100_pct / 100);
+
+            const deltaP_minus100_pct = (-modifiedDuration * (-0.01) + 0.5 * convexityMeasure * Math.pow(-0.01, 2)) * 100;
+            const deltaP_minus100_dlr = cleanPrice * (deltaP_minus100_pct / 100);
+
+            // Store current calculated metrics
+            currentCalculatedMetrics = {
+                par, couponRate, freq, cleanPrice, dirtyPrice, years, daysAccrued, accruedInterest,
+                nominalYTM, effectiveYTM, currentYield, annualCouponPayment, periodicCoupon,
+                totalCouponPayments, totalCashFlow, capitalGainAtPar,
+                macaulayDurationYears, modifiedDuration, convexityMeasure, dv01,
+                deltaP_plus100_pct, deltaP_plus100_dlr, deltaP_minus100_pct, deltaP_minus100_dlr
+            };
+
+            // Update UI KPIs
+            document.getElementById('kpi-ytm').textContent = formatPercent(nominalYTM, 2);
+            document.getElementById('kpi-effective-yield').textContent = `${formatPercent(effectiveYTM, 2)} Effective Annual`;
+            document.getElementById('kpi-current-yield').textContent = formatPercent(currentYield, 2);
+            document.getElementById('kpi-annual-coupon-subtext').textContent = `${formatCurrency(annualCouponPayment, 2)} Annual Income`;
+            document.getElementById('kpi-modified-duration').textContent = `${modifiedDuration.toFixed(2)} Yrs`;
+            document.getElementById('kpi-macaulay-duration').textContent = `Mac: ${macaulayDurationYears.toFixed(2)} Yrs`;
+            document.getElementById('kpi-total-coupons').textContent = formatCurrency(totalCouponPayments, 2);
+            document.getElementById('kpi-total-cashflow').textContent = `Total Return: ${formatCurrency(totalCashFlow, 0)}`;
+
+            // Pricing Status Badge
+            const statusBadge = document.getElementById('badge-bond-status');
+            const diffPrice = cleanPrice - par;
+            const diffPct = Math.abs((diffPrice / par) * 100);
+            if (Math.abs(diffPrice) < 0.01) {
+                statusBadge.textContent = 'Trading at Par (100.00%)';
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full font-bold text-xs bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300';
+            } else if (cleanPrice < par) {
+                statusBadge.textContent = `Trading at a ${diffPct.toFixed(2)}% Discount`;
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full font-bold text-xs bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
+            } else {
+                statusBadge.textContent = `Trading at a ${diffPct.toFixed(2)}% Premium`;
+                statusBadge.className = 'px-2.5 py-0.5 rounded-full font-bold text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+            }
+
+            document.getElementById('metric-convexity').textContent = convexityMeasure.toFixed(2);
+            document.getElementById('metric-dv01').textContent = formatCurrency(dv01, 2);
+            document.getElementById('metric-capital-gain').textContent = `${capitalGainAtPar >= 0 ? '+' : ''}${formatCurrency(capitalGainAtPar, 2)}`;
+            if (capitalGainAtPar >= 0) {
+                document.getElementById('metric-capital-gain').className = 'text-emerald-600 dark:text-emerald-400 font-mono';
+            } else {
+                document.getElementById('metric-capital-gain').className = 'text-rose-600 dark:text-rose-400 font-mono';
+            }
+
+            // Summary tab updates
+            const freqLabels = { 1: 'Annual (1x)', 2: 'Semi-Annual (2x)', 4: 'Quarterly (4x)', 12: 'Monthly (12x)' };
+            document.getElementById('sum-frequency-label').textContent = freqLabels[freq] || 'Semi-Annual';
+            document.getElementById('sum-nominal-ytm').textContent = formatPercent(nominalYTM, 2);
+            document.getElementById('sum-effective-ytm').textContent = formatPercent(effectiveYTM, 2);
+            document.getElementById('sum-current-yield').textContent = formatPercent(currentYield, 2);
+            document.getElementById('sum-periodic-coupon').textContent = `${formatCurrency(periodicCoupon, 2)} per period`;
+            document.getElementById('sum-total-cashflow').textContent = formatCurrency(totalCashFlow, 2);
+
+            document.getElementById('sum-macaulay-duration').textContent = `${macaulayDurationYears.toFixed(2)} Years`;
+            document.getElementById('sum-modified-duration').textContent = `${modifiedDuration.toFixed(2)} Years`;
+            document.getElementById('sum-convexity').textContent = convexityMeasure.toFixed(2);
+            document.getElementById('sum-delta-100bps').textContent = `${deltaP_plus100_pct.toFixed(2)}% (${formatCurrency(deltaP_plus100_dlr, 2)})`;
+            document.getElementById('sum-delta-minus100bps').textContent = `+${deltaP_minus100_pct.toFixed(2)}% (+${formatCurrency(deltaP_minus100_dlr, 2)})`;
+
+            // Refresh Active Tab Elements
+            renderCharts();
+            renderScheduleTable();
+            renderSensitivityTable();
+            renderPrintReport();
+            saveStateToURL();
+        }
+
+        // Render Charts with Chart.js
+        function renderCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            const m = currentCalculatedMetrics;
+            if (!m.par) return;
+
+            // 1. Chart 1: Price-Yield Convexity Curve
+            const ctxConvexity = document.getElementById('convexityChart');
+            if (ctxConvexity) {
+                // Generate yield points from max(0.5, nominalYTM - 4%) to nominalYTM + 4%
+                const minY = Math.max(0.5, Math.floor(m.nominalYTM - 4));
+                const maxY = Math.max(minY + 6, Math.ceil(m.nominalYTM + 4));
+                const step = 0.5;
+
+                const yieldLabels = [];
+                const exactPrices = [];
+                const durationPrices = [];
+
+                for (let y = minY; y <= maxY + 0.001; y += step) {
+                    yieldLabels.push(y.toFixed(1) + '%');
+                    const priceExact = computeBondPrice(m.par, m.couponRate, m.freq, y, m.years);
+                    exactPrices.push(priceExact);
+
+                    // Linear duration tangent approximation: P_tan = P_0 * [1 - ModD * (y - y0)]
+                    const dY = (y - m.nominalYTM) / 100;
+                    const priceTan = m.cleanPrice * (1 - m.modifiedDuration * dY);
+                    durationPrices.push(priceTan);
+                }
+
+                if (convexityChart) convexityChart.destroy();
+
+                convexityChart = new Chart(ctxConvexity, {
+                    type: 'line',
+                    data: {
+                        labels: yieldLabels,
+                        datasets: [
+                            {
+                                label: 'Exact Bond Price (DCF Convexity Curve)',
+                                data: exactPrices,
+                                borderColor: '#3b82f6',
+                                backgroundColor: isDark ? 'rgba(59, 130, 246, 0.1)' : 'rgba(59, 130, 246, 0.05)',
+                                fill: true,
+                                borderWidth: 3,
+                                tension: 0.35,
+                                pointRadius: 3,
+                                pointHoverRadius: 6
+                            },
+                            {
+                                label: 'Linear Duration Approximation (Tangent Line)',
+                                data: durationPrices,
+                                borderColor: '#ef4444',
+                                backgroundColor: 'transparent',
+                                borderDash: [6, 6],
+                                borderWidth: 2,
+                                tension: 0,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, 2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { color: textColor, font: { family: 'Inter', size: 10 } },
+                                title: { display: true, text: 'Market Yield to Maturity (YTM %)', color: textColor, font: { size: 11, weight: '600' } }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { family: 'Inter', size: 10 },
+                                    callback: val => formatCurrency(val, 0)
+                                },
+                                title: { display: true, text: `Bond Price (${currencySymbol})`, color: textColor, font: { size: 11, weight: '600' } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Chart 2: Cash Flow Timeline Bar Chart
+            const ctxCashflow = document.getElementById('cashflowChart');
+            if (ctxCashflow && bondSchedule.length > 0) {
+                const labels = bondSchedule.map(r => `P${r.period} (${r.timeYears}y)`);
+                const couponData = bondSchedule.map(r => r.coupon);
+                const principalData = bondSchedule.map(r => r.principal);
+
+                if (cashflowChart) cashflowChart.destroy();
+
+                cashflowChart = new Chart(ctxCashflow, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Coupon Payment',
+                                data: couponData,
+                                backgroundColor: '#f59e0b',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Principal Redemption',
+                                data: principalData,
+                                backgroundColor: '#10b981',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '600' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.dataset.label}: ${formatCurrency(ctx.parsed.y, 2)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { family: 'Inter', size: 9 },
+                                    maxRotation: 45,
+                                    autoSkip: labels.length > 20
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { family: 'Inter', size: 10 },
+                                    callback: val => formatCurrency(val, 0)
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Render Cash Flow Amortization Table
+        function renderScheduleTable() {
+            const tbody = document.getElementById('table-schedule-body');
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+            bondSchedule.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Period ${row.period}</td>
+                    <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300">${row.timeYears} Yrs</td>
+                    <td class="py-2.5 px-3 font-mono text-amber-600 dark:text-amber-400 font-medium">${formatCurrency(row.coupon, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono ${row.principal > 0 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400'}">${formatCurrency(row.principal, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-white">${formatCurrency(row.totalFlow, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono text-slate-500 dark:text-slate-400">${row.discountFactor.toFixed(4)}</td>
+                    <td class="py-2.5 px-3 font-mono font-semibold text-brand-600 dark:text-brand-400">${formatCurrency(row.presentValue, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono text-slate-700 dark:text-slate-300">${formatCurrency(row.cumulativePV, 2)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render Sensitivity Matrix Table
+        function renderSensitivityTable() {
+            const tbody = document.getElementById('table-sensitivity-body');
+            if (!tbody) return;
+
+            const m = currentCalculatedMetrics;
+            if (!m.par) return;
+
+            const shifts = [-200, -100, -50, 0, 50, 100, 200]; // in basis points
+            tbody.innerHTML = '';
+
+            shifts.forEach(bps => {
+                const deltaYieldPct = bps / 10000; // e.g. 100bps = 0.01
+                const newYTM = Math.max(0.01, m.nominalYTM + (bps / 100));
+
+                // 1. Exact DCF Price
+                const exactPrice = computeBondPrice(m.par, m.couponRate, m.freq, newYTM, m.years);
+                const exactPctChange = ((exactPrice - m.cleanPrice) / m.cleanPrice) * 100;
+                const exactDollarPL = exactPrice - m.cleanPrice;
+
+                // 2. Duration Only Model: P_dur = P_0 * [1 - ModD * dy]
+                const durPrice = m.cleanPrice * (1 - m.modifiedDuration * deltaYieldPct);
+
+                // 3. Duration + Convexity: P_dur_conv = P_0 * [1 - ModD * dy + 0.5 * Conv * dy^2]
+                const durConvPrice = m.cleanPrice * (1 - m.modifiedDuration * deltaYieldPct + 0.5 * m.convexityMeasure * Math.pow(deltaYieldPct, 2));
+
+                // 4. Portfolio Impact on $100,000 position
+                const portfolioBonds = 100000 / m.cleanPrice;
+                const portfolioPL = portfolioBonds * exactDollarPL;
+
+                const tr = document.createElement('tr');
+                tr.className = bps === 0 
+                    ? 'bg-blue-50/50 dark:bg-blue-950/30 font-bold' 
+                    : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+
+                const plColor = exactDollarPL >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
+                const sign = exactDollarPL > 0 ? '+' : '';
+
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold ${bps === 0 ? 'text-brand-600 dark:text-brand-400' : 'text-slate-900 dark:text-white'}">
+                        ${bps > 0 ? '+' : ''}${bps} bps (${(bps/100).toFixed(2)}%)
+                    </td>
+                    <td class="py-2.5 px-3 font-mono font-medium text-slate-800 dark:text-slate-200">${newYTM.toFixed(2)}%</td>
+                    <td class="py-2.5 px-3 font-mono font-bold text-slate-900 dark:text-white">${formatCurrency(exactPrice, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono text-slate-600 dark:text-slate-400">${formatCurrency(durPrice, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono text-purple-600 dark:text-purple-400 font-semibold">${formatCurrency(durConvPrice, 2)}</td>
+                    <td class="py-2.5 px-3 font-semibold ${plColor}">${sign}${exactPctChange.toFixed(2)}%</td>
+                    <td class="py-2.5 px-3 font-mono font-bold ${plColor}">${sign}${formatCurrency(exactDollarPL, 2)}</td>
+                    <td class="py-2.5 px-3 font-mono font-bold ${plColor}">${sign}${formatCurrency(portfolioPL, 0)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // CSV Export Function
+        function exportBondScheduleCSV() {
+            if (bondSchedule.length === 0) return;
+
+            let csv = 'Period,Timing (Years),Coupon Cash Flow,Principal Repayment,Total Cash Flow,Discount Factor,Present Value,Cumulative Present Value\n';
+            bondSchedule.forEach(r => {
+                csv += `${r.period},${r.timeYears},${r.coupon.toFixed(2)},${r.principal.toFixed(2)},${r.totalFlow.toFixed(2)},${r.discountFactor.toFixed(6)},${r.presentValue.toFixed(2)},${r.cumulativePV.toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'bond_cashflow_amortization_schedule.csv');
+            link.click();
+            showToast('Bond cash flow CSV schedule exported successfully!');
+        }
+
+        // Printable Report Generator
+        function renderPrintReport() {
+            const printSheet = document.getElementById('print-sheet-content');
+            if (!printSheet) return;
+
+            const m = currentCalculatedMetrics;
+            if (!m.par) return;
+
+            printSheet.innerHTML = `
+                <div><strong>Bond Face / Par Value:</strong> ${formatCurrency(m.par, 2)}</div>
+                <div><strong>Stated Annual Coupon:</strong> ${m.couponRate.toFixed(2)}% (${formatCurrency(m.annualCouponPayment, 2)}/yr)</div>
+                <div><strong>Coupon Payment Frequency:</strong> ${m.freq === 2 ? 'Semi-Annual (2x)' : m.freq === 1 ? 'Annual (1x)' : m.freq === 4 ? 'Quarterly (4x)' : 'Monthly (12x)'}</div>
+                <div><strong>Maturity Horizon:</strong> ${m.years} Years (${m.years * m.freq} Total Periods)</div>
+                <div><strong>Current Clean Market Price:</strong> ${formatCurrency(m.cleanPrice, 2)} (${((m.cleanPrice / m.par) * 100).toFixed(2)}% of Par)</div>
+                <div><strong>Accrued Interest (${m.daysAccrued} Days):</strong> ${formatCurrency(m.accruedInterest, 2)}</div>
+                <div><strong>Full Dirty (Invoice) Price:</strong> ${formatCurrency(m.dirtyPrice, 2)}</div>
+                <div class="text-brand-600 font-bold"><strong>Nominal Yield to Maturity (YTM):</strong> ${m.nominalYTM.toFixed(2)}%</div>
+                <div><strong>Effective Annual Yield (EAY):</strong> ${m.effectiveYTM.toFixed(2)}%</div>
+                <div><strong>Current Yield (Annual / Price):</strong> ${m.currentYield.toFixed(2)}%</div>
+                <div class="text-purple-600 font-bold"><strong>Macaulay Duration:</strong> ${m.macaulayDurationYears.toFixed(2)} Years</div>
+                <div class="text-purple-600 font-bold"><strong>Modified Duration:</strong> ${m.modifiedDuration.toFixed(2)} Years</div>
+                <div><strong>Bond Convexity Measure:</strong> ${m.convexityMeasure.toFixed(2)}</div>
+                <div><strong>DV01 (Dollar Value of a Basis Point):</strong> ${formatCurrency(m.dv01, 2)}</div>
+                <div class="text-emerald-600 font-bold"><strong>Total Lifetime Cash Flows:</strong> ${formatCurrency(m.totalCashFlow, 2)}</div>
+                <div class="col-span-2 text-slate-800 dark:text-slate-200 border-t pt-1 border-slate-300 dark:border-slate-700"><strong>Interest Rate Shift Impact (+100bps):</strong> ${m.deltaP_plus100_pct.toFixed(2)}% (${formatCurrency(m.deltaP_plus100_dlr, 2)})</div>
+                <div class="col-span-2 text-slate-800 dark:text-slate-200"><strong>Interest Rate Shift Impact (-100bps):</strong> +${m.deltaP_minus100_pct.toFixed(2)}% (+${formatCurrency(m.deltaP_minus100_dlr, 2)})</div>
+            `;
+        }
+
+        // Copy Summary to Clipboard
+        function copySummary() {
+            const m = currentCalculatedMetrics;
+            if (!m.par) return;
+
+            const summaryText = `--- CALCWORLD BOND VALUATION & DURATION SUMMARY ---
+Face / Par Value: ${formatCurrency(m.par, 2)}
+Annual Coupon Rate: ${m.couponRate.toFixed(2)}% (${m.freq === 2 ? 'Semi-Annual' : m.freq === 1 ? 'Annual' : 'Quarterly'})
+Maturity: ${m.years} Years
+Current Market Price: ${formatCurrency(m.cleanPrice, 2)} (${((m.cleanPrice / m.par) * 100).toFixed(2)}% of Par)
+Yield to Maturity (YTM): ${m.nominalYTM.toFixed(2)}% (Effective Annual: ${m.effectiveYTM.toFixed(2)}%)
+Current Yield: ${m.currentYield.toFixed(2)}%
+Macaulay Duration: ${m.macaulayDurationYears.toFixed(2)} Years
+Modified Duration: ${m.modifiedDuration.toFixed(2)} Years
+Convexity Measure: ${m.convexityMeasure.toFixed(2)}
+DV01: ${formatCurrency(m.dv01, 2)}
+Total Lifetime Cash Flows: ${formatCurrency(m.totalCashFlow, 2)}
+Valuation Engine URL: ${window.location.href}`;
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast('Bond valuation summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Summary copied to clipboard!');
+            });
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-message').textContent = msg;
+            toast.classList.remove('translate-y-[-160%]', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-[-160%]', 'opacity-0');
+            }, 2000);
+        }
+
+        function showLeadToast() {
+            showToast('Institutional Bond Audit dossier generated! Check your email.');
+            document.getElementById('lead-email').value = '';
+        }
+
+        // URL State Synchronization (history.replaceState)
+        function saveStateToURL() {
+            const params = new URLSearchParams();
+            params.set('cur', currencyCode);
+            params.set('par', document.getElementById('par-value').value);
+            params.set('coupon', document.getElementById('coupon-rate').value);
+            params.set('freq', document.getElementById('coupon-freq').value);
+            params.set('price', document.getElementById('market-price').value);
+            params.set('years', document.getElementById('years-maturity').value);
+            params.set('days', document.getElementById('days-accrued').value);
+            params.set('daycount', document.getElementById('day-count-convention').value);
+            history.replaceState(null, '', '?' + params.toString());
+        }
+
+        function loadStateFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('cur')) {
+                const cur = params.get('cur');
+                if (currencyMap[cur]) {
+                    currencyCode = cur;
+                    currencySymbol = currencyMap[cur];
+                    document.getElementById('currency-switcher').value = cur;
+                    document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = currencySymbol);
+                }
+            }
+            if (params.has('par')) document.getElementById('par-value').value = params.get('par');
+            if (params.has('coupon')) {
+                const c = parseFloat(params.get('coupon')) || 5.0;
+                document.getElementById('coupon-rate').value = c;
+                document.getElementById('coupon-rate-slider').value = c;
+                document.getElementById('coupon-rate-display').textContent = `${c.toFixed(2)}%`;
+            }
+            if (params.has('freq')) document.getElementById('coupon-freq').value = params.get('freq');
+            if (params.has('price')) {
+                const p = parseFloat(params.get('price')) || 950.0;
+                document.getElementById('market-price').value = p;
+                const par = parseFloat(document.getElementById('par-value').value) || 1000;
+                document.getElementById('market-price-pct').value = ((p / par) * 100).toFixed(2);
+            }
+            if (params.has('years')) {
+                const y = parseInt(params.get('years')) || 10;
+                document.getElementById('years-maturity').value = y;
+                document.getElementById('years-slider').value = y <= 30 ? y : 30;
+                document.getElementById('years-display').textContent = `${y} Years`;
+            }
+            if (params.has('days')) document.getElementById('days-accrued').value = params.get('days');
+            if (params.has('daycount')) document.getElementById('day-count-convention').value = params.get('daycount');
+        }
+
+        // Initial Boot
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadStateFromURL();
+            calculate();
+        });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

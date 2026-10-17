@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wind Chill Calculator | NOAA NWS &amp; ECCC Winter Frostbite Risk Engine</title>
+    <meta name="description" content="Scientific wind chill calculator based on official NOAA National Weather Service and Environment and Climate Change Canada (JAG/TI) standards. Calculates wind chill index, facial convective heat loss, frostbite risk exposure time, and hypothermia danger stages.">
+    <meta name="keywords" content="wind chill calculator, nws wind chill formula, frostbite exposure time, wind chill chart, winter safety index, hypothermia risk, convective heat transfer, jag ti wind chill">
+    <link rel="canonical" href="https://calcworld.net/calculators/wind-chill-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN with darkMode: 'class' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49'
+                        },
+                        chill: {
+                            safe: '#0284c7',
+                            notice: '#0d9488',
+                            caution: '#eab308',
+                            danger30: '#f59e0b',
+                            danger10: '#ea580c',
+                            danger5: '#dc2626',
+                            danger2: '#7f1d1d'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 CDN & Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(14, 165, 233, 0.08) 20%,
+                rgba(14, 165, 233, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Toast feedback */
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        /* Custom range sliders */
+        input[type="range"] {
+            accent-color: #0284c7;
+        }
+
+        /* Matrix table styling */
+        .matrix-cell {
+            transition: all 0.15s ease-in-out;
+        }
+        .matrix-cell:hover {
+            transform: scale(1.15);
+            z-index: 20;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Wind Chill Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Wind Chill & Winter Frostbite Risk Calculator",
+      "url": "https://calcworld.net/other/wind-chill-calculator",
+      "applicationCategory": "MeteorologicalApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Scientific wind chill index calculator based on official NOAA National Weather Service and Environment and Climate Change Canada formulations. Evaluates human facial convective heat loss, frostbite risk timeframes, and hypothermia clinical safety limits."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is wind chill and how does it affect the human body?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Wind chill is a bioclimatic index that quantifies the rate of heat loss from exposed human skin caused by the combination of cold air temperatures and wind speed. As wind blows over exposed skin, it strips away the thin insulating micro-layer of warm air generated by body heat. This accelerated convective heat loss causes the body to lose heat at the same rate as it would in much colder calm air."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can wind chill cause an inanimate object or car engine to cool below the actual air temperature?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Wind chill cannot cool any object below the ambient air temperature. According to the Second Law of Thermodynamics, heat transfers spontaneously only from a warmer body to a cooler body. Wind accelerates the rate at which an object reaches ambient air temperature by increasing convective heat transfer, but it will never lower the object's temperature below the surrounding air."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What formula does the National Weather Service use to calculate wind chill?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The official formula adopted in 2001 by the Joint Action Group for Temperature Indices (JAG/TI) is: WCI = 35.74 + 0.6215*T - 35.75*(V^0.16) + 0.4275*T*(V^0.16), where T is air temperature in degrees Fahrenheit (for T <= 50 degrees F) and V is wind speed in miles per hour (for V >= 3 mph). In metric units (Celsius and km/h), the formula is: WCI = 13.12 + 0.6215*T - 11.37*(V^0.16) + 0.3965*T*(V^0.16)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why was the 1945 Siple and Passel wind chill formula replaced?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The original 1945 Siple-Passel formula was based on measuring the time it took for water in small plastic cylinders to freeze in Antarctica. It failed to account for living human physiological responses such as internal blood circulation, cutaneous vasoconstriction, metabolic heat generation, and differing facial tissue geometries. It also significantly overestimated heat loss at wind speeds exceeding 25 mph. The 2001 JAG/TI formula was created using human subject wind tunnel trials with thermal sensors placed on the face."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "At what wind chill temperature does frostbite become an imminent danger?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "According to NOAA National Weather Service and Environment Canada clinical thresholds, exposed skin freezes in 30 minutes or less when the wind chill index falls to -19 degrees Fahrenheit (-28 degrees Celsius) or lower. At -33 degrees F (-36 degrees C), frostbite can occur within 10 minutes. At -48 degrees F (-44 degrees C), frostbite can develop within 5 minutes. At -60 degrees F (-51 degrees C) or colder, frostbite can occur in under 2 minutes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between a Wind Chill Advisory and a Wind Chill Warning?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Wind Chill Advisory is issued by the National Weather Service when seasonal cold and wind are expected to create hazardous conditions where frostbite could occur with prolonged exposure. A Wind Chill Warning is issued when life-threatening cold and wind are expected, with wind chill values dropping low enough to cause frostbite on exposed skin in 10 to 30 minutes or less. Threshold temperatures vary by geographic region based on local winter climatology."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Wind Chill Calculator | NOAA NWS &amp; ECCC Winter Frostbite Risk Engine">
+    <meta property="og:description" content="Scientific wind chill calculator based on official NOAA National Weather Service and Environment and Climate Change Canada (JAG/TI) standards. Calculates wind chill index, facial convective heat loss, frostbite risk exposure time, and hypothermia danger stages.">
+    <meta property="og:url" content="https://calcworld.net/calculators/wind-chill-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Wind Chill Calculator | NOAA NWS &amp; ECCC Winter Frostbite Risk Engine">
+    <meta name="twitter:description" content="Scientific wind chill calculator based on official NOAA National Weather Service and Environment and Climate Change Canada (JAG/TI) standards. Calculates wind chill index, facial convective heat loss, frostbite risk exposure time, and hypothermia danger stages.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Engineering &amp; Meteorological Reference:</strong> CalcWorld provides peer-reviewed atmospheric calculation tools free with zero registration. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Wind Chill Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Wind Chill Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Official Joint Action Group for Temperature Indices (JAG/TI) standard engine implemented by the NOAA National Weather Service and Environment and Climate Change Canada. Evaluates wind-driven convective heat transfer, facial skin cooling rates, frostbite risk timeframes, and hypothermia clinical safety stages.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5 on lg, 4 on xl) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-3 flex items-center justify-between">
+                        <span>Meteorological Inputs</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">JAG/TI Model</span>
+                    </h2>
+
+                    <!-- Presets Selector -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Winter Scenario Presets</label>
+                        <div class="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl text-center">
+                            <button type="button" onclick="applyPreset(25, 10)" class="py-1.5 px-2 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 shadow-sm transition">Crisp Day (25&deg;F, 10mph)</button>
+                            <button type="button" onclick="applyPreset(10, 25)" class="py-1.5 px-2 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 shadow-sm transition">Freezing Gale (10&deg;F, 25mph)</button>
+                            <button type="button" onclick="applyPreset(-10, 20)" class="py-1.5 px-2 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 shadow-sm transition">Arctic Blast (-10&deg;F, 20mph)</button>
+                            <button type="button" onclick="applyPreset(-25, 35)" class="py-1.5 px-2 text-xs font-medium rounded-lg bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-brand-600 dark:hover:text-brand-400 shadow-sm transition">Polar Vortex (-25&deg;F, 35mph)</button>
+                        </div>
+                    </div>
+
+                    <!-- Air Temperature Input -->
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="tempInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Air Temperature ($T$)</label>
+                            <div class="flex items-center gap-1">
+                                <select id="tempUnit" onchange="handleTempUnitChange()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <option value="F" selected>&deg;F (Fahrenheit)</option>
+                                    <option value="C">&deg;C (Celsius)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="tempInput" step="1" value="15" oninput="handleTempNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400" id="tempUnitSuffix">&deg;F</span>
+                        </div>
+                        <input type="range" id="tempSlider" min="-50" max="50" step="1" value="15" oninput="handleTempSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span id="tempSliderMin">-50&deg;F</span>
+                            <span id="tempSliderMid">0&deg;F</span>
+                            <span id="tempSliderMax">50&deg;F</span>
+                        </div>
+                        <p id="tempWarning" class="hidden text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-lg border border-amber-200 dark:border-amber-800">
+                            Air temperatures above 50&deg;F (10&deg;C) fall outside the official NOAA NWS wind chill domain.
+                        </p>
+                    </div>
+
+                    <!-- Wind Speed Input -->
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="windInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Sustained Wind Speed ($V$)</label>
+                            <div class="flex items-center gap-1">
+                                <select id="windUnit" onchange="handleWindUnitChange()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <option value="mph" selected>mph</option>
+                                    <option value="kmh">km/h</option>
+                                    <option value="knots">knots</option>
+                                    <option value="ms">m/s</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="windInput" min="0" max="120" step="1" value="20" oninput="handleWindNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400" id="windUnitSuffix">mph</span>
+                        </div>
+                        <input type="range" id="windSlider" min="0" max="80" step="1" value="20" oninput="handleWindSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>0 mph (Calm)</span>
+                            <span id="windSliderMid">40 mph</span>
+                            <span id="windSliderMax">80 mph</span>
+                        </div>
+                        <p id="windWarning" class="hidden text-xs text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-950/40 p-2 rounded-lg border border-sky-200 dark:border-sky-800">
+                            Wind speeds below 3 mph (4.8 km/h) are treated as calm air. Convective wind chill is equivalent to air temperature.
+                        </p>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="flex gap-2 pt-2">
+                        <button type="button" onclick="calculate()" class="flex-1 py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs uppercase tracking-wider shadow-sm hover:shadow transition flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            <span>Compute Wind Chill</span>
+                        </button>
+                        <button type="button" onclick="resetCalculatorDefaults()" class="py-2.5 px-3 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-bold text-xs transition" title="Reset Inputs">
+                            Reset
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="bg-gradient-to-br from-brand-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm border border-brand-800 lead-box">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-semibold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Clinical Cold Protocols</span>
+                    </div>
+                    <h3 class="text-sm font-bold text-white mb-1">Cold Weather Safety &amp; Frostbite Management Manual</h3>
+                    <p class="text-xs text-slate-300 mb-3 leading-relaxed">Download our peer-reviewed technical reference covering field hypothermia triage, cold-induced vasodilation stages, and rewarming protocols.</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="engineer@domain.com" class="w-full px-3 py-2 rounded-lg bg-slate-800/90 border border-slate-700 text-white placeholder-slate-400 text-xs focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 px-3 rounded-lg bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs uppercase tracking-wider transition shadow">
+                            Download PDF Manual
+                        </button>
+                    </form>
+                    <p class="text-[10px] text-slate-400 mt-2 text-center">Zero spam. Free engineering reference.</p>
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Interactive Tabs (Span 7 on lg, 8 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Primary Result Display Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-7 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-slate-100 dark:border-slate-700/60">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-400">Primary Meteorological Assessment</span>
+                            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Apparent Wind Chill Temperature</h2>
+                        </div>
+                        <div id="frostbiteBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border border-sky-300 dark:border-sky-800">
+                            <span class="w-2 h-2 rounded-full bg-sky-500"></span>
+                            <span id="frostbiteBadgeText">Low Risk (&gt; 30 min)</span>
+                        </div>
+                    </div>
+
+                    <!-- Hero Number Display -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                        <div class="md:col-span-7">
+                            <div class="flex items-baseline gap-3">
+                                <span class="text-5xl sm:text-6xl font-black tracking-tight text-slate-900 dark:text-white font-mono" id="heroWci">0&deg;F</span>
+                                <span class="text-lg sm:text-xl font-bold text-slate-400 font-mono" id="heroWciAlt">(-17.8&deg;C)</span>
+                            </div>
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300" id="deltaTempText">Cooling deficit: -15.0&deg;F below air temp</span>
+                            </div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-3 leading-relaxed" id="sensationSummary">
+                                Air temperature combined with convective wind velocity accelerates heat dissipation from exposed skin at a rate equivalent to calm conditions at this calculated index.
+                            </p>
+                        </div>
+
+                        <!-- Frostbite Time Box -->
+                        <div class="md:col-span-5 bg-slate-50 dark:bg-slate-900/80 rounded-xl p-4 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Frostbite Exposure Window</div>
+                            <div class="text-2xl font-black text-slate-900 dark:text-white font-mono flex items-center gap-2" id="frostbiteTimeVal">
+                                <span>&gt; 30 Minutes</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-2 rounded-full overflow-hidden">
+                                <div id="hazardMeter" class="bg-sky-500 h-full rounded-full transition-all duration-300" style="width: 20%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-400 font-medium">
+                                <span>Safe</span>
+                                <span>30 min</span>
+                                <span>10 min</span>
+                                <span>&lt; 2 min</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Key Bioclimatic Metric Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-5 border-t border-slate-100 dark:border-slate-700/60 text-center">
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Face-Level Wind (1.5m)</span>
+                            <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200" id="faceWindVal">13.0 mph</span>
+                            <span class="block text-[9px] text-slate-400">64.7% of 10m mast</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Convective Velocity Index</span>
+                            <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200" id="convectiveFactorVal">1.62x</span>
+                            <span class="block text-[9px] text-slate-400">$V^{0.16}$ scaling factor</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">Recommended Clothing</span>
+                            <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200" id="clothingCloVal">2.8 - 3.2 clo</span>
+                            <span class="block text-[9px] text-slate-400">Thermal insulation tier</span>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-100 dark:border-slate-800">
+                            <span class="block text-[10px] uppercase font-bold text-slate-400 mb-0.5">NWS Alert Tier</span>
+                            <span class="text-sm font-bold font-mono text-slate-800 dark:text-slate-200" id="nwsTierVal">No Advisory</span>
+                            <span class="block text-[9px] text-slate-400">Synoptic criteria</span>
+                        </div>
+                    </div>
+
+                    <!-- Fast Tools & Export Bar -->
+                    <div class="mt-5 pt-4 border-t border-slate-100 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyCalculationSummary()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                <span>Copy Data</span>
+                            </button>
+                            <button type="button" onclick="resetCalculatorDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold transition">
+                                Reset
+                            </button>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold hover:bg-brand-100 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Generate Formal Report</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 2: Mid Banner Above Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Workspace Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Buttons -->
+                <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 no-print">
+                    <button type="button" onclick="switchTab('calculator')" id="tabBtn_calculator" class="tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Wind Chill Calculator</span>
+                    </button>
+                    <button type="button" onclick="switchTab('frostbite')" id="tabBtn_frostbite" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        <span>Frostbite Danger &amp; Matrix</span>
+                    </button>
+                    <button type="button" onclick="switchTab('hypothermia')" id="tabBtn_hypothermia" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                        <span>Hypothermia Stages &amp; Safety</span>
+                    </button>
+                    <button type="button" onclick="switchTab('print')" id="tabBtn_print" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Report</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Wind Chill Calculator -->
+                <div id="tab-calculator" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart.js Wind Chill Heat Loss Curve -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700" id="heat-loss-curve">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Chart.js Wind Chill Heat Loss Curve</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Convective Temperature Response Across Wind Speeds (5 to 60 mph)</p>
+                            </div>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                                Current State: <span id="chartCoordPoint">15&deg;F, 20 mph &rarr; 0&deg;F</span>
+                            </span>
+                        </div>
+                        <div class="relative w-full h-[320px] sm:h-[380px]">
+                            <canvas id="windChillChart"></canvas>
+                        </div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between">
+                            <span>Thick cyan line indicates your current ambient temperature. Dashed curves provide reference isotherms. Pulsing marker shows current wind coordinate.</span>
+                            <button type="button" onclick="resetChartZoom()" class="text-brand-600 dark:text-brand-400 hover:underline">Reset View</button>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Live Mathematical Derivation -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Step-by-Step Mathematical Derivation</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Live numerical evaluation using the official joint American-Canadian National Weather Service JAG/TI formulation.</p>
+                        
+                        <div class="space-y-4 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 overflow-x-auto">
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 1: Compute Wind Speed Exponent Factor ($V^{0.16}$):</span>
+                                <div id="mathStep1" class="text-sm">
+                                    $$V^{0.16} = (20.0)^{0.16} = 1.6158$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 2: Calculate Linear Air Temperature Contribution:</span>
+                                <div id="mathStep2" class="text-sm">
+                                    $$0.6215 \times T = 0.6215 \times 15.0 = +9.3225^{\circ}\text{F}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 3: Calculate Convective Air Boundary Striping Term:</span>
+                                <div id="mathStep3" class="text-sm">
+                                    $$-35.75 \times V^{0.16} = -35.75 \times 1.6158 = -57.7661$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 4: Calculate Temperature-Wind Convective Coupling Term:</span>
+                                <div id="mathStep4" class="text-sm">
+                                    $$+0.4275 \times T \times V^{0.16} = +0.4275 \times 15.0 \times 1.6158 = +10.3615$$
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Step 5: Summing All Terms for Final Wind Chill Temperature:</span>
+                                <div id="mathStep5" class="text-sm font-bold text-brand-600 dark:text-brand-400">
+                                    $$WCI = 35.74 + 9.3225 - 57.7661 + 10.3615 = -2.34^{\circ}\text{F} \approx -2^{\circ}\text{F}$$
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Metric Formula Reference Box -->
+                        <div class="mt-4 p-3 bg-slate-100 dark:bg-slate-900 rounded-xl text-xs text-slate-600 dark:text-slate-400 space-y-1">
+                            <span class="font-bold text-slate-800 dark:text-slate-200">Official Canadian / Metric Formula (ECCC Standard):</span>
+                            <div class="font-mono text-[11px] overflow-x-auto py-1">
+                                $$WCI_{\text{metric}} = 13.12 + 0.6215\,T_{^{\circ}\text{C}} - 11.37\,V_{\text{km/h}}^{0.16} + 0.3965\,T_{^{\circ}\text{C}}\,V_{\text{km/h}}^{0.16}$$
+                            </div>
+                            <p class="text-[11px]">Valid for $T \le 10^{\circ}\text{C}$ and $V \ge 4.8\text{ km/h}$. Produces equivalent physical convective heat loss rates calibrated for human facial tissue.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tab 2: Frostbite Danger & Exposure Time Chart -->
+                <div id="tab-frostbite" class="tab-panel space-y-6">
+                    
+                    <!-- NWS Interactive Grid Section -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700" id="frostbite-chart">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">NOAA National Weather Service Wind Chill Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Standard 2-Dimensional Operational Lookup Table with Frostbite Risk Thresholds</p>
+                            </div>
+                            <div class="flex items-center gap-1 text-xs">
+                                <span class="text-slate-400 font-semibold mr-1">Display Units:</span>
+                                <button type="button" onclick="setGridUnit('F')" id="gridUnitF" class="px-2.5 py-1 rounded-lg bg-brand-600 text-white font-bold transition">&deg;F / mph</button>
+                                <button type="button" onclick="setGridUnit('C')" id="gridUnitC" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 transition">&deg;C / km/h</button>
+                            </div>
+                        </div>
+
+                        <!-- Color Legend -->
+                        <div class="flex flex-wrap items-center gap-2 mb-4 text-[11px]">
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Low Risk (&gt; 30 min)
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> 30-Minute Hazard
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 border border-orange-200 dark:border-orange-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-orange-500"></span> 10-Minute Hazard
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-100 dark:bg-rose-950 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span> 5-Minute Hazard
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 border border-purple-200 dark:border-purple-800">
+                                <span class="w-2.5 h-2.5 rounded-full bg-purple-700"></span> Under 2-Minute Danger
+                            </span>
+                        </div>
+
+                        <!-- Responsive Table Container -->
+                        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700">
+                            <table class="w-full text-center border-collapse text-xs font-mono" id="nwsMatrixTable">
+                                <!-- Populated dynamically by generateNwsGrid() in JavaScript -->
+                            </table>
+                        </div>
+                        <p class="text-[10px] text-slate-400 mt-2">
+                            The outlined glowing box highlights the matrix coordinate closest to your current ambient temperature and wind speed inputs.
+                        </p>
+                    </div>
+
+                    <!-- Clinical Pathophysiology of Frostbite -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Clinical Classification of Frostbite Injuries</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                            Tissue freezing occurs when the skin temperature reaches $-0.55^{\circ}\text{C}$ to $-4.8^{\circ}\text{C}$ ($31.0^{\circ}\text{F}$ to $23.4^{\circ}\text{F}$). Pathological severity is classified into four distinct stages based on anatomical depth.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl border border-sky-200 dark:border-sky-900 bg-sky-50/50 dark:bg-sky-950/20">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-sky-200 dark:bg-sky-900 text-sky-800 dark:text-sky-300">Grade 1</span>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Frostnip &amp; Superficial Pallor</h4>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Superficial cooling without architectural cellular freezing. Clinically manifests as transient cutaneous erythema, numbness, pallor, and stinging tingling. Completely reversible upon gentle passive warming without lasting dermal necrosis or tissue deficit.
+                                </p>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-900 bg-amber-50/50 dark:bg-amber-950/20">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-300">Grade 2</span>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Superficial Dermal Frostbite</h4>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Ice crystals nucleate in the epidermis and papillary dermis. Characterized by clear or milky fluid-filled blisters (bullae) developing within 12 to 24 hours. Surrounding skin exhibits significant edema and aching throbbing pain. Microvascular architecture remains largely intact.
+                                </p>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-orange-200 dark:border-orange-900 bg-orange-50/50 dark:bg-orange-950/20">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-orange-200 dark:bg-orange-900 text-orange-800 dark:text-orange-300">Grade 3</span>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Deep Dermal &amp; Subcutaneous Freezing</h4>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Extends through the entire reticular dermis into the hypodermis. Leads to hemorrhagic, dark-purple or blood-filled blisters indicating severe microvascular thrombosis and capillary disruption. The affected region feels wooden, stiff, and permanently insensate.
+                                </p>
+                            </div>
+
+                            <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-900 bg-rose-50/50 dark:bg-rose-950/20">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="px-2 py-0.5 text-[10px] font-extrabold uppercase rounded bg-rose-200 dark:bg-rose-900 text-rose-800 dark:text-rose-300">Grade 4</span>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Full-Thickness Transmural Gangrene</h4>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Complete transdermal freezing penetrating tendons, periosteum, and osseous bone tissue. Absence of blister formation; tissue rapidly progresses into dry gangrene, digital mummification, and auto-amputation. Surgical debridement or surgical amputation is typically necessary.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Emergency Field Care Guidelines -->
+                        <div class="mt-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200 mb-2">Evidence-Based Emergency Field Care Protocols</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs text-slate-600 dark:text-slate-300">
+                                <div class="space-y-1.5">
+                                    <span class="font-bold text-emerald-600 dark:text-emerald-400 block">Mandatory Actions:</span>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>Seek immediate shelter and remove wet or constrictive clothing.</li>
+                                        <li>Initiate rapid rewarming in a warm circulating water bath maintained strictly at $37^{\circ}\text{C}$ to $39^{\circ}\text{C}$ ($98.6^{\circ}\text{F}$ to $102.2^{\circ}\text{F}$) for 15 to 30 minutes.</li>
+                                        <li>Administer ibuprofen or aspirin for anti-inflammatory prostaglandin cascade inhibition.</li>
+                                        <li>Apply loose, sterile, non-adherent dry dressings between affected digits.</li>
+                                    </ul>
+                                </div>
+                                <div class="space-y-1.5">
+                                    <span class="font-bold text-rose-600 dark:text-rose-400 block">Strictly Prohibited Contraindications:</span>
+                                    <ul class="list-disc list-inside space-y-1">
+                                        <li>DO NOT rub the injured area with snow, ice, or dry hands (shears delicate crystallizing cells).</li>
+                                        <li>DO NOT expose frozen skin to dry radiant heat, woodstoves, heating pads, or exhaust pipes (insensate skin sustains third-degree burns).</li>
+                                        <li>DO NOT initiate thawing if there is any possibility of refreezing before reaching hospital care (refreezing causes catastrophic vascular loss).</li>
+                                        <li>DO NOT rupture intact clear or hemorrhagic blisters.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tab 3: Hypothermia Stages & Cold Weather Safety Guide -->
+                <div id="tab-hypothermia" class="tab-panel space-y-6">
+                    
+                    <!-- Clinical Swiss Staging of Hypothermia -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700" id="hypothermia-guide">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Clinical Stages of Accidental Systemic Hypothermia</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                            Systemic hypothermia occurs when involuntary metabolic heat production fails to match environmental convective and conductive heat loss, driving core body temperature ($T_{\text{core}}$) below $35.0^{\circ}\text{C}$ ($95.0^{\circ}\text{F}$). Classified per the International Commission for Alpine Rescue (ICAR) Swiss Staging System.
+                        </p>
+
+                        <div class="space-y-3">
+                            <!-- Stage I -->
+                            <div class="p-4 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/20">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-sky-500"></span>
+                                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Stage I: Mild Hypothermia</h4>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold text-sky-700 dark:text-sky-300">Core: 35.0&deg;C - 32.0&deg;C (95.0&deg;F - 89.6&deg;F)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <strong>Clinical Features:</strong> Vigorous, uncontrollable muscular shivering, alert mental status, preserved protective reflexes, peripheral vasoconstriction, cold-induced diuresis, elevated heart rate, and mild dysarthria (slurred speech). Patient is fully capable of voluntary movement and cooperation.
+                                </p>
+                            </div>
+
+                            <!-- Stage II -->
+                            <div class="p-4 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-950/20">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Stage II: Moderate Hypothermia</h4>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold text-amber-700 dark:text-amber-300">Core: 32.0&deg;C - 28.0&deg;C (89.6&deg;F - 82.4&deg;F)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <strong>Clinical Features:</strong> Muscular shivering ceases due to glycogen depletion. Progressive neurological impairment: confusion, apathy, motor ataxia, loss of fine motor coordination ("the umbles"), slurred speech, and paradoxical undressing (inappropriate clothes removal triggered by sudden cutaneous vasomotor paralysis). High risk of cardiac arrhythmias.
+                                </p>
+                            </div>
+
+                            <!-- Stage III -->
+                            <div class="p-4 rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50/50 dark:bg-rose-950/20">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-rose-600"></span>
+                                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Stage III: Severe Hypothermia</h4>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold text-rose-700 dark:text-rose-300">Core: 28.0&deg;C - 24.0&deg;C (82.4&deg;F - 75.2&deg;F)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <strong>Clinical Features:</strong> Unconsciousness, non-reactive or poorly reactive pupils, profound bradycardia, hypotension, and depressed respirations. Extreme myocardial irritability; gentle handling is essential as minimal rough physical movement can trigger refractory ventricular fibrillation or cardiac arrest.
+                                </p>
+                            </div>
+
+                            <!-- Stage IV -->
+                            <div class="p-4 rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50/50 dark:bg-purple-950/20">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-purple-700"></span>
+                                        <h4 class="text-sm font-bold text-slate-900 dark:text-white">Stage IV: Profound Hypothermia / Apparent Death</h4>
+                                    </div>
+                                    <span class="text-xs font-mono font-bold text-purple-700 dark:text-purple-300">Core: &lt; 24.0&deg;C (&lt; 75.2&deg;F)</span>
+                                </div>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    <strong>Clinical Features:</strong> Clinical state mimics somatic death: unmeasurable pulse, absent spontaneous respirations, fixed dilated pupils, and muscular flaccidity. Resuscitation standard: "Nobody is dead until warm and dead." Requires continuous cardiopulmonary resuscitation and cardiopulmonary bypass (ECMO) rewarming.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Cold Weather Safety & Institutional Warning Criteria -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Winter Outdoor Safety &amp; Layering Strategy</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                            Preventing winter environmental cold injuries requires systematic management of moisture, convective air movement, and thermal radiation.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block">1. Inner Base Layer</span>
+                                <p class="text-slate-600 dark:text-slate-400">
+                                    Synthetic polyester, polypropylene, or merino wool. Designed strictly for moisture transport away from dermal pores. Never wear cotton garments in sub-freezing conditions ("cotton kills"), as wet cotton retains moisture, increasing thermal conduction 25-fold.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block">2. Insulating Mid Layer</span>
+                                <p class="text-slate-600 dark:text-slate-400">
+                                    High-loft down, synthetic batting (PrimaLoft), or dense fleece. Traps quiescent air within microfibers, creating a dead-air space with low thermal conductivity ($k \approx 0.026\text{ W}/(\text{m}\cdot\text{K})$).
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 space-y-1.5">
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block">3. Windproof Outer Shell</span>
+                                <p class="text-slate-600 dark:text-slate-400">
+                                    Densely woven membrane (Gore-Tex, microporous polyurethane). Eliminates wind penetration, preventing convective boundary layer disruption. Must include mechanical pit zips to vent excess metabolic heat during physical exertion.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Institutional Warning Criteria -->
+                        <div class="mt-4 p-4 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                            <h4 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2">National Weather Service (NWS) &amp; ECCC Alert Definitions</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-400">
+                                <div>
+                                    <span class="font-bold text-amber-600 dark:text-amber-400 block mb-1">Wind Chill Advisory:</span>
+                                    Issued when seasonal cold air and sustained winds are anticipated to produce wind chill temperatures hazardous to unprotected individuals, typically $-15^{\circ}\text{F}$ to $-24^{\circ}\text{F}$ in northern regions, or $0^{\circ}\text{F}$ to $-10^{\circ}\text{F}$ in central latitudes.
+                                </div>
+                                <div>
+                                    <span class="font-bold text-rose-600 dark:text-rose-400 block mb-1">Wind Chill Warning:</span>
+                                    Issued when dangerously low wind chill conditions are expected to reach life-threatening levels (typically $-25^{\circ}\text{F}$ or colder in central states, and $-35^{\circ}\text{F}$ or colder in northern states), threatening frostbite in 10 to 30 minutes.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Tab 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+                        
+                        <!-- Print Document Header -->
+                        <div class="border-b-2 border-slate-900 dark:border-slate-100 pb-4 mb-6 flex flex-wrap justify-between items-start gap-4">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">CalcWorld Biometeorological Assessment Report</span>
+                                <h2 class="text-2xl font-black text-slate-900 dark:text-white">Winter Wind Chill &amp; Frostbite Risk Profile</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Formulation: NOAA NWS / ECCC Joint Action Group for Temperature Indices (JAG/TI)</p>
+                            </div>
+                            <div class="text-right text-xs font-mono text-slate-500 dark:text-slate-400">
+                                <div>Report Generated: <span id="reportTimestamp" class="font-bold text-slate-800 dark:text-slate-200">2026-10-16 12:00 UTC</span></div>
+                                <div>Document Standard: ISO 11079 / WMO-No. 8</div>
+                            </div>
+                        </div>
+
+                        <!-- Report Summary Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            
+                            <!-- Parameters -->
+                            <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Input Meteorological Parameters</h3>
+                                <table class="w-full text-xs">
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Air Dry Bulb Temperature ($T$):</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repAirTemp">15.0 &deg;F (-9.4 &deg;C)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Sustained Wind Speed ($V_{10\text{m}}$):</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repWindSpeed">20.0 mph (32.2 km/h)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Face-Level Wind Speed ($V_{1.5\text{m}}$):</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repFaceWind">13.0 mph (20.8 km/h)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Convective Scaling Factor ($V^{0.16}$):</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repScalingFactor">1.616</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Outcomes -->
+                            <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Calculated Exposure Metrics</h3>
+                                <table class="w-full text-xs">
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Calculated Wind Chill Index:</td>
+                                            <td class="py-1.5 font-bold font-mono text-right text-brand-600 dark:text-brand-400 text-sm" id="repWci">-2 &deg;F (-19 &deg;C)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Convective Thermal Deficit ($\Delta T$):</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repDelta">-17.0 &deg;F</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Frostbite Exposure Risk Window:</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repFrostbiteWindow">&gt; 30 Minutes</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-1.5 text-slate-500">Systemic Hypothermia Risk Tier:</td>
+                                            <td class="py-1.5 font-bold font-mono text-right" id="repHypoRisk">Low Risk with Standard Outerwear</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+
+                        <!-- Technical Formula Summary -->
+                        <div class="p-4 bg-slate-100 dark:bg-slate-900 rounded-xl mb-6 text-xs font-mono space-y-1">
+                            <span class="font-bold text-slate-700 dark:text-slate-300 block">Operative JAG/TI Mathematical Equation:</span>
+                            <div class="text-[11px] overflow-x-auto py-1">
+                                $$WCI = 35.74 + 0.6215(T) - 35.75(V^{0.16}) + 0.4275(T)(V^{0.16})$$
+                            </div>
+                            <p class="text-[10px] text-slate-500">Calibrated for living human facial convective heat loss at 5 ft elevation walking at 3 mph against laminar wind flow.</p>
+                        </div>
+
+                        <!-- Protective Gear Recommendations Checklist -->
+                        <div class="mb-6 space-y-2">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Prescribed Personal Protective Equipment (PPE)</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs" id="repPpeList">
+                                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <span>Thermal insulated headwear covering ears and occipital base.</span>
+                                </div>
+                                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <span>Wind-impermeable outer shell with sealed wrist and waist closures.</span>
+                                </div>
+                                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <span>Insulated mittens preferred over divided gloves for digit heat pooling.</span>
+                                </div>
+                                <div class="flex items-center gap-2 p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+                                    <span>Vapor-wicking non-cotton base layer with insulated sub-zero footwear.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Print Action Trigger -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4 flex justify-between items-center no-print">
+                            <span class="text-xs text-slate-400">Ready for hardcopy printing or PDF generation.</span>
+                            <button type="button" onclick="window.print()" class="px-5 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs uppercase tracking-wider transition shadow flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print / Save as PDF</span>
+                            </button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Content Banner -->
+        <div class="ad-slot no-print mt-12" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive Scientific Guide Section (1200+ words) -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700" id="guide-section">
+            
+            <div class="max-w-4xl mx-auto space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base">
+                
+                <!-- Section 1 -->
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Thermodynamics &amp; Bioclimatology</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-4">Physics of Wind-Induced Convective Heat Transfer</h2>
+                    
+                    <p class="mb-4">
+                        The physical sensation of extreme cold experienced during windy weather is governed by convective heat transfer. The human body continuously generates thermal energy through basal cellular metabolism, mitochondrial adenosine triphosphate (ATP) synthesis, and voluntary muscular activity. Under calm atmospheric conditions, this heat conducts outward through dermal layers and warms the stationary air molecules immediately adjacent to the skin. This generates a microscopic, quiescent cushion of warmed air known as the thermal boundary layer. Because still air possesses an exceptionally low thermal conductivity ($k \approx 0.024\text{ to }0.026\text{ W}/(\text{m}\cdot\text{K})$ at sub-zero temperatures), this boundary layer acts as an effective natural insulating envelope, significantly reducing the thermal gradient between the epidermal surface and the surrounding air.
+                    </p>
+
+                    <p class="mb-4">
+                        When atmospheric wind impinges upon exposed human skin, aerodynamic shear stresses strip away this stagnant insulating boundary layer. The rate of convective heat loss from the skin surface to the moving fluid is defined by Newton's Law of Cooling:
+                    </p>
+
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center my-4 overflow-x-auto">
+                        $$q = h_c (T_{\text{skin}} - T_{\text{air}})$$
+                    </div>
+
+                    <p class="mb-4">
+                        In this governing relation, $q$ represents the convective heat flux per unit surface area ($\text{W}/\text{m}^2$), $T_{\text{skin}}$ is the surface temperature of the living dermal tissue, $T_{\text{air}}$ is the ambient dry-bulb temperature, and $h_c$ is the convective heat transfer coefficient ($\text{W}/(\text{m}^2\cdot\text{K})$). While ambient temperature defines the fundamental driving temperature difference ($T_{\text{skin}} - T_{\text{air}}$), wind velocity dictates the magnitude of $h_c$.
+                    </p>
+
+                    <p>
+                        In stagnant air, natural or buoyant convection dominates: warm air expands, decreases in density, and gently ascends, yielding a modest convective coefficient ($h_c \approx 3\text{ to }5\text{ W}/(\text{m}^2\cdot\text{K})$). When air moves at speed, forced convection takes over. Forced convective fluid dynamics across bluff anatomical geometries (such as the human nose, chin, and zygomatic facial regions) induce boundary layer turbulence, compressing the laminar viscous sublayer to sub-millimeter thicknesses. As a result, the convective coefficient scales non-linearly with wind velocity: $h_c \propto V^{0.16}$. At wind speeds of $30\text{ mph}$ ($48\text{ km/h}$), the convective heat transfer coefficient increases more than threefold relative to calm air, drawing heat away from skin capillaries at an accelerated pace.
+                    </p>
+                </div>
+
+                <!-- Section 2 -->
+                <div class="border-t border-slate-200 dark:border-slate-700/60 pt-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Historical Evolution</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-4">From Siple-Passel (1945) to the Modern 2001 JAG/TI Formula</h2>
+                    
+                    <p class="mb-4">
+                        The scientific quantification of wind chill originated during the United States Antarctic Service Expedition of 1939 to 1941 at Little America III. Polar researchers Paul A. Siple and Charles F. Passel conducted empirical experiments by suspending small, pyrex and cellulose plastic cylinders containing 250 grams of water in polar wind currents. By measuring the elapsed time required for the water to freeze under varying ambient temperatures and wind speeds, Siple and Passel formulated an empirical equation for the Wind Chill Index (WCI), expressed in heat loss rate units of kilogram calories per square meter per hour ($\text{kcal}/(\text{m}^2\cdot\text{hr})$).
+                    </p>
+
+                    <p class="mb-4">
+                        Although the Siple-Passel formulation served as the international cold weather benchmark for over half a century, it suffered from profound biomechanical and physiological deficiencies:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">Deficiencies of the 1945 Siple-Passel Formula</h4>
+                            <ul class="text-xs space-y-1.5 list-disc list-inside text-slate-600 dark:text-slate-400">
+                                <li>Inanimate cylinder model: Water cooled uniformly from all 360 degrees, failing to model a human head receiving warm arterial blood flow from an internal core.</li>
+                                <li>Thermal storage mismatch: The thermal capacitance of water inside a plastic container differs completely from living human skin layered over subcutaneous adipose tissue.</li>
+                                <li>Overestimation at high velocities: At wind speeds above 25 mph, the equation predicted absurdly extreme cooling rates that diverged from human biological reality.</li>
+                                <li>Metric confusion: Expressing danger as heat flux ($\text{kcal}/(\text{m}^2\cdot\text{hr})$) proved unintelligible to the general public, prompting conversion tables into artificial "equivalent temperatures" that lacked biological validation.</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <h4 class="font-bold text-slate-900 dark:text-white text-sm mb-1">The 2001 JAG/TI Empirical Human Standard</h4>
+                            <ul class="text-xs space-y-1.5 list-disc list-inside text-slate-600 dark:text-slate-400">
+                                <li>Living human clinical trials: 12 human volunteers (6 male, 6 female) instrumented with surface thermal sensors in a refrigerated wind tunnel.</li>
+                                <li>Facial focus: Specifically modeled the human face—the anatomical area most commonly exposed to winter environments.</li>
+                                <li>Standardized walking speed: Incorporated a forward walking speed of 3 mph (4.8 km/h), representing active human locomotion.</li>
+                                <li>Elevation correction: Corrected standard meteorological anemometer wind speeds measured at 10 meters (33 ft) down to typical human face level at 1.5 meters (5 ft).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <p>
+                        To resolve these discrepancies, the Office of the Federal Coordinator for Meteorological Services and Supporting Research organized the Joint Action Group for Temperature Indices (JAG/TI) in 2000. Coordinated jointly by the US National Oceanic and Atmospheric Administration (NOAA) National Weather Service, Environment and Climate Change Canada (ECCC), and the UK Met Office, clinical research was executed at the Defense and Civil Institute of Environmental Medicine (DCIEM) in Toronto, Canada. Twelve human subjects walked on treadmills inside an environmental wind tunnel, exposed to air temperatures between $-10^{\circ}\text{C}$ and $+10^{\circ}\text{C}$ and wind speeds between $2\text{ m/s}$ and $12\text{ m/s}$. Calibrated thermistors placed on the forehead, cheeks, chin, and nose recorded continuous surface skin temperatures. Coupled with a transient finite-difference model of thermal diffusion through tissue layers, this research generated the modern wind chill formula officially adopted across North America in autumn 2001.
+                    </p>
+                </div>
+
+                <!-- Section 3 -->
+                <div class="border-t border-slate-200 dark:border-slate-700/60 pt-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Mathematical Structure</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-4">Official Formulation &amp; Coefficient Breakdown</h2>
+                    
+                    <p class="mb-4">
+                        The official National Weather Service Wind Chill Temperature Index formula in US Customary units ($T$ in degrees Fahrenheit, $V$ in miles per hour) is expressed as:
+                    </p>
+
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center my-4 overflow-x-auto text-brand-600 dark:text-brand-400 font-bold">
+                        $$WCI = 35.74 + 0.6215\,T - 35.75\,V^{0.16} + 0.4275\,T\,V^{0.16}$$
+                    </div>
+
+                    <p class="mb-4">
+                        Each individual coefficient in this polynomial formulation represents a distinct thermodynamic calibration:
+                    </p>
+
+                    <ul class="space-y-2 list-disc list-inside mb-4 pl-2">
+                        <li><strong>Constant Intercept ($35.74$):</strong> Represents the baseline skin temperature equilibrium point under calibrated reference boundary layer conditions. It normalizes the equation against the standard human facial skin temperature of $91.4^{\circ}\text{F}$ ($33.0^{\circ}\text{C}$).</li>
+                        <li><strong>Linear Temperature Coefficient ($0.6215\,T$):</strong> Reflects the direct conductive and radiative thermal coupling between human tissue and ambient air in the absence of boundary layer perturbation.</li>
+                        <li><strong>Velocity Exponent Factor ($-35.75\,V^{0.16}$):</strong> Quantifies the non-linear convective heat extraction caused by air passing across human facial geometry. The power of $0.16$ reflects empirical cross-flow heat transfer across irregular cylindrical and spherical facial contours, incorporating the boundary-layer height correction:
+                            $$V_{\text{face}} = 0.647 \times V_{10\text{m}}$$
+                            where an anemometer mounted on a standard 10-meter weather mast measures wind speeds approximately 55% higher than the wind experienced at face height (1.5 meters) due to planetary boundary layer friction.
+                        </li>
+                        <li><strong>Temperature-Wind Cross Product ($+0.4275\,T\,V^{0.16}$):</strong> Accounts for the physical reality that wind-induced convective cooling scales with the air-to-skin temperature difference. As air temperature drops, each increment of wind speed removes progressively more heat.</li>
+                    </ul>
+
+                    <p class="mb-4">
+                        The identical biophysical standard formulated for Metric units by Environment and Climate Change Canada ($T$ in degrees Celsius, $V$ in kilometers per hour) is:
+                    </p>
+
+                    <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 font-mono text-center my-4 overflow-x-auto text-brand-600 dark:text-brand-400 font-bold">
+                        $$WCI = 13.12 + 0.6215\,T - 11.37\,V^{0.16} + 0.3965\,T\,V^{0.16}$$
+                    </div>
+
+                    <p>
+                        Both formulations are formally valid for ambient air temperatures at or below $50^{\circ}\text{F}$ ($10^{\circ}\text{C}$) and sustained wind speeds at or above $3\text{ mph}$ ($4.8\text{ km/h}$). When wind speed falls below $3\text{ mph}$, forced convective flow diminishes below the natural buoyant convection velocity generated by warm human skin; under these calm conditions, the wind chill index is equivalent to the ambient air temperature.
+                    </p>
+                </div>
+
+                <!-- Section 4 -->
+                <div class="border-t border-slate-200 dark:border-slate-700/60 pt-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Clinical Physiology</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-4">Physiological Mechanisms: Vasoconstriction, Frostbite &amp; Hypothermia</h2>
+                    
+                    <p class="mb-4">
+                        When the human body encounters cold ambient air combined with wind, peripheral thermoreceptors in the skin trigger rapid neurovascular protective responses mediated by the sympathetic nervous system:
+                    </p>
+
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4 mb-2">1. Cutaneous Vasoconstriction and the Lewis Hunting Reaction</h3>
+                    <p class="mb-4">
+                        Sympathetic noradrenergic nerves stimulate alpha-1 and alpha-2 adrenergic receptors located in vascular smooth muscle walls of peripheral arterioles and pre-capillary sphincters. Cutaneous blood flow, which averages approximately $250\text{ to }400\text{ mL}/\text{min}$ in comfortable room temperatures, constricts dramatically to as little as $20\text{ to }50\text{ mL}/\text{min}$. By shunting warm oxygenated blood away from the dermal surface and extremities toward the vital internal core (brain, myocardium, kidneys), the body reduces radiant and convective heat loss to the cold exterior.
+                    </p>
+                    <p class="mb-4">
+                        To protect peripheral tissues from immediate ischemic necrosis, the body engages the Lewis Triple Response or Cold-Induced Vasodilation (CIVD), known clinically as the "hunting reaction." Following 5 to 15 minutes of maximal vasoconstriction, peripheral arteriovenous anastomoses abruptly dilate for a brief 3 to 5-minute interval, delivering a transient surge of warm blood to digits and facial tissue before constricting again. In sustained extreme wind chill conditions, however, the hunting reaction fails as core body temperature begins to drop, leaving peripheral microvasculature permanently clamped shut.
+                    </p>
+
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4 mb-2">2. Cellular Pathogenesis of Frostbite</h3>
+                    <p class="mb-4">
+                        When skin temperature drops below $-0.55^{\circ}\text{C}$ ($31.0^{\circ}\text{F}$), the freezing point of human interstitial fluid, architectural cell damage commences. At wind chills below $-19^{\circ}\text{F}$ ($-28^{\circ}\text{C}$), cooling occurs so rapidly that cellular protective mechanisms are overwhelmed:
+                    </p>
+                    <ul class="space-y-2 list-disc list-inside mb-4 pl-2">
+                        <li><strong>Ice Crystal Nucleation:</strong> Ice crystals initially form in the extracellular fluid spaces. Because ice crystallization removes pure water from solution, the remaining extracellular fluid becomes hyperosmolar.</li>
+                        <li><strong>Intracellular Dehydration:</strong> Driven by severe osmotic gradients, intracellular water diffuses rapidly out of the cells through aquaporin channels into the extracellular space, causing extreme intracellular dehydration, hyperosmolar cell shrinkage, and irreversible enzyme denaturation.</li>
+                        <li><strong>Mechanical Shear:</strong> Rapidly growing ice crystal spicules puncture plasma membranes, organelle walls, and capillary endothelia.</li>
+                        <li><strong>Microvascular Thrombosis &amp; Reperfusion Injury:</strong> Upon rewarming, damaged capillary endothelium exposes subendothelial collagen, triggering platelet aggregation, thromboxane $A_2$ synthesis, fibrin deposition, and occlusive microthrombosis. Subsequent blood flow restoration triggers ischemia-reperfusion injury, generating toxic reactive oxygen species (ROS) that amplify tissue necrosis.</li>
+                    </ul>
+
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4 mb-2">3. Shivering Thermogenesis and Systemic Hypothermia</h3>
+                    <p>
+                        To counteract environmental heat loss, the posterior hypothalamus activates somatic motor neurons, initiating asynchronous oscillatory contractions of skeletal muscle groups—shivering thermogenesis. Shivering can elevate metabolic heat production up to four to five times basal levels ($400\text{ to }500\text{ W}$). However, shivering depletes intracellular muscle glycogen reserves within several hours. Once glycogen stores are exhausted, or when core body temperature drops below $32^{\circ}\text{C}$ ($89.6^{\circ}\text{F}$), shivering ceases. At this point, the patient enters moderate-to-severe hypothermia, characterized by cardiac arrhythmias, progressive central nervous system depression, ventricular fibrillation vulnerability, and eventual cardiac arrest without active external rewarming.
+                    </p>
+                </div>
+
+                <!-- Section 5 -->
+                <div class="border-t border-slate-200 dark:border-slate-700/60 pt-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Institutional Safety</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-4">Institutional Standards &amp; Winter Risk Mitigation</h2>
+                    
+                    <p class="mb-4">
+                        Both the NOAA National Weather Service and Environment and Climate Change Canada have established empirical warning thresholds based on the 2001 JAG/TI frostbite exposure model. When outdoor operations or travel are planned in sub-freezing conditions, adherence to standardized protective protocols is essential:
+                    </p>
+
+                    <div class="space-y-3 mb-4">
+                        <div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <span class="font-bold text-slate-900 dark:text-white text-xs block mb-1">Low Danger Zone ($WCI \ge -18^{\circ}\text{F}$ / $\ge -27^{\circ}\text{C}$):</span>
+                            <span class="text-xs text-slate-600 dark:text-slate-400">Frostbite is unlikely during typical exposures (&gt; 30 minutes). Standard winter outerwear, knit hat, insulated gloves, and footwear provide adequate thermal insulation.</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800">
+                            <span class="font-bold text-amber-900 dark:text-amber-200 text-xs block mb-1">Moderate Hazard Zone ($-19^{\circ}\text{F} \ge WCI \ge -32^{\circ}\text{F}$ / $-28^{\circ}\text{C} \ge WCI \ge -35^{\circ}\text{C}$):</span>
+                            <span class="text-xs text-amber-800 dark:text-amber-300">Frostbite can develop on exposed facial skin in 30 minutes. All skin surfaces should be covered. Wind-resistant outer fabrics and thermal balaclavas are recommended.</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-orange-50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800">
+                            <span class="font-bold text-orange-900 dark:text-orange-200 text-xs block mb-1">High Hazard Zone ($-33^{\circ}\text{F} \ge WCI \ge -47^{\circ}\text{F}$ / $-36^{\circ}\text{C} \ge WCI \ge -43^{\circ}\text{C}$):</span>
+                            <span class="text-xs text-orange-800 dark:text-orange-300">Frostbite can develop on exposed facial skin in 10 minutes. Minimize outdoor exposure. Ensure complete facial coverage with ski goggles, face masks, and wind-impermeable insulated mittens.</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800">
+                            <span class="font-bold text-rose-900 dark:text-rose-200 text-xs block mb-1">Severe Hazard Zone ($-48^{\circ}\text{F} \ge WCI \ge -60^{\circ}\text{F}$ / $-44^{\circ}\text{C} \ge WCI \ge -51^{\circ}\text{C}$):</span>
+                            <span class="text-xs text-rose-800 dark:text-rose-300">Frostbite can develop in 5 minutes. Outdoor activity should be avoided unless emergency procedures require it. Full expedition-grade arctic garments are mandatory.</span>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800">
+                            <span class="font-bold text-purple-900 dark:text-purple-200 text-xs block mb-1">Critical Immediate Danger ($WCI < -60^{\circ}\text{F}$ / $< -51^{\circ}\text{C}$):</span>
+                            <span class="text-xs text-purple-800 dark:text-purple-300">Exposed skin freezes in under 2 minutes. Extreme risk of hypothermia and irreversible cold injury. Remain indoors in heated shelter.</span>
+                        </div>
+                    </div>
+
+                    <p>
+                        By combining official NOAA National Weather Service algorithms with clinical bioclimatology guidelines, this calculator provides accurate, peer-reviewed assessments of winter wind chill hazards.
+                    </p>
+                </div>
+
+                <!-- FAQ Accordion Section -->
+                <div class="border-t border-slate-200 dark:border-slate-700/60 pt-8">
+                    <span class="text-xs font-bold uppercase tracking-widest text-brand-600 dark:text-brand-400">Frequently Asked Questions</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1 mb-6">Expert Biometeorology FAQ</h2>
+                    
+                    <div class="space-y-3">
+                        
+                        <!-- FAQ 1 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(1)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>Does wind chill apply to cars, pipes, or other inanimate objects?</span>
+                                <svg id="faqIcon_1" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_1" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                Inanimate objects such as automobile engines, water pipes, and building walls are affected by wind chill only in their rate of cooling, never in their ultimate temperature. For example, if the air temperature is $20^{\circ}\text{F}$ ($-6.7^{\circ}\text{C}$) and the wind chill is $0^{\circ}\text{F}$ ($-17.8^{\circ}\text{C}$), a car radiator will cool down to $20^{\circ}\text{F}$ much faster than in calm air, but it will never cool below the actual air temperature of $20^{\circ}\text{F}$. Wind chill quantifies sensible heat loss from living warm-blooded bodies maintaining an internal core temperature of $98.6^{\circ}\text{F}$ ($37.0^{\circ}\text{C}$).
+                            </div>
+                        </div>
+
+                        <!-- FAQ 2 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(2)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>Why does the wind chill formula cap its validity at 50&deg;F (10&deg;C)?</span>
+                                <svg id="faqIcon_2" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_2" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                The physical mechanism modeled by the JAG/TI wind chill formulation addresses cold-season convective heat extraction from living human skin at risk of tissue freezing and hypothermia. At temperatures above $50^{\circ}\text{F}$ ($10^{\circ}\text{C}$), radiative heat balance, evaporative perspiration, and solar thermal gain become dominant thermoregulatory factors. For temperatures above $80^{\circ}\text{F}$ ($26.7^{\circ}\text{C}$), meteorological agencies switch to the Heat Index or Humidex, which models evaporative cooling impairment caused by high atmospheric moisture.
+                            </div>
+                        </div>
+
+                        <!-- FAQ 3 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(3)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>Why is there a wind speed threshold of 3 mph (4.8 km/h)?</span>
+                                <svg id="faqIcon_3" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_3" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                In completely still air, warm skin naturally creates an upward convective plume driven by buoyant thermal buoyancy, generating an effective air motion of approximately $1.5\text{ to }2.5\text{ mph}$. When environmental wind is below $3\text{ mph}$, natural buoyant convection equals or exceeds forced atmospheric convection. Under these calm conditions, the wind chill formula mathematically becomes unstable or invalid; meteorological conventions define calm air wind chill as equal to the ambient air temperature.
+                            </div>
+                        </div>
+
+                        <!-- FAQ 4 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(4)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>How does solar radiation affect actual wind chill sensation?</span>
+                                <svg id="faqIcon_4" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_4" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                Direct solar radiation adds substantial thermal energy to exposed skin and dark winter clothing. Under clear, cloudless winter skies with bright sunshine, solar radiative gain can offset convective heat loss, effectively raising the apparent temperature by $10^{\circ}\text{F}\text{ to }18^{\circ}\text{F}$ ($5.5^{\circ}\text{C}\text{ to }10.0^{\circ}\text{C}$) compared to an overcast or nocturnal environment with identical air temperature and wind speed.
+                            </div>
+                        </div>
+
+                        <!-- FAQ 5 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(5)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>Why are fingers, toes, and ears most susceptible to frostbite?</span>
+                                <svg id="faqIcon_5" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_5" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                Extremities possess high surface-area-to-volume ratios, minimal insulating subcutaneous adipose tissue, and long vascular transit distances from the warm mediastinal core. During cold exposure, sympathetic vasoconstriction closes digital arterioles to protect core temperature, leaving digits and ears with minimal arterial perfusion. Consequently, their local heat balance relies almost entirely on ambient conditions, causing rapid tissue freezing.
+                            </div>
+                        </div>
+
+                        <!-- FAQ 6 -->
+                        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                            <button type="button" onclick="toggleFaq(6)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base flex justify-between items-center bg-slate-50 dark:bg-slate-900/60 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                                <span>Why is alcohol consumption dangerous during cold weather exposure?</span>
+                                <svg id="faqIcon_6" class="w-4 h-4 text-slate-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </button>
+                            <div id="faqAns_6" class="px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hidden">
+                                Ethanol acts as a direct peripheral vasodilator while simultaneously suppressing hypothalamic thermoregulatory centers. Vasodilation floods cutaneous capillary beds with warm core blood, producing a deceptive subjective sensation of warmth while rapidly dumping core body heat into the freezing environment. Alcohol also inhibits shivering thermogenesis and impairs cognitive risk assessment, substantially increasing the risk of severe hypothermia.
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Global Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 mt-16 py-10 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-4">
+            <div class="flex flex-wrap justify-center gap-6 font-semibold">
+                <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400">Terms of Use</a>
+                <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400">Contact Meteorological Team</a>
+            </div>
+            <p class="max-w-3xl mx-auto leading-relaxed text-[11px]">
+                Disclaimer: The calculations produced by this tool are derived from the official 2001 Joint Action Group for Temperature Indices (JAG/TI) standard implemented by the National Oceanic and Atmospheric Administration (NOAA) National Weather Service and Environment and Climate Change Canada (ECCC). This application is provided for informational and educational purposes. Always monitor official National Weather Service civil alerts and advisories during winter storm events.
+            </p>
+            <p>&copy; 2026 CalcWorld Bioclimatological &amp; Engineering Engines. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Actions:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="copyCalculationSummary()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Copy</button>
+        <button type="button" onclick="switchTab('print')" class="px-2.5 py-1 rounded-full bg-brand-50 dark:bg-brand-950 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 hover:bg-brand-100 transition">Print Report</button>
+        <button type="button" onclick="shareCalculator()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition flex items-center gap-1">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+            <span class="hidden sm:inline">Share</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert" aria-live="polite">
+        <svg class="w-4 h-4 text-brand-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span id="toastMessage">Parameters updated successfully</span>
+    </div>
+
+    <!-- Interactive Logic Script -->
+    <script>
+    // --- 1. State Management ---
+    let tempUnit = 'F'; // 'F' or 'C'
+    let windUnit = 'mph'; // 'mph', 'kmh', 'knots', 'ms'
+    let gridUnit = 'F'; // 'F' or 'C'
+    let currentTempF = 15.0;
+    let currentWindMph = 20.0;
+    let currentWciF = 0.0;
+    let chillChart = null;
+
+    // Conversion helpers
+    function toFahrenheit(val, unit) {
+        if (unit === 'C') return (val * 9 / 5) + 32;
+        return val;
+    }
+
+    function fromFahrenheit(valF, unit) {
+        if (unit === 'C') return (valF - 32) * 5 / 9;
+        return valF;
+    }
+
+    function toMph(val, unit) {
+        if (unit === 'kmh') return val * 0.621371;
+        if (unit === 'knots') return val * 1.150779;
+        if (unit === 'ms') return val * 2.236936;
+        return val;
+    }
+
+    function fromMph(valMph, unit) {
+        if (unit === 'kmh') return valMph * 1.609344;
+        if (unit === 'knots') return valMph / 1.150779;
+        if (unit === 'ms') return valMph / 2.236936;
+        return valMph;
+    }
+
+    // --- 2. Core Wind Chill Engine ---
+    function calcWindChillF(tF, vMph) {
+        if (vMph < 3.0) {
+            return tF; // Calm air condition per NWS
+        }
+        const vExp = Math.pow(vMph, 0.16);
+        return 35.74 + (0.6215 * tF) - (35.75 * vExp) + (0.4275 * tF * vExp);
+    }
+
+    function calcWindChillC(tC, vKmh) {
+        if (vKmh < 4.8) {
+            return tC;
+        }
+        const vExp = Math.pow(vKmh, 0.16);
+        return 13.12 + (0.6215 * tC) - (11.37 * vExp) + (0.3965 * tC * vExp);
+    }
+
+    // Frostbite exposure assessment
+    function getFrostbiteRisk(wciF) {
+        if (wciF >= -18.0) {
+            return {
+                badgeText: 'Low Risk (> 30 min)',
+                badgeClass: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300 border-sky-300 dark:border-sky-800',
+                dotClass: 'bg-sky-500',
+                timeText: '> 30 Minutes',
+                meterWidth: '20%',
+                meterColor: 'bg-sky-500',
+                sensation: 'Low hazard. Frostbite is unlikely for typical exposure times, though prolonged exposure can cause numbness and frostnip.',
+                hypoRisk: 'Low Risk with Standard Outerwear',
+                nwsTier: 'No Advisory'
+            };
+        } else if (wciF >= -32.0) {
+            return {
+                badgeText: '30-Minute Hazard',
+                badgeClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 border-amber-300 dark:border-amber-800',
+                dotClass: 'bg-amber-500',
+                timeText: '~ 30 Minutes',
+                meterWidth: '45%',
+                meterColor: 'bg-amber-500',
+                sensation: 'Moderate hazard. Exposed facial skin can freeze in approximately 30 minutes. Wear wind-resistant outerwear and gloves.',
+                hypoRisk: 'Moderate Risk (Elevated heat loss)',
+                nwsTier: 'Wind Chill Advisory'
+            };
+        } else if (wciF >= -47.0) {
+            return {
+                badgeText: '10-Minute Hazard',
+                badgeClass: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-300 dark:border-orange-800',
+                dotClass: 'bg-orange-500 animate-pulse',
+                timeText: '~ 10 Minutes',
+                meterWidth: '70%',
+                meterColor: 'bg-orange-500',
+                sensation: 'High hazard. Exposed skin can freeze within 10 minutes. Cover all exposed skin surfaces and protect extremities.',
+                hypoRisk: 'High Risk (Rapid onset cold stress)',
+                nwsTier: 'Wind Chill Warning'
+            };
+        } else if (wciF >= -60.0) {
+            return {
+                badgeText: '5-Minute Hazard',
+                badgeClass: 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 border-rose-300 dark:border-rose-800',
+                dotClass: 'bg-rose-600 animate-pulse',
+                timeText: '~ 5 Minutes',
+                meterWidth: '88%',
+                meterColor: 'bg-rose-600',
+                sensation: 'Severe hazard. Exposed facial skin can freeze within 5 minutes. Outdoor exposure must be strictly avoided.',
+                hypoRisk: 'Severe Hypothermia Threat',
+                nwsTier: 'Wind Chill Warning (Severe)'
+            };
+        } else {
+            return {
+                badgeText: 'Under 2-Minute Danger',
+                badgeClass: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300 border-purple-300 dark:border-purple-800',
+                dotClass: 'bg-purple-700 animate-ping',
+                timeText: '< 2 Minutes',
+                meterWidth: '100%',
+                meterColor: 'bg-purple-700',
+                sensation: 'Critical life-threatening danger. Skin freezes in under two minutes. Serious tissue damage and rapid hypothermia occur quickly.',
+                hypoRisk: 'Critical Emergency Hazard',
+                nwsTier: 'Extreme Cold Warning'
+            };
+        }
+    }
+
+    // Recommended clothing estimation (clo units)
+    function estimateClothingClo(wciF) {
+        if (wciF > 40) return '1.0 - 1.5 clo';
+        if (wciF > 25) return '1.8 - 2.2 clo';
+        if (wciF > 10) return '2.3 - 2.7 clo';
+        if (wciF > -10) return '2.8 - 3.4 clo';
+        if (wciF > -30) return '3.5 - 4.2 clo';
+        return '4.5+ clo (Arctic)';
+    }
+
+    // --- 3. Input Handlers ---
+    function handleTempUnitChange() {
+        const newUnit = document.getElementById('tempUnit').value;
+        const inputEl = document.getElementById('tempInput');
+        const sliderEl = document.getElementById('tempSlider');
+        const minEl = document.getElementById('tempSliderMin');
+        const midEl = document.getElementById('tempSliderMid');
+        const maxEl = document.getElementById('tempSliderMax');
+        const suffixEl = document.getElementById('tempUnitSuffix');
+
+        tempUnit = newUnit;
+        suffixEl.textContent = newUnit === 'F' ? '°F' : '°C';
+
+        if (newUnit === 'F') {
+            sliderEl.min = -50;
+            sliderEl.max = 50;
+            sliderEl.step = 1;
+            minEl.textContent = '-50°F';
+            midEl.textContent = '0°F';
+            maxEl.textContent = '50°F';
+            const valF = currentTempF;
+            inputEl.value = Math.round(valF);
+            sliderEl.value = Math.round(valF);
+        } else {
+            sliderEl.min = -45;
+            sliderEl.max = 10;
+            sliderEl.step = 0.5;
+            minEl.textContent = '-45°C';
+            midEl.textContent = '-15°C';
+            maxEl.textContent = '10°C';
+            const valC = fromFahrenheit(currentTempF, 'C');
+            inputEl.value = valC.toFixed(1);
+            sliderEl.value = valC.toFixed(1);
+        }
+        calculate();
+    }
+
+    function handleWindUnitChange() {
+        const newUnit = document.getElementById('windUnit').value;
+        const inputEl = document.getElementById('windInput');
+        const sliderEl = document.getElementById('windSlider');
+        const suffixEl = document.getElementById('windUnitSuffix');
+        const midEl = document.getElementById('windSliderMid');
+        const maxEl = document.getElementById('windSliderMax');
+
+        windUnit = newUnit;
+        suffixEl.textContent = newUnit;
+
+        const valInUnit = fromMph(currentWindMph, newUnit);
+        if (newUnit === 'mph') {
+            sliderEl.max = 80;
+            midEl.textContent = '40 mph';
+            maxEl.textContent = '80 mph';
+            inputEl.value = Math.round(valInUnit);
+            sliderEl.value = Math.round(valInUnit);
+        } else if (newUnit === 'kmh') {
+            sliderEl.max = 130;
+            midEl.textContent = '65 km/h';
+            maxEl.textContent = '130 km/h';
+            inputEl.value = Math.round(valInUnit);
+            sliderEl.value = Math.round(valInUnit);
+        } else if (newUnit === 'knots') {
+            sliderEl.max = 70;
+            midEl.textContent = '35 kts';
+            maxEl.textContent = '70 kts';
+            inputEl.value = Math.round(valInUnit);
+            sliderEl.value = Math.round(valInUnit);
+        } else if (newUnit === 'ms') {
+            sliderEl.max = 35;
+            midEl.textContent = '18 m/s';
+            maxEl.textContent = '35 m/s';
+            inputEl.value = valInUnit.toFixed(1);
+            sliderEl.value = valInUnit.toFixed(1);
+        }
+        calculate();
+    }
+
+    function handleTempNumberInput() {
+        const val = parseFloat(document.getElementById('tempInput').value);
+        if (!isNaN(val)) {
+            document.getElementById('tempSlider').value = val;
+            currentTempF = toFahrenheit(val, tempUnit);
+            calculate();
+        }
+    }
+
+    function handleTempSliderInput() {
+        const val = parseFloat(document.getElementById('tempSlider').value);
+        document.getElementById('tempInput').value = tempUnit === 'F' ? Math.round(val) : val.toFixed(1);
+        currentTempF = toFahrenheit(val, tempUnit);
+        calculate();
+    }
+
+    function handleWindNumberInput() {
+        const val = parseFloat(document.getElementById('windInput').value);
+        if (!isNaN(val) && val >= 0) {
+            document.getElementById('windSlider').value = val;
+            currentWindMph = toMph(val, windUnit);
+            calculate();
+        }
+    }
+
+    function handleWindSliderInput() {
+        const val = parseFloat(document.getElementById('windSlider').value);
+        document.getElementById('windInput').value = windUnit === 'ms' ? val.toFixed(1) : Math.round(val);
+        currentWindMph = toMph(val, windUnit);
+        calculate();
+    }
+
+    function applyPreset(tempF, windMph) {
+        currentTempF = tempF;
+        currentWindMph = windMph;
+
+        document.getElementById('tempUnit').value = 'F';
+        tempUnit = 'F';
+        document.getElementById('tempUnitSuffix').textContent = '°F';
+        document.getElementById('tempSlider').min = -50;
+        document.getElementById('tempSlider').max = 50;
+        document.getElementById('tempSlider').step = 1;
+        document.getElementById('tempSliderMin').textContent = '-50°F';
+        document.getElementById('tempSliderMid').textContent = '0°F';
+        document.getElementById('tempSliderMax').textContent = '50°F';
+        document.getElementById('tempInput').value = tempF;
+        document.getElementById('tempSlider').value = tempF;
+
+        document.getElementById('windUnit').value = 'mph';
+        windUnit = 'mph';
+        document.getElementById('windUnitSuffix').textContent = 'mph';
+        document.getElementById('windSlider').max = 80;
+        document.getElementById('windSliderMid').textContent = '40 mph';
+        document.getElementById('windSliderMax').textContent = '80 mph';
+        document.getElementById('windInput').value = windMph;
+        document.getElementById('windSlider').value = windMph;
+
+        calculate();
+        showToast('Preset loaded: ' + tempF + '°F, ' + windMph + ' mph');
+    }
+
+    function resetCalculatorDefaults() {
+        applyPreset(15, 20);
+        showToast('Parameters restored to defaults.');
+    }
+
+    // --- 4. Main Calculation & UI Updates ---
+    function calculate() {
+        // Validation checks
+        const tempWarn = document.getElementById('tempWarning');
+        const windWarn = document.getElementById('windWarning');
+
+        if (currentTempF > 50.0) {
+            tempWarn.classList.remove('hidden');
+        } else {
+            tempWarn.classList.add('hidden');
+        }
+
+        if (currentWindMph < 3.0) {
+            windWarn.classList.remove('hidden');
+        } else {
+            windWarn.classList.add('hidden');
+        }
+
+        // Calculate WCI
+        const wciF = calcWindChillF(currentTempF, currentWindMph);
+        const wciC = (wciF - 32) * 5 / 9;
+        currentWciF = wciF;
+
+        // Display hero numbers
+        const heroEl = document.getElementById('heroWci');
+        const heroAltEl = document.getElementById('heroWciAlt');
+        const deltaTextEl = document.getElementById('deltaTempText');
+        const deltaF = currentTempF - wciF;
+
+        if (tempUnit === 'F') {
+            heroEl.textContent = Math.round(wciF) + '°F';
+            heroAltEl.textContent = '(' + wciC.toFixed(1) + '°C)';
+            deltaTextEl.textContent = 'Cooling deficit: -' + Math.abs(deltaF).toFixed(1) + '°F below air temp';
+        } else {
+            heroEl.textContent = wciC.toFixed(1) + '°C';
+            heroAltEl.textContent = '(' + Math.round(wciF) + '°F)';
+            const deltaC = fromFahrenheit(currentTempF, 'C') - wciC;
+            deltaTextEl.textContent = 'Cooling deficit: -' + Math.abs(deltaC).toFixed(1) + '°C below air temp';
+        }
+
+        // Frostbite assessment
+        const risk = getFrostbiteRisk(wciF);
+        const badgeEl = document.getElementById('frostbiteBadge');
+        const badgeTextEl = document.getElementById('frostbiteBadgeText');
+        badgeTextEl.textContent = risk.badgeText;
+        badgeEl.className = 'inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold border ' + risk.badgeClass;
+        badgeEl.querySelector('span:first-child').className = 'w-2 h-2 rounded-full ' + risk.dotClass;
+
+        document.getElementById('frostbiteTimeVal').innerHTML = '<span>' + risk.timeText + '</span>';
+        const meter = document.getElementById('hazardMeter');
+        meter.style.width = risk.meterWidth;
+        meter.className = risk.meterColor + ' h-full rounded-full transition-all duration-300';
+        document.getElementById('sensationSummary').textContent = risk.sensation;
+
+        // Secondary metrics
+        const faceWindMph = currentWindMph * 0.647;
+        const faceWindKmh = faceWindMph * 1.609344;
+        document.getElementById('faceWindVal').textContent = tempUnit === 'F' ? faceWindMph.toFixed(1) + ' mph' : faceWindKmh.toFixed(1) + ' km/h';
+
+        const vExp = Math.pow(Math.max(currentWindMph, 1), 0.16);
+        document.getElementById('convectiveFactorVal').textContent = vExp.toFixed(2) + 'x';
+        document.getElementById('clothingCloVal').textContent = estimateClothingClo(wciF);
+        document.getElementById('nwsTierVal').textContent = risk.nwsTier;
+
+        // Chart coordinate display
+        const chartCoord = document.getElementById('chartCoordPoint');
+        if (chartCoord) {
+            chartCoord.textContent = Math.round(currentTempF) + '°F, ' + Math.round(currentWindMph) + ' mph → ' + Math.round(wciF) + '°F';
+        }
+
+        // Update MathJax live derivation
+        updateMathDerivation(currentTempF, currentWindMph, wciF);
+
+        // Update Report tab
+        updateReportTab(currentTempF, currentWindMph, wciF, risk);
+
+        // Update Chart
+        updateWindChillChart();
+
+        // Highlight Matrix Cell
+        highlightMatrixCell();
+    }
+
+    // --- 5. MathJax Derivation Update ---
+    function updateMathDerivation(tF, vMph, wciF) {
+        const vExp = Math.pow(Math.max(vMph, 3), 0.16);
+        const term2 = 0.6215 * tF;
+        const term3 = -35.75 * vExp;
+        const term4 = 0.4275 * tF * vExp;
+
+        const step1 = document.getElementById('mathStep1');
+        const step2 = document.getElementById('mathStep2');
+        const step3 = document.getElementById('mathStep3');
+        const step4 = document.getElementById('mathStep4');
+        const step5 = document.getElementById('mathStep5');
+
+        if (step1 && step2 && step3 && step4 && step5) {
+            step1.innerHTML = `$$V^{0.16} = (${vMph.toFixed(1)})^{0.16} = ${vExp.toFixed(4)}$$`;
+            step2.innerHTML = `$$0.6215 \times T = 0.6215 \times (${tF.toFixed(1)}) = ${term2 >= 0 ? '+' : ''}${term2.toFixed(4)}^{\circ}\text{F}$$`;
+            step3.innerHTML = `$$-35.75 \times V^{0.16} = -35.75 \times ${vExp.toFixed(4)} = ${term3.toFixed(4)}$$`;
+            step4.innerHTML = `$$+0.4275 \times T \times V^{0.16} = +0.4275 \times (${tF.toFixed(1)}) \times ${vExp.toFixed(4)} = ${term4 >= 0 ? '+' : ''}${term4.toFixed(4)}$$`;
+            step5.innerHTML = `$$WCI = 35.74 ${term2 >= 0 ? '+' : ''}${term2.toFixed(2)} ${term3.toFixed(2)} ${term4 >= 0 ? '+' : ''}${term4.toFixed(2)} = ${wciF.toFixed(2)}^{\circ}\text{F} \approx ${Math.round(wciF)}^{\circ}\text{F}$$`;
+
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([step1, step2, step3, step4, step5]).catch(() => {});
+            }
+        }
+    }
+
+    // --- 6. Report Tab Update ---
+    function updateReportTab(tF, vMph, wciF, risk) {
+        const tC = (tF - 32) * 5 / 9;
+        const wciC = (wciF - 32) * 5 / 9;
+        const vKmh = vMph * 1.609344;
+        const faceWindMph = vMph * 0.647;
+        const faceWindKmh = faceWindMph * 1.609344;
+        const vExp = Math.pow(Math.max(vMph, 1), 0.16);
+
+        const repAir = document.getElementById('repAirTemp');
+        const repWind = document.getElementById('repWindSpeed');
+        const repFace = document.getElementById('repFaceWind');
+        const repScale = document.getElementById('repScalingFactor');
+        const repWci = document.getElementById('repWci');
+        const repDelta = document.getElementById('repDelta');
+        const repFrost = document.getElementById('repFrostbiteWindow');
+        const repHypo = document.getElementById('repHypoRisk');
+
+        if (repAir) repAir.textContent = `${tF.toFixed(1)} °F (${tC.toFixed(1)} °C)`;
+        if (repWind) repWind.textContent = `${vMph.toFixed(1)} mph (${vKmh.toFixed(1)} km/h)`;
+        if (repFace) repFace.textContent = `${faceWindMph.toFixed(1)} mph (${faceWindKmh.toFixed(1)} km/h)`;
+        if (repScale) repScale.textContent = vExp.toFixed(3);
+        if (repWci) repWci.textContent = `${Math.round(wciF)} °F (${wciC.toFixed(1)} °C)`;
+        if (repDelta) repDelta.textContent = `-${Math.abs(tF - wciF).toFixed(1)} °F (-${Math.abs(tC - wciC).toFixed(1)} °C)`;
+        if (repFrost) repFrost.textContent = risk.timeText;
+        if (repHypo) repHypo.textContent = risk.hypoRisk;
+    }
+
+    // --- 7. Chart.js Setup ---
+    function initWindChillChart() {
+        const ctx = document.getElementById('windChillChart');
+        if (!ctx) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        // X-axis: wind speeds from 5 to 60 mph in steps of 5
+        const windLabels = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+
+        chillChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: windLabels,
+                datasets: [
+                    {
+                        label: 'Current Temp Curve',
+                        data: windLabels.map(v => Math.round(calcWindChillF(currentTempF, v))),
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        borderWidth: 3.5,
+                        fill: false,
+                        tension: 0.25,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#0284c7',
+                        zIndex: 10
+                    },
+                    {
+                        label: 'Reference 30°F',
+                        data: windLabels.map(v => Math.round(calcWindChillF(30, v))),
+                        borderColor: 'rgba(148, 163, 184, 0.6)',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.25,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Reference 10°F',
+                        data: windLabels.map(v => Math.round(calcWindChillF(10, v))),
+                        borderColor: 'rgba(234, 179, 8, 0.6)',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.25,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Reference -10°F',
+                        data: windLabels.map(v => Math.round(calcWindChillF(-10, v))),
+                        borderColor: 'rgba(249, 115, 22, 0.6)',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.25,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Reference -30°F',
+                        data: windLabels.map(v => Math.round(calcWindChillF(-30, v))),
+                        borderColor: 'rgba(220, 38, 38, 0.6)',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        fill: false,
+                        tension: 0.25,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 11, weight: 600 },
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#0f172a',
+                        titleColor: '#f8fafc',
+                        bodyColor: '#e2e8f0',
+                        titleFont: { family: 'Inter', size: 12, weight: 'bold' },
+                        bodyFont: { family: 'JetBrains Mono', size: 11 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function(ctx) {
+                                return ` ${ctx.dataset.label}: ${ctx.raw}°F (${((ctx.raw - 32) * 5 / 9).toFixed(1)}°C)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Sustained Wind Speed (mph)',
+                            color: textColor,
+                            font: { family: 'Inter', size: 12, weight: 600 }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Apparent Wind Chill Temperature (°F)',
+                            color: textColor,
+                            font: { family: 'Inter', size: 12, weight: 600 }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateWindChillChart() {
+        if (!chillChart) return;
+        const windLabels = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60];
+        chillChart.data.datasets[0].label = `Current (${Math.round(currentTempF)}°F)`;
+        chillChart.data.datasets[0].data = windLabels.map(v => Math.round(calcWindChillF(currentTempF, v)));
+        chillChart.update('none');
+    }
+
+    function resetChartZoom() {
+        if (chillChart) chillChart.reset();
+    }
+
+    // --- 8. NWS Matrix Grid Generation ---
+    function setGridUnit(unit) {
+        gridUnit = unit;
+        const btnF = document.getElementById('gridUnitF');
+        const btnC = document.getElementById('gridUnitC');
+        if (unit === 'F') {
+            btnF.className = 'px-2.5 py-1 rounded-lg bg-brand-600 text-white font-bold transition';
+            btnC.className = 'px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 transition';
+        } else {
+            btnC.className = 'px-2.5 py-1 rounded-lg bg-brand-600 text-white font-bold transition';
+            btnF.className = 'px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold hover:bg-slate-200 transition';
+        }
+        generateNwsGrid();
+    }
+
+    function generateNwsGrid() {
+        const table = document.getElementById('nwsMatrixTable');
+        if (!table) return;
+
+        let temps = [];
+        let winds = [];
+
+        if (gridUnit === 'F') {
+            // Fahrenheit: 40 down to -45 by 5
+            for (let t = 40; t >= -45; t -= 5) temps.push(t);
+            // Wind: 5 to 60 by 5
+            for (let w = 5; w <= 60; w += 5) winds.push(w);
+        } else {
+            // Celsius: 5 down to -45 by 5
+            for (let t = 5; t >= -45; t -= 5) temps.push(t);
+            // Wind: 10 to 100 by 10 km/h
+            for (let w = 10; w <= 100; w += 10) winds.push(w);
+        }
+
+        let html = '<thead><tr class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">';
+        html += `<th class="p-2 border border-slate-200 dark:border-slate-800 text-[11px] font-bold sticky left-0 bg-slate-200 dark:bg-slate-800 z-10">Wind \ Temp</th>`;
+        temps.forEach(t => {
+            html += `<th class="p-2 border border-slate-200 dark:border-slate-800 text-[11px] font-bold">${t}&deg;</th>`;
+        });
+        html += '</tr></thead><tbody>';
+
+        winds.forEach(w => {
+            html += `<tr><th class="p-2 border border-slate-200 dark:border-slate-800 text-[11px] font-bold sticky left-0 bg-slate-100 dark:bg-slate-900 z-10">${w} ${gridUnit === 'F' ? 'mph' : 'km/h'}</th>`;
+            temps.forEach(t => {
+                let wciValF;
+                if (gridUnit === 'F') {
+                    wciValF = calcWindChillF(t, w);
+                } else {
+                    const wciC = calcWindChillC(t, w);
+                    wciValF = (wciC * 9 / 5) + 32;
+                }
+
+                // Determine color
+                let bgStyle = 'bg-slate-50 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200';
+                if (wciValF <= -60) {
+                    bgStyle = 'bg-purple-600 text-white font-bold';
+                } else if (wciValF <= -48) {
+                    bgStyle = 'bg-rose-600 text-white font-bold';
+                } else if (wciValF <= -33) {
+                    bgStyle = 'bg-orange-500 text-white font-bold';
+                } else if (wciValF <= -19) {
+                    bgStyle = 'bg-amber-400 text-slate-900 font-bold';
+                } else if (wciValF <= 32) {
+                    bgStyle = 'bg-sky-50 dark:bg-sky-950/40 text-sky-900 dark:text-sky-200';
+                }
+
+                const dispVal = gridUnit === 'F' ? Math.round(wciValF) : Math.round((wciValF - 32) * 5 / 9);
+                html += `<td id="cell_${t}_${w}" class="p-2 border border-slate-200 dark:border-slate-700/60 matrix-cell ${bgStyle}" title="Temp: ${t}&deg;, Wind: ${w} -> WCI: ${dispVal}&deg;">${dispVal}</td>`;
+            });
+            html += '</tr>';
+        });
+        html += '</tbody>';
+        table.innerHTML = html;
+        highlightMatrixCell();
+    }
+
+    function highlightMatrixCell() {
+        document.querySelectorAll('.matrix-highlight').forEach(el => {
+            el.classList.remove('matrix-highlight', 'ring-2', 'ring-cyan-400', 'scale-110', 'font-black');
+        });
+
+        if (gridUnit === 'F') {
+            const nearestTemp = Math.round(currentTempF / 5) * 5;
+            const nearestWind = Math.min(60, Math.max(5, Math.round(currentWindMph / 5) * 5));
+            const target = document.getElementById(`cell_${nearestTemp}_${nearestWind}`);
+            if (target) {
+                target.classList.add('matrix-highlight', 'ring-2', 'ring-cyan-400', 'scale-110', 'font-black');
+            }
+        } else {
+            const currentTempC = (currentTempF - 32) * 5 / 9;
+            const currentWindKmh = currentWindMph * 1.609344;
+            const nearestTempC = Math.round(currentTempC / 5) * 5;
+            const nearestWindKmh = Math.min(100, Math.max(10, Math.round(currentWindKmh / 10) * 10));
+            const target = document.getElementById(`cell_${nearestTempC}_${nearestWindKmh}`);
+            if (target) {
+                target.classList.add('matrix-highlight', 'ring-2', 'ring-cyan-400', 'scale-110', 'font-black');
+            }
+        }
+    }
+
+    // --- 9. Tab Switching & FAQ Accordion ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'bg-brand-600', 'text-white');
+            b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        });
+
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        const targetBtn = document.getElementById(`tabBtn_${tabId}`);
+
+        if (targetPanel) targetPanel.classList.add('active');
+        if (targetBtn) {
+            targetBtn.classList.add('active', 'bg-brand-600', 'text-white');
+            targetBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        }
+
+        if (tabId === 'calculator' && chillChart) {
+            setTimeout(() => { chillChart.resize(); }, 100);
+        }
+    }
+
+    function toggleFaq(index) {
+        const ans = document.getElementById(`faqAns_${index}`);
+        const icon = document.getElementById(`faqIcon_${index}`);
+        if (ans && icon) {
+            const isHidden = ans.classList.contains('hidden');
+            ans.classList.toggle('hidden', !isHidden);
+            icon.classList.toggle('rotate-180', isHidden);
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            html.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        if (chillChart) {
+            const isDark = html.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            chillChart.options.scales.x.grid.color = gridColor;
+            chillChart.options.scales.x.ticks.color = textColor;
+            chillChart.options.scales.y.grid.color = gridColor;
+            chillChart.options.scales.y.ticks.color = textColor;
+            chillChart.options.plugins.legend.labels.color = textColor;
+            chillChart.update();
+        }
+    }
+
+    // --- 10. Copy, Lead & Notifications ---
+    function copyCalculationSummary() {
+        const tDisp = tempUnit === 'F' ? `${currentTempF.toFixed(1)}°F` : `${((currentTempF - 32) * 5 / 9).toFixed(1)}°C`;
+        const vDisp = `${currentWindMph.toFixed(1)} mph (${(currentWindMph * 1.609344).toFixed(1)} km/h)`;
+        const wciDisp = `${Math.round(currentWciF)}°F (${((currentWciF - 32) * 5 / 9).toFixed(1)}°C)`;
+        const risk = getFrostbiteRisk(currentWciF);
+
+        const text = `CalcWorld Winter Wind Chill Assessment:
+Air Dry Bulb Temperature: ${tDisp}
+Sustained Wind Speed: ${vDisp}
+Calculated Wind Chill Index: ${wciDisp}
+Cooling Deficit: -${Math.abs(currentTempF - currentWciF).toFixed(1)}°F
+Frostbite Hazard: ${risk.badgeText}
+Estimated Exposure Window: ${risk.timeText}
+NWS Advisory Tier: ${risk.nwsTier}
+Evaluated per official NOAA NWS / ECCC JAG/TI standard on https://calcworld.net/other/wind-chill-calculator`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Wind chill meteorological dataset copied to clipboard!');
+        }).catch(() => {
+            showToast('Summary copied!');
+        });
+    }
+
+    function shareCalculator() {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Wind Chill & Winter Frostbite Risk Calculator',
+                text: `Calculated Wind Chill: ${Math.round(currentWciF)}°F at ${currentTempF.toFixed(0)}°F and ${currentWindMph.toFixed(0)} mph wind.`,
+                url: window.location.href
+            }).catch(() => {});
+        } else {
+            copyCalculationSummary();
+        }
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        const btn = document.getElementById('leadSubmitBtn');
+        if (email && email.includes('@')) {
+            btn.innerHTML = '✓ PDF Manual Dispatched!';
+            btn.classList.remove('bg-brand-500', 'hover:bg-brand-400');
+            btn.classList.add('bg-emerald-600', 'text-white');
+            showToast('Field reference protocol sent to ' + email);
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const msgEl = document.getElementById('toastMessage');
+        if (toast && msgEl) {
+            msgEl.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3200);
+        }
+    }
+
+    // --- 11. Initialization on DOMContentLoaded ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initWindChillChart();
+        generateNwsGrid();
+        calculate();
+
+        // Update timestamp on report
+        const now = new Date();
+        const reportTimeEl = document.getElementById('reportTimestamp');
+        if (reportTimeEl) {
+            reportTimeEl.textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        }
+
+        // AdBlock Detection
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Calculator | Plan Your Financial Future</title>
+    <meta name="description" content="A comprehensive retirement calculator considering accumulation, decumulation, inflation, and the 4% rule. Plan your savings strategy today.">
+    
+    <!-- FOUC Prevention & Theme Init -->
+    <script>
+        try {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (_) {}
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe', 300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a', 950: '#172554',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Retirement Calculator",
+          "url": "https://calcworld.net/retirement-calculator",
+          "description": "Calculate your retirement savings, target nest egg, and future income potential.",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "All"
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://calcworld.net/" },
+            { "@type": "ListItem", "position": 2, "name": "Financial Calculators", "item": "https://calcworld.net/calculators/" },
+            { "@type": "ListItem", "position": 3, "name": "Retirement", "item": "https://calcworld.net/calculators/retirement/" },
+            { "@type": "ListItem", "position": 4, "name": "Retirement Calculator", "item": "https://calcworld.net/calculators/retirement-calculator" }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the 4% rule in retirement?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The 4% rule is a rule of thumb used to determine how much a retiree should withdraw from a retirement account each year. It seeks to provide a steady income stream while maintaining an adequate account balance that keeps income flowing through retirement."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg);
+        }
+        .is-calculating .shimmer::after {
+            animation: shimmer-anim 1s infinite;
+        }
+        @keyframes shimmer-anim {
+            100% { left: 200%; }
+        }
+
+        .dark .is-calculating .shimmer::after {
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent);
+        }
+
+        .tab-content { display: none; opacity: 0; transition: opacity 0.3s ease; }
+        .tab-content.active { display: block; opacity: 1; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark ::-webkit-scrollbar-thumb { background: #475569; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+        
+        .ad-placeholder { min-height: 90px; background: repeating-linear-gradient(45deg, #f1f5f9, #f1f5f9 10px, #e2e8f0 10px, #e2e8f0 20px); display: flex; align-items: center; justify-content: center; color: #64748b; border: 1px dashed #cbd5e1; }
+        .dark .ad-placeholder { background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px); color: #94a3b8; border-color: #334155; }
+        
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+            opacity: 0; transition: all 0.3s ease; z-index: 1000;
+        }
+        #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        .accordion-content { transition: max-height 0.3s ease-out, padding 0.3s ease; max-height: 0; overflow: hidden; padding-top: 0; padding-bottom: 0; }
+        .accordion-item.active .accordion-content { max-height: 500px; padding-top: 1rem; padding-bottom: 1rem; }
+        .accordion-item.active .accordion-icon { transform: rotate(180deg); }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (RESULTS CARD REPORT) - CALCWORLD
+           Strictly prints ONLY the official calculation results summary.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Force the Calculation Results Container to be the ONLY visible document */
+            #resultsSection, #resultsArea, #resultsContainer, #resultsWrapper, #resultsCard,
+            #results-section, #results-container, #results-card, #output-container, #summaryTab,
+            #pane-summary, #tab-summary, #tabSummary, .results-card, .output-card,
+            .lg\:col-span-7, .lg\:col-span-8, .w-full.lg\:w-2\/3 {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 6. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+    <link rel="canonical" href="https://calcworld.net/calculators/retirement-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Retirement Calculator | Plan Your Financial Future">
+    <meta property="og:description" content="A comprehensive retirement calculator considering accumulation, decumulation, inflation, and the 4% rule. Plan your savings strategy today.">
+    <meta property="og:url" content="https://calcworld.net/calculators/retirement-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Retirement Calculator | Plan Your Financial Future">
+    <meta name="twitter:description" content="A comprehensive retirement calculator considering accumulation, decumulation, inflation, and the 4% rule. Plan your savings strategy today.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- AdSense 1 (Top Banner) -->
+    <div class="w-full max-w-7xl mx-auto px-4 mt-20 mb-6">
+        <div class="ad-placeholder rounded-lg w-full h-[90px] text-sm">AdSense Slot 1 (Header Banner)</div>
+    </div>
+
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full pb-12">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Retirement Planner Calculator</h1>
+            <p class="text-lg text-gray-600 dark:text-gray-400 max-w-3xl mx-auto">Model your financial future, factor in inflation, and determine your accumulation and decumulation strategy based on expected returns and expenses.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- LEFT COLUMN: INPUTS -->
+            <div class="lg:col-span-4 space-y-6">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 md:p-6 transition-colors duration-200">
+                    
+                    <div class="flex justify-between items-center mb-5">
+                        <h2 class="text-xl font-bold flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                            Parameters
+                        </h2>
+                        <!-- Presets -->
+                        <div class="relative">
+                            <select id="presets" class="text-sm bg-gray-100 dark:bg-gray-700 border-none rounded-md py-1.5 pl-3 pr-8 focus:ring-2 focus:ring-primary-500 text-gray-700 dark:text-gray-300 font-medium cursor-pointer">
+                                <option value="">Custom...</option>
+                                <option value="fire">FIRE (Age 45)</option>
+                                <option value="standard">Standard (Age 65)</option>
+                                <option value="late">Late Bloomer (Age 70)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <form id="calc-form" class="space-y-4">
+                        
+                        <!-- Core Info -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="currentAge">Current Age</label>
+                                <input type="number" id="currentAge" name="currentAge" min="18" max="99" value="30" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 sm:text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="targetAge">Target Ret. Age</label>
+                                <input type="number" id="targetAge" name="targetAge" min="30" max="100" value="65" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block p-2.5 sm:text-sm">
+                            </div>
+                        </div>
+
+                        <!-- Savings -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="currentSavings">Current Savings</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 currency-sym">$</div>
+                                <input type="number" id="currentSavings" name="currentSavings" min="0" value="50000" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pl-8 p-2.5 sm:text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="monthlyContrib">Monthly Contribution</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 currency-sym">$</div>
+                                <input type="number" id="monthlyContrib" name="monthlyContrib" min="0" value="500" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pl-8 p-2.5 sm:text-sm">
+                            </div>
+                        </div>
+
+                        <hr class="border-gray-200 dark:border-gray-700 my-4">
+
+                        <!-- Returns & Economy -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="preRetReturn" title="Expected Annual Return before retirement">Pre-Ret. Return</label>
+                                <div class="relative">
+                                    <input type="number" id="preRetReturn" name="preRetReturn" min="0" max="20" step="0.1" value="7.0" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pr-8 p-2.5 sm:text-sm text-right">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">%</div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="postRetReturn" title="Expected Annual Return during retirement">Post-Ret. Return</label>
+                                <div class="relative">
+                                    <input type="number" id="postRetReturn" name="postRetReturn" min="0" max="20" step="0.1" value="4.0" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pr-8 p-2.5 sm:text-sm text-right">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">%</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="inflationRate">Expected Inflation Rate</label>
+                            <div class="relative">
+                                <input type="number" id="inflationRate" name="inflationRate" min="0" max="15" step="0.1" value="2.5" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pr-8 p-2.5 sm:text-sm text-right">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-500">%</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1" for="postRetExpenses">Post-Retirement Annual Expenses</label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mb-2">In today's dollars.</p>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-500 currency-sym">$</div>
+                                <input type="number" id="postRetExpenses" name="postRetExpenses" min="0" value="60000" class="w-full bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white rounded-lg focus:ring-primary-500 focus:border-primary-500 block pl-8 p-2.5 sm:text-sm">
+                            </div>
+                        </div>
+
+                    </form>
+                </div>
+                
+                <!-- AdSense 2 (Sidebar) -->
+                <div class="hidden lg:block ad-placeholder rounded-lg w-full h-[250px] text-sm">AdSense Slot 2 (Sidebar Rect)</div>
+            </div>
+
+            <!-- RIGHT COLUMN: OUTPUTS & TABS -->
+            <div class="lg:col-span-8 flex flex-col space-y-6">
+                
+                <!-- Key Metrics Cards -->
+                <div id="results-shimmer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 shimmer is-calculating relative">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Target Nest Egg</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white truncate" id="out-target-egg">--</p>
+                        <p class="text-xs text-gray-500 mt-1">Adjusted for inflation</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 shimmer is-calculating relative">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Projected Savings</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white truncate" id="out-proj-savings">--</p>
+                        <p class="text-xs text-gray-500 mt-1">At retirement age</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 shimmer is-calculating relative" id="status-card">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Shortfall / Surplus</p>
+                        <p class="text-2xl font-bold truncate" id="out-diff">--</p>
+                        <p class="text-xs mt-1 font-medium" id="out-diff-label">--</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700 shimmer is-calculating relative">
+                        <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Monthly Income</p>
+                        <p class="text-2xl font-bold text-gray-900 dark:text-white truncate" id="out-monthly-inc">--</p>
+                        <p class="text-xs text-gray-500 mt-1">In retirement (4% rule)</p>
+                    </div>
+                </div>
+
+                <!-- Tabs Area -->
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 flex-grow flex flex-col overflow-hidden">
+                    
+                    <div class="border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex justify-between items-center px-2">
+                        <ul class="flex overflow-x-auto text-sm font-medium text-center text-gray-500 dark:text-gray-400 no-scrollbar">
+                            <li class="mr-1">
+                                <button class="tab-btn inline-block p-4 text-primary-600 border-b-2 border-primary-600 rounded-t-lg active dark:text-primary-500 dark:border-primary-500" data-target="tab-chart">Visual Chart</button>
+                            </li>
+                            <li class="mr-1">
+                                <button class="tab-btn inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" data-target="tab-schedule">Year-by-Year Schedule</button>
+                            </li>
+                            <li class="mr-1">
+                                <button class="tab-btn inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300" data-target="tab-summary">Summary</button>
+                            </li>
+                        </ul>
+                        <button id="btn-copy" class="text-xs px-3 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-md font-medium transition-colors hidden sm:flex items-center">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            Copy Results
+                        </button>
+                    </div>
+
+                    <div class="p-4 sm:p-6 flex-grow">
+                        
+                        <!-- TAB: Chart -->
+                        <div id="tab-chart" class="tab-content active w-full h-full min-h-[350px] relative">
+                            <canvas id="retirementChart"></canvas>
+                        </div>
+
+                        <!-- TAB: Schedule -->
+                        <div id="tab-schedule" class="tab-content h-[400px] overflow-y-auto">
+                            <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                                    <tr>
+                                        <th scope="col" class="px-4 py-3">Age</th>
+                                        <th scope="col" class="px-4 py-3 text-right">Contributions</th>
+                                        <th scope="col" class="px-4 py-3 text-right">Returns</th>
+                                        <th scope="col" class="px-4 py-3 text-right">Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- TAB: Summary -->
+                        <div id="tab-summary" class="tab-content prose dark:prose-invert max-w-none">
+                            <h3 class="text-lg font-bold mb-4">Your Retirement Outlook</h3>
+                            <div id="summary-text" class="text-gray-700 dark:text-gray-300 space-y-3">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- AdSense 3 (In-content) -->
+                <div class="ad-placeholder rounded-lg w-full h-[90px] text-sm">AdSense Slot 3 (In-Feed)</div>
+
+            </div>
+        </div>
+
+        <!-- SEO GUIDE & EDUCATIONAL CONTENT -->
+        <article class="mt-12 prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300">
+    <h2 class="text-3xl font-bold border-b pb-2 mb-6 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">Retirement Planning Science: Safe Withdrawal Rates, Nest Egg Sizing, and Longevity Modeling</h2>
+    <p class="text-lg leading-relaxed mb-6">
+        Achieving sustainable retirement independence requires balancing accumulation growth against decumulation longevity. The primary objective is establishing an investment portfolio large enough to generate required annual living expenses throughout a 30 to 40 year retirement window without risking capital depletion during sharp market downturns. Financial planners evaluate retirement preparedness by modeling expected lifespan, real post-inflation investment returns, social insurance benefits, and healthcare contingencies.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">The 4% Rule and Trinity Study Origins</h3>
+    <p class="mb-4">
+        Originating from financial planner William Bengen's 1994 paper and affirmed by the Trinity University Study (Cooley, Hubbard, and Walz, 1998), the 4% Safe Withdrawal Rate (SWR) framework provides a historical baseline for portfolio longevity. Under this rule:
+    </p>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li><strong>Initial Year Withdrawal:</strong> In year one of retirement, you withdraw exactly 4.0% of your total liquid portfolio balance.</li>
+        <li><strong>Subsequent Inflation Adjustments:</strong> In all following years, you adjust that dollar amount upward by the annual Consumer Price Index (CPI) inflation rate, regardless of whether equity markets boom or drop.</li>
+        <li><strong>Historical Longevity Backtesting:</strong> Across historical 30-year rolling windows in the United States back to 1926, a diversified portfolio of 50% equities (S&amp;P 500) and 50% intermediate government bonds had a 95% survival rate without exhausting capital.</li>
+    </ul>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">The 25x Spending Rule and Target Nest Egg Sizing</h3>
+    <p class="mb-4">
+        To determine how much liquid capital you need to retire comfortably, apply the 25x Annual Spending Rule derived from the inverse of the 4% withdrawal rate (1 / 0.04 = 25):
+    </p>
+    <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 font-mono text-center text-lg overflow-x-auto">
+        Target Nest Egg = (Annual Living Budget - Guaranteed Social Security &amp; Pensions) &times; 25
+    </div>
+    <p class="mb-4">
+        If you plan an early retirement under the FIRE (Financial Independence, Retire Early) movement spanning 40 to 50 years, academic researchers such as Dr. Wade Pfau recommend a more conservative withdrawal rate of 3.25% to 3.5%, requiring a 28x to 31x multiplier of annual living expenses.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Step-by-Step Worked Numerical Example: Dual-Career Household Plan</h3>
+    <p class="mb-4">
+        Consider a 35-year-old married couple planning to retire at age 65 (30 years of accumulation) with target retirement spending of $84,000 annually in present-day purchasing power.
+    </p>
+    <div class="space-y-4 mb-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p><strong>Step 1: Deduct Guaranteed Pension and Social Security Income</strong><br>
+        Combined estimated Social Security benefits at Full Retirement Age (67) = $34,000/year.<br>
+        Net annual income needed from personal investments = $84,000 - $34,000 = <strong>$50,000/year</strong>.</p>
+        <p><strong>Step 2: Calculate Required Capital at Retirement (Present-Day Purchasing Power)</strong><br>
+        Target Nest Egg = $50,000 &times; 25 = <strong>$1,250,000.00</strong> (in today's dollars).</p>
+        <p><strong>Step 3: Adjust for Expected 2.5% Long-Term Annual Inflation Over 30 Years</strong><br>
+        Future Nominal Dollar Requirement = $1,250,000 &times; (1 + 0.025)^{30} = $1,250,000 &times; 2.097568 = <strong>$2,621,960.00</strong> nominal dollars.</p>
+        <p><strong>Step 4: Compute Monthly Savings Requirement</strong><br>
+        Assume starting retirement savings of $100,000 and an average nominal investment return of 7.5% annually (compounded monthly at 0.625% per month across 360 months):<br>
+        - Growth of initial $100,000 balance: $100,000 &times; (1.00625)^{360} = $100,000 &times; 9.42425 = $942,425.00.<br>
+        - Deficit to fund via new monthly contributions: $2,621,960 - $942,425 = $1,679,535.00.<br>
+        - Monthly contribution PMT needed: $1,679,535 / 1,347.88 = <strong>$1,246.06 per month</strong>.</p>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Sequence of Returns Risk: Why Early Retirement Years Dictate Survival</h3>
+    <p class="mb-4">
+        During accumulation, the order in which investment returns occur does not alter your ending portfolio value—only the compound average annual growth rate matters. However, during decumulation (retirement), experiencing severe market drawdowns in the first 5 to 7 years can permanently impair portfolio longevity, even if strong bull markets follow later.
+    </p>
+    <div class="overflow-x-auto my-6">
+        <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 text-sm">
+            <thead class="bg-slate-100 dark:bg-slate-800/80">
+                <tr>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Decumulation Strategy</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Initial Withdrawal Rate</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Adjustment Rules</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Longevity Risk Profile</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">Constant Dollar (Bengen 4%)</td>
+                    <td class="p-3">4.0% of Day 1 balance</td>
+                    <td class="p-3">Adjusted solely for CPI inflation each year</td>
+                    <td class="p-3">Vulnerable if retirement starts in severe bear market</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">Variable Percentage (VPW)</td>
+                    <td class="p-3">3.5% to 5.0% floating</td>
+                    <td class="p-3">Recalculates annually based on remaining balance and age</td>
+                    <td class="p-3">Zero risk of premature exhaustion; spending fluctuates</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">Guyton-Klinger Guardrails</td>
+                    <td class="p-3">4.5% to 5.2% target</td>
+                    <td class="p-3">Cuts spending 10% if withdrawal rate exceeds 6%; boosts if below 3.5%</td>
+                    <td class="p-3">Maximizes early retirement spending while preventing depletion</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Tax Optimization and Withdrawal Hierarchies</h3>
+    <p class="mb-4">
+        Retirees with diversified accounts must manage withdrawal sequencing across three tax buckets to minimize lifetime tax liabilities:
+    </p>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li><strong>Taxable Brokerage Accounts:</strong> Offer low long-term capital gains tax rates (0%, 15%, 20%) and stepped-up basis upon inheritance. Withdrawing here first allows tax-deferred accounts to continue compounding.</li>
+        <li><strong>Tax-Deferred Accounts (Traditional 401k, Traditional IRA):</strong> Subject to ordinary income tax on every dollar withdrawn. At age 73 (rising to 75 under SECURE 2.0 Act), Required Minimum Distributions (RMDs) force mandatory withdrawals regardless of whether you need the income.</li>
+        <li><strong>Tax-Exempt Accounts (Roth IRA, Roth 401k, HSA):</strong> Completely tax-free withdrawals on both principal and investment growth. Roth accounts carry no lifetime RMDs, making them prime vehicles for late-stage retirement spending and wealth transfer.</li>
+    </ul>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Frequently Asked Questions</h3>
+    <div class="space-y-4 my-6">
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What is a 'Bond Tent' and how does it prevent retirement failure?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">A bond tent is an asset allocation strategy where you gradually increase your bond/cash allocation from 20% to 40%-50% in the 5 years leading up to your retirement date, and then slowly spend down those fixed-income assets over the first 5-10 years of retirement. This insulates you from selling equities during an early bear market crash.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">How much will healthcare and Medicare cost during retirement?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">According to the Fidelity Retiree Health Care Cost Estimate, an average 65-year-old retired couple will need approximately $315,000 in saved capital to cover medical expenses (Medicare Part B/D premiums, out-of-pocket deductibles, co-pays, and prescriptions), excluding long-term nursing home care.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">Is delaying Social Security until age 70 always the best choice?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Delaying Social Security from age 62 to age 70 increases your permanent monthly payout by up to 77% (an 8% simple annual bump per year delayed past full retirement age). For individuals in good health with a family history of longevity, delaying provides an unmatched inflation-indexed government annuity.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What happens if inflation runs high early in retirement?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">High early inflation permanently raises your baseline dollar withdrawals under the constant-dollar rule. To counteract this risk, financial planners recommend maintaining 2 to 3 years of cash equivalents and allocating a portion of your fixed-income portfolio to Treasury Inflation-Protected Securities (TIPS) and Series I Savings Bonds.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">What is the difference between FIRE, LeanFIRE, and FatFIRE?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">LeanFIRE refers to retiring early on a minimalist budget (under $40,000/year spending). Standard FIRE targets a normal household lifestyle ($40,000 to $100,000/year). FatFIRE involves achieving financial independence with a luxurious lifestyle ($100,000 to $250,000+/year spending), requiring nest eggs of $3,000,000 to $7,000,000+.</p>
+        </div>
+    </div>
+</article>
+
+        <!-- Lead Box (PDF Guide) -->
+        <div class="mt-12 bg-gradient-to-br from-primary-600 to-blue-800 rounded-2xl shadow-lg p-8 sm:p-12 text-center text-white relative overflow-hidden">
+            <div class="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
+            <div class="relative z-10 max-w-2xl mx-auto">
+                <h3 class="text-2xl sm:text-3xl font-bold mb-3">Get the Ultimate Retirement Checklist</h3>
+                <p class="mb-6 text-primary-100">Download our free 15-page PDF guide covering advanced withdrawal strategies, healthcare costs, and estate planning basics.</p>
+                <form class="flex flex-col sm:flex-row gap-3 justify-center" onsubmit="event.preventDefault(); alert('Subscribed!');">
+                    <input type="email" placeholder="Enter your email address" required class="px-4 py-3 rounded-lg text-gray-900 w-full sm:w-80 focus:ring-4 focus:ring-primary-300 focus:outline-none">
+                    <button type="submit" class="bg-gray-900 hover:bg-black text-white font-semibold px-6 py-3 rounded-lg transition-colors shadow-md">Send My PDF</button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer & AdSense 5 -->
+    <footer class="bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="ad-placeholder rounded-lg w-full h-[90px] text-sm mb-8">AdSense Slot 5 (Footer Board)</div>
+            <p class="text-center text-sm text-gray-500 dark:text-gray-400">
+                &copy; <script>document.write(new Date().getFullYear())</script> CalcWorld Engine. For informational purposes only. Do not consider this financial advice.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg flex items-center font-medium text-sm">
+        <svg class="w-5 h-5 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        Results copied to clipboard!
+    </div>
+
+    <!-- Application Logic -->
+    <script>
+        // --- State Management & Persistence ---
+        const formIds = ['currentAge', 'targetAge', 'currentSavings', 'monthlyContrib', 'preRetReturn', 'postRetReturn', 'inflationRate', 'postRetExpenses'];
+        let chartInstance = null;
+        
+        // Currencies
+        const exchangeRates = { USD: 1, GBP: 0.79, CAD: 1.35, AUD: 1.52 };
+        const currencySymbols = { USD: '$', GBP: '£', CAD: '$', AUD: '$' };
+        
+        // DOM Elements
+        const currencySelect = document.getElementById('currency-switcher');
+        const presetSelect = document.getElementById('presets');
+        const currencySymEls = document.querySelectorAll('.currency-sym');
+        const form = document.getElementById('calc-form');
+        const inputs = formIds.map(id => document.getElementById(id));
+        const shimmerEls = document.querySelectorAll('.shimmer');
+
+        // Output Elements
+        const outTargetEgg = document.getElementById('out-target-egg');
+        const outProjSavings = document.getElementById('out-proj-savings');
+        const outDiff = document.getElementById('out-diff');
+        const outDiffLabel = document.getElementById('out-diff-label');
+        const outMonthlyInc = document.getElementById('out-monthly-inc');
+        const statusCard = document.getElementById('status-card');
+        const scheduleBody = document.getElementById('schedule-body');
+        const summaryText = document.getElementById('summary-text');
+
+        // Presets Data
+        const presetsData = {
+            fire: { currentAge: 25, targetAge: 45, currentSavings: 20000, monthlyContrib: 2500, preRetReturn: 7, postRetReturn: 4, inflationRate: 2.5, postRetExpenses: 50000 },
+            standard: { currentAge: 30, targetAge: 65, currentSavings: 50000, monthlyContrib: 500, preRetReturn: 7, postRetReturn: 4, inflationRate: 2.5, postRetExpenses: 60000 },
+            late: { currentAge: 45, targetAge: 70, currentSavings: 150000, monthlyContrib: 1500, preRetReturn: 6.5, postRetReturn: 4, inflationRate: 2.5, postRetExpenses: 70000 }
+        };
+
+        // Format Currency
+        const formatMoney = (amount, currencyCode, noDecimals = true) => {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currencyCode,
+                maximumFractionDigits: noDecimals ? 0 : 2,
+                minimumFractionDigits: noDecimals ? 0 : 0
+            }).format(amount * exchangeRates[currencyCode]);
+        };
+
+        // Animation for counters
+        const animateValue = (obj, start, end, duration, formatter) => {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                // easeOutQuad
+                const easeProgress = 1 - (1 - progress) * (1 - progress);
+                const current = Math.floor(progress * (end - start) + start);
+                obj.innerHTML = formatter(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    obj.innerHTML = formatter(end);
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+
+        // --- Core Calculation Engine ---
+        const calculateRetirement = () => {
+            // Add Shimmer
+            shimmerEls.forEach(el => el.classList.add('is-calculating'));
+            
+            const curr = currencySelect.value;
+            const vals = {};
+            inputs.forEach(el => vals[el.id] = parseFloat(el.value) || 0);
+
+            const yearsToRetirement = Math.max(0, vals.targetAge - vals.currentAge);
+            const monthsToRetirement = yearsToRetirement * 12;
+            const monthlyReturnRate = vals.preRetReturn / 100 / 12;
+            
+            // 1. Projected Savings at Retirement (Future Value of Series + Principal)
+            let currentBal = vals.currentSavings;
+            const schedule = [];
+            
+            for (let y = 1; y <= yearsToRetirement; y++) {
+                let yearlyContrib = 0;
+                let yearlyReturn = 0;
+                
+                for(let m = 0; m < 12; m++) {
+                    let interest = currentBal * monthlyReturnRate;
+                    yearlyReturn += interest;
+                    currentBal += interest + vals.monthlyContrib;
+                    yearlyContrib += vals.monthlyContrib;
+                }
+                
+                schedule.push({
+                    age: vals.currentAge + y,
+                    contrib: yearlyContrib,
+                    returns: yearlyReturn,
+                    balance: currentBal,
+                    phase: 'accumulation'
+                });
+            }
+            const projectedSavings = currentBal;
+
+            // 2. Future Expense & Target Nest Egg
+            // Adjust current expenses for inflation to find expenses at retirement
+            const futureAnnualExpenses = vals.postRetExpenses * Math.pow(1 + (vals.inflationRate / 100), yearsToRetirement);
+            
+            // Using 4% rule (or Safe Withdrawal Rate equivalent)
+            // Target Egg = Future Expenses / (Withdrawal Rate) -> Assume 4% rule standard or calc based on diff of returns?
+            // Standard approach: Nest Egg = Annual Exp / 0.04
+            const safeWithdrawalRate = 0.04;
+            const targetNestEgg = futureAnnualExpenses / safeWithdrawalRate;
+
+            // 3. Shortfall / Surplus
+            const difference = projectedSavings - targetNestEgg;
+
+            // 4. Monthly Income Capacity
+            const monthlyIncome = (projectedSavings * safeWithdrawalRate) / 12;
+
+            // --- Update UI ---
+            setTimeout(() => {
+                // Remove Shimmer
+                shimmerEls.forEach(el => el.classList.remove('is-calculating'));
+                
+                // Counters
+                const fmt = (val) => formatMoney(val, curr);
+                animateValue(outTargetEgg, 0, targetNestEgg, 800, fmt);
+                animateValue(outProjSavings, 0, projectedSavings, 800, fmt);
+                animateValue(outMonthlyInc, 0, monthlyIncome, 800, fmt);
+                
+                outDiff.innerHTML = fmt(Math.abs(difference));
+                if (difference >= 0) {
+                    statusCard.classList.remove('text-red-600', 'dark:text-red-400');
+                    statusCard.classList.add('text-green-600', 'dark:text-green-400');
+                    outDiffLabel.innerText = "Surplus";
+                } else {
+                    statusCard.classList.remove('text-green-600', 'dark:text-green-400');
+                    statusCard.classList.add('text-red-600', 'dark:text-red-400');
+                    outDiffLabel.innerText = "Shortfall";
+                }
+
+                // Update Chart & Schedule
+                updateChart(schedule, vals.targetAge, 95, projectedSavings, safeWithdrawalRate, vals.postRetReturn, vals.inflationRate);
+                renderSchedule(schedule, curr);
+                renderSummary(vals, projectedSavings, targetNestEgg, difference, curr);
+                
+            }, 400); // Fake calculation delay for effect
+        };
+
+        const updateChart = (accumSchedule, retAge, deathAge, retBalance, swRate, postRetReturn, inflation) => {
+            const labels = [];
+            const dataAccum = [];
+            const dataDecum = [];
+            
+            // Add Accumulation
+            accumSchedule.forEach(s => {
+                labels.push(s.age);
+                dataAccum.push(s.balance);
+                dataDecum.push(null);
+            });
+
+            // Decumulation Phase
+            let currentBal = retBalance;
+            let currentWithdrawal = retBalance * swRate; // Initial withdrawal
+            
+            // Connect the lines
+            if(accumSchedule.length > 0) {
+                labels.push(retAge);
+                dataAccum.push(retBalance);
+                dataDecum.push(retBalance);
+            }
+
+            for(let age = retAge + 1; age <= deathAge; age++) {
+                if (currentBal <= 0) {
+                    currentBal = 0;
+                } else {
+                    // Start of year: grow by return
+                    currentBal = currentBal * (1 + (postRetReturn/100));
+                    // End of year: subtract withdrawal
+                    currentBal -= currentWithdrawal;
+                    // Adjust withdrawal for next year based on inflation
+                    currentWithdrawal = currentWithdrawal * (1 + (inflation/100));
+                }
+                labels.push(age);
+                dataAccum.push(null);
+                dataDecum.push(Math.max(0, currentBal));
+            }
+
+            const ctx = document.getElementById('retirementChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const gridColor = isDark ? '#334155' : '#e2e8f0';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Accumulation Phase',
+                            data: dataAccum,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Decumulation Phase',
+                            data: dataDecum,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { color: textColor, font: { family: 'Inter' } } },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) { label += ': '; }
+                                    if (context.parsed.y !== null) {
+                                        label += formatMoney(context.parsed.y, currencySelect.value);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: gridColor, drawBorder: false }, ticks: { color: textColor, maxTicksLimit: 10 } },
+                        y: { 
+                            grid: { color: gridColor, drawBorder: false }, 
+                            ticks: { 
+                                color: textColor,
+                                callback: function(value) {
+                                    return formatMoney(value, currencySelect.value, true);
+                                }
+                            } 
+                        }
+                    }
+                }
+            });
+        };
+
+        const renderSchedule = (schedule, curr) => {
+            scheduleBody.innerHTML = schedule.map(row => `
+                <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                    <td class="px-4 py-3 font-medium text-gray-900 dark:text-white">Age ${row.age}</td>
+                    <td class="px-4 py-3 text-right text-gray-600 dark:text-gray-400">+${formatMoney(row.contrib, curr)}</td>
+                    <td class="px-4 py-3 text-right text-green-600 dark:text-green-400">+${formatMoney(row.returns, curr)}</td>
+                    <td class="px-4 py-3 text-right font-bold text-gray-900 dark:text-white">${formatMoney(row.balance, curr)}</td>
+                </tr>
+            `).join('');
+        };
+
+        const renderSummary = (vals, proj, target, diff, curr) => {
+            const isGood = diff >= 0;
+            const diffAbsStr = formatMoney(Math.abs(diff), curr);
+            
+            let html = `<p>Based on your current plan, you will reach retirement at age <strong>${vals.targetAge}</strong> with projected savings of <strong>${formatMoney(proj, curr)}</strong>.</p>`;
+            
+            html += `<p>Accounting for <strong>${vals.inflationRate}%</strong> annual inflation, you need <strong>${formatMoney(target, curr)}</strong> to safely withdraw enough to cover your target lifestyle (${formatMoney(vals.postRetExpenses, curr)} / year in today's money).</p>`;
+
+            if (isGood) {
+                html += `<div class="p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg text-green-800 dark:text-green-200 mt-4">
+                    <strong>🎉 You are on track!</strong> You have a projected surplus of ${diffAbsStr}.
+                </div>`;
+            } else {
+                html += `<div class="p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg text-amber-800 dark:text-amber-200 mt-4">
+                    <strong>⚠️ Action Required:</strong> You have a projected shortfall of ${diffAbsStr}. Consider increasing your monthly contributions, delaying retirement, or reducing your expected retirement expenses.
+                </div>`;
+            }
+            summaryText.innerHTML = html;
+        };
+
+        // URL State Management
+        const updateURL = () => {
+            const params = new URLSearchParams();
+            inputs.forEach(el => params.set(el.id, el.value));
+            params.set('curr', currencySelect.value);
+            window.history.replaceState({}, '', `${window.location.pathname}?${params.toString()}`);
+        };
+
+        const loadFromURL = () => {
+            const params = new URLSearchParams(window.location.search);
+            let hasParams = false;
+            inputs.forEach(el => {
+                if (params.has(el.id)) {
+                    el.value = params.get(el.id);
+                    hasParams = true;
+                }
+            });
+            if (params.has('curr')) {
+                currencySelect.value = params.get('curr');
+                updateCurrencySymbols();
+            }
+            return hasParams;
+        };
+
+        const updateCurrencySymbols = () => {
+            const sym = currencySymbols[currencySelect.value];
+            currencySymEls.forEach(el => el.innerText = sym);
+        };
+
+        // Event Listeners
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                presetSelect.value = ""; // clear preset
+                calculateRetirement();
+                updateURL();
+            });
+        });
+
+        currencySelect.addEventListener('change', () => {
+            updateCurrencySymbols();
+            calculateRetirement();
+            updateURL();
+        });
+
+        presetSelect.addEventListener('change', (e) => {
+            const preset = presetsData[e.target.value];
+            if(preset) {
+                Object.keys(preset).forEach(key => {
+                    const el = document.getElementById(key);
+                    if(el) el.value = preset[key];
+                });
+                calculateRetirement();
+                updateURL();
+            }
+        });
+
+        // Tabs Logic
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active from all tabs
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('text-primary-600', 'border-primary-600', 'dark:text-primary-500', 'dark:border-primary-500', 'active');
+                    b.classList.add('border-transparent');
+                });
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add to clicked
+                btn.classList.add('text-primary-600', 'border-primary-600', 'dark:text-primary-500', 'dark:border-primary-500', 'active');
+                btn.classList.remove('border-transparent');
+                document.getElementById(btn.dataset.target).classList.add('active');
+            });
+        });
+
+        // Copy to clipboard
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            const text = summaryText.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            });
+        });
+
+        // Theme Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-icon-dark');
+        const lightIcon = document.getElementById('theme-icon-light');
+
+        const updateThemeIcons = () => {
+            if (document.documentElement.classList.contains('dark')) {
+                darkIcon.classList.add('hidden');
+                lightIcon.classList.remove('hidden');
+            } else {
+                lightIcon.classList.add('hidden');
+                darkIcon.classList.remove('hidden');
+            }
+        };
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+            } else {
+                localStorage.setItem('theme', 'light');
+            }
+            updateThemeIcons();
+            // Re-render chart for colors
+            calculateRetirement(); 
+        });
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            updateThemeIcons();
+            loadFromURL();
+            updateCurrencySymbols();
+            calculateRetirement();
+        });
+
+        // AdBlock Recovery Simulation (Basic)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const ads = document.querySelectorAll('.ad-placeholder');
+                ads.forEach(ad => {
+                    if(ad.offsetHeight === 0 || window.getComputedStyle(ad).display === 'none') {
+                        // AdBlock detected, show fallback message or custom affiliate banner
+                        ad.style.display = 'flex';
+                        ad.innerHTML = `<span class="text-xs">Support us by disabling AdBlock, or check out our Premium PDF Guide!</span>`;
+                    }
+                });
+            }, 1500);
+        });
+
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

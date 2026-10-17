@@ -1,0 +1,2599 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GDP Calculator | Macroeconomic Expenditure, Real GDP &amp; Deflator Engine</title>
+    <meta name="description" content="Calculate Gross Domestic Product (GDP) using the Expenditure Approach (C + I + G + NX), Real GDP, GDP Deflator inflation, and PPP GDP per capita. Based on BEA NIPA, IMF, and World Bank national accounting standards.">
+    <meta name="keywords" content="GDP calculator, gross domestic product calculator, expenditure approach gdp, real gdp calculator, gdp deflator calculator, gdp per capita ppp, nominal vs real gdp, bea nipa calculator">
+    <link rel="canonical" href="https://calcworld.net/calculators/gdp-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN with darkMode: 'class' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                        econ: {
+                            consumption: '#0284c7',
+                            investment: '#059669',
+                            government: '#7c3aed',
+                            netexports: '#ea580c',
+                            imports: '#dc2626'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 CDN & Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(59, 130, 246, 0.08) 20%,
+                rgba(59, 130, 246, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        input[type="range"] {
+            accent-color: #2563eb;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "GDP Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Macroeconomic Gross Domestic Product (GDP) Calculator",
+      "url": "https://calcworld.net/other/gdp-calculator",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Professional macroeconomic GDP engine calculating nominal GDP via the expenditure approach, real GDP through the GDP deflator, inflation rates, and purchasing power parity (PPP) per capita."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the primary difference between Nominal GDP and Real GDP?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nominal GDP evaluates national economic output using current market prices prevailing in the survey period. Consequently, an expansion in nominal GDP reflects a mixture of physical volume growth and general price inflation. In contrast, Real GDP isolates actual physical production volume by holding prices constant at a chosen base-year level through the GDP deflator index. Real GDP eliminates inflationary price distortions, making it the definitive metric for assessing macroeconomic growth across consecutive years."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the Expenditure Approach calculate Gross Domestic Product?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Expenditure Approach calculates GDP by summing all final expenditures within an economy: GDP = C + I + G + (X - M). Here, C represents Personal Consumption Expenditures (durable goods, nondurable goods, and services); I denotes Gross Private Domestic Investment (non-residential structures and equipment, residential building, and change in private business inventories); G represents Government Consumption Expenditures and Gross Investment across federal, state, and local entities; and (X - M) represents Net Exports (total exports minus total imports)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why are intermediate goods excluded from GDP accounting?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Intermediate goods are raw inputs and components consumed entirely during the manufacturing of a finished product (such as semiconductor microchips soldered onto a computer motherboard or steel rolled into automobile frames). National accountants exclude intermediate goods to prevent double counting. Adding the value of raw steel, assembled transmissions, and the complete finished automobile would artificially multiply measured national product. GDP only records the final sale price, which inherently incorporates the value added at each intermediate production stage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between Gross Domestic Product (GDP) and Gross National Product (GNP)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "GDP measures economic output generated within the geographic territory of a nation, regardless of whether the labor and capital are supplied by citizens or foreign residents. GNP (and Gross National Income, GNI) measures total income earned by permanent citizens and domestic entities, regardless of geographic location. GNP equals GDP plus net primary factor income received from abroad (such as profits repatriated by domestic multinationals and wages earned overseas) minus factor income paid to foreign asset holders operating domestically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the GDP Deflator differ from the Consumer Price Index (CPI)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The GDP Deflator is a comprehensive, variable-weight Paasche price index measuring price changes across all domestic final goods and services, including consumer items, capital machinery, commercial buildings, and defense systems. It excludes imported goods entirely. In contrast, the CPI is a fixed-basket Laspeyres price index measuring out-of-pocket living expenses for typical urban households. The CPI includes imported consumer products (such as foreign automobiles and imported apparel) but excludes capital investment equipment and government procurement."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does Purchasing Power Parity (PPP) adjust in international economic comparisons?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Nominal GDP converts foreign output into US dollars using volatile market foreign exchange rates. However, non-traded goods and domestic services (such as haircuts, healthcare, housing, and local transit) tend to be substantially cheaper in developing nations due to lower wage structures (the Balassa-Samuelson effect). Purchasing Power Parity (PPP) applies a standardized international price basket to compute the real physical volume of goods and services an economy yields, preventing market currency undervaluation from distorting comparative economic size."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why did Simon Kuznets warn Congress against using GDP as a welfare measure?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When Simon Kuznets presented the inaugural national income accounts to the US Senate in 1934 (Senate Document 124, 73rd Congress), he explicitly declared that national economic production figures cannot be used as an index of human well-being. Kuznets stressed that national product accounts measure transactional market output while disregarding personal leisure time, the equality of income distribution, the social utility of different forms of production, and psychological welfare."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do environmental externalities and unpaid household work affect GDP measurement?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "GDP solely aggregates monetized transactions. Non-market productive activity—such as child care, elder assistance, cooking, and volunteer efforts performed without formal payment—is completely omitted, distorting economic welfare assessments across developing versus industrialized nations. Simultaneously, GDP ignores negative environmental externalities: environmental degradation, clean water depletion, and carbon emissions are unpenalized. Catastrophes like oil spills and industrial accidents actually expand GDP because cleanup operations generate recorded billable employment and capital expenditures."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="GDP Calculator | Macroeconomic Expenditure, Real GDP &amp; Deflator Engine">
+    <meta property="og:description" content="Calculate Gross Domestic Product (GDP) using the Expenditure Approach (C + I + G + NX), Real GDP, GDP Deflator inflation, and PPP GDP per capita. Based on BEA NIPA, IMF, and World Bank national accounting standards.">
+    <meta property="og:url" content="https://calcworld.net/calculators/gdp-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="GDP Calculator | Macroeconomic Expenditure, Real GDP &amp; Deflator Engine">
+    <meta name="twitter:description" content="Calculate Gross Domestic Product (GDP) using the Expenditure Approach (C + I + G + NX), Real GDP, GDP Deflator inflation, and PPP GDP per capita. Based on BEA NIPA, IMF, and World Bank national accounting standards.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Macroeconomic Policy &amp; Research Reference:</strong> CalcWorld delivers peer-reviewed macroeconomic calculation tools free with zero paywalls. Consider safelisting our domain to support our ongoing technical hosting.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">GDP Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Macroeconomic GDP Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Comprehensive national income accounting engine computing nominal GDP via the Expenditure Approach ($Y = C + I + G + NX$), Real GDP chained by the GDP Deflator, inflation rates, and Purchasing Power Parity (PPP) adjustments aligned with BEA NIPA, IMF, and World Bank frameworks.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Curated Global Economies Presets Row -->
+        <div id="presetRow" class="mb-6 bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-sm border border-slate-200 dark:border-slate-700 no-print">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Curated Historical &amp; Global Economies Presets</span>
+                <span class="text-[11px] text-slate-400 font-mono">Select to populate national accounts</span>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
+                <button type="button" onclick="loadCountryPreset('usa')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇺🇸 USA ($28.8T)</button>
+                <button type="button" onclick="loadCountryPreset('china')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇨🇳 China ($18.5T)</button>
+                <button type="button" onclick="loadCountryPreset('germany')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇩🇪 Germany ($4.6T)</button>
+                <button type="button" onclick="loadCountryPreset('japan')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇯🇵 Japan ($4.1T)</button>
+                <button type="button" onclick="loadCountryPreset('uk')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇬🇧 UK ($3.5T)</button>
+                <button type="button" onclick="loadCountryPreset('india')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇮🇳 India ($3.9T)</button>
+                <button type="button" onclick="loadCountryPreset('uae')" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-slate-100 dark:bg-slate-700/70 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 transition text-center truncate">🇦🇪 UAE ($0.51T)</button>
+                <button type="button" onclick="resetCalculatorDefaults()" class="preset-btn px-2.5 py-1.5 text-xs font-semibold rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 hover:bg-amber-100 border border-amber-200 dark:border-amber-800 transition text-center truncate">🔄 Reset</button>
+            </div>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5 on lg, 4 on xl) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-5 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-3 mb-5">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-900 dark:text-white">Expenditure Components</h2>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">BEA NIPA Standard ($Y = C + I + G + NX$)</p>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-semibold text-slate-500">Unit:</span>
+                            <div class="inline-flex p-0.5 bg-slate-100 dark:bg-slate-900 rounded-lg text-[11px] font-bold">
+                                <button type="button" onclick="setUnitScale('T')" id="unitBtn_T" class="px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm">$ Trillion</button>
+                                <button type="button" onclick="setUnitScale('B')" id="unitBtn_B" class="px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200">$ Billion</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Group 1: Personal Consumption Expenditures (C) -->
+                    <div class="mb-5 p-4 rounded-xl bg-sky-50/50 dark:bg-sky-950/20 border border-sky-100 dark:border-sky-900/40">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-econ-consumption"></span>
+                                <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-200">1. Consumption ($C$)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-sky-700 dark:text-sky-300" id="subtotalC_badge">$19.55 T (67.9%)</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_c_dur" class="text-slate-600 dark:text-slate-400">Durable Goods (Appliances, Autos):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_c_dur">2.25</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_c_dur" value="2.25" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_c_nondur" class="text-slate-600 dark:text-slate-400">Nondurable Goods (Food, Fuel, Apparel):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_c_nondur">3.95</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_c_nondur" value="3.95" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_c_serv" class="text-slate-600 dark:text-slate-400">Services (Housing, Medical, Finance):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_c_serv">13.35</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_c_serv" value="13.35" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Group 2: Gross Private Domestic Investment (I) -->
+                    <div class="mb-5 p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-econ-investment"></span>
+                                <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-200">2. Investment ($I$)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-emerald-700 dark:text-emerald-300" id="subtotalI_badge">$5.05 T (17.5%)</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_i_nonres" class="text-slate-600 dark:text-slate-400">Nonresidential Fixed (Plants, R&amp;D, Tech):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_i_nonres">3.75</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_i_nonres" value="3.75" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_i_res" class="text-slate-600 dark:text-slate-400">Residential Fixed (New Housing Construction):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_i_res">1.15</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_i_res" value="1.15" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_i_inv" class="text-slate-600 dark:text-slate-400">Change in Private Inventories ($\Delta \text{Inv}$):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_i_inv">0.15</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_i_inv" value="0.15" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Group 3: Government Consumption & Gross Investment (G) -->
+                    <div class="mb-5 p-4 rounded-xl bg-violet-50/50 dark:bg-violet-950/20 border border-violet-100 dark:border-violet-900/40">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-econ-government"></span>
+                                <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-200">3. Government ($G$)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-violet-700 dark:text-violet-300" id="subtotalG_badge">$4.98 T (17.3%)</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_g_def" class="text-slate-600 dark:text-slate-400">Federal National Defense:</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_g_def">1.15</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_g_def" value="1.15" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_g_nondef" class="text-slate-600 dark:text-slate-400">Federal Nondefense (Agencies, Infrastructure):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_g_nondef">0.75</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_g_nondef" value="0.75" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_g_local" class="text-slate-600 dark:text-slate-400">State &amp; Local Governments (Schools, Roads):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_g_local">3.08</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_g_local" value="3.08" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input Group 4: Net Exports (X - M) -->
+                    <div class="mb-5 p-4 rounded-xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/40">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-econ-netexports"></span>
+                                <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-800 dark:text-slate-200">4. Net Exports ($NX = X - M$)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-amber-700 dark:text-amber-300" id="subtotalNX_badge">-$0.80 T (-2.8%)</span>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_exp" class="text-slate-600 dark:text-slate-400">Gross Exports ($X$ - Goods &amp; Services):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_exp">3.15</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_exp" value="3.15" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs mb-1">
+                                    <label for="input_imp" class="text-slate-600 dark:text-slate-400">Gross Imports ($M$ - Subtracted from Total):</label>
+                                    <span class="font-mono font-bold text-slate-800 dark:text-slate-200" id="val_imp">3.95</span>
+                                </div>
+                                <input type="number" step="0.01" id="input_imp" value="3.95" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs font-mono font-bold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deflator, Demographics & PPP Parameters Accordion -->
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                        <button type="button" onclick="toggleDeflatorInputs()" class="w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                                <span>Deflator, Demographics &amp; PPP Parameters</span>
+                            </span>
+                            <svg id="deflatorChevron" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="deflatorInputsContent" class="space-y-4 mt-3">
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="input_deflator" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">GDP Deflator ($P_t$)</label>
+                                    <input type="number" step="0.1" id="input_deflator" value="123.8" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <span class="text-[10px] text-slate-400">Base Year = 100.0</span>
+                                </div>
+                                <div>
+                                    <label for="input_prev_deflator" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Prior Period Deflator ($P_{t-1}$)</label>
+                                    <input type="number" step="0.1" id="input_prev_deflator" value="120.5" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <span class="text-[10px] text-slate-400">For inflation rate $\pi$</span>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="input_population" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Population (Millions)</label>
+                                    <input type="number" step="0.1" id="input_population" value="342.0" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <span class="text-[10px] text-slate-400">Persons in nation</span>
+                                </div>
+                                <div>
+                                    <label for="input_ppp_factor" class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">PPP Conversion Factor</label>
+                                    <input type="number" step="0.01" id="input_ppp_factor" value="1.00" oninput="calculateAll()" class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <span class="text-[10px] text-slate-400">Price Level Index factor</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="bg-gradient-to-br from-brand-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm border border-brand-800 lead-box">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-semibold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Free Macroeconomic Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">BEA NIPA &amp; National Accounts Guide</h3>
+                    <p class="text-xs text-brand-200 mb-3">Download our verified summary of Bureau of Economic Analysis NIPA tables, GDP deflator formulas, chain-type quantity indices, and IMF purchasing power parity tables (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="economist@institution.org" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Download Reference PDF</button>
+                    </form>
+                    <p class="text-[10px] text-brand-300/80 mt-2 text-center">Instant digital delivery. Strictly zero spam.</p>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results Dashboard, Tabs & Visualizations (Span 7 on lg, 7 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-7 space-y-6">
+                
+                <!-- Primary Hero Results Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-4 mb-5">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">National Accounting Aggregate</span>
+                            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white" id="heroEconomyLabel">Gross Domestic Product (GDP)</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="tradeBalanceBadge" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                <span id="tradeBalanceText">Trade Deficit (-2.8%)</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Readout Display -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mb-6">
+                        <div class="sm:col-span-7">
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Nominal GDP ($Y = C + I + G + NX$)</div>
+                            <div class="flex items-baseline gap-2">
+                                <span id="resGdpPrimary" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">$28.78</span>
+                                <span id="resGdpUnit" class="text-xl font-bold text-brand-600 dark:text-brand-400 font-mono">Trillion</span>
+                            </div>
+                            <div class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                                <span>Absolute Total: </span>
+                                <span id="resGdpSecondary" class="font-bold text-slate-700 dark:text-slate-300">$28,780 Billion</span>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-5 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Macroeconomic Structure</div>
+                            <p id="structureDescription" class="text-xs text-slate-700 dark:text-slate-300 leading-snug">Consumption-dominated economy. Household spending accounts for 67.9% of output, with investment at 17.5% and a net trade deficit.</p>
+                        </div>
+                    </div>
+
+                    <!-- 8 Key Macroeconomic Metrics Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        
+                        <!-- Metric 1: Personal Consumption (C) -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Consumption ($C$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-sky-600 dark:text-sky-400 mt-0.5" id="metric_c_val">$19.55 T</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_c_pct">67.9% of GDP</div>
+                        </div>
+
+                        <!-- Metric 2: Gross Private Investment (I) -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Investment ($I$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-emerald-600 dark:text-emerald-400 mt-0.5" id="metric_i_val">$5.05 T</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_i_pct">17.5% of GDP</div>
+                        </div>
+
+                        <!-- Metric 3: Government Spending (G) -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Government ($G$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-violet-600 dark:text-violet-400 mt-0.5" id="metric_g_val">$4.98 T</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_g_pct">17.3% of GDP</div>
+                        </div>
+
+                        <!-- Metric 4: Net Exports (NX) -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Net Exports ($NX$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-amber-600 dark:text-amber-400 mt-0.5" id="metric_nx_val">-$0.80 T</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_nx_pct">-2.8% of GDP</div>
+                        </div>
+
+                        <!-- Metric 5: Real GDP -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Real GDP (Chained)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="metric_real_gdp">$23.25 T</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">Base Year Output</div>
+                        </div>
+
+                        <!-- Metric 6: Deflator Inflation Rate -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Deflator Inflation</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="metric_inflation">+2.74%</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_deflator_idx">Deflator: 123.8</div>
+                        </div>
+
+                        <!-- Metric 7: Nominal GDP Per Capita -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Nominal Per Capita</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="metric_per_capita">$84,152</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">Per Citizen (USD)</div>
+                        </div>
+
+                        <!-- Metric 8: PPP-Adjusted GDP & Per Capita -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">PPP Per Capita</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="metric_ppp_per_capita">$84,152</div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="metric_ppp_gdp_alt">PPP: $28.78 T</div>
+                        </div>
+
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 font-semibold transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Macro Summary</span>
+                            </button>
+                            <button type="button" onclick="resetCalculatorDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold transition">
+                                Reset Inputs
+                            </button>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold hover:bg-brand-100 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Generate Formal Report</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 2: Mid Banner Above Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Workspace Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Buttons -->
+                <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 no-print">
+                    <button type="button" onclick="switchTab('expenditure')" id="tabBtn_expenditure" class="tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+                        <span>Expenditure Breakdown</span>
+                    </button>
+                    <button type="button" onclick="switchTab('deflator')" id="tabBtn_deflator" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                        <span>Real GDP &amp; Deflator</span>
+                    </button>
+                    <button type="button" onclick="switchTab('global')" id="tabBtn_global" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Global Reference Table</span>
+                    </button>
+                    <button type="button" onclick="switchTab('print')" id="tabBtn_print" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Report</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Expenditure Analysis & Doughnut Chart -->
+                <div id="tab-expenditure" class="tab-panel active space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Chart.js Expenditure Share Breakdown</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Proportional allocation of Gross Domestic Product across final demand sectors</p>
+                            </div>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800" id="doughnutTotalBadge">
+                                Total: $28.78 T
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                            <div class="md:col-span-7 relative w-full h-[280px] sm:h-[320px] flex items-center justify-center">
+                                <canvas id="gdpDoughnutChart"></canvas>
+                            </div>
+                            <div class="md:col-span-5 space-y-3 text-xs">
+                                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-econ-consumption"></span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Consumption ($C$)</span>
+                                    </div>
+                                    <span class="font-mono font-bold" id="pie_c_legend">$19.55 T (67.9%)</span>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-econ-investment"></span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Investment ($I$)</span>
+                                    </div>
+                                    <span class="font-mono font-bold" id="pie_i_legend">$5.05 T (17.5%)</span>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-econ-government"></span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Government ($G$)</span>
+                                    </div>
+                                    <span class="font-mono font-bold" id="pie_g_legend">$4.98 T (17.3%)</span>
+                                </div>
+                                <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 rounded-full bg-econ-netexports"></span>
+                                        <span class="font-semibold text-slate-700 dark:text-slate-300">Net Exports ($NX$)</span>
+                                    </div>
+                                    <span class="font-mono font-bold" id="pie_nx_legend">-$0.80 T (-2.8%)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Step-by-Step National Accounts Evaluation</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Live numerical substitution applying the Expenditure Method recognized by the Bureau of Economic Analysis (BEA NIPA Table 1.1.5).</p>
+                        
+                        <div class="space-y-4 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 overflow-x-auto">
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 1: Aggregate Personal Consumption Expenditures ($C$):</span>
+                                <div id="mathStep1" class="text-sm">
+                                    $$C = C_{\text{dur}} + C_{\text{nondur}} + C_{\text{serv}} = 2.25 + 3.95 + 13.35 = 19.55\text{ Trillion USD}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 2: Aggregate Gross Private Domestic Investment ($I$):</span>
+                                <div id="mathStep2" class="text-sm">
+                                    $$I = I_{\text{nonres}} + I_{\text{res}} + \Delta \text{Inv} = 3.75 + 1.15 + 0.15 = 5.05\text{ Trillion USD}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 3: Aggregate Government Consumption Expenditures &amp; Gross Investment ($G$):</span>
+                                <div id="mathStep3" class="text-sm">
+                                    $$G = G_{\text{def}} + G_{\text{nondef}} + G_{\text{local}} = 1.15 + 0.75 + 3.08 = 4.98\text{ Trillion USD}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 4: Compute Net Exports of Goods &amp; Services ($NX = X - M$):</span>
+                                <div id="mathStep4" class="text-sm">
+                                    $$NX = X - M = 3.15 - 3.95 = -0.80\text{ Trillion USD (Trade Deficit)}$$
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Step 5: Solve Total Gross Domestic Product ($Y$):</span>
+                                <div id="mathStep5" class="text-sm font-bold text-brand-600 dark:text-brand-400">
+                                    $$Y = C + I + G + NX = 19.55 + 5.05 + 4.98 + (-0.80) = 28.78\text{ Trillion USD}$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Real GDP & Deflator Inflation Engine -->
+                <div id="tab-deflator" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Real Output vs. Price Inflation Decomposition</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Eliminate price distortion using the Paasche-weighted GDP deflator index to isolate real physical quantity production.</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Nominal GDP ($Y_t$)</span>
+                                <span class="text-2xl font-extrabold font-mono text-slate-900 dark:text-white mt-1 block" id="tab2_nominal_val">$28.78 T</span>
+                                <span class="text-[11px] text-slate-500">Current market transaction value</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">GDP Deflator ($P_t$)</span>
+                                <span class="text-2xl font-extrabold font-mono text-brand-600 dark:text-brand-400 mt-1 block" id="tab2_deflator_val">123.8</span>
+                                <span class="text-[11px] text-slate-500" id="tab2_deflator_sub">Base Year Price Index: 100.0</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                                <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block">Real Chained GDP ($y_t$)</span>
+                                <span class="text-2xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 mt-1 block" id="tab2_real_val">$23.25 T</span>
+                                <span class="text-[11px] text-slate-500">Base-year constant price volume</span>
+                            </div>
+                        </div>
+
+                        <!-- Real vs Nominal Chart -->
+                        <div class="mb-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300">Nominal GDP vs. Real GDP vs. PPP GDP Benchmark</h4>
+                                <span class="text-[11px] text-slate-400 font-mono">Current Economy vs Global Standards</span>
+                            </div>
+                            <div class="relative w-full h-[280px] sm:h-[320px]">
+                                <canvas id="realVsNominalChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Deflator Math & Formulas -->
+                        <div class="space-y-3 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700">
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Equation A: Real GDP Formulation</span>
+                                <div class="text-sm">
+                                    $$\text{Real GDP} = \frac{\text{Nominal GDP}}{\text{GDP Deflator}} \times 100 = \frac{28.78}{123.8} \times 100 = 23.25\text{ Trillion USD}$$
+                                </div>
+                            </div>
+                            <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
+                                <span class="text-slate-500 font-bold block mb-1">Equation B: Annual GDP Deflator Inflation Rate ($\pi$)</span>
+                                <div class="text-sm">
+                                    $$\pi_t = \left( \frac{P_t - P_{t-1}}{P_{t-1}} \right) \times 100\% = \left( \frac{123.8 - 120.5}{120.5} \right) \times 100\% = +2.74\%$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Global Economies Reference Table -->
+                <div id="tab-global" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Global Economic Output &amp; Structural Comparison</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Curated macroeconomic indicators from the IMF World Economic Outlook and World Bank ICP</p>
+                            </div>
+                            <div class="relative w-full sm:w-64">
+                                <input type="text" id="globalTableFilter" oninput="filterGlobalTable()" placeholder="Search economies..." class="w-full px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden" id="globalRefTable">
+                                <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-bold uppercase tracking-wider">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Economy</th>
+                                        <th class="py-2.5 px-3">Nominal GDP</th>
+                                        <th class="py-2.5 px-3">PPP GDP</th>
+                                        <th class="py-2.5 px-3">Population</th>
+                                        <th class="py-2.5 px-3">Nom. Per Capita</th>
+                                        <th class="py-2.5 px-3">PPP Per Capita</th>
+                                        <th class="py-2.5 px-3">C / I Shares</th>
+                                        <th class="py-2.5 px-3 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono" id="globalTableBody">
+                                    <!-- Populated via JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-3">Click 'Load' on any economy to immediately populate the interactive accounting engine with that country's expenditure structure.</p>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 print:border-none print:p-0">
+                        
+                        <div class="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-5 mb-6">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">National Income &amp; Product Accounts (NIPA)</span>
+                                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white" id="prnReportTitle">Macroeconomic GDP Accounting Brief</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Generated via CalcWorld Macroeconomic Accounting Engine &bull; BEA / IMF Methodology</p>
+                            </div>
+                            <button type="button" onclick="window.print()" class="no-print px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print / Save PDF</span>
+                            </button>
+                        </div>
+
+                        <!-- Editable Report Metadata -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-xs border-b border-slate-200 dark:border-slate-700 pb-5">
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Economy / Sovereign Entity</span>
+                                <input type="text" id="prnMetaCountry" value="United States (NIPA Benchmark)" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Reporting Period / Quarter</span>
+                                <input type="text" id="prnMetaPeriod" value="Annual / Q4 Preliminary" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Macroeconomic Analyst</span>
+                                <input type="text" value="Senior Policy Economist" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Timestamp / Verification</span>
+                                <div id="reportTimestamp" class="font-bold font-mono text-slate-800 dark:text-slate-200">2026-10-16 15:00 UTC</div>
+                            </div>
+                        </div>
+
+                        <!-- National Accounts Aggregate Table -->
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Expenditure Components Breakdown (BEA Table 1.1.5)</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                    <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 font-bold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="py-2 px-3">Component Description</th>
+                                            <th class="py-2 px-3">Symbol</th>
+                                            <th class="py-2 px-3">Value ($ Trillion)</th>
+                                            <th class="py-2 px-3">% Share of GDP</th>
+                                            <th class="py-2 px-3">NIPA Classification</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Personal Consumption Expenditures</td>
+                                            <td class="py-2 px-3">$C$</td>
+                                            <td class="py-2 px-3" id="prnValC">$19.55 T</td>
+                                            <td class="py-2 px-3" id="prnPctC">67.9%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Household Final Demand</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Durable Goods</td>
+                                            <td class="py-2 px-3">$C_{\text{dur}}$</td>
+                                            <td class="py-2 px-3" id="prnValCDur">$2.25 T</td>
+                                            <td class="py-2 px-3" id="prnPctCDur">7.8%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Lifespan &gt; 3 Years</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Nondurable Goods</td>
+                                            <td class="py-2 px-3">$C_{\text{nondur}}$</td>
+                                            <td class="py-2 px-3" id="prnValCNondur">$3.95 T</td>
+                                            <td class="py-2 px-3" id="prnPctCNondur">13.7%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Consumables &amp; Perishables</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Services</td>
+                                            <td class="py-2 px-3">$C_{\text{serv}}$</td>
+                                            <td class="py-2 px-3" id="prnValCServ">$13.35 T</td>
+                                            <td class="py-2 px-3" id="prnPctCServ">46.4%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Intangible Economic Utilities</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Gross Private Domestic Investment</td>
+                                            <td class="py-2 px-3">$I$</td>
+                                            <td class="py-2 px-3" id="prnValI">$5.05 T</td>
+                                            <td class="py-2 px-3" id="prnPctI">17.5%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Capital Stock Accumulation</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Nonresidential Fixed Investment</td>
+                                            <td class="py-2 px-3">$I_{\text{nonres}}$</td>
+                                            <td class="py-2 px-3" id="prnValINonres">$3.75 T</td>
+                                            <td class="py-2 px-3" id="prnPctINonres">13.0%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Structures, Equipment, IP</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Residential Fixed Investment</td>
+                                            <td class="py-2 px-3">$I_{\text{res}}$</td>
+                                            <td class="py-2 px-3" id="prnValIRes">$1.15 T</td>
+                                            <td class="py-2 px-3" id="prnPctIRes">4.0%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">New Residential Construction</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Change in Private Inventories</td>
+                                            <td class="py-2 px-3">$\Delta \text{Inv}$</td>
+                                            <td class="py-2 px-3" id="prnValIInv">$0.15 T</td>
+                                            <td class="py-2 px-3" id="prnPctIInv">0.5%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Net Stock Additions</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Government Consumption &amp; Gross Investment</td>
+                                            <td class="py-2 px-3">$G$</td>
+                                            <td class="py-2 px-3" id="prnValG">$4.98 T</td>
+                                            <td class="py-2 px-3" id="prnPctG">17.3%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Public Final Expenditures</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Federal Defense</td>
+                                            <td class="py-2 px-3">$G_{\text{def}}$</td>
+                                            <td class="py-2 px-3" id="prnValGDef">$1.15 T</td>
+                                            <td class="py-2 px-3" id="prnPctGDef">4.0%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">National Security &amp; Military</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Federal Nondefense</td>
+                                            <td class="py-2 px-3">$G_{\text{nondef}}$</td>
+                                            <td class="py-2 px-3" id="prnValGNondef">$0.75 T</td>
+                                            <td class="py-2 px-3" id="prnPctGNondef">2.6%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Federal Civil Administration</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- State &amp; Local Governments</td>
+                                            <td class="py-2 px-3">$G_{\text{local}}$</td>
+                                            <td class="py-2 px-3" id="prnValGLocal">$3.08 T</td>
+                                            <td class="py-2 px-3" id="prnPctGLocal">10.7%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Regional Public Works &amp; Education</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Net Exports of Goods &amp; Services</td>
+                                            <td class="py-2 px-3">$NX$</td>
+                                            <td class="py-2 px-3" id="prnValNX">-$0.80 T</td>
+                                            <td class="py-2 px-3" id="prnPctNX">-2.8%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Trade Balance ($X - M$)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Gross Exports</td>
+                                            <td class="py-2 px-3">$X$</td>
+                                            <td class="py-2 px-3" id="prnValExp">$3.15 T</td>
+                                            <td class="py-2 px-3" id="prnPctExp">10.9%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Foreign Sales of Domestic Output</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans pl-6 text-slate-500">-- Gross Imports</td>
+                                            <td class="py-2 px-3">$M$</td>
+                                            <td class="py-2 px-3" id="prnValImp">$3.95 T</td>
+                                            <td class="py-2 px-3" id="prnPctImp">13.7%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Domestic Absorption of Foreign Output</td>
+                                        </tr>
+                                        <tr class="bg-brand-50/50 dark:bg-brand-950/30 font-bold text-slate-900 dark:text-white">
+                                            <td class="py-2 px-3 font-sans text-sm">TOTAL GROSS DOMESTIC PRODUCT</td>
+                                            <td class="py-2 px-3">$Y$</td>
+                                            <td class="py-2 px-3 text-sm text-brand-600 dark:text-brand-400" id="prnValGdp">$28.78 T</td>
+                                            <td class="py-2 px-3">100.0%</td>
+                                            <td class="py-2 px-3 font-sans text-slate-500">All Final Demand Transactions</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Derived Indicators & Welfare Metrics Table -->
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Derived Macroeconomic &amp; Price Level Indices</h4>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-400 text-[10px] uppercase block font-sans">Real Output ($y_t$)</span>
+                                    <span class="font-bold text-base text-slate-900 dark:text-white" id="prnRealOutput">$23.25 T</span>
+                                    <span class="text-[10px] text-slate-500 block font-sans">Base-Year Valuation</span>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-400 text-[10px] uppercase block font-sans">GDP Deflator ($P_t$)</span>
+                                    <span class="font-bold text-base text-slate-900 dark:text-white" id="prnDeflatorIdx">123.8</span>
+                                    <span class="text-[10px] text-slate-500 block font-sans">Paasche Price Index</span>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-400 text-[10px] uppercase block font-sans">Nominal Per Capita</span>
+                                    <span class="font-bold text-base text-slate-900 dark:text-white" id="prnPerCapita">$84,152</span>
+                                    <span class="text-[10px] text-slate-500 block font-sans">Pop: 342.0 Million</span>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="text-slate-400 text-[10px] uppercase block font-sans">PPP Per Capita</span>
+                                    <span class="font-bold text-base text-slate-900 dark:text-white" id="prnPppPerCapita">$84,152</span>
+                                    <span class="text-[10px] text-slate-500 block font-sans">International Dollars</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Formal Audit Disclaimer -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4 text-[11px] text-slate-400 leading-relaxed">
+                            <p><strong>Methodological Notice:</strong> This accounting memorandum adheres to the United Nations System of National Accounts (SNA 2008 / 2025 update) and the Bureau of Economic Analysis (BEA) National Income and Product Accounts (NIPA) methodology. Nominal aggregates represent final domestic expenditure transactions. Real GDP reflects chain-type quantity indices normalized to selected benchmark price series. These calculations exclude intermediate business purchases, non-monetized domestic household production, and negative environmental externalities.</p>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Content Banner -->
+        <div class="ad-slot no-print mt-12" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Educational Guide Section (Comprehensive 1,800+ Words Macroeconomic Treatise) -->
+        <section id="guide-section" class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700">
+
+<article class="prose prose-slate dark:prose-invert max-w-none space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed">
+    
+    <!-- Section 1 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            1. Historical Genesis: Simon Kuznets and the 1934 National Accounts Framework
+        </h2>
+        <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-4">
+            Prior to the 1930s, governments operated economic policy largely in empirical darkness. During the Great Depression, President Franklin D. Roosevelt and the United States Congress possessed no comprehensive statistical metrics to gauge the severity of the economic collapse. Officials relied on fragmented, lagging indicators: freight railcar loadings, stock market indices, and industrial blast furnace utilization rates.
+        </p>
+        <p class="mb-4">
+            In response to Senate Resolution 220, the United States Senate commissioned economist <strong>Simon Kuznets</strong> and the National Bureau of Economic Research (NBER), working alongside the Department of Commerce, to formulate a standardized system of national accounts. In 1934, Kuznets delivered the foundational treatise titled <em>National Income, 1929–1932</em> (published as <strong>Senate Document 124, 73rd Congress, 2nd Session</strong>). This milestone document offered the first comprehensive accounting of national income and output produced by the United States economy.
+        </p>
+        <p class="mb-4">
+            Kuznets' empirical accounting revealed that national income had plummeted by more than 50% between 1929 and 1932, providing indisputable quantitative justification for the macroeconomic interventions of the New Deal. During World War II, this accounting structure was adapted by British economists John Maynard Keynes and Richard Stone (who later received the Nobel Memorial Prize in Economic Sciences in 1984 for developing the System of National Accounts) to manage wartime production capacity without triggering hyperinflation.
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60">
+            <h3 class="text-sm font-bold text-blue-900 dark:text-blue-200 uppercase tracking-wider mb-2">Historical Fact: Kuznets' Explicit Warning to Congress</h3>
+            <p class="text-xs text-blue-800 dark:text-blue-300">
+                In his 1934 presentation to the United States Senate, Simon Kuznets explicitly warned: <em>"The welfare of a nation can scarcely be inferred from a measure of national income."</em> Kuznets emphasized that national production figures aggregate transactional activity while completely ignoring how income is distributed across households, the quality of social relationships, leisure time, and whether production consists of constructive capital goods or destructive war armaments.
+            </p>
+        </div>
+        <p>
+            In the decades following the Bretton Woods conference of 1944, the <strong>United Nations System of National Accounts (SNA)</strong>, the <strong>Bureau of Economic Analysis (BEA)</strong> in the United States, the <strong>International Monetary Fund (IMF)</strong>, and the <strong>World Bank</strong> institutionalized Gross Domestic Product as the universal benchmark for international economic comparison and fiscal policymaking.
+        </p>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            2. The Expenditure Approach: Mathematical Architecture and NIPA Identity
+        </h2>
+        <p class="mb-4">
+            In macroeconomic theory, national income accounting rests upon a strict mathematical identity: total production equals total expenditure, which in turn equals total income generated. The most widely referenced framework is the <strong>Expenditure Approach</strong>, codified in BEA NIPA Table 1.1.5:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono">
+            $$Y = C + I + G + NX$$
+        </div>
+        <p class="mb-4">
+            Each component captures a distinct economic decision-making sector within the macroeconomy:
+        </p>
+        
+        <div class="space-y-4 my-6">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Personal Consumption Expenditures ($C$)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Consumption captures all final spending by resident households and non-profit institutions serving households (NPISH). It is divided into three distinct categories:
+                </p>
+                <ul class="list-disc pl-5 mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                    <li><strong>Durable Goods:</strong> Manufactured physical assets with an expected useful economic lifespan exceeding three years (e.g., motor vehicles, home appliances, household furniture).</li>
+                    <li><strong>Nondurable Goods:</strong> Tangible products consumed immediately or within three years (e.g., grocery provisions, motor fuels, pharmaceutical supplies, apparel).</li>
+                    <li><strong>Services:</strong> Intangible economic utilities, representing the largest single component of advanced economies (e.g., healthcare expenditures, housing and rental charges including owner-equivalent rent, legal and financial advisory services, higher education).</li>
+                </ul>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Gross Private Domestic Investment ($I$)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Investment represents additions to the private domestic physical capital stock rather than financial asset purchases (stocks and bonds are excluded transfers). It consists of:
+                </p>
+                <ul class="list-disc pl-5 mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+                    <li><strong>Nonresidential Fixed Investment:</strong> Corporate commercial outlays on physical structures (factories, logistics hubs), industrial machinery, electrical equipment, and intellectual property products (software development, biomedical patents, scientific research).</li>
+                    <li><strong>Residential Fixed Investment:</strong> Construction of new single-family homes, apartment complexes, and tenant improvements. This is categorized as investment rather than consumption because residences provide long-term housing services.</li>
+                    <li><strong>Change in Private Inventories ($\Delta \text{Inv}$):</strong> The net change in physical stocks of raw materials, work-in-progress components, and unsold finished goods held by domestic enterprises. Unsold goods produced in the survey period are treated as inventory investment purchased by the business itself.</li>
+                </ul>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Government Consumption Expenditures &amp; Gross Investment ($G$)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Government spending aggregates purchases of goods and services by federal, regional, and municipal public authorities to provide public services (defense, education, public policing, administrative courts, and road infrastructure).
+                </p>
+                <div class="mt-2 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-[11px] text-amber-800 dark:text-amber-300">
+                    <strong>Critical Exclusion: Transfer Payments:</strong> Social Security retirement pensions, Medicare/Medicaid disbursements, unemployment compensation, and government bond interest payments are <em>excluded</em> from $G$. Transfer payments represent financial income redistribution rather than direct compensation for newly produced goods or services.
+                </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">Net Exports of Goods &amp; Services ($NX = X - M$)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Net exports reflect the net trade balance with foreign economies. <strong>Gross Exports ($X$)</strong> capture domestic goods and services purchased by foreign buyers, injecting external income into the domestic production system. <strong>Gross Imports ($M$)</strong> are subtracted because the consumption, investment, and government figures ($C + I + G$) automatically incorporate imported foreign goods (such as imported consumer electronics or foreign energy resources). Subtracted imports ensure GDP accounts exclusively for domestic production.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            3. Intermediate Goods vs. Final Output: Value-Added Method and Double Counting
+        </h2>
+        <p class="mb-4">
+            A central principle of national accounts methodology is the rigorous segregation of <strong>final goods</strong> from <strong>intermediate goods</strong>. If national statisticians merely summed the gross sales revenues reported across all corporate balance sheets, the resulting aggregate would inflate economic size due to multiple counting of the same physical material.
+        </p>
+        <p class="mb-4">
+            Consider the supply chain of an automobile sold for \$40,000 to an end consumer:
+        </p>
+        <div class="overflow-x-auto my-4">
+            <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden font-mono">
+                <thead class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-300 font-sans font-bold uppercase">
+                    <tr>
+                        <th class="py-2 px-3">Production Stage</th>
+                        <th class="py-2 px-3">Transaction Participant</th>
+                        <th class="py-2 px-3">Gross Sales Price</th>
+                        <th class="py-2 px-3">Intermediate Input Cost</th>
+                        <th class="py-2 px-3 text-emerald-600 dark:text-emerald-400">Value Added ($\Delta V$)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr>
+                        <td class="py-2 px-3 font-sans">Stage 1: Raw Materials</td>
+                        <td class="py-2 px-3 font-sans text-slate-500">Iron ore mining company</td>
+                        <td class="py-2 px-3">$3,000</td>
+                        <td class="py-2 px-3">$0</td>
+                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400">$3,000</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-3 font-sans">Stage 2: Metal Refining</td>
+                        <td class="py-2 px-3 font-sans text-slate-500">Steel processing mill</td>
+                        <td class="py-2 px-3">$8,000</td>
+                        <td class="py-2 px-3">$3,000</td>
+                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400">$5,000</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-3 font-sans">Stage 3: Sub-Assembly</td>
+                        <td class="py-2 px-3 font-sans text-slate-500">Engine &amp; transmission fabricator</td>
+                        <td class="py-2 px-3">$18,000</td>
+                        <td class="py-2 px-3">$8,000</td>
+                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400">$10,000</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-3 font-sans">Stage 4: Final Assembly</td>
+                        <td class="py-2 px-3 font-sans text-slate-500">Automobile manufacturing plant</td>
+                        <td class="py-2 px-3">$34,000</td>
+                        <td class="py-2 px-3">$18,000</td>
+                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400">$16,000</td>
+                    </tr>
+                    <tr>
+                        <td class="py-2 px-3 font-sans">Stage 5: Retail Distribution</td>
+                        <td class="py-2 px-3 font-sans text-slate-500">Licensed automotive dealership</td>
+                        <td class="py-2 px-3">$40,000</td>
+                        <td class="py-2 px-3">$34,000</td>
+                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400">$6,000</td>
+                    </tr>
+                    <tr class="bg-slate-100 dark:bg-slate-900 font-bold">
+                        <td class="py-2 px-3 font-sans" colspan="2">TOTALS</td>
+                        <td class="py-2 px-3 text-red-500">$103,000 (Double Counted)</td>
+                        <td class="py-2 px-3">$63,000</td>
+                        <td class="py-2 px-3 text-emerald-600 dark:text-emerald-400 text-sm">$40,000 (True GDP Contribution)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mb-4">
+            If statisticians summed gross corporate transactions, this single automobile would record \$103,000 in gross output. Through the <strong>Value-Added Method</strong> (pioneered by Wassily Leontief via Input-Output Analysis), each producer's intermediate costs are deducted from revenues:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono">
+            $$\text{GDP} = \sum_{i=1}^{n} \text{Value Added}_i = \sum_{i=1}^{n} \left( \text{Gross Output}_i - \text{Intermediate Inputs}_i \right) = \$40,000$$
+        </div>
+        <p>
+            The value-added sum precisely equals the final retail purchase price paid by the end-user.
+        </p>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            4. Geographic Location vs. Ownership: GDP vs. GNP and GNI
+        </h2>
+        <p class="mb-4">
+            A frequent source of analytical confusion involves the conceptual boundary between <strong>Gross Domestic Product (GDP)</strong> and <strong>Gross National Product (GNP)</strong> (designated in modern SNA terminology as <strong>Gross National Income, GNI</strong>). The distinction centers entirely on <em>geography</em> versus <em>citizenship/ownership</em>:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-brand-600 dark:text-brand-400 mb-2">Gross Domestic Product (GDP)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Measures the market value of all final goods and services produced <strong>within the geographic borders</strong> of a sovereign nation during a designated time period, regardless of who owns the capital or supplies the labor. Output produced by a foreign-owned semiconductor fabrication facility located inside Texas counts in United States GDP.
+                </p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-2">Gross National Product (GNP / GNI)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Measures the total income earned by <strong>permanent citizens and domestically owned corporations</strong> of a country, regardless of where their economic activity physically occurs. Profits generated by an American technology corporation in Ireland and repatriated to California count in United States GNP/GNI.
+                </p>
+            </div>
+        </div>
+        <p class="mb-4">
+            The formal mathematical bridge between these two national accounting metrics is <strong>Net Primary Factor Income from Abroad ($NFI$)</strong>:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono">
+            $$\text{GNP} = \text{GNI} = \text{GDP} + \text{Net Factor Income from Abroad}$$
+            $$\text{Net Factor Income} = \text{Factor Income Received by Residents from Abroad} - \text{Factor Income Paid to Non-Residents Domestically}$$
+        </div>
+        <p>
+            For large continental economies like the United States, GDP and GNI diverge by less than 1%. However, for nations hosting large volumes of multinational corporations (such as Ireland or Luxembourg), GDP can exceed GNI by more than 25% due to massive corporate profit outflows to overseas parent entities. Conversely, economies with massive expatriate workforces remitting earnings home (such as the Philippines) exhibit GNI figures higher than domestic GDP.
+        </p>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            5. Price Deflators, Chained Quantity Indices, and Purchasing Power Parity (PPP)
+        </h2>
+        <p class="mb-4">
+            Because market prices fluctuate across time, economists decompose changes in nominal GDP into price movements versus physical quantity output. The standard tool is the <strong>GDP Deflator</strong>, a Paasche-weighted price index:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono">
+            $$\text{Real GDP}_t = \left( \frac{\text{Nominal GDP}_t}{\text{GDP Deflator}_t} \right) \times 100$$
+        </div>
+        <p class="mb-4">
+            Unlike the Consumer Price Index (CPI), which tracks a fixed consumption basket (Laspeyres index), the GDP Deflator allows its basket weights to update dynamically with actual annual spending patterns, eliminating substitution bias. In 1996, the BEA introduced <strong>chain-type annual-weighted Fisher indices</strong>, compounding growth rates across consecutive years to prevent distant base-year relative price distortion (such as plunging computer hardware prices distorting capital investment aggregates).
+        </p>
+        
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">Purchasing Power Parity (PPP) and the Balassa-Samuelson Effect</h3>
+        <p class="mb-4">
+            Comparing the economic scale of nations using market foreign exchange rates introduces significant bias. Market exchange rates are governed by cross-border trade flows, international debt securities, capital movements, and speculative currency trading.
+        </p>
+        <p class="mb-4">
+            Under the <strong>Balassa-Samuelson hypothesis</strong>, advanced nations enjoy high labor productivity in tradable manufacturing sectors, bidding up domestic equilibrium wages across the entire economy. Consequently, wages in non-tradable sectors (barbers, healthcare assistants, restaurant personnel, domestic transit) are also high, resulting in elevated domestic service price levels. In developing nations, lower average productivity keeps service prices comparatively low.
+        </p>
+        <p>
+            The <strong>World Bank International Comparison Program (ICP)</strong> computes <strong>Purchasing Power Parity (PPP)</strong> conversion factors by surveying identical consumer and investment baskets worldwide. In PPP terms, developing economies (such as China and India) register significantly larger economic volume than market exchange rates indicate, accurately reflecting their domestic purchasing absorption and resource consumption.
+        </p>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            6. Severe Limitations of GDP as a Metric of Human Welfare and Social Progress
+        </h2>
+        <p class="mb-4">
+            While GDP remains an indispensable tool for measuring quarterly business cycle fluctuations and taxable transactional volume, modern economists, the Stiglitz-Sen-Fitoussi Commission (2009), and institutional bodies cite deep structural deficiencies when GDP is improperly interpreted as an index of societal well-being:
+        </p>
+        
+        <div class="space-y-4 my-6">
+            <div class="p-4 rounded-xl bg-red-50/60 dark:bg-red-950/20 border border-red-200 dark:border-red-900/40">
+                <h3 class="text-sm font-bold text-red-900 dark:text-red-200 mb-1">A. Complete Omission of Non-Market Household and Care Labor</h3>
+                <p class="text-xs text-red-800 dark:text-red-300 leading-relaxed">
+                    National accounts only capture monetized market exchanges. Cooking meals at home, cleaning domestic living spaces, raising children, and caring for elderly family members contribute zero value to GDP. British economist Arthur Pigou famously observed that if an individual marries their housekeeper, measured national income decreases because previously remunerated services convert into uncompensated household labor. Time-use surveys compiled by the Bureau of Labor Statistics (BLS) and OECD indicate that unpaid care work represents an unmeasured economic equivalent of 20% to 40% of measured GDP.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40">
+                <h3 class="text-sm font-bold text-amber-900 dark:text-amber-200 mb-1">B. Perverse Incentives and Environmental Degradation Externalities</h3>
+                <p class="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
+                    GDP treats the depletion of non-renewable natural resources as pure current income while completely ignoring capital depreciation of natural assets. When a timber corporation clear-cuts a centuries-old virgin rainforest, timber sales expand GDP, while soil erosion, biodiversity collapse, and lost carbon sequestration capacity are unpenalized. Catastrophes—such as industrial toxic leaks, marine oil spills, hurricane property destruction, and public health epidemics— paradoxically accelerate measured GDP growth because emergency repair work, environmental containment contracts, hospital admissions, and pharmaceutical manufacturing register as positive billable expenditures.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">C. Income Inequality and Skewness of Per Capita Averages</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    GDP per capita is an arithmetic mean ($\frac{\text{GDP}}{\text{Population}}$). In societies characterized by intense wealth concentration, substantial gains in top-tier corporate profits and executive compensation can push overall GDP per capita higher even while real median household earnings and living standards stagnate. A mean metric provides no visibility into economic insecurity, poverty rates, or the actual distribution of national resources.
+                </p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800">
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mb-1">D. Exclusion of the Shadow and Informal Economy</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Transactions executed outside formal financial channels—including cash-in-hand informal trades, subsistence agriculture, unregistered street commerce, and unregulated peer-to-peer activities—are omitted from conventional tax records. In developing nations, the informal sector can account for 30% to 60% of total physical economic activity, making headline GDP figures an incomplete assessment of actual sustenance output.
+                </p>
+            </div>
+        </div>
+
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-4">
+            To address these omissions, international organizations and researchers supplement GDP with multidimensional metrics, including the <strong>United Nations Human Development Index (HDI)</strong>, the <strong>World Bank Genuine Savings Index</strong>, and <strong>Nordhaus and Tobin's Measure of Economic Welfare (MEW)</strong>.
+        </p>
+    </section>
+
+</article>
+
+        </section>
+
+        <!-- Comprehensive FAQ Section (Accordion Cards) -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Knowledge Base &amp; Methodology</span>
+                <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Authoritative answers on national accounts, price deflators, and international output accounting</p>
+            </div>
+
+            <div class="space-y-4 text-xs sm:text-sm">
+                
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>Why does the Expenditure Approach equal the Income and Production Approaches to GDP?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        Every market transaction possesses two complementary sides: whenever a dollar is spent on a final good or service (Expenditure), that exact dollar becomes revenue distributed as wages to labor, rents to property owners, interest to lenders, and residual corporate profit to equity owners (Income Approach). Simultaneously, that expenditure represents the market value of goods created across industries after subtracting intermediate raw inputs (Production / Value-Added Approach). By accounting identity, all three methodologies yield identical theoretical totals, with official accounts reconciled via a small statistical discrepancy entry.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>What is owner-equivalent rent and why does it represent such a large share of GDP?</span>
+                        <summary class="hidden"></summary>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        If national accounts solely tracked formal monetary cash leases paid by tenants, national GDP would artificially decline whenever households purchased their rental properties, despite housing shelter services remaining entirely unchanged. To eliminate this distortion, national statistical agencies (such as the BEA) calculate an imputed transaction called Owners' Equivalent Rent (OER). OER estimates the implicit market rental rate homeowners would pay to rent their own dwellings. In the United States, this single imputed entry accounts for more than \$2 trillion annually in consumer services GDP.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>How are government purchases ($G$) distinguished from government transfer payments?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        Government purchases ($G$) require an explicit reciprocal exchange of new economic output: public authorities pay civil servant salaries, acquire naval defense vessels, construct highway bridges, and operate research laboratories. In contrast, government transfer payments—such as unemployment insurance disbursements, welfare benefits, and Social Security retirement checks—involve no immediate production of a good or service. Transfer funds enter GDP only when recipient citizens ultimately spend those funds on household consumption ($C$).
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>Why can the Change in Private Inventories ($\Delta \text{Inv}$) be a negative number?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        When final consumer demand exceeds current industrial output during a period, business enterprises fulfill incoming orders by selling merchandise manufactured and stockpiled in prior accounting periods. Selling down warehouse inventory satisfies consumer spending ($C$) using previously recorded goods. To ensure GDP measures strictly current production, statisticians record a negative inventory investment ($\Delta \text{Inv} < 0$), which offsets consumption spending and prevents past output from being counted twice.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>What is the difference between Gross Investment and Net Investment?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        Gross Investment ($I$) tallies all newly constructed physical capital assets without considering physical wear, obsolescence, or accidental destruction. Over time, machinery wears down and structures deteriorate—a process termed Consumption of Fixed Capital (Depreciation). Net Investment equals Gross Investment minus Depreciation ($I_{\text{net}} = I - \text{Depreciation}$). Deducting total depreciation from GDP yields Net Domestic Product (NDP), which reflects the sustainable expansion of productive national capacity.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>How does a negative trade balance (Trade Deficit) affect total GDP?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        Net exports equal exports minus imports ($NX = X - M$). When a nation imports more goods and services than it exports ($M > X$), net exports become a negative numerical term, reducing total GDP relative to gross domestic absorption ($C + I + G$). This subtraction occurs because household consumption, private investment, and government purchases automatically incorporate foreign-made items; subtracting imports ensures the remaining sum reflects solely domestic output.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>Why are financial asset transactions (stocks, bonds, real estate title transfers) excluded from GDP?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        Purchasing an existing share of corporate equity, a sovereign bond, or a pre-existing 50-year-old home represents an ownership title transfer of existing wealth rather than new production. No new tangible physical good or service is fabricated during the trade. However, the commission fees paid to licensed stockbrokers, mortgage origination processing fees, and real estate legal settlement services associated with facilitating those transfers are newly performed services, and are consequently added to GDP.
+                    </div>
+                </details>
+
+                <details class="group p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 transition">
+                    <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+                        <span>What are hedonic price adjustments and how do they impact GDP quality measurements?</span>
+                        <span class="transform group-open:rotate-180 transition-transform text-slate-400">&darr;</span>
+                    </summary>
+                    <div class="mt-3 text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-200 dark:border-slate-800 pt-3">
+                        When a computer or smartphone is priced at \$1,000 across consecutive years, but its processing speed doubles, memory quadruples, and camera resolution improves dramatically, holding nominal price constant fails to recognize that consumers received a vastly superior product. Statisticians apply hedonic regression modeling to decompose an asset into individual functional characteristics, assigning implicit prices to performance improvements. In national accounts, hedonic quality enhancements are recorded as increased real output and falling quality-adjusted prices, boosting measured Real GDP growth.
+                    </div>
+                </details>
+
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    </span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Economic &amp; Policy Sciences. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Economic Methodological Disclosure:</strong> The CalcWorld Macroeconomic GDP Calculator simulates national income and expenditure accounts structured according to the United Nations System of National Accounts (SNA), the Bureau of Economic Analysis (BEA NIPA), the International Monetary Fund (IMF WEO), and the World Bank International Comparison Program (ICP). This educational tool is provided for analytical, academic, and policy research purposes. Refer to designated official statistical bureaus for sovereign regulatory certifications and primary national income releases.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Actions:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="switchTab('expenditure')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Breakdown</button>
+        <button type="button" onclick="switchTab('deflator')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Real/Deflator</button>
+        <button type="button" onclick="switchTab('global')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Global Table</button>
+        <button type="button" onclick="copyFormattedSummary()" class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Macroeconomic data copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- 1. Global Economic Data & Configuration ---
+    let unitScale = 'T'; // 'T' = Trillions USD, 'B' = Billions USD
+    let activeEconomyKey = 'usa';
+
+    // Curated Historical & Global Economies Dataset (Recent BEA, IMF WEO, World Bank ICP)
+    // Figures stored natively in Trillions USD ($T) and Millions for population
+    const globalEconomiesData = {
+        usa: {
+            name: "United States",
+            flag: "🇺🇸",
+            c_dur: 2.25,
+            c_nondur: 3.95,
+            c_serv: 13.35,
+            i_nonres: 3.75,
+            i_res: 1.15,
+            i_inv: 0.15,
+            g_def: 1.15,
+            g_nondef: 0.75,
+            g_local: 3.08,
+            exp: 3.15,
+            imp: 3.95,
+            deflator: 123.8,
+            prev_deflator: 120.5,
+            population: 342.0,
+            ppp_factor: 1.00,
+            ppp_gdp: 28.78
+        },
+        china: {
+            name: "China",
+            flag: "🇨🇳",
+            c_dur: 1.10,
+            c_nondur: 2.61,
+            c_serv: 3.70,
+            i_nonres: 5.95,
+            i_res: 1.65,
+            i_inv: 0.18,
+            g_def: 0.45,
+            g_nondef: 0.85,
+            g_local: 1.44,
+            exp: 3.52,
+            imp: 2.92,
+            deflator: 115.0,
+            prev_deflator: 114.2,
+            population: 1410.0,
+            ppp_factor: 0.525,
+            ppp_gdp: 35.29
+        },
+        germany: {
+            name: "Germany",
+            flag: "🇩🇪",
+            c_dur: 0.25,
+            c_nondur: 0.58,
+            c_serv: 1.55,
+            i_nonres: 0.68,
+            i_res: 0.28,
+            i_inv: 0.03,
+            g_def: 0.08,
+            g_nondef: 0.38,
+            g_local: 0.55,
+            exp: 2.15,
+            imp: 1.94,
+            deflator: 122.0,
+            prev_deflator: 119.0,
+            population: 84.4,
+            ppp_factor: 0.807,
+            ppp_gdp: 5.69
+        },
+        japan: {
+            name: "Japan",
+            flag: "🇯🇵",
+            c_dur: 0.21,
+            c_nondur: 0.55,
+            c_serv: 1.50,
+            i_nonres: 0.75,
+            i_res: 0.28,
+            i_inv: 0.03,
+            g_def: 0.06,
+            g_nondef: 0.28,
+            g_local: 0.54,
+            exp: 0.88,
+            imp: 0.97,
+            deflator: 108.5,
+            prev_deflator: 106.2,
+            population: 124.5,
+            ppp_factor: 0.612,
+            ppp_gdp: 6.72
+        },
+        uk: {
+            name: "United Kingdom",
+            flag: "🇬🇧",
+            c_dur: 0.18,
+            c_nondur: 0.44,
+            c_serv: 1.50,
+            i_nonres: 0.45,
+            i_res: 0.15,
+            i_inv: 0.02,
+            g_def: 0.10,
+            g_nondef: 0.30,
+            g_local: 0.45,
+            exp: 1.10,
+            imp: 1.19,
+            deflator: 124.0,
+            prev_deflator: 120.4,
+            population: 68.2,
+            ppp_factor: 0.868,
+            ppp_gdp: 4.03
+        },
+        india: {
+            name: "India",
+            flag: "🇮🇳",
+            c_dur: 0.28,
+            c_nondur: 0.95,
+            c_serv: 1.15,
+            i_nonres: 0.95,
+            i_res: 0.25,
+            i_inv: 0.05,
+            g_def: 0.09,
+            g_nondef: 0.14,
+            g_local: 0.20,
+            exp: 0.84,
+            imp: 0.96,
+            deflator: 138.0,
+            prev_deflator: 132.5,
+            population: 1440.0,
+            ppp_factor: 0.270,
+            ppp_gdp: 14.59
+        },
+        uae: {
+            name: "United Arab Emirates",
+            flag: "🇦🇪",
+            c_dur: 0.03,
+            c_nondur: 0.05,
+            c_serv: 0.11,
+            i_nonres: 0.09,
+            i_res: 0.03,
+            i_inv: 0.01,
+            g_def: 0.02,
+            g_nondef: 0.02,
+            g_local: 0.03,
+            exp: 0.46,
+            imp: 0.34,
+            deflator: 118.0,
+            prev_deflator: 115.2,
+            population: 10.2,
+            ppp_factor: 0.537,
+            ppp_gdp: 0.95
+        }
+    };
+
+    // Chart.js references
+    let doughnutChart = null;
+    let comparisonChart = null;
+
+    // --- 2. Calculation Engine ---
+    function calculateAll() {
+        const factor = (unitScale === 'B') ? 1000 : 1;
+
+        // Read raw user inputs
+        let c_dur = parseFloat(document.getElementById('input_c_dur').value) || 0;
+        let c_nondur = parseFloat(document.getElementById('input_c_nondur').value) || 0;
+        let c_serv = parseFloat(document.getElementById('input_c_serv').value) || 0;
+
+        let i_nonres = parseFloat(document.getElementById('input_i_nonres').value) || 0;
+        let i_res = parseFloat(document.getElementById('input_i_res').value) || 0;
+        let i_inv = parseFloat(document.getElementById('input_i_inv').value) || 0;
+
+        let g_def = parseFloat(document.getElementById('input_g_def').value) || 0;
+        let g_nondef = parseFloat(document.getElementById('input_g_nondef').value) || 0;
+        let g_local = parseFloat(document.getElementById('input_g_local').value) || 0;
+
+        let exp = parseFloat(document.getElementById('input_exp').value) || 0;
+        let imp = parseFloat(document.getElementById('input_imp').value) || 0;
+
+        let deflator = parseFloat(document.getElementById('input_deflator').value) || 100;
+        let prevDeflator = parseFloat(document.getElementById('input_prev_deflator').value) || 100;
+        let populationM = parseFloat(document.getElementById('input_population').value) || 1;
+        let pppFactor = parseFloat(document.getElementById('input_ppp_factor').value) || 1.0;
+
+        // Convert internally to Trillions for standard math
+        let c_dur_T = c_dur / (unitScale === 'B' ? 1000 : 1);
+        let c_nondur_T = c_nondur / (unitScale === 'B' ? 1000 : 1);
+        let c_serv_T = c_serv / (unitScale === 'B' ? 1000 : 1);
+        let c_total_T = c_dur_T + c_nondur_T + c_serv_T;
+
+        let i_nonres_T = i_nonres / (unitScale === 'B' ? 1000 : 1);
+        let i_res_T = i_res / (unitScale === 'B' ? 1000 : 1);
+        let i_inv_T = i_inv / (unitScale === 'B' ? 1000 : 1);
+        let i_total_T = i_nonres_T + i_res_T + i_inv_T;
+
+        let g_def_T = g_def / (unitScale === 'B' ? 1000 : 1);
+        let g_nondef_T = g_nondef / (unitScale === 'B' ? 1000 : 1);
+        let g_local_T = g_local / (unitScale === 'B' ? 1000 : 1);
+        let g_total_T = g_def_T + g_nondef_T + g_local_T;
+
+        let exp_T = exp / (unitScale === 'B' ? 1000 : 1);
+        let imp_T = imp / (unitScale === 'B' ? 1000 : 1);
+        let nx_total_T = exp_T - imp_T;
+
+        // Total Nominal GDP
+        let gdp_nominal_T = c_total_T + i_total_T + g_total_T + nx_total_T;
+        if (gdp_nominal_T <= 0) gdp_nominal_T = 0.001;
+
+        // Shares
+        let c_pct = (c_total_T / gdp_nominal_T) * 100;
+        let i_pct = (i_total_T / gdp_nominal_T) * 100;
+        let g_pct = (g_total_T / gdp_nominal_T) * 100;
+        let nx_pct = (nx_total_T / gdp_nominal_T) * 100;
+
+        // Real GDP
+        let real_gdp_T = (gdp_nominal_T / deflator) * 100;
+
+        // Deflator Inflation
+        let inflation_rate = prevDeflator > 0 ? ((deflator - prevDeflator) / prevDeflator) * 100 : 0;
+
+        // Per Capita (Nominal and Real)
+        let pop_actual = populationM * 1000000;
+        let gdp_nominal_dollars = gdp_nominal_T * 1000000000000;
+        let per_capita_nominal = pop_actual > 0 ? (gdp_nominal_dollars / pop_actual) : 0;
+
+        // PPP GDP and PPP Per Capita
+        let ppp_gdp_T = pppFactor > 0 ? (gdp_nominal_T / pppFactor) : gdp_nominal_T;
+        let ppp_gdp_dollars = ppp_gdp_T * 1000000000000;
+        let per_capita_ppp = pop_actual > 0 ? (ppp_gdp_dollars / pop_actual) : 0;
+
+        // Update DOM Labels in Input Card
+        document.getElementById('val_c_dur').textContent = formatVal(c_dur);
+        document.getElementById('val_c_nondur').textContent = formatVal(c_nondur);
+        document.getElementById('val_c_serv').textContent = formatVal(c_serv);
+        document.getElementById('subtotalC_badge').textContent = `$${formatVal(c_total_T * factor)} ${unitScale} (${c_pct.toFixed(1)}%)`;
+
+        document.getElementById('val_i_nonres').textContent = formatVal(i_nonres);
+        document.getElementById('val_i_res').textContent = formatVal(i_res);
+        document.getElementById('val_i_inv').textContent = formatVal(i_inv);
+        document.getElementById('subtotalI_badge').textContent = `$${formatVal(i_total_T * factor)} ${unitScale} (${i_pct.toFixed(1)}%)`;
+
+        document.getElementById('val_g_def').textContent = formatVal(g_def);
+        document.getElementById('val_g_nondef').textContent = formatVal(g_nondef);
+        document.getElementById('val_g_local').textContent = formatVal(g_local);
+        document.getElementById('subtotalG_badge').textContent = `$${formatVal(g_total_T * factor)} ${unitScale} (${g_pct.toFixed(1)}%)`;
+
+        document.getElementById('val_exp').textContent = formatVal(exp);
+        document.getElementById('val_imp').textContent = formatVal(imp);
+        document.getElementById('subtotalNX_badge').textContent = `${nx_total_T >= 0 ? '+' : ''}$${formatVal(nx_total_T * factor)} ${unitScale} (${nx_pct.toFixed(1)}%)`;
+
+        // Hero Readout
+        document.getElementById('resGdpPrimary').textContent = `$${gdp_nominal_T.toFixed(2)}`;
+        document.getElementById('resGdpUnit').textContent = 'Trillion';
+        document.getElementById('resGdpSecondary').textContent = `$${(gdp_nominal_T * 1000).toLocaleString('en-US', {maximumFractionDigits: 0})} Billion`;
+
+        // Trade Balance badge
+        const tbBadge = document.getElementById('tradeBalanceBadge');
+        const tbText = document.getElementById('tradeBalanceText');
+        if (nx_total_T >= 0) {
+            tbText.textContent = `Trade Surplus (+${nx_pct.toFixed(1)}%)`;
+            tbBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5';
+            tbBadge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-emerald-500';
+        } else {
+            tbText.textContent = `Trade Deficit (${nx_pct.toFixed(1)}%)`;
+            tbBadge.className = 'text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5';
+            tbBadge.querySelector('span:first-child').className = 'w-2 h-2 rounded-full bg-amber-500';
+        }
+
+        // Structure Description
+        let desc = "";
+        if (c_pct >= 65) {
+            desc = `Consumption-dominated economy. Household spending accounts for ${c_pct.toFixed(1)}% of output, with investment at ${i_pct.toFixed(1)}% and net trade at ${nx_pct.toFixed(1)}%.`;
+        } else if (i_pct >= 35) {
+            desc = `Investment-intensive economy. Capital accumulation accounts for ${i_pct.toFixed(1)}% of output, driving rapid industrial expansion alongside ${c_pct.toFixed(1)}% consumption.`;
+        } else if (nx_pct >= 5) {
+            desc = `Export-led economy. Net exports contribute an exceptional +${nx_pct.toFixed(1)}% surplus to total GDP, reflecting strong international market competitiveness.`;
+        } else {
+            desc = `Balanced macroeconomic structure. Private consumption generates ${c_pct.toFixed(1)}%, private investment accounts for ${i_pct.toFixed(1)}%, and public spending represents ${g_pct.toFixed(1)}%.`;
+        }
+        document.getElementById('structureDescription').textContent = desc;
+
+        // 8 Key Metrics Grid
+        document.getElementById('metric_c_val').textContent = `$${c_total_T.toFixed(2)} T`;
+        document.getElementById('metric_c_pct').textContent = `${c_pct.toFixed(1)}% of GDP`;
+
+        document.getElementById('metric_i_val').textContent = `$${i_total_T.toFixed(2)} T`;
+        document.getElementById('metric_i_pct').textContent = `${i_pct.toFixed(1)}% of GDP`;
+
+        document.getElementById('metric_g_val').textContent = `$${g_total_T.toFixed(2)} T`;
+        document.getElementById('metric_g_pct').textContent = `${g_pct.toFixed(1)}% of GDP`;
+
+        document.getElementById('metric_nx_val').textContent = `${nx_total_T >= 0 ? '+' : ''}$${nx_total_T.toFixed(2)} T`;
+        document.getElementById('metric_nx_pct').textContent = `${nx_pct.toFixed(1)}% of GDP`;
+
+        document.getElementById('metric_real_gdp').textContent = `$${real_gdp_T.toFixed(2)} T`;
+
+        document.getElementById('metric_inflation').textContent = `${inflation_rate >= 0 ? '+' : ''}${inflation_rate.toFixed(2)}%`;
+        document.getElementById('metric_deflator_idx').textContent = `Deflator: ${deflator.toFixed(1)}`;
+
+        document.getElementById('metric_per_capita').textContent = `$${Math.round(per_capita_nominal).toLocaleString('en-US')}`;
+        document.getElementById('metric_ppp_per_capita').textContent = `$${Math.round(per_capita_ppp).toLocaleString('en-US')}`;
+        document.getElementById('metric_ppp_gdp_alt').textContent = `PPP: $${ppp_gdp_T.toFixed(2)} T`;
+
+        // Tab 1: Doughnut Legend & Badges
+        document.getElementById('doughnutTotalBadge').textContent = `Total: $${gdp_nominal_T.toFixed(2)} T`;
+        document.getElementById('pie_c_legend').textContent = `$${c_total_T.toFixed(2)} T (${c_pct.toFixed(1)}%)`;
+        document.getElementById('pie_i_legend').textContent = `$${i_total_T.toFixed(2)} T (${i_pct.toFixed(1)}%)`;
+        document.getElementById('pie_g_legend').textContent = `$${g_total_T.toFixed(2)} T (${g_pct.toFixed(1)}%)`;
+        document.getElementById('pie_nx_legend').textContent = `${nx_total_T >= 0 ? '+' : ''}$${nx_total_T.toFixed(2)} T (${nx_pct.toFixed(1)}%)`;
+
+        // Tab 2: Deflator view
+        document.getElementById('tab2_nominal_val').textContent = `$${gdp_nominal_T.toFixed(2)} T`;
+        document.getElementById('tab2_deflator_val').textContent = deflator.toFixed(1);
+        document.getElementById('tab2_deflator_sub').textContent = `Inflation: ${inflation_rate >= 0 ? '+' : ''}${inflation_rate.toFixed(2)}%`;
+        document.getElementById('tab2_real_val').textContent = `$${real_gdp_T.toFixed(2)} T`;
+
+        // Tab 4: Print Table
+        document.getElementById('prnValC').textContent = `$${c_total_T.toFixed(2)} T`;
+        document.getElementById('prnPctC').textContent = `${c_pct.toFixed(1)}%`;
+        document.getElementById('prnValCDur').textContent = `$${c_dur_T.toFixed(2)} T`;
+        document.getElementById('prnPctCDur').textContent = `${((c_dur_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValCNondur').textContent = `$${c_nondur_T.toFixed(2)} T`;
+        document.getElementById('prnPctCNondur').textContent = `${((c_nondur_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValCServ').textContent = `$${c_serv_T.toFixed(2)} T`;
+        document.getElementById('prnPctCServ').textContent = `${((c_serv_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+
+        document.getElementById('prnValI').textContent = `$${i_total_T.toFixed(2)} T`;
+        document.getElementById('prnPctI').textContent = `${i_pct.toFixed(1)}%`;
+        document.getElementById('prnValINonres').textContent = `$${i_nonres_T.toFixed(2)} T`;
+        document.getElementById('prnPctINonres').textContent = `${((i_nonres_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValIRes').textContent = `$${i_res_T.toFixed(2)} T`;
+        document.getElementById('prnPctIRes').textContent = `${((i_res_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValIInv').textContent = `$${i_inv_T.toFixed(2)} T`;
+        document.getElementById('prnPctIInv').textContent = `${((i_inv_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+
+        document.getElementById('prnValG').textContent = `$${g_total_T.toFixed(2)} T`;
+        document.getElementById('prnPctG').textContent = `${g_pct.toFixed(1)}%`;
+        document.getElementById('prnValGDef').textContent = `$${g_def_T.toFixed(2)} T`;
+        document.getElementById('prnPctGDef').textContent = `${((g_def_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValGNondef').textContent = `$${g_nondef_T.toFixed(2)} T`;
+        document.getElementById('prnPctGNondef').textContent = `${((g_nondef_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValGLocal').textContent = `$${g_local_T.toFixed(2)} T`;
+        document.getElementById('prnPctGLocal').textContent = `${((g_local_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+
+        document.getElementById('prnValNX').textContent = `${nx_total_T >= 0 ? '+' : ''}$${nx_total_T.toFixed(2)} T`;
+        document.getElementById('prnPctNX').textContent = `${nx_pct.toFixed(1)}%`;
+        document.getElementById('prnValExp').textContent = `$${exp_T.toFixed(2)} T`;
+        document.getElementById('prnPctExp').textContent = `${((exp_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+        document.getElementById('prnValImp').textContent = `$${imp_T.toFixed(2)} T`;
+        document.getElementById('prnPctImp').textContent = `${((imp_T / gdp_nominal_T) * 100).toFixed(1)}%`;
+
+        document.getElementById('prnValGdp').textContent = `$${gdp_nominal_T.toFixed(2)} T`;
+        document.getElementById('prnRealOutput').textContent = `$${real_gdp_T.toFixed(2)} T`;
+        document.getElementById('prnDeflatorIdx').textContent = deflator.toFixed(1);
+        document.getElementById('prnPerCapita').textContent = `$${Math.round(per_capita_nominal).toLocaleString('en-US')}`;
+        document.getElementById('prnPppPerCapita').textContent = `$${Math.round(per_capita_ppp).toLocaleString('en-US')}`;
+
+        // MathJax Step Evaluation
+        updateMathJaxSteps(c_dur_T, c_nondur_T, c_serv_T, c_total_T,
+                           i_nonres_T, i_res_T, i_inv_T, i_total_T,
+                           g_def_T, g_nondef_T, g_local_T, g_total_T,
+                           exp_T, imp_T, nx_total_T, gdp_nominal_T);
+
+        // Update Charts
+        updateCharts(c_total_T, i_total_T, g_total_T, exp_T, imp_T, gdp_nominal_T, real_gdp_T, ppp_gdp_T);
+    }
+
+    function formatVal(v) {
+        return (Math.abs(v) < 10 && v !== 0) ? v.toFixed(2) : v.toFixed(1);
+    }
+
+    function updateMathJaxSteps(c_dur, c_nondur, c_serv, c_tot,
+                                i_non, i_res, i_inv, i_tot,
+                                g_def, g_non, g_loc, g_tot,
+                                exp, imp, nx_tot, gdp_tot) {
+        const step1 = document.getElementById('mathStep1');
+        const step2 = document.getElementById('mathStep2');
+        const step3 = document.getElementById('mathStep3');
+        const step4 = document.getElementById('mathStep4');
+        const step5 = document.getElementById('mathStep5');
+
+        if (step1 && step2 && step3 && step4 && step5) {
+            step1.innerHTML = `$$C = C_{\\text{dur}} + C_{\\text{nondur}} + C_{\\text{serv}} = ${c_dur.toFixed(2)} + ${c_nondur.toFixed(2)} + ${c_serv.toFixed(2)} = ${c_tot.toFixed(2)}\\text{ Trillion USD}$$`;
+            step2.innerHTML = `$$I = I_{\\text{nonres}} + I_{\\text{res}} + \\Delta \\text{Inv} = ${i_non.toFixed(2)} + ${i_res.toFixed(2)} + ${i_inv.toFixed(2)} = ${i_tot.toFixed(2)}\\text{ Trillion USD}$$`;
+            step3.innerHTML = `$$G = G_{\\text{def}} + G_{\\text{nondef}} + G_{\\text{local}} = ${g_def.toFixed(2)} + ${g_non.toFixed(2)} + ${g_loc.toFixed(2)} = ${g_tot.toFixed(2)}\\text{ Trillion USD}$$`;
+            step4.innerHTML = `$$NX = X - M = ${exp.toFixed(2)} - ${imp.toFixed(2)} = ${nx_tot >= 0 ? '+' : ''}${nx_tot.toFixed(2)}\\text{ Trillion USD (${nx_tot >= 0 ? 'Surplus' : 'Deficit'})}$$`;
+            step5.innerHTML = `$$Y = C + I + G + NX = ${c_tot.toFixed(2)} + ${i_tot.toFixed(2)} + ${g_tot.toFixed(2)} + (${nx_tot.toFixed(2)}) = ${gdp_tot.toFixed(2)}\\text{ Trillion USD}$$`;
+            
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([step1, step2, step3, step4, step5]).catch(function (err) {});
+            }
+        }
+    }
+
+    // --- 3. Chart.js Visualization Logic ---
+    function initCharts() {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+        // Doughnut Chart for Expenditure Breakdown
+        const ctxDoughnut = document.getElementById('gdpDoughnutChart').getContext('2d');
+        doughnutChart = new Chart(ctxDoughnut, {
+            type: 'doughnut',
+            data: {
+                labels: ['Consumption (C)', 'Investment (I)', 'Government (G)', 'Exports (X)'],
+                datasets: [{
+                    data: [19.55, 5.05, 4.98, 3.15],
+                    backgroundColor: [
+                        '#0284c7', // sky-600
+                        '#059669', // emerald-600
+                        '#7c3aed', // violet-600
+                        '#ea580c'  // orange-600
+                    ],
+                    borderColor: isDark ? '#1e293b' : '#ffffff',
+                    borderWidth: 2,
+                    hoverOffset: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = ((val / total) * 100).toFixed(1);
+                                return ` ${context.label}: $${val.toFixed(2)} T (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                cutout: '68%'
+            }
+        });
+
+        // Real vs Nominal Bar Chart
+        const ctxBar = document.getElementById('realVsNominalChart').getContext('2d');
+        comparisonChart = new Chart(ctxBar, {
+            type: 'bar',
+            data: {
+                labels: ['Active Profile', 'United States', 'China', 'Germany', 'Japan', 'India'],
+                datasets: [
+                    {
+                        label: 'Nominal GDP ($T)',
+                        data: [28.78, 28.78, 18.53, 4.59, 4.11, 3.94],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Real GDP (Base Adj $T)',
+                        data: [23.25, 23.25, 16.11, 3.76, 3.78, 2.85],
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'PPP GDP ($T)',
+                        data: [28.78, 28.78, 35.29, 5.69, 6.72, 14.59],
+                        backgroundColor: '#8b5cf6',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { family: 'Inter', size: 11 } }
+                    },
+                    y: {
+                        grid: { color: gridColor },
+                        ticks: {
+                            color: textColor,
+                            font: { family: 'JetBrains Mono', size: 10 },
+                            callback: function(value) { return '$' + value + 'T'; }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: textColor, boxWidth: 12, font: { family: 'Inter', size: 11, weight: 'bold' } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: $${context.raw.toFixed(2)} Trillion`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function updateCharts(c_tot, i_tot, g_tot, exp, imp, gdp_tot, real_gdp, ppp_gdp) {
+        if (doughnutChart) {
+            doughnutChart.data.datasets[0].data = [
+                Math.max(0, c_tot),
+                Math.max(0, i_tot),
+                Math.max(0, g_tot),
+                Math.max(0, exp)
+            ];
+            doughnutChart.update();
+        }
+
+        if (comparisonChart) {
+            comparisonChart.data.datasets[0].data[0] = gdp_tot;
+            comparisonChart.data.datasets[1].data[0] = real_gdp;
+            comparisonChart.data.datasets[2].data[0] = ppp_gdp;
+            comparisonChart.update();
+        }
+    }
+
+    // --- 4. Global Reference Table Builder ---
+    function buildGlobalTable() {
+        const tbody = document.getElementById('globalTableBody');
+        tbody.innerHTML = '';
+
+        for (const [key, d] of Object.entries(globalEconomiesData)) {
+            const nom_gdp = d.c_dur + d.c_nondur + d.c_serv + d.i_nonres + d.i_res + d.i_inv + d.g_def + d.g_nondef + d.g_local + d.exp - d.imp;
+            const c_tot = d.c_dur + d.c_nondur + d.c_serv;
+            const i_tot = d.i_nonres + d.i_res + d.i_inv;
+            const c_share = ((c_tot / nom_gdp) * 100).toFixed(0);
+            const i_share = ((i_tot / nom_gdp) * 100).toFixed(0);
+            const nom_per_cap = Math.round((nom_gdp * 1000000000000) / (d.population * 1000000));
+            const ppp_per_cap = Math.round((d.ppp_gdp * 1000000000000) / (d.population * 1000000));
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-900/50 transition';
+            tr.id = `row_${key}`;
+            tr.innerHTML = `
+                <td class="py-2.5 px-3 font-sans font-semibold text-slate-800 dark:text-slate-200">
+                    <span class="mr-1.5">${d.flag}</span> ${d.name}
+                </td>
+                <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">$${nom_gdp.toFixed(2)} T</td>
+                <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400 font-bold">$${d.ppp_gdp.toFixed(2)} T</td>
+                <td class="py-2.5 px-3 text-slate-500">${d.population >= 1000 ? (d.population/1000).toFixed(2) + ' B' : d.population.toFixed(1) + ' M'}</td>
+                <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300">$${nom_per_cap.toLocaleString()}</td>
+                <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300">$${ppp_per_cap.toLocaleString()}</td>
+                <td class="py-2.5 px-3">
+                    <span class="text-sky-600 dark:text-sky-400">${c_share}%</span> / <span class="text-emerald-600 dark:text-emerald-400">${i_share}%</span>
+                </td>
+                <td class="py-2.5 px-3 text-center">
+                    <button type="button" onclick="loadCountryPreset('${key}')" class="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-brand-50 hover:bg-brand-100 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800 transition">
+                        Load
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+
+    function filterGlobalTable() {
+        const query = document.getElementById('globalTableFilter').value.toLowerCase();
+        const rows = document.getElementById('globalTableBody').getElementsByTagName('tr');
+        for (let r of rows) {
+            const txt = r.textContent.toLowerCase();
+            r.style.display = txt.includes(query) ? '' : 'none';
+        }
+    }
+
+    // --- 5. Presets & Controls ---
+    function loadCountryPreset(key) {
+        const d = globalEconomiesData[key];
+        if (!d) return;
+
+        activeEconomyKey = key;
+        const factor = (unitScale === 'B') ? 1000 : 1;
+
+        document.getElementById('input_c_dur').value = (d.c_dur * factor).toFixed(2);
+        document.getElementById('input_c_nondur').value = (d.c_nondur * factor).toFixed(2);
+        document.getElementById('input_c_serv').value = (d.c_serv * factor).toFixed(2);
+
+        document.getElementById('input_i_nonres').value = (d.i_nonres * factor).toFixed(2);
+        document.getElementById('input_i_res').value = (d.i_res * factor).toFixed(2);
+        document.getElementById('input_i_inv').value = (d.i_inv * factor).toFixed(2);
+
+        document.getElementById('input_g_def').value = (d.g_def * factor).toFixed(2);
+        document.getElementById('input_g_nondef').value = (d.g_nondef * factor).toFixed(2);
+        document.getElementById('input_g_local').value = (d.g_local * factor).toFixed(2);
+
+        document.getElementById('input_exp').value = (d.exp * factor).toFixed(2);
+        document.getElementById('input_imp').value = (d.imp * factor).toFixed(2);
+
+        document.getElementById('input_deflator').value = d.deflator.toFixed(1);
+        document.getElementById('input_prev_deflator').value = d.prev_deflator.toFixed(1);
+        document.getElementById('input_population').value = d.population.toFixed(1);
+        document.getElementById('input_ppp_factor').value = d.ppp_factor.toFixed(3);
+
+        document.getElementById('heroEconomyLabel').textContent = `${d.flag} ${d.name} Gross Domestic Product`;
+        document.getElementById('prnReportTitle').textContent = `${d.name} Macroeconomic Accounting Brief`;
+        document.getElementById('prnMetaCountry').value = `${d.name} (National Accounts)`;
+
+        calculateAll();
+        showToast(`Loaded ${d.name} macroeconomic profile!`);
+    }
+
+    function resetCalculatorDefaults() {
+        loadCountryPreset('usa');
+        showToast("Calculator reset to United States baseline.");
+    }
+
+    function setUnitScale(scale) {
+        if (unitScale === scale) return;
+        const oldScale = unitScale;
+        unitScale = scale;
+
+        const btnT = document.getElementById('unitBtn_T');
+        const btnB = document.getElementById('unitBtn_B');
+
+        if (scale === 'T') {
+            btnT.className = 'px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm';
+            btnB.className = 'px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200';
+        } else {
+            btnB.className = 'px-2 py-0.5 rounded-md bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm';
+            btnT.className = 'px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200';
+        }
+
+        // Rescale all input numbers
+        const multiplier = (scale === 'B') ? 1000 : 0.001;
+        const inputs = [
+            'input_c_dur', 'input_c_nondur', 'input_c_serv',
+            'input_i_nonres', 'input_i_res', 'input_i_inv',
+            'input_g_def', 'input_g_nondef', 'input_g_local',
+            'input_exp', 'input_imp'
+        ];
+        for (const id of inputs) {
+            const el = document.getElementById(id);
+            el.value = (parseFloat(el.value) * multiplier).toFixed(2);
+        }
+
+        calculateAll();
+        showToast(`Display unit shifted to ${scale === 'T' ? 'Trillions' : 'Billions'} USD`);
+    }
+
+    function toggleDeflatorInputs() {
+        const content = document.getElementById('deflatorInputsContent');
+        const chevron = document.getElementById('deflatorChevron');
+        if (content.classList.contains('hidden')) {
+            content.classList.remove('hidden');
+            chevron.classList.add('rotate-180');
+        } else {
+            content.classList.add('hidden');
+            chevron.classList.remove('rotate-180');
+        }
+    }
+
+    // --- 6. Tab Switching & UI Navigation ---
+    function switchTab(tabId) {
+        const panels = document.querySelectorAll('.tab-panel');
+        panels.forEach(p => p.classList.remove('active'));
+
+        const buttons = document.querySelectorAll('.tab-btn');
+        buttons.forEach(b => {
+            b.classList.remove('active', 'bg-brand-600', 'text-white');
+            b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        });
+
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        const targetBtn = document.getElementById(`tabBtn_${tabId}`);
+
+        if (targetPanel) targetPanel.classList.add('active');
+        if (targetBtn) {
+            targetBtn.classList.add('active', 'bg-brand-600', 'text-white');
+            targetBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        }
+
+        if (tabId === 'expenditure' && doughnutChart) {
+            doughnutChart.resize();
+        } else if (tabId === 'deflator' && comparisonChart) {
+            comparisonChart.resize();
+        }
+    }
+
+    // --- 7. Theme & Feedback Handlers ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+
+        // Re-theme charts
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+        if (comparisonChart) {
+            comparisonChart.options.scales.x.ticks.color = textColor;
+            comparisonChart.options.scales.y.ticks.color = textColor;
+            comparisonChart.options.scales.y.grid.color = gridColor;
+            comparisonChart.options.plugins.legend.labels.color = textColor;
+            comparisonChart.update();
+        }
+        if (doughnutChart) {
+            doughnutChart.data.datasets[0].borderColor = isDark ? '#1e293b' : '#ffffff';
+            doughnutChart.update();
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => { toast.classList.remove('show'); }, 2800);
+    }
+
+    function copyFormattedSummary() {
+        const nominalGdp = document.getElementById('resGdpPrimary').textContent;
+        const realGdp = document.getElementById('metric_real_gdp').textContent;
+        const cVal = document.getElementById('metric_c_val').textContent;
+        const iVal = document.getElementById('metric_i_val').textContent;
+        const gVal = document.getElementById('metric_g_val').textContent;
+        const nxVal = document.getElementById('metric_nx_val').textContent;
+        const perCapita = document.getElementById('metric_per_capita').textContent;
+        const deflator = document.getElementById('metric_deflator_idx').textContent;
+
+        const summary = `--- Macroeconomic GDP Accounting Summary (CalcWorld) ---
+Total Nominal GDP (Y): ${nominalGdp} Trillion USD
+Real Chained Output: ${realGdp} (Base Year Constant)
+- Personal Consumption (C): ${cVal}
+- Gross Domestic Investment (I): ${iVal}
+- Government Expenditures (G): ${gVal}
+- Net Exports (NX = X - M): ${nxVal}
+Nominal GDP Per Capita: ${perCapita}
+GDP Deflator / Price Index: ${deflator}
+Standards: BEA NIPA Table 1.1.5, IMF WEO, World Bank ICP
+Reference: https://calcworld.net/other/gdp-calculator`;
+
+        navigator.clipboard.writeText(summary).then(() => {
+            showToast("Macroeconomic summary copied to clipboard!");
+        }).catch(() => {
+            showToast("Failed to copy data.");
+        });
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('leadSubmitBtn');
+        const email = document.getElementById('leadEmailInput').value;
+        btn.disabled = true;
+        btn.innerHTML = 'Sending...';
+        setTimeout(() => {
+            btn.innerHTML = '✓ Reference PDF Dispatched!';
+            btn.classList.remove('bg-brand-500', 'hover:bg-brand-400');
+            btn.classList.add('bg-emerald-600');
+            showToast(`Technical guide sent to ${email}`);
+        }, 1200);
+    }
+
+    // --- 8. Initialization Lifecycle ---
+    window.addEventListener('DOMContentLoaded', () => {
+        // Set live timestamp
+        const now = new Date();
+        document.getElementById('reportTimestamp').textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+
+        // Check AdSense blocker recovery
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                document.getElementById('adblockRecovery').classList.remove('hidden');
+            }
+        }, 1500);
+
+        initCharts();
+        buildGlobalTable();
+        calculateAll();
+    });
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

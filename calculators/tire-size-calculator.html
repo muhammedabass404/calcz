@@ -1,0 +1,2636 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tire Size Calculator | Automotive Fitment &amp; Speedometer Calibration Engine</title>
+    <meta name="description" content="Compare tire dimensions, sidewall height, rolling diameter, circumference, revs per mile, and speedometer calibration error. Includes interactive SVG overlay visualizer, wheel offset fitment guide, and Chart.js speed graphs.">
+    <link rel="canonical" href="https://calcworld.net/calculators/tire-size-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554',
+                        },
+                        tire1: {
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        tire2: {
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 for Mathematical Formula Rendering -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: { fontCache: 'global' }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Toast feedback */
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: rgba(59, 130, 246, 0.3);
+        }
+
+        input[type="range"] {
+            accent-color: #2563eb;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Tire Size Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Automotive Tire Size Comparison & Speedometer Calibration Suite",
+      "url": "https://calcworld.net/other/tire-size-calculator",
+      "applicationCategory": "AutomotiveApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Comprehensive automotive tire size comparison engine. Solves sidewall height, rolling diameter, circumference, revolutions per mile, speedometer error matrix, ride height change, and wheel offset clearance."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the acceptable percentage difference when changing tire sizes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Automotive engineering standards set by the Tire and Rim Association (TRA) recommend keeping the overall tire diameter within \u00b11.0% to \u00b11.5% of the original equipment manufacturer (OEM) tire. Differences between 1.5% and 2.5% are generally acceptable if adequate wheel well clearance exists. Size changes exceeding \u00b13.0% are strongly discouraged because they trigger false readings in the Anti-lock Braking System (ABS), disrupt Electronic Stability Control (ESC) yaw calculation, degrade transmission shift timing, and generate significant speedometer inaccuracy."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does tire size change affect my speedometer and odometer readings?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Because speedometers calculate vehicle velocity from wheel rotation speed, installing a tire with a larger diameter covers more linear distance per rotation, causing the speedometer to read slower than your actual road speed (under-reporting). If you install a smaller tire, the wheel rotates more frequently, causing the speedometer to read faster than your actual road speed (over-reporting). Your odometer is altered by the exact same percentage, recording either fewer or more total miles than actually traveled."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does tire plus-sizing mean (Plus 1, Plus 2)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Plus-sizing is the practice of replacing factory wheels with larger diameter wheels while reducing the tire aspect ratio to keep overall rolling diameter identical to stock. A 'Plus 1' fitment increases wheel diameter by 1 inch while reducing aspect ratio by 10 points (for example, stepping from 205/55R16 to 225/45R17). A 'Plus 2' fitment increases wheel rim diameter by 2 inches (for example, stepping to 225/40R18). This upgrade enhances lateral grip, steering responsiveness, and brake clearance."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What do the numbers on a tire code mean (e.g. 225/45R17)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In a tire code such as 225/45R17, '225' is the nominal section width in millimeters measured across the sidewalls; '45' is the aspect ratio, indicating the sidewall height is 45% of the section width (101.25 mm); 'R' indicates radial ply construction; and '17' specifies the wheel rim diameter in inches. An accompanying service code like '94W' specifies the load index (94 = 1,477 lbs / 670 kg capacity) and speed rating symbol (W = up to 168 mph / 270 km/h)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is tire diameter critical on All-Wheel-Drive (AWD) vehicles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All-Wheel-Drive (AWD) systems rely on center differentials, viscous couplings, or electronically controlled multi-plate clutch packs to distribute torque between front and rear axles. If tires on one axle differ in diameter by more than 1% (or approximately 2/32 to 3/32 of an inch in tread depth), the wheels rotate at different rotational speeds on dry pavement. This forces the center transfer case to slip continuously, causing fluid overheating, mechanical binding, and costly driveline failure."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is wheel offset (ET) and how does it relate to tire fitment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Wheel offset, designated as 'ET' from the German word Einpresstiefe, is the distance in millimeters from the wheel's true geometric centerline to its hub mounting surface. A positive offset positions the mounting face toward the street face, pulling the wheel inward toward the suspension. When installing wider tires, incorrect offset causes tires to rub against internal suspension struts or outer fender lips during steering lock and spring compression."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I replace my tires with a lower load index or speed rating than OEM?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Under NHTSA safety guidelines, replacement tires must have an equal or higher load index than the vehicle manufacturer's factory specification listed on the driver door jamb placard. Installing a lower load rating risks sudden tire sidewall blowout under normal passenger or cargo weight. Similarly, speed ratings should match or exceed factory ratings to preserve high-speed centrifugal carcass stability and heat dissipation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does tire diameter change affect engine RPM and fuel economy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A taller tire alters the effective final drive ratio, reducing engine RPM at any given highway speed. While lower cruising RPM can slightly improve steady-state highway fuel economy under flat terrain, it reduces wheel torque multiplication. This causes sluggish throttle acceleration, requires more downshifting during hill climbing, increases city stop-and-go fuel consumption, and can add rotational inertia that dulls braking response."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Tire Size Calculator | Automotive Fitment &amp; Speedometer Calibration Engine">
+    <meta property="og:description" content="Compare tire dimensions, sidewall height, rolling diameter, circumference, revs per mile, and speedometer calibration error. Includes interactive SVG overlay visualizer, wheel offset fitment guide, and Chart.js speed graphs.">
+    <meta property="og:url" content="https://calcworld.net/calculators/tire-size-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Tire Size Calculator | Automotive Fitment &amp; Speedometer Calibration Engine">
+    <meta name="twitter:description" content="Compare tire dimensions, sidewall height, rolling diameter, circumference, revs per mile, and speedometer calibration error. Includes interactive SVG overlay visualizer, wheel offset fitment guide, and Chart.js speed graphs.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Automotive Engineering Notice:</strong> CalcWorld provides peer-reviewed vehicle fitment calculations free without registration. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Tire Size Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Tire Size Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Automotive tire size comparison engine and speedometer calibration suite. Compute sidewall height, rolling diameter, circumference, revolutions per mile, ride height change, speedometer error matrix, and wheel offset clearances according to Tire and Rim Association (TRA) standards.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5 on lg, 4 on xl) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <span>Tire Specifications</span>
+                        </h2>
+                        <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 p-0.5 rounded-lg text-[11px] font-bold">
+                            <button type="button" onclick="setUnits('imperial')" id="unitBtn_imperial" class="px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition">Inches / MPH</button>
+                            <button type="button" onclick="setUnits('metric')" id="unitBtn_metric" class="px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">mm / km/h</button>
+                        </div>
+                    </div>
+
+                    <!-- Quick Preset Selector -->
+                    <div class="mb-5 p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Popular Fitment Presets</label>
+                        <div class="grid grid-cols-2 gap-1.5 text-xs">
+                            <button type="button" onclick="applyPreset('225/45R17', '225/40R18')" class="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-left border border-slate-200 dark:border-slate-700 transition">
+                                <span class="font-bold block text-[11px]">Sport Plus-1</span>
+                                <span class="text-[10px] text-slate-400 font-mono">225/45R17 &rarr; 225/40R18</span>
+                            </button>
+                            <button type="button" onclick="applyPreset('205/55R16', '225/45R17')" class="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-left border border-slate-200 dark:border-slate-700 transition">
+                                <span class="font-bold block text-[11px]">Sedan Plus-1</span>
+                                <span class="text-[10px] text-slate-400 font-mono">205/55R16 &rarr; 225/45R17</span>
+                            </button>
+                            <button type="button" onclick="applyPreset('245/40R18', '245/35R19')" class="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-left border border-slate-200 dark:border-slate-700 transition">
+                                <span class="font-bold block text-[11px]">Performance Plus-1</span>
+                                <span class="text-[10px] text-slate-400 font-mono">245/40R18 &rarr; 245/35R19</span>
+                            </button>
+                            <button type="button" onclick="applyPreset('265/70R17', '285/70R17')" class="p-1.5 rounded-lg bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-left border border-slate-200 dark:border-slate-700 transition">
+                                <span class="font-bold block text-[11px]">Truck / SUV Lift</span>
+                                <span class="text-[10px] text-slate-400 font-mono">265/70R17 &rarr; 285/70R17</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- TIRE 1 (STOCK / CURRENT) -->
+                    <div class="mb-5 p-4 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/60">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+                                <h3 class="font-bold text-sm text-blue-900 dark:text-blue-300">Tire 1 (Stock / OEM)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-900/60" id="badgeTire1Code">225/45R17</span>
+                        </div>
+
+                        <!-- Direct Code Parser Input -->
+                        <div class="mb-3">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Quick Tire Code Input</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="t1CodeInput" value="225/45R17" placeholder="e.g. 225/45R17" onchange="parseTireCodeInput(1)" class="w-full px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button type="button" onclick="parseTireCodeInput(1)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition shrink-0">Parse</button>
+                            </div>
+                        </div>
+
+                        <!-- 3 Dropdown Selectors -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label for="t1Width" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Width (mm)</label>
+                                <select id="t1Width" onchange="handleTireChange(1)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="t1Aspect" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Aspect (AR %)</label>
+                                <select id="t1Aspect" onchange="handleTireChange(1)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="t1Rim" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Rim (in)</label>
+                                <select id="t1Rim" onchange="handleTireChange(1)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TIRE 2 (NEW / PROPOSED) -->
+                    <div class="mb-5 p-4 rounded-xl bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-800/60">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-2">
+                                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                <h3 class="font-bold text-sm text-orange-900 dark:text-orange-300">Tire 2 (New / Proposed)</h3>
+                            </div>
+                            <span class="text-xs font-mono font-bold text-orange-700 dark:text-orange-300 px-2 py-0.5 rounded bg-orange-100 dark:bg-orange-900/60" id="badgeTire2Code">245/40R18</span>
+                        </div>
+
+                        <!-- Direct Code Parser Input -->
+                        <div class="mb-3">
+                            <label class="block text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">Quick Tire Code Input</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="t2CodeInput" value="245/40R18" placeholder="e.g. 245/40R18" onchange="parseTireCodeInput(2)" class="w-full px-3 py-1.5 text-xs font-mono font-bold uppercase rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500">
+                                <button type="button" onclick="parseTireCodeInput(2)" class="px-3 py-1.5 text-xs font-bold rounded-lg bg-orange-600 hover:bg-orange-700 text-white transition shrink-0">Parse</button>
+                            </div>
+                        </div>
+
+                        <!-- 3 Dropdown Selectors -->
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label for="t2Width" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Width (mm)</label>
+                                <select id="t2Width" onchange="handleTireChange(2)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="t2Aspect" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Aspect (AR %)</label>
+                                <select id="t2Aspect" onchange="handleTireChange(2)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                            <div>
+                                <label for="t2Rim" class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-1">Rim (in)</label>
+                                <select id="t2Rim" onchange="handleTireChange(2)" class="w-full px-2 py-1.5 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                    <!-- Will be populated by JS -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Parameters (Speed, Axle Ratio) -->
+                    <div class="space-y-4 pt-2 border-t border-slate-200 dark:border-slate-700">
+                        <!-- Speed Input -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="speedTestInput" class="text-xs font-bold text-slate-700 dark:text-slate-300">Test Vehicle Speed</label>
+                                <span class="text-xs font-bold font-mono text-brand-600 dark:text-brand-400" id="speedTestBadge">60 mph</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="speedTestInput" value="60" min="10" max="150" step="5" oninput="handleSpeedTestInput()" class="w-full px-3 py-2 text-xs font-mono font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                                <span class="absolute right-3 top-2 text-xs font-bold text-slate-400" id="speedUnitSuffix">mph</span>
+                            </div>
+                            <input type="range" id="speedTestSlider" min="20" max="100" step="5" value="60" oninput="handleSpeedSliderInput()" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer mt-2">
+                        </div>
+
+                        <!-- Axle Ratio Input -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="axleRatioInput" class="text-xs font-bold text-slate-700 dark:text-slate-300">Stock Axle / Final Drive Ratio</label>
+                                <span class="text-xs font-mono text-slate-400">e.g. 3.73, 4.10</span>
+                            </div>
+                            <input type="number" id="axleRatioInput" value="3.73" step="0.01" min="2.0" max="6.0" oninput="recalculate()" class="w-full px-3 py-2 text-xs font-mono font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="bg-gradient-to-br from-brand-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm border border-brand-800 lead-box">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-semibold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Free Automotive Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Wheel Fitment &amp; Tire Guide</h3>
+                    <p class="text-xs text-brand-200 mb-3">Download our verified plus-sizing offset charts, TRA load index ratings, speedometer calibration formulas, and suspension scrub radius guidelines (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="driver@automotive.org" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Download Reference PDF</button>
+                    </form>
+                    <p class="text-[10px] text-brand-300/80 mt-2 text-center">Instant digital delivery. Strictly zero spam.</p>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results Dashboard, Tabs & Visualizations (Span 7 on lg, 8 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Primary Hero Results Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-4 mb-5">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Kinematic Output</span>
+                            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Tire Dimension Delta</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Safety Badge -->
+                            <span id="fitmentSafetyBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span id="fitmentSafetyLabel">Optimal Fitment (&lt; 1.0%)</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Hero Metric: Overall Diameter Difference -->
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                        
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Diameter Difference</div>
+                            <div class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">
+                                <span id="heroDiameterDiff">+0.75</span> <span class="text-sm font-normal text-slate-500" id="heroDiameterDiffUnit">in</span>
+                            </div>
+                            <div class="text-xs font-bold font-mono mt-1 text-emerald-600 dark:text-emerald-400" id="heroDiameterPct">+3.0%</div>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Speed @ 60 mph</div>
+                            <div class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">
+                                <span id="heroSpeedActual">61.8</span> <span class="text-sm font-normal text-slate-500" id="heroSpeedUnit">mph</span>
+                            </div>
+                            <div class="text-xs font-mono text-slate-400 mt-1" id="heroSpeedNote">Reads 1.8 mph slower</div>
+                        </div>
+
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ride Height Change</div>
+                            <div class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white mt-1">
+                                <span id="heroRideHeight">+0.38</span> <span class="text-sm font-normal text-slate-500" id="heroRideHeightUnit">in</span>
+                            </div>
+                            <div class="text-xs font-mono text-slate-400 mt-1" id="heroRideHeightNote">Vehicle stance lifted</div>
+                        </div>
+
+                    </div>
+
+                    <!-- Interactive SVG Visualizer Container -->
+                    <div class="mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Interactive SVG Visualizer</h3>
+                                <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">True Scale</span>
+                            </div>
+                            <!-- View mode toggles -->
+                            <div class="flex items-center gap-1 bg-white dark:bg-slate-800 p-0.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
+                                <button type="button" onclick="setSvgViewMode('overlay')" id="svgMode_overlay" class="px-2.5 py-1 rounded bg-brand-50 text-brand-600 dark:bg-slate-700 dark:text-white font-bold transition">Concentric Overlay</button>
+                                <button type="button" onclick="setSvgViewMode('sidebyside')" id="svgMode_sidebyside" class="px-2.5 py-1 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition">Side-by-Side</button>
+                            </div>
+                        </div>
+
+                        <!-- The SVG Graphic -->
+                        <div class="w-full flex items-center justify-center overflow-x-auto py-2">
+                            <svg id="tireSvg" viewBox="0 0 700 340" class="w-full max-w-[680px] h-auto drop-shadow-sm select-none" xmlns="http://www.w3.org/2000/svg">
+                                <!-- Rendered dynamically by JS -->
+                            </svg>
+                        </div>
+
+                        <!-- Color Legend -->
+                        <div class="flex flex-wrap items-center justify-center gap-4 text-xs mt-3 pt-3 border-t border-slate-200/60 dark:border-slate-800 font-mono">
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-blue-600"></span>
+                                <span class="text-slate-700 dark:text-slate-300 font-bold" id="legendT1">Tire 1: 225/45R17</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                                <span class="text-slate-700 dark:text-slate-300 font-bold" id="legendT2">Tire 2: 245/40R18</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 font-semibold transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Data</span>
+                            </button>
+                            <button type="button" onclick="resetCalculatorDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold transition">
+                                Reset
+                            </button>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold hover:bg-brand-100 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Generate Formal Report</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 2: Mid Banner Above Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Workspace Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Buttons -->
+                <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 no-print">
+                    <button type="button" onclick="switchTab('solver')" id="tabBtn_solver" class="tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6"/></svg>
+                        <span>Comparison Matrix</span>
+                    </button>
+                    <button type="button" onclick="switchTab('speedo')" id="tabBtn_speedo" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>Speedometer Error Matrix</span>
+                    </button>
+                    <button type="button" onclick="switchTab('fitment')" id="tabBtn_fitment" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"/></svg>
+                        <span>Plus-Sizing &amp; Wheel Fitment</span>
+                    </button>
+                    <button type="button" onclick="switchTab('print')" id="tabBtn_print" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Report</span>
+                    </button>
+                </div>
+
+                <!-- TAB 1: DUAL TIRE COMPARISON MATRIX -->
+                <div id="tab-solver" class="tab-panel active space-y-6">
+                    
+                    <!-- Comprehensive 10-Point Comparison Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Dual Tire Comparison Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Complete kinematic specifications and delta measurements</p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border-collapse font-mono" id="comparisonTable">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider">
+                                        <th class="py-2.5 px-3">Parameter</th>
+                                        <th class="py-2.5 px-3 text-blue-600 dark:text-blue-400 font-bold" id="thTire1Label">Tire 1 (Stock)</th>
+                                        <th class="py-2.5 px-3 text-orange-600 dark:text-orange-400 font-bold" id="thTire2Label">Tire 2 (New)</th>
+                                        <th class="py-2.5 px-3">Difference</th>
+                                        <th class="py-2.5 px-3">Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200">
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Section Width</td>
+                                        <td class="py-2 px-3 font-bold" id="m_width1">225 mm (8.86 in)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_width2">245 mm (9.65 in)</td>
+                                        <td class="py-2 px-3" id="m_widthDiff">+20 mm (+0.79 in)</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_widthPct">+8.9%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Sidewall Height</td>
+                                        <td class="py-2 px-3 font-bold" id="m_sidewall1">101.3 mm (3.99 in)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_sidewall2">98.0 mm (3.86 in)</td>
+                                        <td class="py-2 px-3" id="m_sidewallDiff">-3.3 mm (-0.13 in)</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_sidewallPct">-3.2%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Overall Diameter</td>
+                                        <td class="py-2 px-3 font-bold" id="m_diameter1">634.3 mm (24.97 in)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_diameter2">653.2 mm (25.72 in)</td>
+                                        <td class="py-2 px-3" id="m_diameterDiff">+18.9 mm (+0.74 in)</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_diameterPct">+3.0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Circumference</td>
+                                        <td class="py-2 px-3 font-bold" id="m_circ1">1992.7 mm (78.45 in)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_circ2">2052.1 mm (80.79 in)</td>
+                                        <td class="py-2 px-3" id="m_circDiff">+59.4 mm (+2.34 in)</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_circPct">+3.0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Revolutions per Mile</td>
+                                        <td class="py-2 px-3 font-bold" id="m_revs1">807.6 rev/mi</td>
+                                        <td class="py-2 px-3 font-bold" id="m_revs2">784.2 rev/mi</td>
+                                        <td class="py-2 px-3" id="m_revsDiff">-23.4 rev/mi</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_revsPct">-2.9%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Revolutions per km</td>
+                                        <td class="py-2 px-3 font-bold" id="m_revskm1">501.8 rev/km</td>
+                                        <td class="py-2 px-3 font-bold" id="m_revskm2">487.3 rev/km</td>
+                                        <td class="py-2 px-3" id="m_revskmDiff">-14.5 rev/km</td>
+                                        <td class="py-2 px-3 font-bold text-emerald-600 dark:text-emerald-400" id="m_revskmPct">-2.9%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Ride Height Change</td>
+                                        <td class="py-2 px-3 font-bold text-slate-400">Baseline (0.0)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_rideHeight">+9.5 mm (+0.37 in)</td>
+                                        <td class="py-2 px-3" id="m_rideHeightDiff">+9.5 mm (+0.37 in)</td>
+                                        <td class="py-2 px-3 font-bold text-blue-600 dark:text-blue-400">Ground clearance</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Speed @ 60 mph</td>
+                                        <td class="py-2 px-3 font-bold">60.0 mph (100.0 km/h)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_speedActual">61.8 mph (103.0 km/h)</td>
+                                        <td class="py-2 px-3" id="m_speedDiff">+1.8 mph (+3.0 km/h)</td>
+                                        <td class="py-2 px-3 font-bold text-amber-600 dark:text-amber-400" id="m_speedErrorPct">+3.0%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-2 px-3 font-semibold text-slate-600 dark:text-slate-300">Effective Axle Ratio</td>
+                                        <td class="py-2 px-3 font-bold" id="m_axleStock">3.73:1 (Stock)</td>
+                                        <td class="py-2 px-3 font-bold" id="m_axleEffective">3.62:1 (Effective)</td>
+                                        <td class="py-2 px-3" id="m_axleDiff">-0.11 taller gearing</td>
+                                        <td class="py-2 px-3 font-bold text-slate-500">Torque change</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Formula Breakdown -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Step-by-Step Mathematical Derivation</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Numerical step-by-step kinematic evaluation based on Tire and Rim Association (TRA) standards.</p>
+                        
+                        <div class="space-y-4 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 overflow-x-auto">
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 1: Compute Sidewall Heights ($H_1$ and $H_2$):</span>
+                                <div id="mathStep1" class="text-sm">
+                                    $$H_1 = 225 \times \frac{45}{100} = 101.25\text{ mm} \quad | \quad H_2 = 245 \times \frac{40}{100} = 98.00\text{ mm}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 2: Calculate Overall Diameters ($\text{Diameter}_1$ and $\text{Diameter}_2$):</span>
+                                <div id="mathStep2" class="text-sm">
+                                    $$\text{Dia}_1 = (2 \times 101.25) + (17 \times 25.4) = 634.3\text{ mm} (24.97\text{ in})$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 3: Calculate Rolling Circumferences ($C_1$ and $C_2$):</span>
+                                <div id="mathStep3" class="text-sm">
+                                    $$C_1 = \pi \times 634.3 = 1992.7\text{ mm} \quad | \quad C_2 = \pi \times 653.2 = 2052.1\text{ mm}$$
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Step 4: Speedometer Actual Velocity and Error Calculation:</span>
+                                <div id="mathStep4" class="text-sm">
+                                    $$\text{Speed}_{\text{actual}} = 60.0 \times \left( \frac{653.2}{634.3} 
+ight) = 61.8\text{ mph} \quad (\text{Error: } +3.0\%)$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: SPEEDOMETER ERROR MATRIX -->
+                <div id="tab-speedo" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Chart.js Speedometer Calibration Curve</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Indicated Gauge Speed vs True Ground Speed across 20 to 100 mph (30 to 160 km/h)</p>
+                            </div>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800" id="chartErrorBadge">
+                                Calibration Factor: 1.030x
+                            </span>
+                        </div>
+                        <div class="relative w-full h-[280px] sm:h-[340px]">
+                            <canvas id="speedoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Comprehensive Speedometer Matrix Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Speedometer Calibration Table</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Speed correlation and odometer discrepancy per 1,000 miles</p>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left border-collapse font-mono" id="speedoMatrixTable">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 uppercase text-[10px] tracking-wider">
+                                        <th class="py-2.5 px-3">Indicated Speed</th>
+                                        <th class="py-2.5 px-3">Actual Ground Speed</th>
+                                        <th class="py-2.5 px-3">Variance</th>
+                                        <th class="py-2.5 px-3">Odometer True Distance (per 1,000 Indicated)</th>
+                                        <th class="py-2.5 px-3">Condition</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-800 dark:text-slate-200" id="speedoMatrixTbody">
+                                    <!-- Rendered dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: PLUS-SIZING & WHEEL FITMENT GUIDE -->
+                <div id="tab-fitment" class="tab-panel space-y-6">
+                    <!-- Plus-Sizing Recommendation Engine -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Plus-Sizing Recommendation Engine</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Algorithmically calculated replacement sizes for Plus-1, Plus-2, and Plus-3 wheels that preserve rolling diameter</p>
+                            </div>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-mono" id="plusRefTireBadge">Base: 225/45R17</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-4" id="plusSizingCardsContainer">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Wheel Offset (ET) & Clearance Calculator -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Wheel Offset (ET) &amp; Strut Clearance Calculator</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Compare wheel rim width and offset (ET in millimeters) to evaluate inner strut suspension clearance and outer fender poke.</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800 text-xs">
+                            <div class="space-y-3">
+                                <span class="font-bold text-blue-600 dark:text-blue-400 block">Wheel 1 (Stock)</span>
+                                <div>
+                                    <label for="w1RimWidth" class="block text-[10px] text-slate-500 mb-1">Rim Width (inches)</label>
+                                    <input type="number" id="w1RimWidth" value="7.5" step="0.5" min="5.0" max="14.0" oninput="calcWheelOffsetClearance()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold">
+                                </div>
+                                <div>
+                                    <label for="w1Offset" class="block text-[10px] text-slate-500 mb-1">Offset ET (mm)</label>
+                                    <input type="number" id="w1Offset" value="45" step="1" min="-30" max="70" oninput="calcWheelOffsetClearance()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold">
+                                </div>
+                            </div>
+
+                            <div class="space-y-3">
+                                <span class="font-bold text-orange-600 dark:text-orange-400 block">Wheel 2 (New)</span>
+                                <div>
+                                    <label for="w2RimWidth" class="block text-[10px] text-slate-500 mb-1">Rim Width (inches)</label>
+                                    <input type="number" id="w2RimWidth" value="8.5" step="0.5" min="5.0" max="14.0" oninput="calcWheelOffsetClearance()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold">
+                                </div>
+                                <div>
+                                    <label for="w2Offset" class="block text-[10px] text-slate-500 mb-1">Offset ET (mm)</label>
+                                    <input type="number" id="w2Offset" value="38" step="1" min="-30" max="70" oninput="calcWheelOffsetClearance()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white font-mono font-bold">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                                <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Inner Strut Clearance Change</div>
+                                <div class="text-xl font-bold font-mono text-slate-900 dark:text-white mt-1" id="resInnerClearance">
+                                    5.7 mm LESS clearance
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1" id="resInnerClearanceNote">Wheel lip extends closer to suspension strut.</div>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-800">
+                                <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Outer Fender Extension (Poke)</div>
+                                <div class="text-xl font-bold font-mono text-slate-900 dark:text-white mt-1" id="resOuterPoke">
+                                    19.7 mm EXTENSION
+                                </div>
+                                <div class="text-xs text-slate-500 mt-1" id="resOuterPokeNote">Pushes wheel face outward toward outer fender edge.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fitment Safety Checklist -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3">Pre-Installation Safety Verification Checklist</h3>
+                        <div class="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+                            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 rounded text-brand-600 focus:ring-brand-500">
+                                <span><strong>Load Index Equality:</strong> Ensure Tire 2 load index equals or exceeds vehicle door placard specification (FMVSS 139).</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 rounded text-brand-600 focus:ring-brand-500">
+                                <span><strong>Speed Rating Compliance:</strong> Certified for top vehicle speed capability (H, V, W, or Y ratings).</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 rounded text-brand-600 focus:ring-brand-500">
+                                <span><strong>Steering Lock Clearance:</strong> Verify zero tire rubbing against wheel well liners or sway bars at full left and right steering lock.</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 rounded text-brand-600 focus:ring-brand-500">
+                                <span><strong>Brake Caliper Clearance:</strong> Confirm minimum 3mm to 5mm clearance between wheel spokes/barrel and brake calipers.</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-900/50 cursor-pointer">
+                                <input type="checkbox" checked class="mt-0.5 rounded text-brand-600 focus:ring-brand-500">
+                                <span><strong>TPMS Sensor Calibration:</strong> Reset or clone Tire Pressure Monitoring System sensors after wheel installation.</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: PRINT REPORT -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                            <div>
+                                <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">Vehicle Tire Kinematic Specification Report</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Generated by CalcWorld Automotive Engineering Engine</p>
+                            </div>
+                            <button type="button" onclick="window.print()" class="no-print px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition flex items-center gap-2 shadow">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print / Save as PDF</span>
+                            </button>
+                        </div>
+
+                        <!-- Print Document Body -->
+                        <div class="space-y-6 text-xs text-slate-800 dark:text-slate-200 font-mono">
+                            <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                                <div>
+                                    <span class="text-slate-500 block text-[10px] uppercase font-bold">Stock OEM Specification</span>
+                                    <span class="text-base font-bold text-blue-600 dark:text-blue-400" id="printT1Code">225/45R17</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 block text-[10px] uppercase font-bold">Proposed Fitment</span>
+                                    <span class="text-base font-bold text-orange-600 dark:text-orange-400" id="printT2Code">245/40R18</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-500 block text-[10px] uppercase font-bold mb-2">Kinematic Summary</span>
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                                    <div>
+                                        <span class="text-slate-400 block text-[10px]">Diameter Delta:</span>
+                                        <span class="font-bold" id="printDiaDelta">+0.75 in (+3.0%)</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 block text-[10px]">Ride Height Shift:</span>
+                                        <span class="font-bold" id="printRideShift">+0.38 in (+9.5 mm)</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 block text-[10px]">Speed @ 60 mph:</span>
+                                        <span class="font-bold" id="printSpeed60">61.8 mph</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-slate-400 block text-[10px]">Fitment Assessment:</span>
+                                        <span class="font-bold text-emerald-600" id="printFitmentStatus">Acceptable</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="text-[11px] leading-relaxed text-slate-500">
+                                <strong>Technical Notice:</strong> Calculations adhere to ISO Metric and Tire and Rim Association (TRA) dimensional standards. Variations in tire manufacturer tread depth, carcass design, and operating cold inflation pressure can introduce minor physical variances of approximately ±1% to ±2% in actual rolling radius.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Content Banner -->
+        <div class="ad-slot no-print mt-12" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Educational Guide Section (1200+ words) -->
+        <section id="guide-section" class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700">
+            <div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-8">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Automotive Technical Reference</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">The Engineering Guide to Tire Dimensions, Speedometer Calibration, and Plus-Sizing</h2>
+            </div>
+            
+<article class="prose prose-slate dark:prose-invert max-w-none space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed">
+    
+    <!-- Section 1 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            1. ISO Metric and P-Metric Tire Sizing Nomenclature
+        </h2>
+        <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-4">
+            Automotive tires follow standardized international alphanumeric designations codified by the <strong>Tire and Rim Association (TRA)</strong> and the <strong>European Tyre and Rim Technical Organisation (ETRTO)</strong>. Deciphering these codes is essential before modifying wheel dimensions or selecting replacement fitments.
+        </p>
+        <p class="mb-4">
+            Consider a typical high-performance passenger fitment: <strong>P225/45R17 94W</strong>. Each alphanumeric segment communicates precise engineering parameters:
+        </p>
+        <ul class="list-disc pl-6 space-y-3 mb-4">
+            <li>
+                <strong>Tire Class Prefix:</strong> The letter <strong>P</strong> indicates P-metric specification designed primarily for passenger vehicles under TRA standards. If no letter precedes the numbers (such as <strong>225/45R17</strong>), the tire follows Euro-metric (ISO Metric) standards, which carry slightly different load-inflation curves at higher operating pressures. Other prefixes include <strong>LT</strong> (Light Truck for heavy-duty payload ratings), <strong>ST</strong> (Special Trailer for non-driven trailer axles only), and <strong>T</strong> (Temporary spare).
+            </li>
+            <li>
+                <strong>Nominal Section Width ($W$):</strong> The three-digit number <strong>225</strong> specifies the linear distance in millimeters across the widest point of the tire sidewalls when mounted on its design measuring wheel width and inflated to nominal test pressure. Section width does not measure tread contact width, but rather carcass width from exterior sidewall to interior sidewall.
+            </li>
+            <li>
+                <strong>Aspect Ratio / Profile Series ($AR$):</strong> The two-digit number <strong>45</strong> indicates the aspect ratio, expressed as a percentage. It defines the vertical sidewall height relative to the section width. A 45 profile tire has a sidewall height equal to $45\%$ of its $225\text{ mm}$ width, producing a sidewall height of $101.25\text{ mm}$ ($3.99\text{ inches}$). Lower aspect ratios (30 to 45) provide stiffer lateral sidewall stability and sharpened transient steering response, whereas higher profiles (55 to 75) yield superior road vibration absorption and curb impact defense.
+            </li>
+            <li>
+                <strong>Internal Construction Type:</strong> The letter <strong>R</strong> designates radial carcass ply construction, where internal polyester or steel cord plies run at $90^{\circ}$ perpendicular to the direction of travel. Over $99\%$ of modern automotive tires are radial. Older or specialized bias-ply designs use <strong>D</strong> (diagonal bias) or <strong>B</strong> (belted bias). High-speed performance tires occasionally incorporate <strong>ZR</strong> within the size designation to indicate structural construction suitable for velocities exceeding $240\text{ km/h}$ ($149\text{ mph}$).
+            </li>
+            <li>
+                <strong>Wheel Diameter ($D$):</strong> The final number <strong>17</strong> specifies the nominal rim diameter in inches across the bead seat surfaces. Tires must match wheel rim diameters exactly; mounting a 17-inch tire onto an 17.5-inch or 16.5-inch wheel risks catastrophic bead failure during seating.
+            </li>
+            <li>
+                <strong>Service Description (94W):</strong> Positioned after the dimensional code, the service description pairs a numerical <strong>Load Index</strong> (94, corresponding to $670\text{ kg}$ or $1,477\text{ lbs}$) with an alphabetical <strong>Speed Symbol</strong> (W, certified for velocities up to $270\text{ km/h}$ or $168\text{ mph}$).
+            </li>
+        </ul>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            2. Tire Kinematics, Revolutions Per Mile, and Rolling Circumference
+        </h2>
+        <p class="mb-4">
+            Evaluating tire swaps begins with fundamental geometric calculations that determine vehicle stance, mechanical gearing, and wheel well clearances.
+        </p>
+        <p class="mb-4">
+            The overall uncompressed tire diameter consists of the wheel rim diameter plus twice the vertical sidewall height. Sidewall height ($H$) is derived directly from section width ($W$) and aspect ratio ($AR$):
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$H = W \times \left( \frac{AR}{100} \right) \quad [\text{in millimeters}]$$
+            $$\text{Diameter} = (2 \times H) + (D \times 25.4) \quad [\text{in millimeters}]$$
+            $$\text{Diameter}_{\text{inches}} = \frac{\text{Diameter}_{\text{mm}}}{25.4} = (2 \times H_{\text{inches}}) + D$$
+        </div>
+        <p class="mb-4">
+            The theoretical outer circumference ($C$) represents the distance traversed during one full $360^{\circ}$ rotation of an unladen tire:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$C = \pi \times \text{Diameter}$$
+        </div>
+        <p class="mb-4">
+            In actual highway operation, a vehicle's sprung mass creates static and dynamic deflection at the tire contact patch. Engineers differentiate between the uncompressed geometric radius and the <strong>static loaded radius</strong> ($SLR$), which measures the vertical distance from wheel hub centerline down to the flat pavement surface. Under design vehicle curb weight and recommended inflation pressure, standard radial passenger tires deflect vertically by roughly $2\%$ to $3\%$.
+        </p>
+        <p class="mb-4">
+            Tire rotation frequency over distance is standardized as <strong>Revolutions Per Mile (RPM)</strong> and <strong>Revolutions Per Kilometer</strong>:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\text{Revolutions Per Mile} = \frac{63,360 \text{ inches/mile}}{C_{\text{inches}}} = \frac{5,280 \times 12}{\pi \times \text{Diameter}_{\text{inches}}}$$
+            $$\text{Revolutions Per Kilometer} = \frac{1,000,000 \text{ mm/km}}{C_{\text{mm}}} = \frac{1,000,000}{\pi \times \text{Diameter}_{\text{mm}}}$$
+        </div>
+        <p class="mb-4">
+            For instance, a standard $225/45\text{R}17$ tire features a calculated diameter of $24.97\text{ inches}$ ($634.3\text{ mm}$) and an unladen circumference of $78.45\text{ inches}$ ($1,992.7\text{ mm}$), resulting in approximately $807.6\text{ revolutions per mile}$. In contrast, stepping up to an oversized $245/45\text{R}18$ ($26.68\text{ inches}$ diameter) lowers rotation frequency to $755.6\text{ revolutions per mile}$—a $6.4\%$ reduction that alters vehicle electronics.
+        </p>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            3. Speedometer Calibration and Final Drive Gearing Mechanics
+        </h2>
+        <p class="mb-4">
+            Vehicle speedometers and odometers do not measure linear velocity across ground surfaces; instead, they monitor rotational velocity through magnetic tone rings located at transmission output shafts, differential pinions, or individual wheel hub bearings. The factory calibration assumes an unvarying tire rolling diameter.
+        </p>
+        <p class="mb-4">
+            When you install a tire with a different outer diameter, the speed registered on the instrument cluster diverges from the true GPS-verified ground velocity. The mathematical speed relationship is governed by the diameter ratio:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\text{Speed}_{\text{actual}} = \text{Speed}_{\text{indicated}} \times \left( \frac{\text{Diameter}_{\text{new}}}{\text{Diameter}_{\text{stock}}} \right) = \text{Speed}_{\text{indicated}} \times \left( \frac{\text{Revs/Mile}_{\text{stock}}}{\text{Revs/Mile}_{\text{new}}} \right)$$
+            $$\text{Percentage Error} = \left( \frac{\text{Diameter}_{\text{new}} - \text{Diameter}_{\text{stock}}}{\text{Diameter}_{\text{stock}}} \right) \times 100\%$$
+        </div>
+        <p class="mb-4">
+            Two distinct calibration conditions emerge:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Tire 2 is Larger than Stock (Positive Diameter Change):</strong> The wheel covers more linear distance per revolution. Consequently, the speedometer <em>under-reports</em> actual velocity. When your gauge displays $60.0\text{ mph}$, your vehicle may be traveling at $63.5\text{ mph}$, exposing the driver to unexpected speeding citations. Simultaneously, the odometer under-records accumulated distance, documenting fewer miles than the vehicle actually traveled.
+            </li>
+            <li>
+                <strong>Tire 2 is Smaller than Stock (Negative Diameter Change):</strong> The wheel spins faster to sustain a given road speed. The speedometer <em>over-reports</em> actual velocity (indicating $60.0\text{ mph}$ when actual speed is only $57.2\text{ mph}$). This condition causes the vehicle odometer to accumulate mileage prematurely, accelerating warranty expiration.
+            </li>
+        </ul>
+        <p class="mb-4">
+            Beyond dashboard readouts, tire diameter changes modify the vehicle's <strong>effective final drive ratio</strong>. The differential axle gear ratio ($\text{Axle Ratio}$) determines engine revolutions relative to wheel rotations. Altering tire diameter changes the mechanical advantage delivered to the asphalt:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\text{Effective Axle Ratio} = \text{Stock Axle Ratio} \times \left( \frac{\text{Diameter}_{\text{stock}}}{\text{Diameter}_{\text{new}}} \right)$$
+        </div>
+        <p>
+            Installing a taller tire numerically reduces the effective gear ratio (acting like a taller overdrive gear). This lowers cruising engine RPM on highways but dulls low-end acceleration, lengthens passing times, and can cause automatic transmissions to hunt between gears when climbing modest grades. Conversely, a shorter tire increases effective torque multiplication, quickening acceleration while raising highway cruising RPM and fuel consumption.
+        </p>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            4. Plus-Sizing Wheels & Tires: Plus-1, Plus-2, and Plus-3 Engineering
+        </h2>
+        <p class="mb-4">
+            Plus-sizing is an automotive engineering practice where the vehicle owner upgrades to larger-diameter wheels while simultaneously stepping down the tire aspect ratio. The objective is to preserve the factory overall diameter within $\pm 1\%$ to $\pm 1.5\%$ of original equipment manufacturer (OEM) specifications.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-2">Plus-Zero Upgrade</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Maintains original wheel diameter while increasing section width by $10\text{ to } 20\text{ mm}$ and reducing aspect ratio by $5\text{ to } 10$ points (e.g., $205/55\text{R}16 \to 225/50\text{R}16$). Expands tire tread footprint without buying new rims.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-2">Plus-One (+1") Upgrade</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Increases wheel diameter by $1\text{ inch}$, widens section width by $10\text{ to } 20\text{ mm}$, and reduces aspect ratio by $10$ points (e.g., $205/55\text{R}16 \to 225/45\text{R}17$). Delivers sharper handling with minimal ride compliance loss.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-2">Plus-Two (+2") Upgrade</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Increases wheel diameter by $2\text{ inches}$, steps width out by $20\text{ to } 30\text{ mm}$, and lowers profile by $15\text{ to } 20$ points (e.g., $205/55\text{R}16 \to 225/40\text{R}18$). Maximum aesthetic impact; requires careful suspension check.</p>
+            </div>
+        </div>
+        <p class="mb-4">
+            <strong>Mechanical Advantages of Plus-Sizing:</strong>
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Reduced Lateral Sidewall Flex:</strong> Shorter sidewalls experience significantly less deflection under lateral cornering loads, shrinking the tire's slip angle and transmitting driver steering inputs with immediate response.
+            </li>
+            <li>
+                <strong>Larger Brake Clearance:</strong> Expanding wheel barrel diameter allows fitment of oversized multi-piston performance brake calipers and larger ventilated rotors for superior track thermal capacity.
+            </li>
+            <li>
+                <strong>Wider Contact Patch:</strong> Increased section width provides a broader, more rectangular contact patch that enhances dry lateral grip and braking deceleration thresholds.
+            </li>
+        </ul>
+        <p class="mb-4">
+            <strong>Engineering Compromises and Limitations:</strong>
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Harsh Ride Quality:</strong> With less air volume and compliant rubber between rim and road, high-frequency pavement imperfections transfer directly into the passenger cabin.
+            </li>
+            <li>
+                <strong>Elevated Rotational Inertia:</strong> Larger alloy wheels place heavier metal mass further from the rotational axis ($I = m \cdot r^2$), which can impair acceleration and increase braking distances despite wider rubber.
+            </li>
+            <li>
+                <strong>Wheel Impact Vulnerability:</strong> Ultra-low profile tires (30 to 35 series) provide scant deflection under pothole impacts, sharply raising the risk of cracked alloy rim barrels and broken suspension strut mounts.
+            </li>
+        </ul>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            5. Vehicle Safety Systems: Impact on ABS, Traction Control, and Stability Control (ESC)
+        </h2>
+        <p class="mb-4">
+            Modern passenger vehicles integrate sophisticated electronic chassis management networks governed by the <strong>National Highway Traffic Safety Administration (NHTSA) Federal Motor Vehicle Safety Standard No. 126 (FMVSS 126)</strong>, which mandates Electronic Stability Control (ESC) on all production vehicles.
+        </p>
+        <p class="mb-4">
+            The vehicle Electronic Control Unit (ECU) and Anti-lock Braking System (ABS) module continuously process high-frequency pulse frequencies generated by 48-tooth tone rings or magnetic Hall-effect encoders embedded in each wheel bearing. The safety algorithm monitors individual wheel rotational speed relative to steering wheel angle, lateral acceleration, and vehicle yaw rate.
+        </p>
+        <p class="mb-4">
+            The wheel slip ratio ($S$) is defined as:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$S = \frac{V_{\text{vehicle}} - \omega \cdot R_{\text{eff}}}{V_{\text{vehicle}}}$$
+        </div>
+        <p class="mb-4">
+            where $V_{\text{vehicle}}$ is vehicle reference speed, $\omega$ is wheel angular velocity, and $R_{\text{eff}}$ is effective rolling radius.
+        </p>
+        <p class="mb-4">
+            When replacement tires deviate by more than $\pm 2\%$ to $\pm 3\%$ from factory overall diameter, several safety-critical disruptions can occur:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Premature ABS Activation:</strong> The ABS module calculates expected wheel deceleration during threshold braking. An oversized tire spins fewer times per second than expected, leading the computer to falsely detect imminent wheel lockup and releasing hydraulic brake pressure unnecessarily, which dangerously lengthens stopping distance.
+            </li>
+            <li>
+                <strong>Nuisance Stability Control Intervention:</strong> In high-speed highway curves, discrepancies between front and rear tire rolling rates can trigger the yaw control system to apply single-wheel braking and throttle throttling, even when tire grip remains entirely secure.
+            </li>
+            <li>
+                <strong>Staggered Fitment Complications (AWD / RWD):</strong> Vehicles using staggered factory fitments (such as $245/40\text{R}19$ front and $275/35\text{R}19$ rear) require identical rolling diameters across both axles. In all-wheel-drive systems, front-to-rear diameter variance exceeding $1.0\%$ forces center differential viscous couplings or multi-plate clutch packs to slip constantly, inducing severe mechanical binding, fluid overheating, and premature transfer case failure.
+            </li>
+            <li>
+                <strong>Automatic Transmission Shift Timing:</strong> Modern automatic and dual-clutch transmissions schedule gear changes based on engine load and vehicle speed signals. Substantial tire diameter modifications shift the throttle-speed mapping, causing delayed upshifts, abrupt downshifts, and failure to engage torque converter lockup in top overdrive gears.
+            </li>
+        </ul>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            6. Wheel Fitment Geometry: Section Width, Rim Width, Offset (ET), and Backspacing
+        </h2>
+        <p class="mb-4">
+            Evaluating tire sizing without examining wheel dimensions can lead to suspension interference, fender rubbing, or ruined wheel bearings.
+        </p>
+        <p class="mb-4">
+            <strong>Approved Rim Width Range:</strong> Every tire size has an approved rim width envelope established by TRA and ETRTO. For instance, a $225/45\text{R}17$ tire specifies a measuring rim width of $7.5\text{ inches}$, with an approved mounting range from $7.0\text{ to } 8.5\text{ inches}$. Mounting a tire on a rim narrower than approved causes the sidewalls to pinch inward, increasing tread crown curvature and causing rapid center-tread wear. Mounting on an excessively wide wheel stretches the sidewalls outward, exposing rim flanges to curb damage and degrading bead retention during hard cornering.
+        </p>
+        <p class="mb-4">
+            <strong>Wheel Offset ($ET$ - Einpresstiefe):</strong> Offset is the millimeter distance from the wheel's true geometric centerline to the mounting face that bolts against the vehicle hub.
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li><strong>Positive Offset (+ET):</strong> The hub mounting surface is positioned toward the exterior street side of the wheel. Typical on modern front-wheel drive and all-wheel drive vehicles.</li>
+            <li><strong>Zero Offset (ET0):</strong> The mounting face aligns perfectly with the center plane of the wheel.</li>
+            <li><strong>Negative Offset (-ET):</strong> The mounting face sits deep inside the wheel barrel toward the brake rotor side, pushing the entire rim outwards to generate a deep-dish appearance common on lifted off-road trucks.</li>
+        </ul>
+        <p class="mb-4">
+            When changing both tire section width and wheel offset, the internal suspension clearance and external fender poke changes are computed as:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center font-mono text-sm">
+            $$\Delta \text{Inner Clearance} = \frac{W_{\text{new}} - W_{\text{stock}}}{2} + (ET_{\text{new}} - ET_{\text{stock}})$$
+            $$\Delta \text{Outer Poke} = \frac{W_{\text{new}} - W_{\text{stock}}}{2} - (ET_{\text{new}} - ET_{\text{stock}})$$
+        </div>
+        <p class="mb-4">
+            A positive value for $\Delta \text{Inner Clearance}$ indicates the new assembly extends closer to internal suspension components (struts, steering knuckles, and brake lines). A positive value for $\Delta \text{Outer Poke}$ indicates the tire face pushes outward toward the fender lip, where it may rub under suspension compression unless fenders are rolled or negative camber is dialed into the alignment.
+        </p>
+        <p>
+            <strong>Scrub Radius Considerations:</strong> Significant offset alterations change the scrub radius—the distance between the steering axis inclination (SAI) ground contact point and the center of the tire footprint. Excessively positive or negative scrub radius intensifies steering kickback over road bumps, induces violent torque steer during hard front-wheel acceleration, and impairs straight-line stability under split-friction (mu-split) braking surfaces.
+        </p>
+    </section>
+
+    <!-- Section 7 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            7. Uniform Tire Quality Grading (UTQG) and Load / Speed Ratings
+        </h2>
+        <p class="mb-4">
+            Mandated by NHTSA under <strong>49 CFR 575.104</strong>, the Uniform Tire Quality Grading (UTQG) system provides consumer guidance regarding treadwear longevity, wet braking traction, and sustained thermal endurance. All passenger car tires sold in the United States display these standardized ratings on their sidewalls.
+        </p>
+        <div class="space-y-4 my-6">
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-1">Treadwear Index (100 to 800+)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">A comparative rating determined during a controlled $7,200\text{-mile}$ government test course in Texas against a Course Monitoring Tire (baseline = 100). A tire graded 400 is projected to last roughly twice as long as a tire graded 200 under identical testing conditions. Dedicated track competition tires often carry 200 ratings, whereas durable all-season touring tires frequently rate between 500 and 700.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-1">Traction Grades (AA, A, B, C)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Measures the tire's straight-line braking coefficient on wet asphalt and wet concrete skid trailers. Grade <strong>AA</strong> represents the highest grip standard (exceeding $0.54\text{ G}$ on asphalt and $0.38\text{ G}$ on concrete), followed by A, B, and C. Note that UTQG traction does not evaluate wet cornering capability, hydroplaning resistance, or snow and ice traction.</p>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                <h3 class="font-bold text-slate-900 dark:text-white mb-1">Temperature Grades (A, B, C)</h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400">Assesses the tire's resistance to heat generation and dissipation under high-speed laboratory wheel drum testing. Grade <strong>A</strong> successfully runs at $115\text{ mph}$ for 30 minutes without thermal failure, Grade <strong>B</strong> satisfies $100\text{ mph}$, and Grade <strong>C</strong> meets the minimum Federal standard of $85\text{ mph}$.</p>
+            </div>
+        </div>
+        <p class="mb-4">
+            <strong>Load Index and Inflation Capacity:</strong> The load index is an assigned numeric code indicating maximum payload carrying capacity per tire when inflated to maximum operating pressure:
+        </p>
+        <div class="overflow-x-auto my-4">
+            <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 font-mono">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                    <tr>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Load Index</th>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Pounds (lbs)</th>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Kilograms (kg)</th>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Load Index</th>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Pounds (lbs)</th>
+                        <th class="p-2 border border-slate-200 dark:border-slate-700">Kilograms (kg)</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                    <tr><td class="p-2 font-bold">88</td><td class="p-2">1,235</td><td class="p-2">560</td><td class="p-2 font-bold">96</td><td class="p-2">1,565</td><td class="p-2">710</td></tr>
+                    <tr><td class="p-2 font-bold">90</td><td class="p-2">1,323</td><td class="p-2">600</td><td class="p-2 font-bold">98</td><td class="p-2">1,653</td><td class="p-2">750</td></tr>
+                    <tr><td class="p-2 font-bold">92</td><td class="p-2">1,389</td><td class="p-2">630</td><td class="p-2 font-bold">100</td><td class="p-2">1,764</td><td class="p-2">800</td></tr>
+                    <tr><td class="p-2 font-bold">94</td><td class="p-2">1,477</td><td class="p-2">670</td><td class="p-2 font-bold">104</td><td class="p-2">1,984</td><td class="p-2">900</td></tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mb-4">
+            <em>Mandatory Rule:</em> Replacement tires must possess a load index equal to or greater than the OEM specification listed on the driver's B-pillar door jamb placard. Downgrading load index severely compromises vehicle safety, leading to potential structural carcass blowout under heavy payload or high ambient temperatures.
+        </p>
+        <p class="mb-4">
+            <strong>Speed Rating Classifications:</strong>
+        </p>
+        <ul class="list-disc pl-6 space-y-1 mb-4 text-xs font-mono">
+            <li><strong>Q:</strong> $160\text{ km/h}$ ($99\text{ mph}$) &bull; Winter studded &amp; off-road tires</li>
+            <li><strong>S:</strong> $180\text{ km/h}$ ($112\text{ mph}$) &bull; Family sedans &amp; minivans</li>
+            <li><strong>T:</strong> $190\text{ km/h}$ ($118\text{ mph}$) &bull; Standard touring fitments</li>
+            <li><strong>H:</strong> $210\text{ km/h}$ ($130\text{ mph}$) &bull; Sport compacts &amp; crossovers</li>
+            <li><strong>V:</strong> $240\text{ km/h}$ ($149\text{ mph}$) &bull; Performance sport coupes &amp; GTs</li>
+            <li><strong>W:</strong> $270\text{ km/h}$ ($168\text{ mph}$) &bull; High-performance sports cars</li>
+            <li><strong>Y:</strong> $300\text{ km/h}$ ($186\text{ mph}$) &bull; Supercars &amp; exotic vehicles</li>
+            <li><strong>(Y):</strong> Exceeding $300\text{ km/h}$ ($186+\text{ mph}$) &bull; Hypercars with special manufacturer approval</li>
+        </ul>
+    </section>
+
+    <!-- Section 8 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            8. Regulatory Standards: TRA, ETRTO, and NHTSA Guidelines
+        </h2>
+        <p class="mb-4">
+            Automotive tire and wheel engineering is governed by strict regulatory frameworks established across global jurisdictions:
+        </p>
+        <ul class="list-disc pl-6 space-y-3 mb-4">
+            <li>
+                <strong>Tire and Rim Association (TRA):</strong> Headquartered in the United States, TRA establishes standardized dimensional tolerances, rim contour profiles, valve designs, and load-inflation tables for North American manufacturers. TRA guidelines establish standard load inflation curves (typically peaking at $35\text{ psi}$ or $240\text{ kPa}$) and extra load (XL / Reinforced) specifications that accommodate pressures up to $42\text{ psi}$ ($290\text{ kPa}$) for higher payload capacity.
+            </li>
+            <li>
+                <strong>European Tyre and Rim Technical Organisation (ETRTO):</strong> The European counterpart establishes technical specifications recognized by the United Nations Economic Commission for Europe (UNECE Regulation 30 for passenger cars and Regulation 54 for commercial vehicles). ETRTO standard load tires are typically rated at $36\text{ psi}$ ($2.5\text{ bar}$) baseline, with Reinforced / Extra Load variants rated at $42\text{ psi}$ ($2.9\text{ bar}$).
+            </li>
+            <li>
+                <strong>NHTSA Federal Motor Vehicle Safety Standards (FMVSS):</strong>
+                <ul class="list-circle pl-6 space-y-1 mt-1 text-xs">
+                    <li><strong>FMVSS No. 109:</strong> Establishes performance requirements for new non-radial and older passenger car pneumatic tires.</li>
+                    <li><strong>FMVSS No. 139:</strong> Mandated following the Transportation Recall Enhancement, Accountability, and Documentation (TREAD) Act, establishing modern high-speed endurance, low-inflation endurance, and bead-unseating resistance tests for radial tires under $10,000\text{ lbs}$ GVWR.</li>
+                    <li><strong>FMVSS No. 138:</strong> Governs Tire Pressure Monitoring Systems (TPMS), requiring illumination of a dashboard warning telltale within 20 minutes when any tire pressure drops $25\%$ or more below vehicle placard recommendation.</li>
+                </ul>
+            </li>
+        </ul>
+        <p>
+            Whenever changing tire dimensions, always calibrate TPMS threshold sensors, verify wheel lug nut torque to factory specification using a calibrated torque wrench after 50 to 100 miles of driving, and maintain cold inflation pressures strictly according to the door jamb tire information label.
+        </p>
+    </section>
+
+</article>
+
+        </section>
+
+        <!-- Technical FAQ Accordion Section -->
+        <section class="mt-12">
+            <div class="mb-6 text-center max-w-2xl mx-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Frequently Asked Questions</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Automotive engineering answers regarding tire sizing, speedometer error, and wheel clearances.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-3" id="faqAccordion">
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(0)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What is the acceptable percentage difference when changing tire sizes?</span>
+                <svg id="faqIcon_0" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_0" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                Automotive engineering standards set by the Tire and Rim Association (TRA) recommend keeping the overall tire diameter within ±1.0% to ±1.5% of the original equipment manufacturer (OEM) tire. Differences between 1.5% and 2.5% are generally acceptable if adequate wheel well clearance exists. Size changes exceeding ±3.0% are strongly discouraged because they trigger false readings in the Anti-lock Braking System (ABS), disrupt Electronic Stability Control (ESC) yaw calculation, degrade transmission shift timing, and generate significant speedometer inaccuracy.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>How does tire size change affect my speedometer and odometer readings?</span>
+                <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                Because speedometers calculate vehicle velocity from wheel rotation speed, installing a tire with a larger diameter covers more linear distance per rotation, causing the speedometer to read slower than your actual road speed (under-reporting). If you install a smaller tire, the wheel rotates more frequently, causing the speedometer to read faster than your actual road speed (over-reporting). Your odometer is altered by the exact same percentage, recording either fewer or more total miles than actually traveled.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What does tire plus-sizing mean (Plus 1, Plus 2)?</span>
+                <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                Plus-sizing is the practice of replacing factory wheels with larger diameter wheels while reducing the tire aspect ratio to keep overall rolling diameter identical to stock. A 'Plus 1' fitment increases wheel diameter by 1 inch while reducing aspect ratio by 10 points (for example, stepping from 205/55R16 to 225/45R17). A 'Plus 2' fitment increases wheel rim diameter by 2 inches (for example, stepping to 225/40R18). This upgrade enhances lateral grip, steering responsiveness, and brake clearance.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What do the numbers on a tire code mean (e.g. 225/45R17)?</span>
+                <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                In a tire code such as 225/45R17, '225' is the nominal section width in millimeters measured across the sidewalls; '45' is the aspect ratio, indicating the sidewall height is 45% of the section width (101.25 mm); 'R' indicates radial ply construction; and '17' specifies the wheel rim diameter in inches. An accompanying service code like '94W' specifies the load index (94 = 1,477 lbs / 670 kg capacity) and speed rating symbol (W = up to 168 mph / 270 km/h).
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>Why is tire diameter critical on All-Wheel-Drive (AWD) vehicles?</span>
+                <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                All-Wheel-Drive (AWD) systems rely on center differentials, viscous couplings, or electronically controlled multi-plate clutch packs to distribute torque between front and rear axles. If tires on one axle differ in diameter by more than 1% (or approximately 2/32 to 3/32 of an inch in tread depth), the wheels rotate at different rotational speeds on dry pavement. This forces the center transfer case to slip continuously, causing fluid overheating, mechanical binding, and costly driveline failure.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What is wheel offset (ET) and how does it relate to tire fitment?</span>
+                <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                Wheel offset, designated as 'ET' from the German word Einpresstiefe, is the distance in millimeters from the wheel's true geometric centerline to its hub mounting surface. A positive offset positions the mounting face toward the street face, pulling the wheel inward toward the suspension. When installing wider tires, incorrect offset causes tires to rub against internal suspension struts or outer fender lips during steering lock and spring compression.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>Can I replace my tires with a lower load index or speed rating than OEM?</span>
+                <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                No. Under NHTSA safety guidelines, replacement tires must have an equal or higher load index than the vehicle manufacturer's factory specification listed on the driver door jamb placard. Installing a lower load rating risks sudden tire sidewall blowout under normal passenger or cargo weight. Similarly, speed ratings should match or exceed factory ratings to preserve high-speed centrifugal carcass stability and heat dissipation.
+            </div>
+        </div>
+        
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>How does tire diameter change affect engine RPM and fuel economy?</span>
+                <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                A taller tire alters the effective final drive ratio, reducing engine RPM at any given highway speed. While lower cruising RPM can slightly improve steady-state highway fuel economy under flat terrain, it reduces wheel torque multiplication. This causes sluggish throttle acceleration, requires more downshifting during hill climbing, increases city stop-and-go fuel consumption, and can add rotational inertia that dulls braking response.
+            </div>
+        </div>
+        
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke-width="2"/><path stroke-width="2" d="M12 3v3m0 12v3M3 12h3m12 0h3"/></svg>
+                    </span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Automotive Engineering. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Engineering Notice:</strong> CalcWorld Tire Size &amp; Speedometer Calibration Engine computes kinematic dimensions using standards published by the Tire and Rim Association (TRA), the European Tyre and Rim Technical Organisation (ETRTO), and the National Highway Traffic Safety Administration (NHTSA Federal Motor Vehicle Safety Standards FMVSS 109 and 139). This web application is intended for automotive comparison, speedometer recalibration planning, and fitment analysis. Always verify mechanical clearances on a vehicle lift before highway operation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Actions:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="switchTab('solver')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Matrix</button>
+        <button type="button" onclick="switchTab('speedo')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Speedo</button>
+        <button type="button" onclick="switchTab('fitment')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Plus-Size</button>
+        <button type="button" onclick="copyFormattedSummary()" class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Tire data copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- 1. Global State & Configuration ---
+    let currentUnits = 'imperial'; // 'imperial' (in/mph) | 'metric' (mm/km/h)
+    let currentSvgMode = 'overlay'; // 'overlay' | 'sidebyside'
+    let currentTab = 'solver';
+    
+    // Tire 1: Stock (225/45R17)
+    let t1 = { width: 225, aspect: 45, rim: 17 };
+    // Tire 2: Proposed (245/40R18)
+    let t2 = { width: 245, aspect: 40, rim: 18 };
+
+    // Standard automotive dimensional options
+    const WIDTH_OPTIONS = [145, 155, 165, 175, 185, 195, 205, 215, 225, 235, 245, 255, 265, 275, 285, 295, 305, 315, 325, 335, 345, 355];
+    const ASPECT_OPTIONS = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85];
+    const RIM_OPTIONS = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26];
+
+    let speedoChartInstance = null;
+
+    // --- 2. Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        populateSelectDropdowns();
+        syncInputsFromState();
+        recalculate();
+    });
+
+    function populateSelectDropdowns() {
+        const populate = (elemId, options, selectedVal) => {
+            const el = document.getElementById(elemId);
+            if (!el) return;
+            el.innerHTML = options.map(opt => `<option value="${opt}" ${opt === selectedVal ? 'selected' : ''}>${opt}</option>`).join('');
+        };
+
+        populate('t1Width', WIDTH_OPTIONS, t1.width);
+        populate('t1Aspect', ASPECT_OPTIONS, t1.aspect);
+        populate('t1Rim', RIM_OPTIONS, t1.rim);
+
+        populate('t2Width', WIDTH_OPTIONS, t2.width);
+        populate('t2Aspect', ASPECT_OPTIONS, t2.aspect);
+        populate('t2Rim', RIM_OPTIONS, t2.rim);
+    }
+
+    function syncInputsFromState() {
+        document.getElementById('t1Width').value = t1.width;
+        document.getElementById('t1Aspect').value = t1.aspect;
+        document.getElementById('t1Rim').value = t1.rim;
+        document.getElementById('t1CodeInput').value = `${t1.width}/${t1.aspect}R${t1.rim}`;
+        document.getElementById('badgeTire1Code').innerText = `${t1.width}/${t1.aspect}R${t1.rim}`;
+
+        document.getElementById('t2Width').value = t2.width;
+        document.getElementById('t2Aspect').value = t2.aspect;
+        document.getElementById('t2Rim').value = t2.rim;
+        document.getElementById('t2CodeInput').value = `${t2.width}/${t2.aspect}R${t2.rim}`;
+        document.getElementById('badgeTire2Code').innerText = `${t2.width}/${t2.aspect}R${t2.rim}`;
+    }
+
+    // --- 3. Tire Code Parser ---
+    function parseTireString(str) {
+        if (!str) return null;
+        // Matches e.g. 225/45R17, P225/45R17, 225/45/17, 225 45 17, 225-45-17, 225/45ZR17
+        const clean = str.trim().toUpperCase().replace(/^[A-Z]{1,2}/, ''); // Remove P or LT
+        const match = clean.match(/(\d{3})[\/\s-]?(\d{2})[\/\s-]?[R|Z|D|B]?(\d{2})/);
+        if (match) {
+            const w = parseInt(match[1], 10);
+            const ar = parseInt(match[2], 10);
+            const r = parseInt(match[3], 10);
+            if (w >= 125 && w <= 405 && ar >= 20 && ar <= 90 && r >= 10 && r <= 32) {
+                return { width: w, aspect: ar, rim: r };
+            }
+        }
+        return null;
+    }
+
+    function parseTireCodeInput(tireIndex) {
+        const inputId = tireIndex === 1 ? 't1CodeInput' : 't2CodeInput';
+        const raw = document.getElementById(inputId).value;
+        const parsed = parseTireString(raw);
+        if (parsed) {
+            if (tireIndex === 1) {
+                t1 = parsed;
+                // Add to options if not present
+                ensureSelectOption('t1Width', parsed.width);
+                ensureSelectOption('t1Aspect', parsed.aspect);
+                ensureSelectOption('t1Rim', parsed.rim);
+            } else {
+                t2 = parsed;
+                ensureSelectOption('t2Width', parsed.width);
+                ensureSelectOption('t2Aspect', parsed.aspect);
+                ensureSelectOption('t2Rim', parsed.rim);
+            }
+            syncInputsFromState();
+            recalculate();
+            showToast(`Parsed Tire ${tireIndex}: ${parsed.width}/${parsed.aspect}R${parsed.rim}`);
+        } else {
+            showToast(`Invalid tire format. Example: 225/45R17`);
+        }
+    }
+
+    function ensureSelectOption(selectId, val) {
+        const el = document.getElementById(selectId);
+        if (!el) return;
+        const exists = Array.from(el.options).some(o => parseInt(o.value, 10) === val);
+        if (!exists) {
+            const opt = document.createElement('option');
+            opt.value = val;
+            opt.innerText = val;
+            el.appendChild(opt);
+        }
+    }
+
+    function handleTireChange(tireIndex) {
+        if (tireIndex === 1) {
+            t1.width = parseInt(document.getElementById('t1Width').value, 10);
+            t1.aspect = parseInt(document.getElementById('t1Aspect').value, 10);
+            t1.rim = parseInt(document.getElementById('t1Rim').value, 10);
+        } else {
+            t2.width = parseInt(document.getElementById('t2Width').value, 10);
+            t2.aspect = parseInt(document.getElementById('t2Aspect').value, 10);
+            t2.rim = parseInt(document.getElementById('t2Rim').value, 10);
+        }
+        syncInputsFromState();
+        recalculate();
+    }
+
+    function applyPreset(code1, code2) {
+        const p1 = parseTireString(code1);
+        const p2 = parseTireString(code2);
+        if (p1 && p2) {
+            t1 = p1;
+            t2 = p2;
+            ensureSelectOption('t1Width', p1.width);
+            ensureSelectOption('t1Aspect', p1.aspect);
+            ensureSelectOption('t1Rim', p1.rim);
+            ensureSelectOption('t2Width', p2.width);
+            ensureSelectOption('t2Aspect', p2.aspect);
+            ensureSelectOption('t2Rim', p2.rim);
+            syncInputsFromState();
+            recalculate();
+            showToast(`Preset Loaded: ${code1} vs ${code2}`);
+        }
+    }
+
+    // --- 4. Kinematic Formulation Engine ---
+    function calcTireKinematics(tire) {
+        const sidewallMm = tire.width * (tire.aspect / 100.0);
+        const sidewallIn = sidewallMm / 25.4;
+
+        const rimMm = tire.rim * 25.4;
+        const diameterMm = (2.0 * sidewallMm) + rimMm;
+        const diameterIn = diameterMm / 25.4;
+
+        const radiusMm = diameterMm / 2.0;
+        const radiusIn = diameterIn / 2.0;
+
+        const circMm = Math.PI * diameterMm;
+        const circIn = Math.PI * diameterIn;
+
+        const revsPerMile = 63360.0 / circIn;
+        const revsPerKm = 1000000.0 / circMm;
+
+        return {
+            sidewallMm, sidewallIn,
+            rimMm, rimIn: tire.rim,
+            diameterMm, diameterIn,
+            radiusMm, radiusIn,
+            circMm, circIn,
+            revsPerMile, revsPerKm
+        };
+    }
+
+    // --- 5. Main Recalculation Routine ---
+    function recalculate() {
+        const k1 = calcTireKinematics(t1);
+        const k2 = calcTireKinematics(t2);
+
+        const diaDiffMm = k2.diameterMm - k1.diameterMm;
+        const diaDiffIn = k2.diameterIn - k1.diameterIn;
+        const diaPctDiff = ((k2.diameterMm - k1.diameterMm) / k1.diameterMm) * 100.0;
+
+        const widthDiffMm = t2.width - t1.width;
+        const widthDiffIn = widthDiffMm / 25.4;
+        const widthPctDiff = ((t2.width - t1.width) / t1.width) * 100.0;
+
+        const sidewallDiffMm = k2.sidewallMm - k1.sidewallMm;
+        const sidewallDiffIn = k2.sidewallIn - k1.sidewallIn;
+        const sidewallPctDiff = ((k2.sidewallMm - k1.sidewallMm) / k1.sidewallMm) * 100.0;
+
+        const circDiffMm = k2.circMm - k1.circMm;
+        const circDiffIn = k2.circIn - k1.circIn;
+        const circPctDiff = ((k2.circMm - k1.circMm) / k1.circMm) * 100.0;
+
+        const revsDiff = k2.revsPerMile - k1.revsPerMile;
+        const revsPctDiff = ((k2.revsPerMile - k1.revsPerMile) / k1.revsPerMile) * 100.0;
+
+        const revskmDiff = k2.revsPerKm - k1.revsPerKm;
+        const revskmPctDiff = ((k2.revsPerKm - k1.revsPerKm) / k1.revsPerKm) * 100.0;
+
+        const rideHeightDiffMm = diaDiffMm / 2.0;
+        const rideHeightDiffIn = diaDiffIn / 2.0;
+
+        // Speedometer Calculation
+        const testSpeed = parseFloat(document.getElementById('speedTestInput').value) || 60.0;
+        const speedRatio = k2.diameterMm / k1.diameterMm;
+        const actualSpeed = testSpeed * speedRatio;
+        const speedDiff = actualSpeed - testSpeed;
+        const speedPctError = diaPctDiff;
+
+        // Axle Gearing
+        const stockAxle = parseFloat(document.getElementById('axleRatioInput').value) || 3.73;
+        const effectiveAxle = stockAxle * (k1.diameterMm / k2.diameterMm);
+        const axleDiff = effectiveAxle - stockAxle;
+
+        // Update Hero Badges & Metrics
+        updateHeroMetrics(diaDiffIn, diaDiffMm, diaPctDiff, actualSpeed, testSpeed, rideHeightDiffIn, rideHeightDiffMm);
+
+        // Update Matrix Table
+        updateMatrixTable(k1, k2, diaDiffMm, diaDiffIn, diaPctDiff, widthDiffMm, widthDiffIn, widthPctDiff,
+            sidewallDiffMm, sidewallDiffIn, sidewallPctDiff, circDiffMm, circDiffIn, circPctDiff,
+            revsDiff, revsPctDiff, revskmDiff, revskmPctDiff, rideHeightDiffMm, rideHeightDiffIn,
+            actualSpeed, testSpeed, speedDiff, speedPctError, stockAxle, effectiveAxle, axleDiff);
+
+        // Update SVG Visualizer
+        renderTireSvg(k1, k2);
+
+        // Update Math Derivation
+        updateMathDerivation(k1, k2, testSpeed, actualSpeed, diaPctDiff);
+
+        // Update Speedometer Error Table & Chart
+        updateSpeedoMatrix(speedRatio);
+        updateSpeedoChart(speedRatio);
+
+        // Update Plus-Sizing Suggestions
+        generatePlusSizingCards(k1);
+
+        // Update Wheel Offset Clearance
+        calcWheelOffsetClearance();
+
+        // Update Print Tab
+        updatePrintTab(k1, k2, diaDiffIn, diaPctDiff, rideHeightDiffIn, rideHeightDiffMm, actualSpeed, testSpeed);
+    }
+
+    // --- 6. Hero Cards & Safety Badges ---
+    function updateHeroMetrics(diaDiffIn, diaDiffMm, pct, actualSpeed, testSpeed, rideIn, rideMm) {
+        const diaElem = document.getElementById('heroDiameterDiff');
+        const diaPctElem = document.getElementById('heroDiameterPct');
+        const speedElem = document.getElementById('heroSpeedActual');
+        const speedNoteElem = document.getElementById('heroSpeedNote');
+        const rideElem = document.getElementById('heroRideHeight');
+        const rideNoteElem = document.getElementById('heroRideHeightNote');
+
+        const unitSuffix = currentUnits === 'imperial' ? 'in' : 'mm';
+        const speedUnit = currentUnits === 'imperial' ? 'mph' : 'km/h';
+
+        document.getElementById('heroDiameterDiffUnit').innerText = unitSuffix;
+        document.getElementById('heroSpeedUnit').innerText = speedUnit;
+        document.getElementById('heroRideHeightUnit').innerText = unitSuffix;
+
+        const diaVal = currentUnits === 'imperial' ? diaDiffIn.toFixed(2) : diaDiffMm.toFixed(1);
+        diaElem.innerText = (diaVal > 0 ? '+' : '') + diaVal;
+        diaPctElem.innerText = (pct > 0 ? '+' : '') + pct.toFixed(1) + '%';
+
+        speedElem.innerText = actualSpeed.toFixed(1);
+        const spdDiff = actualSpeed - testSpeed;
+        if (Math.abs(spdDiff) < 0.1) {
+            speedNoteElem.innerText = `Exact match with speedometer`;
+        } else if (spdDiff > 0) {
+            speedNoteElem.innerText = `Reads ${Math.abs(spdDiff).toFixed(1)} ${speedUnit} slower than actual`;
+        } else {
+            speedNoteElem.innerText = `Reads ${Math.abs(spdDiff).toFixed(1)} ${speedUnit} faster than actual`;
+        }
+
+        const rideVal = currentUnits === 'imperial' ? rideIn.toFixed(2) : rideMm.toFixed(1);
+        rideElem.innerText = (rideVal > 0 ? '+' : '') + rideVal;
+        rideNoteElem.innerText = rideVal > 0 ? 'Vehicle stance lifted' : (rideVal < 0 ? 'Vehicle stance lowered' : 'No change');
+
+        // Safety Assessment Badge
+        const safetyBadge = document.getElementById('fitmentSafetyBadge');
+        const safetyLabel = document.getElementById('fitmentSafetyLabel');
+        const absDiff = Math.abs(pct);
+
+        if (absDiff <= 1.0) {
+            safetyBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-sm';
+            safetyLabel.innerText = `Optimal Fitment (${absDiff.toFixed(1)}% <= 1.0%)`;
+        } else if (absDiff <= 2.0) {
+            safetyBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-300 dark:border-amber-800 flex items-center gap-1.5 shadow-sm';
+            safetyLabel.innerText = `Acceptable Fitment (${absDiff.toFixed(1)}% <= 2.0%)`;
+        } else if (absDiff <= 3.0) {
+            safetyBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300 border border-orange-300 dark:border-orange-800 flex items-center gap-1.5 shadow-sm';
+            safetyLabel.innerText = `Caution: Marginal Fitment (${absDiff.toFixed(1)}%)`;
+        } else {
+            safetyBadge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300 border border-rose-300 dark:border-rose-800 flex items-center gap-1.5 shadow-sm';
+            safetyLabel.innerText = `Hazard: > 3% Error (${absDiff.toFixed(1)}% ABS/ESC Warning)`;
+        }
+    }
+
+    // --- 7. Matrix Table Update ---
+    function updateMatrixTable(k1, k2, diaMm, diaIn, diaPct, wMm, wIn, wPct, swMm, swIn, swPct,
+        cMm, cIn, cPct, revs, revsPct, revskm, revskmPct, rhMm, rhIn, actSpeed, indSpeed, spdDiff,
+        spdPct, stockAxle, effAxle, axleDiff) {
+
+        document.getElementById('thTire1Label').innerText = `Tire 1 (${t1.width}/${t1.aspect}R${t1.rim})`;
+        document.getElementById('thTire2Label').innerText = `Tire 2 (${t2.width}/${t2.aspect}R${t2.rim})`;
+
+        // Section Width
+        document.getElementById('m_width1').innerText = `${t1.width} mm (${(t1.width/25.4).toFixed(2)} in)`;
+        document.getElementById('m_width2').innerText = `${t2.width} mm (${(t2.width/25.4).toFixed(2)} in)`;
+        document.getElementById('m_widthDiff').innerText = `${wMm > 0 ? '+' : ''}${wMm} mm (${wIn > 0 ? '+' : ''}${wIn.toFixed(2)} in)`;
+        document.getElementById('m_widthPct').innerText = `${wPct > 0 ? '+' : ''}${wPct.toFixed(1)}%`;
+
+        // Sidewall Height
+        document.getElementById('m_sidewall1').innerText = `${k1.sidewallMm.toFixed(1)} mm (${k1.sidewallIn.toFixed(2)} in)`;
+        document.getElementById('m_sidewall2').innerText = `${k2.sidewallMm.toFixed(1)} mm (${k2.sidewallIn.toFixed(2)} in)`;
+        document.getElementById('m_sidewallDiff').innerText = `${swMm > 0 ? '+' : ''}${swMm.toFixed(1)} mm (${swIn > 0 ? '+' : ''}${swIn.toFixed(2)} in)`;
+        document.getElementById('m_sidewallPct').innerText = `${swPct > 0 ? '+' : ''}${swPct.toFixed(1)}%`;
+
+        // Overall Diameter
+        document.getElementById('m_diameter1').innerText = `${k1.diameterMm.toFixed(1)} mm (${k1.diameterIn.toFixed(2)} in)`;
+        document.getElementById('m_diameter2').innerText = `${k2.diameterMm.toFixed(1)} mm (${k2.diameterIn.toFixed(2)} in)`;
+        document.getElementById('m_diameterDiff').innerText = `${diaMm > 0 ? '+' : ''}${diaMm.toFixed(1)} mm (${diaIn > 0 ? '+' : ''}${diaIn.toFixed(2)} in)`;
+        document.getElementById('m_diameterPct').innerText = `${diaPct > 0 ? '+' : ''}${diaPct.toFixed(1)}%`;
+
+        // Circumference
+        document.getElementById('m_circ1').innerText = `${k1.circMm.toFixed(1)} mm (${k1.circIn.toFixed(2)} in)`;
+        document.getElementById('m_circ2').innerText = `${k2.circMm.toFixed(1)} mm (${k2.circIn.toFixed(2)} in)`;
+        document.getElementById('m_circDiff').innerText = `${cMm > 0 ? '+' : ''}${cMm.toFixed(1)} mm (${cIn > 0 ? '+' : ''}${cIn.toFixed(2)} in)`;
+        document.getElementById('m_circPct').innerText = `${cPct > 0 ? '+' : ''}${cPct.toFixed(1)}%`;
+
+        // Revs per Mile
+        document.getElementById('m_revs1').innerText = `${k1.revsPerMile.toFixed(1)} rev/mi`;
+        document.getElementById('m_revs2').innerText = `${k2.revsPerMile.toFixed(1)} rev/mi`;
+        document.getElementById('m_revsDiff').innerText = `${revs > 0 ? '+' : ''}${revs.toFixed(1)} rev/mi`;
+        document.getElementById('m_revsPct').innerText = `${revsPct > 0 ? '+' : ''}${revsPct.toFixed(1)}%`;
+
+        // Revs per km
+        document.getElementById('m_revskm1').innerText = `${k1.revsPerKm.toFixed(1)} rev/km`;
+        document.getElementById('m_revskm2').innerText = `${k2.revsPerKm.toFixed(1)} rev/km`;
+        document.getElementById('m_revskmDiff').innerText = `${revskm > 0 ? '+' : ''}${revskm.toFixed(1)} rev/km`;
+        document.getElementById('m_revskmPct').innerText = `${revskmPct > 0 ? '+' : ''}${revskmPct.toFixed(1)}%`;
+
+        // Ride Height
+        document.getElementById('m_rideHeight').innerText = `${rhMm > 0 ? '+' : ''}${rhMm.toFixed(1)} mm (${rhIn > 0 ? '+' : ''}${rhIn.toFixed(2)} in)`;
+        document.getElementById('m_rideHeightDiff').innerText = `${rhMm > 0 ? '+' : ''}${rhMm.toFixed(1)} mm (${rhIn > 0 ? '+' : ''}${rhIn.toFixed(2)} in)`;
+
+        // Speed Reading
+        const spdUnit = currentUnits === 'imperial' ? 'mph' : 'km/h';
+        document.getElementById('m_speedActual').innerText = `${actSpeed.toFixed(1)} ${spdUnit}`;
+        document.getElementById('m_speedDiff').innerText = `${spdDiff > 0 ? '+' : ''}${spdDiff.toFixed(1)} ${spdUnit}`;
+        document.getElementById('m_speedErrorPct').innerText = `${spdPct > 0 ? '+' : ''}${spdPct.toFixed(1)}%`;
+
+        // Effective Axle Ratio
+        document.getElementById('m_axleStock').innerText = `${stockAxle.toFixed(2)}:1 (Stock)`;
+        document.getElementById('m_axleEffective').innerText = `${effAxle.toFixed(2)}:1 (Effective)`;
+        document.getElementById('m_axleDiff').innerText = `${axleDiff > 0 ? '+' : ''}${axleDiff.toFixed(2)} gear shift`;
+    }
+
+    // --- 8. Interactive SVG Visualizer Engine ---
+    function setSvgViewMode(mode) {
+        currentSvgMode = mode;
+        const btnOverlay = document.getElementById('svgMode_overlay');
+        const btnSide = document.getElementById('svgMode_sidebyside');
+
+        if (mode === 'overlay') {
+            btnOverlay.className = 'px-2.5 py-1 rounded bg-brand-50 text-brand-600 dark:bg-slate-700 dark:text-white font-bold transition';
+            btnSide.className = 'px-2.5 py-1 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition';
+        } else {
+            btnSide.className = 'px-2.5 py-1 rounded bg-brand-50 text-brand-600 dark:bg-slate-700 dark:text-white font-bold transition';
+            btnOverlay.className = 'px-2.5 py-1 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white font-medium transition';
+        }
+
+        const k1 = calcTireKinematics(t1);
+        const k2 = calcTireKinematics(t2);
+        renderTireSvg(k1, k2);
+    }
+
+    function renderTireSvg(k1, k2) {
+        const svg = document.getElementById('tireSvg');
+        if (!svg) return;
+
+        document.getElementById('legendT1').innerText = `Tire 1: ${t1.width}/${t1.aspect}R${t1.rim}`;
+        document.getElementById('legendT2').innerText = `Tire 2: ${t2.width}/${t2.aspect}R${t2.rim}`;
+
+        const maxDiaMm = Math.max(k1.diameterMm, k2.diameterMm, 700);
+        // Base scale factor: map maxDiaMm to ~260 px
+        const scale = 250.0 / maxDiaMm;
+
+        const rTire1 = (k1.diameterMm / 2.0) * scale;
+        const rRim1 = (k1.rimMm / 2.0) * scale;
+
+        const rTire2 = (k2.diameterMm / 2.0) * scale;
+        const rRim2 = (k2.rimMm / 2.0) * scale;
+
+        if (currentSvgMode === 'overlay') {
+            // Concentric Overlay View (cx = 350, cy = 170)
+            const cx = 350;
+            const cy = 170;
+
+            svg.innerHTML = `
+                <!-- Background Grid Lines -->
+                <defs>
+                    <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5" class="text-slate-200 dark:text-slate-800" />
+                    </pattern>
+                </defs>
+                <rect width="700" height="340" fill="url(#gridPattern)" rx="12" />
+
+                <!-- Ground baseline line -->
+                <line x1="80" y1="${cy + Math.max(rTire1, rTire2)}" x2="620" y2="${cy + Math.max(rTire1, rTire2)}" stroke="currentColor" stroke-dasharray="4 4" class="text-slate-400/50" />
+                <text x="90" y="${cy + Math.max(rTire1, rTire2) - 6}" font-size="9" fill="currentColor" class="text-slate-400 font-mono">Ground Plane</text>
+
+                <!-- TIRE 1 (Blue) -->
+                <!-- Tire 1 Outer Rubber Tread Circle -->
+                <circle cx="${cx}" cy="${cy}" r="${rTire1}" fill="rgba(37, 99, 235, 0.08)" stroke="#2563eb" stroke-width="3" stroke-dasharray="8 4" />
+                <!-- Tire 1 Rim Circle -->
+                <circle cx="${cx}" cy="${cy}" r="${rRim1}" fill="rgba(37, 99, 235, 0.15)" stroke="#1d4ed8" stroke-width="2" />
+
+                <!-- TIRE 2 (Orange) -->
+                <!-- Tire 2 Outer Rubber Tread Circle -->
+                <circle cx="${cx}" cy="${cy}" r="${rTire2}" fill="rgba(234, 88, 12, 0.06)" stroke="#ea580c" stroke-width="3" />
+                <!-- Tire 2 Rim Circle -->
+                <circle cx="${cx}" cy="${cy}" r="${rRim2}" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="4 3" />
+
+                <!-- Center Hub & Lugs -->
+                <circle cx="${cx}" cy="${cy}" r="16" fill="currentColor" class="text-slate-300 dark:text-slate-700" stroke="#64748b" stroke-width="1.5" />
+                <circle cx="${cx}" cy="${cy}" r="6" fill="#0f172a" />
+                ${[0, 72, 144, 216, 288].map(ang => {
+                    const rad = (ang * Math.PI) / 180;
+                    const lx = cx + 10 * Math.cos(rad);
+                    const ly = cy + 10 * Math.sin(rad);
+                    return `<circle cx="${lx.toFixed(1)}" cy="${ly.toFixed(1)}" r="2" fill="#cbd5e1" />`;
+                }).join('')}
+
+                <!-- Dimension Callout Lines & Labels -->
+                <!-- Tire 1 Top Callout -->
+                <line x1="${cx - rTire1}" y1="${cy - rTire1 - 18}" x2="${cx + rTire1}" y2="${cy - rTire1 - 18}" stroke="#2563eb" stroke-width="1.5" />
+                <line x1="${cx - rTire1}" y1="${cy - rTire1 - 24}" x2="${cx - rTire1}" y2="${cy - rTire1 - 12}" stroke="#2563eb" stroke-width="1.5" />
+                <line x1="${cx + rTire1}" y1="${cy - rTire1 - 24}" x2="${cx + rTire1}" y2="${cy - rTire1 - 12}" stroke="#2563eb" stroke-width="1.5" />
+                <text x="${cx}" y="${cy - rTire1 - 22}" text-anchor="middle" font-size="11" font-weight="bold" fill="#2563eb" class="font-mono">
+                    T1 Dia: ${k1.diameterIn.toFixed(2)}" (${k1.diameterMm.toFixed(0)} mm)
+                </text>
+
+                <!-- Tire 2 Bottom Dimension Label -->
+                <text x="${cx}" y="${cy + Math.max(rTire1, rTire2) + 20}" text-anchor="middle" font-size="11" font-weight="bold" fill="#ea580c" class="font-mono">
+                    T2 Dia: ${k2.diameterIn.toFixed(2)}" (${k2.diameterMm.toFixed(0)} mm) | Diff: ${(k2.diameterIn - k1.diameterIn) > 0 ? '+' : ''}${(k2.diameterIn - k1.diameterIn).toFixed(2)}"
+                </text>
+
+                <!-- Sidewall annotations -->
+                <line x1="${cx + rRim1 + 5}" y1="${cy}" x2="${cx + rTire1}" y2="${cy}" stroke="#2563eb" stroke-width="2" />
+                <text x="${cx + rRim1 + 10}" y="${cy - 4}" font-size="9" font-weight="bold" fill="#2563eb" class="font-mono">H1: ${k1.sidewallIn.toFixed(2)}"</text>
+            `;
+        } else {
+            // Side-by-Side View (Tire 1 @ cx=210, Tire 2 @ cx=490)
+            const c1x = 210;
+            const c2x = 490;
+            const cy = 170;
+
+            svg.innerHTML = `
+                <!-- Background Grid -->
+                <defs>
+                    <pattern id="gridPattern" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="currentColor" stroke-width="0.5" class="text-slate-200 dark:text-slate-800" />
+                    </pattern>
+                </defs>
+                <rect width="700" height="340" fill="url(#gridPattern)" rx="12" />
+
+                <!-- Ground Plane Line -->
+                <line x1="50" y1="${cy + rTire1}" x2="650" y2="${cy + rTire1}" stroke="currentColor" stroke-dasharray="4 4" class="text-slate-400" />
+                <text x="60" y="${cy + rTire1 - 6}" font-size="9" fill="currentColor" class="text-slate-400 font-mono">Ground Baseline</text>
+
+                <!-- TIRE 1 -->
+                <circle cx="${c1x}" cy="${cy}" r="${rTire1}" fill="rgba(37, 99, 235, 0.08)" stroke="#2563eb" stroke-width="3" />
+                <circle cx="${c1x}" cy="${cy}" r="${rRim1}" fill="rgba(37, 99, 235, 0.2)" stroke="#1d4ed8" stroke-width="2" />
+                <!-- 5 Spokes -->
+                ${[0, 72, 144, 216, 288].map(ang => {
+                    const rad = (ang * Math.PI) / 180;
+                    return `<line x1="${c1x}" y1="${cy}" x2="${(c1x + rRim1 * Math.cos(rad)).toFixed(1)}" y2="${(cy + rRim1 * Math.sin(rad)).toFixed(1)}" stroke="#1d4ed8" stroke-width="3" stroke-linecap="round" />`;
+                }).join('')}
+                <circle cx="${c1x}" cy="${cy}" r="14" fill="#1e293b" />
+                <circle cx="${c1x}" cy="${cy}" r="5" fill="#f8fafc" />
+
+                <text x="${c1x}" y="${cy - rTire1 - 12}" text-anchor="middle" font-size="12" font-weight="bold" fill="#2563eb" class="font-mono">
+                    ${t1.width}/${t1.aspect}R${t1.rim}
+                </text>
+                <text x="${c1x}" y="${cy + rTire1 + 18}" text-anchor="middle" font-size="10" fill="currentColor" class="text-slate-500 font-mono">
+                    Dia: ${k1.diameterIn.toFixed(2)}" | Sidewall: ${k1.sidewallIn.toFixed(2)}"
+                </text>
+
+                <!-- TIRE 2 -->
+                <circle cx="${c2x}" cy="${cy}" r="${rTire2}" fill="rgba(234, 88, 12, 0.08)" stroke="#ea580c" stroke-width="3" />
+                <circle cx="${c2x}" cy="${cy}" r="${rRim2}" fill="rgba(234, 88, 12, 0.2)" stroke="#c2410c" stroke-width="2" />
+                <!-- 5 Spokes -->
+                ${[36, 108, 180, 252, 324].map(ang => {
+                    const rad = (ang * Math.PI) / 180;
+                    return `<line x1="${c2x}" y1="${cy}" x2="${(c2x + rRim2 * Math.cos(rad)).toFixed(1)}" y2="${(cy + rRim2 * Math.sin(rad)).toFixed(1)}" stroke="#ea580c" stroke-width="3" stroke-linecap="round" />`;
+                }).join('')}
+                <circle cx="${c2x}" cy="${cy}" r="14" fill="#1e293b" />
+                <circle cx="${c2x}" cy="${cy}" r="5" fill="#f8fafc" />
+
+                <text x="${c2x}" y="${cy - rTire2 - 12}" text-anchor="middle" font-size="12" font-weight="bold" fill="#ea580c" class="font-mono">
+                    ${t2.width}/${t2.aspect}R${t2.rim}
+                </text>
+                <text x="${c2x}" y="${cy + rTire2 + 18}" text-anchor="middle" font-size="10" fill="currentColor" class="text-slate-500 font-mono">
+                    Dia: ${k2.diameterIn.toFixed(2)}" | Sidewall: ${k2.sidewallIn.toFixed(2)}"
+                </text>
+
+                <!-- Comparison Delta Arrow in Center -->
+                <path d="M 320 170 L 380 170" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)" class="text-slate-400" />
+                <text x="350" y="160" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor" class="text-slate-600 dark:text-slate-300 font-mono">
+                    ${(k2.diameterIn - k1.diameterIn) > 0 ? '+' : ''}${(k2.diameterIn - k1.diameterIn).toFixed(2)}"
+                </text>
+            `;
+        }
+    }
+
+    // --- 9. Step-by-Step Math Derivation ---
+    function updateMathDerivation(k1, k2, indSpeed, actSpeed, pct) {
+        const s1 = document.getElementById('mathStep1');
+        const s2 = document.getElementById('mathStep2');
+        const s3 = document.getElementById('mathStep3');
+        const s4 = document.getElementById('mathStep4');
+
+        if (!s1 || !s2 || !s3 || !s4) return;
+
+        s1.innerHTML = `$$H_1 = ${t1.width} \times \frac{${t1.aspect}}{100} = ${k1.sidewallMm.toFixed(2)}\text{ mm (${k1.sidewallIn.toFixed(2)} in)} \quad | \quad H_2 = ${t2.width} \times \frac{${t2.aspect}}{100} = ${k2.sidewallMm.toFixed(2)}\text{ mm (${k2.sidewallIn.toFixed(2)} in)}$$`;
+
+        s2.innerHTML = `$$\\text{Dia}_1 = (2 \\times ${k1.sidewallMm.toFixed(1)}) + (${t1.rim} \\times 25.4) = ${k1.diameterMm.toFixed(1)}\\text{ mm (${k1.diameterIn.toFixed(2)} in)}$$
+$$\\text{Dia}_2 = (2 \\times ${k2.sidewallMm.toFixed(1)}) + (${t2.rim} \\times 25.4) = ${k2.diameterMm.toFixed(1)}\\text{ mm (${k2.diameterIn.toFixed(2)} in)}$$`;
+
+        s3.innerHTML = `$$C_1 = \\pi \\times ${k1.diameterMm.toFixed(1)} = ${k1.circMm.toFixed(1)}\\text{ mm} \\quad | \\quad C_2 = \\pi \\times ${k2.diameterMm.toFixed(1)} = ${k2.circMm.toFixed(1)}\\text{ mm}$$`;
+
+        s4.innerHTML = `$$\\text{Speed}_{\\text{actual}} = ${indSpeed.toFixed(1)} \\times \\left( \\frac{${k2.diameterMm.toFixed(1)}}{${k1.diameterMm.toFixed(1)}} \\right) = ${actSpeed.toFixed(1)}\\text{ ${currentUnits === 'imperial' ? 'mph' : 'km/h'}} \\quad (\\Delta: ${pct > 0 ? '+' : ''}${pct.toFixed(2)}\\%)$$`;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([s1, s2, s3, s4]).catch(() => {});
+        }
+    }
+
+    // --- 10. Speedometer Matrix Table & Chart ---
+    function updateSpeedoMatrix(ratio) {
+        const tbody = document.getElementById('speedoMatrixTbody');
+        if (!tbody) return;
+
+        const speeds = currentUnits === 'imperial'
+            ? [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90]
+            : [30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150];
+        
+        const unitLabel = currentUnits === 'imperial' ? 'mph' : 'km/h';
+        const distUnit = currentUnits === 'imperial' ? 'miles' : 'km';
+
+        tbody.innerHTML = speeds.map(spd => {
+            const act = spd * ratio;
+            const diff = act - spd;
+            const odoDistance = 1000 * ratio;
+
+            let conditionBadge = '';
+            if (Math.abs(diff) < 0.2) {
+                conditionBadge = `<span class="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Accurate</span>`;
+            } else if (diff > 0) {
+                conditionBadge = `<span class="px-2 py-0.5 rounded bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300">Under-reads (Ticket Risk)</span>`;
+            } else {
+                conditionBadge = `<span class="px-2 py-0.5 rounded bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300">Over-reads (Odometer Fast)</span>`;
+            }
+
+            return `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                    <td class="py-2 px-3 font-bold">${spd} ${unitLabel}</td>
+                    <td class="py-2 px-3 font-bold font-mono text-brand-600 dark:text-brand-400">${act.toFixed(1)} ${unitLabel}</td>
+                    <td class="py-2 px-3 font-mono ${diff > 0 ? 'text-rose-600' : (diff < 0 ? 'text-sky-600' : '')}">${diff > 0 ? '+' : ''}${diff.toFixed(1)} ${unitLabel}</td>
+                    <td class="py-2 px-3 font-mono">${odoDistance.toFixed(1)} ${distUnit}</td>
+                    <td class="py-2 px-3">${conditionBadge}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function updateSpeedoChart(ratio) {
+        const ctx = document.getElementById('speedoChart');
+        if (!ctx) return;
+
+        const factorBadge = document.getElementById('chartErrorBadge');
+        if (factorBadge) factorBadge.innerText = `Calibration Factor: ${ratio.toFixed(4)}x`;
+
+        const speeds = currentUnits === 'imperial'
+            ? [20, 30, 40, 50, 60, 70, 80, 90, 100]
+            : [30, 50, 70, 90, 110, 130, 150];
+
+        const actualSpeeds = speeds.map(s => parseFloat((s * ratio).toFixed(1)));
+
+        if (speedoChartInstance) {
+            speedoChartInstance.data.labels = speeds.map(s => `${s}`);
+            speedoChartInstance.data.datasets[0].data = speeds;
+            speedoChartInstance.data.datasets[1].data = actualSpeeds;
+            speedoChartInstance.update();
+            return;
+        }
+
+        speedoChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: speeds.map(s => `${s}`),
+                datasets: [
+                    {
+                        label: 'Factory Indicated Baseline',
+                        data: speeds,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        pointRadius: 3,
+                        fill: false
+                    },
+                    {
+                        label: `Actual Speed with Tire 2 (${t2.width}/${t2.aspect}R${t2.rim})`,
+                        data: actualSpeeds,
+                        borderColor: '#ea580c',
+                        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        fill: true,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { font: { family: 'Inter', size: 11 } }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return `${ctx.dataset.label}: ${ctx.raw} ${currentUnits === 'imperial' ? 'mph' : 'km/h'}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: `Indicated Speed (${currentUnits === 'imperial' ? 'mph' : 'km/h'})`,
+                            font: { family: 'Inter', size: 11, weight: 'bold' }
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: `True Ground Speed (${currentUnits === 'imperial' ? 'mph' : 'km/h'})`,
+                            font: { family: 'Inter', size: 11, weight: 'bold' }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 11. Plus-Sizing Concept Engine ---
+    function generatePlusSizingCards(baseK) {
+        const container = document.getElementById('plusSizingCardsContainer');
+        const badge = document.getElementById('plusRefTireBadge');
+        if (!container) return;
+
+        badge.innerText = `Base: ${t1.width}/${t1.aspect}R${t1.rim}`;
+
+        const targets = [
+            { name: 'Plus-One (+1")', plusRim: 1 },
+            { name: 'Plus-Two (+2")', plusRim: 2 },
+            { name: 'Plus-Three (+3")', plusRim: 3 }
+        ];
+
+        const cardsHtml = targets.map(tgt => {
+            const targetRim = t1.rim + tgt.plusRim;
+            let bestTire = null;
+            let minDiff = 9999;
+
+            // Search matching combinations
+            const candidateWidths = [t1.width - 10, t1.width, t1.width + 10, t1.width + 20];
+            const candidateAspects = [25, 30, 35, 40, 45, 50, 55];
+
+            candidateWidths.forEach(w => {
+                candidateAspects.forEach(ar => {
+                    const testK = calcTireKinematics({ width: w, aspect: ar, rim: targetRim });
+                    const diff = Math.abs(testK.diameterMm - baseK.diameterMm);
+                    if (diff < minDiff) {
+                        minDiff = diff;
+                        bestTire = { width: w, aspect: ar, rim: targetRim, k: testK, diffMm: testK.diameterMm - baseK.diameterMm };
+                    }
+                });
+            });
+
+            if (!bestTire) return '';
+
+            const pct = (bestTire.diffMm / baseK.diameterMm) * 100.0;
+            const isOptimal = Math.abs(pct) <= 1.0;
+
+            return `
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-bold text-xs uppercase text-slate-500">${tgt.name}</span>
+                            <span class="text-[10px] font-bold px-2 py-0.5 rounded ${isOptimal ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'} font-mono">
+                                ${pct > 0 ? '+' : ''}${pct.toFixed(2)}%
+                            </span>
+                        </div>
+                        <div class="text-lg font-extrabold text-slate-900 dark:text-white font-mono mb-1">
+                            ${bestTire.width}/${bestTire.aspect}R${bestTire.rim}
+                        </div>
+                        <div class="text-xs text-slate-500 space-y-0.5 font-mono">
+                            <div>Diameter: ${bestTire.k.diameterIn.toFixed(2)}" (${bestTire.k.diameterMm.toFixed(0)} mm)</div>
+                            <div>Sidewall: ${bestTire.k.sidewallIn.toFixed(2)}"</div>
+                        </div>
+                    </div>
+                    <button type="button" onclick="applyPreset('${t1.width}/${t1.aspect}R${t1.rim}', '${bestTire.width}/${bestTire.aspect}R${bestTire.rim}')" class="mt-3 w-full py-1.5 bg-white dark:bg-slate-800 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-700 transition shadow-sm">
+                        Apply This Size
+                    </button>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = cardsHtml;
+    }
+
+    // --- 12. Wheel Offset & Suspension Clearance ---
+    function calcWheelOffsetClearance() {
+        const w1w = parseFloat(document.getElementById('w1RimWidth').value) || 7.5;
+        const et1 = parseFloat(document.getElementById('w1Offset').value) || 45;
+        const w2w = parseFloat(document.getElementById('w2RimWidth').value) || 8.5;
+        const et2 = parseFloat(document.getElementById('w2Offset').value) || 38;
+
+        // Inner clearance change in mm: (w2w - w1w)/2 * 25.4 + (et2 - et1)
+        const innerShiftMm = ((w2w - w1w) / 2.0) * 25.4 + (et2 - et1);
+        // Outer poke change in mm: (w2w - w1w)/2 * 25.4 - (et2 - et1)
+        const outerShiftMm = ((w2w - w1w) / 2.0) * 25.4 - (et2 - et1);
+
+        const innerElem = document.getElementById('resInnerClearance');
+        const innerNote = document.getElementById('resInnerClearanceNote');
+        const outerElem = document.getElementById('resOuterPoke');
+        const outerNote = document.getElementById('resOuterPokeNote');
+
+        if (innerShiftMm > 0) {
+            innerElem.innerText = `${innerShiftMm.toFixed(1)} mm LESS clearance`;
+            innerNote.innerText = `Inner rim lip sits ${innerShiftMm.toFixed(1)} mm closer to suspension strut.`;
+        } else {
+            innerElem.innerText = `${Math.abs(innerShiftMm).toFixed(1)} mm MORE clearance`;
+            innerNote.innerText = `Inner rim lip retracts ${Math.abs(innerShiftMm).toFixed(1)} mm away from strut.`;
+        }
+
+        if (outerShiftMm > 0) {
+            outerElem.innerText = `${outerShiftMm.toFixed(1)} mm EXTENSION`;
+            outerNote.innerText = `Pushes wheel face ${outerShiftMm.toFixed(1)} mm outward toward fender edge.`;
+        } else {
+            outerElem.innerText = `${Math.abs(outerShiftMm).toFixed(1)} mm RETRACTED`;
+            outerNote.innerText = `Tucks wheel face ${Math.abs(outerShiftMm).toFixed(1)} mm inward under fender.`;
+        }
+    }
+
+    // --- 13. Print Report Synchronization ---
+    function updatePrintTab(k1, k2, diaDiffIn, pct, rideIn, rideMm, actualSpeed, testSpeed) {
+        document.getElementById('printT1Code').innerText = `${t1.width}/${t1.aspect}R${t1.rim}`;
+        document.getElementById('printT2Code').innerText = `${t2.width}/${t2.aspect}R${t2.rim}`;
+        document.getElementById('printDiaDelta').innerText = `${diaDiffIn > 0 ? '+' : ''}${diaDiffIn.toFixed(2)} in (${pct > 0 ? '+' : ''}${pct.toFixed(2)}%)`;
+        document.getElementById('printRideShift').innerText = `${rideIn > 0 ? '+' : ''}${rideIn.toFixed(2)} in (${rideMm > 0 ? '+' : ''}${rideMm.toFixed(1)} mm)`;
+        document.getElementById('printSpeed60').innerText = `${actualSpeed.toFixed(1)} ${currentUnits === 'imperial' ? 'mph' : 'km/h'} (@ ${testSpeed} indicated)`;
+        
+        const statusElem = document.getElementById('printFitmentStatus');
+        if (Math.abs(pct) <= 1.0) {
+            statusElem.innerText = 'Optimal (< 1%)';
+            statusElem.className = 'font-bold text-emerald-600';
+        } else if (Math.abs(pct) <= 2.0) {
+            statusElem.innerText = 'Acceptable (1-2%)';
+            statusElem.className = 'font-bold text-amber-600';
+        } else {
+            statusElem.innerText = 'Caution (> 2% Recalibration Needed)';
+            statusElem.className = 'font-bold text-rose-600';
+        }
+    }
+
+    // --- 14. Speed Inputs & Unit Handlers ---
+    function handleSpeedTestInput() {
+        const val = parseFloat(document.getElementById('speedTestInput').value) || 60;
+        document.getElementById('speedTestSlider').value = Math.min(100, Math.max(20, val));
+        document.getElementById('speedTestBadge').innerText = `${val} ${currentUnits === 'imperial' ? 'mph' : 'km/h'}`;
+        recalculate();
+    }
+
+    function handleSpeedSliderInput() {
+        const val = parseFloat(document.getElementById('speedTestSlider').value);
+        document.getElementById('speedTestInput').value = val;
+        document.getElementById('speedTestBadge').innerText = `${val} ${currentUnits === 'imperial' ? 'mph' : 'km/h'}`;
+        recalculate();
+    }
+
+    function setUnits(u) {
+        currentUnits = u;
+        const btnImp = document.getElementById('unitBtn_imperial');
+        const btnMet = document.getElementById('unitBtn_metric');
+
+        if (u === 'imperial') {
+            btnImp.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition';
+            btnMet.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+            document.getElementById('speedUnitSuffix').innerText = 'mph';
+            document.getElementById('speedTestInput').value = 60;
+            document.getElementById('speedTestBadge').innerText = '60 mph';
+        } else {
+            btnMet.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition';
+            btnImp.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+            document.getElementById('speedUnitSuffix').innerText = 'km/h';
+            document.getElementById('speedTestInput').value = 100;
+            document.getElementById('speedTestBadge').innerText = '100 km/h';
+        }
+
+        if (speedoChartInstance) {
+            speedoChartInstance.destroy();
+            speedoChartInstance = null;
+        }
+
+        recalculate();
+        showToast(`Units switched to ${u === 'imperial' ? 'Imperial (Inches/MPH)' : 'Metric (mm/km/h)'}`);
+    }
+
+    // --- 15. Tab Switching ---
+    function switchTab(tabId) {
+        currentTab = tabId;
+        const tabs = ['solver', 'speedo', 'fitment', 'print'];
+        tabs.forEach(t => {
+            const panel = document.getElementById(`tab-${t}`);
+            const btn = document.getElementById(`tabBtn_${t}`);
+            if (panel) {
+                if (t === tabId) {
+                    panel.classList.add('active');
+                } else {
+                    panel.classList.remove('active');
+                }
+            }
+            if (btn) {
+                if (t === tabId) {
+                    btn.className = 'tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2';
+                } else {
+                    btn.className = 'tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2';
+                }
+            }
+        });
+
+        if (tabId === 'speedo') {
+            setTimeout(() => {
+                const k1 = calcTireKinematics(t1);
+                const k2 = calcTireKinematics(t2);
+                updateSpeedoChart(k2.diameterMm / k1.diameterMm);
+            }, 50);
+        }
+    }
+
+    // --- 16. Utility & Interaction Handlers ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+    }
+
+    function toggleFaq(index) {
+        const ans = document.getElementById(`faqAns_${index}`);
+        const icon = document.getElementById(`faqIcon_${index}`);
+        if (!ans) return;
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+            ans.classList.remove('hidden');
+            if (icon) icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.classList.remove('rotate-180');
+        }
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const text = document.getElementById('toastMessage');
+        if (!toast || !text) return;
+        text.innerText = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function copyFormattedSummary() {
+        const k1 = calcTireKinematics(t1);
+        const k2 = calcTireKinematics(t2);
+        const diaDiff = (k2.diameterIn - k1.diameterIn).toFixed(2);
+        const pct = (((k2.diameterMm - k1.diameterMm) / k1.diameterMm) * 100).toFixed(2);
+        const speedRatio = k2.diameterMm / k1.diameterMm;
+        const actualAt60 = (60.0 * speedRatio).toFixed(1);
+
+        const summary = `--- CalcWorld Tire Size Comparison ---
+Tire 1 (Stock): ${t1.width}/${t1.aspect}R${t1.rim} (Dia: ${k1.diameterIn.toFixed(2)}" / ${k1.diameterMm.toFixed(1)} mm, Revs/Mi: ${k1.revsPerMile.toFixed(1)})
+Tire 2 (New):   ${t2.width}/${t2.aspect}R${t2.rim} (Dia: ${k2.diameterIn.toFixed(2)}" / ${k2.diameterMm.toFixed(1)} mm, Revs/Mi: ${k2.revsPerMile.toFixed(1)})
+Diameter Delta: ${diaDiff > 0 ? '+' : ''}${diaDiff}" (${pct > 0 ? '+' : ''}${pct}%)
+Speedometer: 60.0 mph reads as ${actualAt60} mph actual
+Circumference: ${k1.circIn.toFixed(2)}" -> ${k2.circIn.toFixed(2)}"
+Generated at: https://calcworld.net/other/tire-size-calculator`;
+
+        navigator.clipboard.writeText(summary).then(() => {
+            showToast('Tire data copied to clipboard!');
+        }).catch(() => {
+            showToast('Failed to copy data');
+        });
+    }
+
+    function resetCalculatorDefaults() {
+        t1 = { width: 225, aspect: 45, rim: 17 };
+        t2 = { width: 245, aspect: 40, rim: 18 };
+        document.getElementById('speedTestInput').value = 60;
+        document.getElementById('axleRatioInput').value = 3.73;
+        syncInputsFromState();
+        recalculate();
+        showToast('Calculator reset to defaults (225/45R17 vs 245/40R18)');
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const btn = document.getElementById('leadSubmitBtn');
+        if (input && btn) {
+            btn.innerText = 'Reference PDF Sent!';
+            btn.classList.add('bg-emerald-600');
+            showToast('Wheel fitment PDF guide dispatched to ' + input.value);
+            input.value = '';
+        }
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

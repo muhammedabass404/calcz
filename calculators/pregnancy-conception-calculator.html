@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pregnancy Conception Calculator - Find Your Conception Window</title>
+    <meta name="description" content="Calculate your exact conception date and fertile window using your Estimated Due Date (EDD) or Last Menstrual Period (LMP). Backed by ASRM guidelines.">
+    <!-- FOUC prevention -->
+    <script>
+        if (localStorage.getItem('theme') === 'light' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: light)').matches)) {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        }, primary: '#ec4899', secondary: '#8b5cf6' }
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        .shimmer {
+            animation: shimmer 1.5s infinite linear;
+            background: linear-gradient(to right, #f6f7f8 4%, #edeef1 25%, #f6f7f8 36%);
+            background-size: 1000px 100%;
+        }
+        .dark .shimmer {
+            background: linear-gradient(to right, #374151 4%, #4b5563 25%, #374151 36%);
+            background-size: 1000px 100%;
+        }
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Toast animation */
+        #toast { transition: opacity 0.3s, transform 0.3s; }
+    
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (RESULTS CARD REPORT) - CALCWORLD
+           Strictly prints ONLY the official calculation results summary.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Force the Calculation Results Container to be the ONLY visible document */
+            #resultsSection, #resultsArea, #resultsContainer, #resultsWrapper, #resultsCard,
+            #results-section, #results-container, #results-card, #output-container, #summaryTab,
+            #pane-summary, #tab-summary, #tabSummary, .results-card, .output-card,
+            .lg\:col-span-7, .lg\:col-span-8, .w-full.lg\:w-2\/3 {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 6. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+</style>
+
+    <!-- SEO JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Pregnancy Conception Calculator",
+      "url": "https://calcworld.net/pregnancy-conception-calculator",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "All"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [{
+        "@type": "ListItem", "position": 1, "name": "Home", "item": "https://calcworld.net/"
+      },{
+        "@type": "ListItem", "position": 2, "name": "Fitness & Health", "item": "https://calcworld.net/health"
+      },{
+        "@type": "ListItem", "position": 3, "name": "Conception Calculator"
+      }]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "How is the conception date calculated?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Conception usually occurs about 14 days after the first day of your last menstrual period (LMP) in a standard 28-day cycle, or by subtracting 266 days from your Estimated Due Date (EDD)." }
+      }]
+    }
+    </script>
+    <link rel="canonical" href="https://calcworld.net/calculators/pregnancy-conception-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Pregnancy Conception Calculator - Find Your Conception Window">
+    <meta property="og:description" content="Calculate your exact conception date and fertile window using your Estimated Due Date (EDD) or Last Menstrual Period (LMP). Backed by ASRM guidelines.">
+    <meta property="og:url" content="https://calcworld.net/calculators/pregnancy-conception-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Pregnancy Conception Calculator - Find Your Conception Window">
+    <meta name="twitter:description" content="Calculate your exact conception date and fertile window using your Estimated Due Date (EDD) or Last Menstrual Period (LMP). Backed by ASRM guidelines.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+<!-- Ad 1: Top Leaderboard -->
+<div class="w-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center py-2 text-xs text-gray-500 min-h-[90px]">
+    [AdSense Slot 1: Leaderboard]
+</div>
+
+<!-- Header & Nav -->
+        <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FITNESS & HEALTH SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+<!-- Breadcrumb -->
+<div class="max-w-7xl mx-auto px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+    Home &gt; Fitness & Health &gt; <span class="text-gray-900 dark:text-gray-200">Conception Calculator</span>
+</div>
+
+<main class="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-24 sm:pb-16">
+    
+    <!-- Calculator Panel -->
+    <div class="lg:col-span-1 space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border border-gray-100 dark:border-gray-700">
+            <h2 class="text-2xl font-bold mb-4">Calculate Conception</h2>
+            
+            <form id="calc-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium mb-1">Known Variable</label>
+                    <div class="flex rounded-md shadow-sm">
+                        <button type="button" class="calc-mode flex-1 py-2 px-4 text-sm font-medium rounded-l-md border border-gray-300 dark:border-gray-600 bg-primary text-white hover:bg-primary/90 focus:z-10 focus:ring-2 focus:ring-primary" data-mode="lmp">Last Period (LMP)</button>
+                        <button type="button" class="calc-mode flex-1 py-2 px-4 text-sm font-medium rounded-r-md border border-l-0 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:z-10 focus:ring-2 focus:ring-primary" data-mode="edd">Due Date (EDD)</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label id="date-label" for="date-input" class="block text-sm font-medium mb-1">First Day of Last Period</label>
+                    <input type="date" id="date-input" required class="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-900 dark:text-white px-4 py-2 border">
+                </div>
+
+                <div id="cycle-length-container">
+                    <label for="cycle-length" class="block text-sm font-medium mb-1">Average Cycle Length (Days)</label>
+                    <div class="flex items-center gap-4">
+                        <input type="range" id="cycle-length-slider" min="21" max="35" value="28" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700">
+                        <input type="number" id="cycle-length" min="21" max="35" value="28" class="w-20 rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary focus:ring-primary dark:bg-gray-900 dark:text-white px-2 py-1 border text-center">
+                    </div>
+                    <div class="flex gap-2 mt-2">
+                        <button type="button" class="preset-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-val="24">Short (24)</button>
+                        <button type="button" class="preset-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-val="28">Standard (28)</button>
+                        <button type="button" class="preset-btn text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600" data-val="32">Long (32)</button>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-primary to-secondary text-white font-bold py-3 px-4 rounded-lg shadow-md hover:shadow-lg transition-transform transform hover:-translate-y-0.5">
+                    Calculate Dates
+                </button>
+            </form>
+        </div>
+
+        <!-- Ad 2: Sidebar -->
+        <div class="bg-gray-200 dark:bg-gray-800 w-full h-[250px] flex items-center justify-center text-xs text-gray-500">
+            [AdSense Slot 2: Medium Rectangle]
+        </div>
+        
+        <!-- Lead Gen Box -->
+        <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5">
+            <h3 class="font-bold text-blue-800 dark:text-blue-300 mb-2">Get Your Free Pregnancy Prep Guide (PDF)</h3>
+            <p class="text-sm text-blue-600 dark:text-blue-400 mb-3">Enter your email to receive our comprehensive guide citing ASRM and ACOG standards.</p>
+            <form class="flex gap-2" onsubmit="event.preventDefault(); alert('Subscribed!')">
+                <input type="email" placeholder="Email address" required class="w-full rounded-md border-blue-300 dark:border-blue-700 shadow-sm px-3 py-2 text-sm dark:bg-gray-800">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Results Panel -->
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden">
+            
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+                <button class="tab-btn active px-6 py-3 text-sm font-medium text-primary border-b-2 border-primary" data-target="tab-summary">Summary</button>
+                <button class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent" data-target="tab-calendar">Calendar Breakdown</button>
+                <button class="tab-btn px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent" data-target="tab-chart">Visual Chart</button>
+                <button class="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border-b-2 border-transparent" onclick="window.print()">Print Report</button>
+            </div>
+
+            <!-- Tab Content: Summary -->
+            <div id="tab-summary" class="tab-content active p-6">
+                <div id="loading-state" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="h-24 rounded-lg shimmer"></div>
+                    <div class="h-24 rounded-lg shimmer"></div>
+                    <div class="h-24 rounded-lg shimmer"></div>
+                    <div class="h-24 rounded-lg shimmer"></div>
+                </div>
+                
+                <div id="results-state" class="opacity-50 pointer-events-none">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-xl font-semibold">Your Results</h3>
+                        <button id="copy-btn" class="text-sm bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-3 py-1.5 rounded-md transition flex items-center gap-2 disabled:opacity-50">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                            Copy
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-pink-50 dark:bg-pink-900/10 p-5 rounded-xl border border-pink-100 dark:border-pink-900/30">
+                            <p class="text-sm text-pink-600 dark:text-pink-400 font-medium mb-1">Most Likely Conception Date</p>
+                            <p id="res-conception" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                            <p id="res-conception-window" class="text-sm text-gray-500 dark:text-gray-400 mt-1">Window: -- to --</p>
+                        </div>
+                        <div class="bg-purple-50 dark:bg-purple-900/10 p-5 rounded-xl border border-purple-100 dark:border-purple-900/30">
+                            <p class="text-sm text-purple-600 dark:text-purple-400 font-medium mb-1">Estimated Due Date (EDD)</p>
+                            <p id="res-edd" class="text-2xl font-bold text-gray-900 dark:text-white">--</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Based on 280-day gestation</p>
+                        </div>
+                        <div class="bg-blue-50 dark:bg-blue-900/10 p-5 rounded-xl border border-blue-100 dark:border-blue-900/30">
+                            <p class="text-sm text-blue-600 dark:text-blue-400 font-medium mb-1">Fertile Window</p>
+                            <p id="res-fertile" class="text-xl font-bold text-gray-900 dark:text-white">-- to --</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">High chance of conception</p>
+                        </div>
+                        <div class="bg-green-50 dark:bg-green-900/10 p-5 rounded-xl border border-green-100 dark:border-green-900/30">
+                            <p class="text-sm text-green-600 dark:text-green-400 font-medium mb-1">Implantation Window</p>
+                            <p id="res-implantation" class="text-xl font-bold text-gray-900 dark:text-white">-- to --</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">6-12 days past ovulation</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Calendar Table -->
+            <div id="tab-calendar" class="tab-content p-6">
+                <h3 class="text-lg font-semibold mb-4">Milestone Breakdown</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-100 dark:bg-gray-700 text-sm">
+                                <th class="p-3 border-b dark:border-gray-600 font-semibold">Event</th>
+                                <th class="p-3 border-b dark:border-gray-600 font-semibold">Date</th>
+                                <th class="p-3 border-b dark:border-gray-600 font-semibold">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="text-sm divide-y divide-gray-200 dark:divide-gray-700">
+                            <tr><td colspan="3" class="p-4 text-center text-gray-500">Calculate to see dates.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab Content: Chart -->
+            <div id="tab-chart" class="tab-content p-6">
+                <h3 class="text-lg font-semibold mb-4">Fertility & Conception Timeline</h3>
+                <div class="relative h-64 w-full">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+            
+        </div>
+
+        <!-- Ad 3: In-article -->
+        <div class="w-full bg-gray-200 dark:bg-gray-800 flex items-center justify-center py-2 text-xs text-gray-500 min-h-[90px]">
+            [AdSense Slot 3: In-Article]
+        </div>
+        
+        <!-- SEO Article & Guide -->
+        <article class="prose dark:prose-invert max-w-none mt-12 bg-white dark:bg-slate-900 p-8 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300">
+    <h2 class="text-3xl font-bold border-b pb-2 mb-6 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">Conception Physiology: Ovulation Windows, Luteal Phases, and Gestational Dating</h2>
+    <p class="text-lg leading-relaxed mb-6">
+        Pinpointing the precise date and biological window of conception requires understanding human reproductive endocrinology and menstrual cycle biology. While clinical obstetrics standardizes pregnancy dating from the first day of the Last Menstrual Period (LMP)—an event that precedes actual fertilization by approximately two weeks—biological conception occurs when a mature secondary oocyte is fertilized by a viable spermatozoon in the fallopian ampulla. Accurately determining conception dates supports prenatal screening schedules, paternity timing, and gestational developmental milestones.
+    </p>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">The Biology of the Fertile Window</h3>
+    <p class="mb-4">
+        Human conception can only occur during a finite window of approximately six days per menstrual cycle:
+    </p>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li><strong>Sperm Viability:</strong> Spermatozoa survive in fertile cervical mucus within the female reproductive tract for up to 5 days (120 hours).</li>
+        <li><strong>Oocyte Viability:</strong> Following follicular rupture triggered by the Luteinizing Hormone (LH) surge, a released ovum remains viable for fertilization for only 12 to 24 hours before degenerating.</li>
+        <li><strong>Peak Conception Probability:</strong> Daily conception probability peaks at approximately 30% to 33% on the two days immediately preceding ovulation (Ovulation - 2 and Ovulation - 1), dropping sharply to less than 10% on the day of ovulation itself, and near zero thereafter.</li>
+    </ul>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Calculating Ovulation Across Variable Cycle Lengths</h3>
+    <p class="mb-4">
+        A textbook 28-day cycle places ovulation on Day 14. However, clinical studies published in the American Journal of Obstetrics &amp; Gynecology reveal that the follicular phase (prior to ovulation) varies considerably among women, whereas the post-ovulatory luteal phase remains biologically constant at approximately 14 days (range: 12 to 16 days).
+    </p>
+    <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/60 font-mono text-center text-lg overflow-x-auto">
+        Estimated Ovulation Day = Total Cycle Length (Days) - Luteal Phase Duration (14 Days)
+    </div>
+    <div class="overflow-x-auto my-6">
+        <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-800 text-sm">
+            <thead class="bg-slate-100 dark:bg-slate-800/80">
+                <tr>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Average Cycle Length</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Calculated Ovulation Day</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Prime 6-Day Fertile Window</th>
+                    <th class="p-3 border border-slate-200 dark:border-slate-700">Estimated Due Date Adjustment</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">24 Days (Short Cycle)</td>
+                    <td class="p-3">Day 10 (24 - 14)</td>
+                    <td class="p-3">Days 5 through 10</td>
+                    <td class="p-3">4 days earlier than Naegele's rule</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">28 Days (Standard)</td>
+                    <td class="p-3">Day 14 (28 - 14)</td>
+                    <td class="p-3">Days 9 through 14</td>
+                    <td class="p-3">Standard 280-day baseline</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800">
+                    <td class="p-3 font-semibold">32 Days (Long Cycle)</td>
+                    <td class="p-3">Day 18 (32 - 14)</td>
+                    <td class="p-3">Days 13 through 18</td>
+                    <td class="p-3">4 days later than Naegele's rule</td>
+                </tr>
+                <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30">
+                    <td class="p-3 font-semibold">35 Days (Extended Cycle)</td>
+                    <td class="p-3">Day 21 (35 - 14)</td>
+                    <td class="p-3">Days 16 through 21</td>
+                    <td class="p-3">7 days later than Naegele's rule</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Step-by-Step Worked Numerical Example: Reverse Dating from Due Date</h3>
+    <p class="mb-4">
+        Suppose an ultrasound confirms an Estimated Due Date (EDD) of October 24, 2026. When did conception most likely take place?
+    </p>
+    <div class="space-y-4 mb-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-slate-200 dark:border-slate-800">
+        <p><strong>Step 1: Understand Gestational vs. Conceptional Age</strong><br>
+        Clinical gestational age measures 280 days (40 weeks) from LMP. Biological fetal conceptional age is exactly 266 days (38 weeks) from fertilization to spontaneous labor.</p>
+        <p><strong>Step 2: Subtract 266 Days from Due Date</strong><br>
+        Target Due Date: October 24, 2026.<br>
+        Subtract 38 weeks (266 days):<br>
+        - Subtract 24 days in October &rarr; September 30.<br>
+        - Subtract 242 days across preceding months &rarr; Arrives at <strong>January 31, 2026</strong>.</p>
+        <p><strong>Step 3: Define Probable Intercourse Window</strong><br>
+        Because sperm remain viable for up to 5 days prior to ovulation, intercourse resulting in conception most likely occurred between <strong>January 26, 2026 and February 1, 2026</strong>.</p>
+    </div>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Clinical Markers of Confirmed Ovulation</h3>
+    <ul class="list-disc pl-6 space-y-3 mb-6">
+        <li><strong>Basal Body Temperature (BBT) Shift:</strong> Progesterone secreted by the corpus luteum causes a sustained thermal shift of 0.5&deg;F to 1.0&deg;F (0.2&deg;C to 0.5&deg;C) following ovulation.</li>
+        <li><strong>Cervical Mucus Spinnbarkeit:</strong> High estrogen levels preceding ovulation produce clear, slippery, stretchy cervical fluid resembling raw egg whites, designed to facilitate sperm transit.</li>
+        <li><strong>Luteinizing Hormone (LH) Test Strips:</strong> Urine test kits detect the surge in LH that triggers follicle rupture within 24 to 36 hours.</li>
+    </ul>
+
+    <h3 class="text-2xl font-bold mt-8 mb-4 text-slate-800 dark:text-slate-100">Frequently Asked Questions</h3>
+    <div class="space-y-4 my-6">
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">Can conception occur outside the fertile window?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Biologically, conception cannot occur without a viable oocyte and viable sperm. However, because ovulation timing can fluctuate due to physical stress, travel, illness, or hormonal shifts, a woman may ovulate earlier or later than her historical average, shifting the true fertile window.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">How accurate is first-trimester ultrasound for dating conception?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">First-trimester crown-rump length (CRL) sonography performed between 8 and 13 weeks of gestation has an error margin of &plusmn;3 to 5 days, making it more accurate than maternal recall of last menstrual period for establishing true gestational age.</p>
+        </div>
+        <div class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <h4 class="font-bold text-slate-900 dark:text-white mb-2">When does implantation occur after conception?</h4>
+            <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400">Following fertilization in the fallopian tube, the developing blastocyst travels into the uterine cavity, implanting into the endometrium between 6 and 12 days after conception (most commonly Days 8 to 10). Human Chorionic Gonadotropin (hCG) becomes detectable in blood within 2-3 days of implantation.</p>
+        </div>
+    </div>
+</article>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 mt-12 py-8">
+    <div class="max-w-7xl mx-auto px-4 text-center text-gray-500 text-sm">
+        <p>&copy; 2026 ConceptionCalc Tool. All rights reserved.</p>
+        <p class="mt-2">Built for educational and health planning purposes.</p>
+    </div>
+</footer>
+
+<!-- Ad 5: Floating Anchor -->
+<div class="fixed bottom-0 left-0 w-full bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 hidden md:flex justify-center items-center h-[60px]">
+    <div class="text-xs text-gray-500">[AdSense Slot 5: Sticky Bottom Anchor]</div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-20 right-4 bg-gray-900 text-white px-4 py-2 rounded-lg shadow-lg opacity-0 translate-y-4 pointer-events-none z-50 flex items-center gap-2">
+    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+    Results copied to clipboard
+</div>
+
+<!-- Scripts -->
+<script>
+    // Theme Toggle
+    const themeBtn = document.getElementById('theme-toggle');
+    themeBtn.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        updateChartTheme();
+    });
+
+    // State Variables
+    let currentMode = 'lmp'; // 'lmp' or 'edd'
+    const form = document.getElementById('calc-form');
+    const modeBtns = document.querySelectorAll('.calc-mode');
+    const dateLabel = document.getElementById('date-label');
+    const cycleContainer = document.getElementById('cycle-length-container');
+    const cycleSlider = document.getElementById('cycle-length-slider');
+    const cycleInput = document.getElementById('cycle-length');
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    const dateInput = document.getElementById('date-input');
+    
+    let chartInstance = null;
+
+    // Sync Slider & Number Input
+    cycleSlider.addEventListener('input', (e) => { cycleInput.value = e.target.value; });
+    cycleInput.addEventListener('input', (e) => { cycleSlider.value = e.target.value; });
+    presetBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const val = btn.getAttribute('data-val');
+            cycleSlider.value = val;
+            cycleInput.value = val;
+        });
+    });
+
+    // Mode Switcher
+    modeBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            modeBtns.forEach(b => {
+                b.classList.remove('bg-primary', 'text-white');
+                b.classList.add('bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+            });
+            btn.classList.add('bg-primary', 'text-white');
+            btn.classList.remove('bg-white', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-200');
+            
+            currentMode = btn.getAttribute('data-mode');
+            if (currentMode === 'lmp') {
+                dateLabel.textContent = 'First Day of Last Period';
+                cycleContainer.style.display = 'block';
+            } else {
+                dateLabel.textContent = 'Estimated Due Date (EDD)';
+                cycleContainer.style.display = 'none';
+            }
+        });
+    });
+
+    // Tabs
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => {
+                b.classList.remove('text-primary', 'border-primary');
+                b.classList.add('text-gray-500', 'border-transparent');
+            });
+            btn.classList.add('text-primary', 'border-primary');
+            btn.classList.remove('text-gray-500', 'border-transparent');
+            
+            tabContents.forEach(c => c.classList.remove('active'));
+            document.getElementById(btn.getAttribute('data-target')).classList.add('active');
+        });
+    });
+
+    // Date Utilities
+    const addDays = (date, days) => {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        return result;
+    };
+    const formatDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const formatShortDate = (date) => date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+    // Chart logic
+    const updateChartTheme = () => {
+        if(chartInstance) {
+            const isDark = document.documentElement.classList.contains('dark');
+            chartInstance.options.scales.x.ticks.color = isDark ? '#9ca3af' : '#4b5563';
+            chartInstance.options.scales.y.ticks.color = isDark ? '#9ca3af' : '#4b5563';
+            chartInstance.options.plugins.legend.labels.color = isDark ? '#9ca3af' : '#4b5563';
+            chartInstance.update();
+        }
+    }
+
+    const renderChart = (lmpDate, ovDate, eddDate) => {
+        const ctx = document.getElementById('timelineChart').getContext('2d');
+        if (chartInstance) chartInstance.destroy();
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#9ca3af' : '#4b5563';
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['LMP', 'Fertile Window Start', 'Ovulation/Conception', 'Implantation', 'First Trimester End', 'EDD'],
+                datasets: [{
+                    label: 'Pregnancy Timeline',
+                    data: [0, 10, 14, 23, 90, 280], // Approximate conceptual timeline for graph shape
+                    borderColor: '#ec4899',
+                    backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#8b5cf6',
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { color: textColor } },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const labelsMap = [
+                                    formatDate(lmpDate),
+                                    formatDate(addDays(ovDate, -5)),
+                                    formatDate(ovDate),
+                                    formatDate(addDays(ovDate, 9)),
+                                    formatDate(addDays(lmpDate, 90)),
+                                    formatDate(eddDate)
+                                ];
+                                return labelsMap[context.dataIndex];
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: { ticks: { color: textColor }, grid: { color: isDark ? '#374151' : '#e5e7eb' } },
+                    y: { display: false }
+                }
+            }
+        });
+    }
+
+    // Calculation Logic
+    let lastResultsText = "";
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const inputDate = new Date(dateInput.value + 'T00:00:00'); // Prevent timezone shift
+        if (isNaN(inputDate.getTime())) return;
+
+        const cycleLength = parseInt(cycleInput.value, 10);
+        
+        // Show shimmer
+        document.getElementById('loading-state').classList.remove('hidden');
+        document.getElementById('results-state').classList.add('opacity-50', 'pointer-events-none');
+        document.getElementById('copy-btn').disabled = true;
+
+        // Persist to URL
+        const params = new URLSearchParams();
+        params.set('mode', currentMode);
+        params.set('date', dateInput.value);
+        if(currentMode === 'lmp') params.set('cycle', cycleLength);
+        window.history.replaceState({}, '', `${location.pathname}?${params}`);
+
+        setTimeout(() => {
+            let lmp, edd, ovulation;
+
+            if (currentMode === 'lmp') {
+                lmp = inputDate;
+                // Standard EDD is LMP + 280 days. 
+                // Adjusting for cycle length: Ovulation is LMP + (Cycle - 14). EDD is Ovulation + 266.
+                ovulation = addDays(lmp, cycleLength - 14);
+                edd = addDays(ovulation, 266); 
+            } else {
+                edd = inputDate;
+                // Working backward: Ovulation is EDD - 266 days.
+                ovulation = addDays(edd, -266);
+                // Assume standard 28 day cycle for backward math if EDD is known
+                lmp = addDays(ovulation, -14); 
+            }
+
+            // Calculations
+            const fertileStart = addDays(ovulation, -5);
+            const fertileEnd = addDays(ovulation, 1);
+            const conceiveMin = addDays(ovulation, -2);
+            const conceiveMax = addDays(ovulation, 2);
+            const implantStart = addDays(ovulation, 6);
+            const implantEnd = addDays(ovulation, 12);
+
+            // Update UI
+            document.getElementById('res-conception').textContent = formatDate(ovulation);
+            document.getElementById('res-conception-window').textContent = `Window: ${formatShortDate(conceiveMin)} to ${formatShortDate(conceiveMax)}`;
+            document.getElementById('res-edd').textContent = formatDate(edd);
+            document.getElementById('res-fertile').textContent = `${formatShortDate(fertileStart)} to ${formatShortDate(fertileEnd)}`;
+            document.getElementById('res-implantation').textContent = `${formatShortDate(implantStart)} to ${formatShortDate(implantEnd)}`;
+
+            // Build Table
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = `
+                <tr><td class="p-3 border-b dark:border-gray-700">Last Menstrual Period</td><td class="p-3 border-b dark:border-gray-700 font-medium">${formatDate(lmp)}</td><td class="p-3 border-b dark:border-gray-700">Start of cycle.</td></tr>
+                <tr><td class="p-3 border-b dark:border-gray-700">Fertile Window Opens</td><td class="p-3 border-b dark:border-gray-700 font-medium">${formatDate(fertileStart)}</td><td class="p-3 border-b dark:border-gray-700">Sperm can survive up to 5 days.</td></tr>
+                <tr class="bg-pink-50 dark:bg-pink-900/10"><td class="p-3 border-b dark:border-gray-700 text-pink-700 dark:text-pink-400 font-bold">Estimated Ovulation</td><td class="p-3 border-b dark:border-gray-700 text-pink-700 dark:text-pink-400 font-bold">${formatDate(ovulation)}</td><td class="p-3 border-b dark:border-gray-700">Most likely conception date.</td></tr>
+                <tr><td class="p-3 border-b dark:border-gray-700">Implantation Window</td><td class="p-3 border-b dark:border-gray-700 font-medium">${formatShortDate(implantStart)} - ${formatShortDate(implantEnd)}</td><td class="p-3 border-b dark:border-gray-700">Embryo attaches to uterus.</td></tr>
+                <tr class="bg-purple-50 dark:bg-purple-900/10"><td class="p-3 text-purple-700 dark:text-purple-400 font-bold">Estimated Due Date</td><td class="p-3 text-purple-700 dark:text-purple-400 font-bold">${formatDate(edd)}</td><td class="p-3">40 weeks standard gestation.</td></tr>
+            `;
+
+            // Setup copy text
+            lastResultsText = `My Conception Results:\n- Most Likely Conception Date: ${formatDate(ovulation)}\n- Conception Window: ${formatShortDate(conceiveMin)} to ${formatShortDate(conceiveMax)}\n- Fertile Window: ${formatShortDate(fertileStart)} to ${formatShortDate(fertileEnd)}\n- Estimated Due Date: ${formatDate(edd)}`;
+
+            renderChart(lmp, ovulation, edd);
+
+            // Hide shimmer
+            document.getElementById('loading-state').classList.add('hidden');
+            document.getElementById('results-state').classList.remove('opacity-50', 'pointer-events-none');
+            document.getElementById('copy-btn').disabled = false;
+            
+            // Animate numbers (simple pop)
+            document.querySelectorAll('#results-state p.text-2xl, #results-state p.text-xl').forEach(el => {
+                el.style.transform = 'scale(1.05)';
+                el.style.transition = 'transform 0.2s';
+                setTimeout(() => el.style.transform = 'scale(1)', 200);
+            });
+
+        }, 600);
+    });
+
+    // Copy to clipboard
+    document.getElementById('copy-btn').addEventListener('click', () => {
+        navigator.clipboard.writeText(lastResultsText).then(() => {
+            const toast = document.getElementById('toast');
+            toast.classList.remove('opacity-0', 'translate-y-4');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2000);
+        });
+    });
+
+    // Load State from URL
+    window.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('mode')) {
+            const mode = params.get('mode');
+            const targetBtn = document.querySelector(`.calc-mode[data-mode="${mode}"]`);
+            if(targetBtn) targetBtn.click();
+        }
+        if (params.has('date')) {
+            dateInput.value = params.get('date');
+        }
+        if (params.has('cycle')) {
+            cycleSlider.value = params.get('cycle');
+            cycleInput.value = params.get('cycle');
+        }
+        if (params.has('date')) {
+            // Auto trigger calculation if date is present
+            form.dispatchEvent(new Event('submit'));
+        }
+    });
+
+</script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

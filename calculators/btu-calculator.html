@@ -1,0 +1,2516 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTU Calculator | HVAC Room Cooling &amp; Heating Load Sizing Engine</title>
+    <meta name="description" content="Free ACCA Manual J residential BTU calculator. Size air conditioner tonnage, ductless mini-split units, and heat pumps with precision correction for ceiling height, sun exposure, occupants, climate zone, and SEER2 operating costs.">
+    <link rel="canonical" href="https://calcworld.net/calculators/btu-calculator.html">
+
+    <!-- Anti-FOUC Script -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#082f49',
+                        },
+                        cool: {
+                            50: '#ecfeff',
+                            100: '#cffafe',
+                            500: '#06b6d4',
+                            600: '#0891b2',
+                            700: '#0e7490'
+                        },
+                        warm: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            500: '#f97316',
+                            600: '#ea580c',
+                            700: '#c2410c'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+
+    <!-- MathJax CDN -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(2, 132, 199, 0.12) 20%,
+                rgba(2, 132, 199, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            position: fixed;
+            bottom: 5.5rem;
+            right: 1.5rem;
+            z-index: 50;
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .toast-notify.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "BTU Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "BTU Calculator & HVAC Sizing Engine",
+          "url": "https://calcworld.net/other/btu-calculator",
+          "applicationCategory": "EngineeringApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Professional HVAC cooling and heating load calculation engine based on ACCA Manual J residential methodology. Calculate room BTU/hr, AC tonnage, ductless mini-split capacity, whole-house multi-room diversity loads, and SEER2 seasonal operating expenses."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is a BTU and what does it measure in HVAC systems?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A British Thermal Unit (BTU) is a physical unit of heat energy defined as the quantity of thermal energy required to raise the temperature of one pound of liquid water by one degree Fahrenheit at standard atmospheric pressure. In heating, ventilation, and air conditioning systems, BTU ratings express the hourly rate of heat transfer (BTU/hr), representing how much thermal energy an air conditioner removes from indoor air or a heating system supplies to an occupied space."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does AC tonnage convert to BTU per hour?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "One ton of air conditioning capacity equals 12,000 BTU per hour. This historic refrigeration standard originates from the cooling power delivered by the melting of one short ton (2,000 pounds) of ice over a 24-hour period. Therefore, a 1.5-ton AC unit delivers 18,000 BTU/hr, a 2-ton unit provides 24,000 BTU/hr, and a 3-ton unit yields 36,000 BTU/hr of nominal heat removal capacity."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What problems arise from installing an oversized air conditioning unit?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Installing an oversized air conditioner causes short-cycling, where the unit runs in brief bursts of 5 to 10 minutes. Because modern cooling coils require sustained operational run times to condense moisture out of the air, short-cycling drops indoor temperature rapidly while leaving indoor relative humidity uncomfortably high. This creates clammy indoor air, accelerates mold and mildew propagation, subjects the compressor to frequent electrical inrush currents, and causes premature equipment failure."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What problems arise from installing an undersized air conditioning unit?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "An undersized cooling system cannot remove heat at the rate the building envelope gains thermal energy during design peak summer days. As a result, the equipment runs continuously without reaching the thermostat setpoint, consuming excess electricity, placing continuous mechanical wear on fan motors and bearings, and potentially causing evaporator coil freeze-ups when refrigerant flow imbalances develop."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is ACCA Manual J residential load calculation?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "ACCA Manual J is the American National Standards Institute (ANSI) recognized engineering protocol published by the Air Conditioning Contractors of America for computing heating and cooling loads in residential structures. Rather than relying on inaccurate square-footage guesswork, Manual J evaluates building orientation, fenestration solar heat gain coefficients, insulation U-values, ceiling height, air infiltration rates, internal occupant heat gains, and local climatic design extremes."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between SEER and SEER2 efficiency standards?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Implemented on January 1, 2023, by the United States Department of Energy, SEER2 (Seasonal Energy Efficiency Ratio 2) updates the historical SEER rating through the Appendix M1 testing procedure. The M1 standard tests cooling equipment against an external static pressure of 0.50 inches water gauge, compared to only 0.1 to 0.2 inches under original SEER. This fivefold static pressure increase mirrors real-world residential duct resistance, giving consumers authentic operational efficiency data."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does ceiling height influence room cooling load?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Standard residential cooling sizing assumes an 8-foot ceiling height. When ceilings rise to 10, 12, or 16 feet, the interior air volume increases proportionally. Warm air rises and forms a thermal stratification layer, increasing wall surface transmission area and overall sensible heat burden. Sizing calculations apply a volumetric correction factor equal to the actual ceiling height divided by 8 to maintain adequate air mixing and cooling capacity."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is a whole-house load diversity factor?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A whole-house diversity factor accounts for the fact that not all rooms experience peak solar and internal thermal loads simultaneously. For example, east-facing bedrooms experience maximum solar gain during morning hours, while west-facing living spaces peak in late afternoon. Additionally, occupants move between spaces rather than occupying every room at once. Applying a diversity factor of 0.85 to 0.90 prevents gross oversizing of central heat pumps and multi-split condensers."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="BTU Calculator | HVAC Room Cooling &amp; Heating Load Sizing Engine">
+    <meta property="og:description" content="Free ACCA Manual J residential BTU calculator. Size air conditioner tonnage, ductless mini-split units, and heat pumps with precision correction for ceiling height, sun exposure, occupants, climate zone, and SEER2 operating costs.">
+    <meta property="og:url" content="https://calcworld.net/calculators/btu-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="BTU Calculator | HVAC Room Cooling &amp; Heating Load Sizing Engine">
+    <meta name="twitter:description" content="Free ACCA Manual J residential BTU calculator. Size air conditioner tonnage, ductless mini-split units, and heat pumps with precision correction for ceiling height, sun exposure, occupants, climate zone, and SEER2 operating costs.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Engineering Resource Notice:</strong> CalcWorld provides verified HVAC load sizing tools completely free with zero sign-up. Please support this educational tool by whitelisting our website in your ad blocker.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">BTU Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Hero Section -->
+        <div class="mb-6">
+            <div class="flex flex-wrap items-center gap-2 mb-2">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-cool-50 text-cool-700 dark:bg-cool-950/60 dark:text-cool-300 border border-cool-200/50">Manual J Sizing Engine</span>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-warm-50 text-warm-700 dark:bg-warm-950/60 dark:text-warm-300 border border-warm-200/50">SEER2 &amp; HSPF2 Certified</span>
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">BTU Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Compute heating and cooling capacity requirements for rooms, whole-house layouts, and ductless mini-split heat pumps. Incorporates ceiling height, sun exposure, kitchen equipment, occupant thermal loads, and US DOE climate zones.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Tab Navigation Bar -->
+        <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 mb-6 no-print" id="tabButtons">
+            <nav class="flex space-x-2 sm:space-x-6 overflow-x-auto" aria-label="Tabs">
+                <button onclick="switchTab('room')" id="tabBtn_room" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span>Room BTU Calculator</span>
+                </button>
+                <button onclick="switchTab('wholeHouse')" id="tabBtn_wholeHouse" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                    <span>Whole-House Load Planner</span>
+                </button>
+                <button onclick="switchTab('guide')" id="tabBtn_guide" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span>AC Tonnage &amp; Mini-Split Guide</span>
+                </button>
+                <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                    <span>Print Report</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- TAB 1: Room BTU Calculator -->
+        <div id="tab-room" class="tab-panel active">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Inputs & Controls (Span 5) -->
+                <div id="calculatorInputs" class="lg:col-span-5 space-y-6 no-print">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        
+                        <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100 dark:border-slate-700">
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                <span>Room Sizing Parameters</span>
+                            </h2>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300">Interactive</span>
+                        </div>
+
+                        <!-- Room Presets Pills -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Quick Presets</label>
+                            <div class="flex flex-wrap gap-1.5">
+                                <button type="button" onclick="applyPreset('masterBed')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Master Bedroom</button>
+                                <button type="button" onclick="applyPreset('livingRoom')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Living Room</button>
+                                <button type="button" onclick="applyPreset('kitchen')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Kitchen</button>
+                                <button type="button" onclick="applyPreset('homeOffice')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Office</button>
+                                <button type="button" onclick="applyPreset('sunroom')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Sunroom</button>
+                                <button type="button" onclick="applyPreset('basement')" class="px-2.5 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Basement</button>
+                            </div>
+                        </div>
+
+                        <!-- Dimension Inputs -->
+                        <div class="space-y-4 mb-5">
+                            <div class="flex items-center justify-between text-xs">
+                                <span class="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dimensions</span>
+                                <div class="flex items-center gap-2">
+                                    <button type="button" id="dimMode_lw" onclick="setDimMode('lw')" class="px-2 py-0.5 rounded text-xs font-semibold bg-brand-600 text-white shadow-sm">L &times; W</button>
+                                    <button type="button" id="dimMode_area" onclick="setDimMode('area')" class="px-2 py-0.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700">Direct Area</button>
+                                </div>
+                            </div>
+
+                            <!-- L x W Mode Container -->
+                            <div id="dimContainer_lw" class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">Length (ft)</label>
+                                    <input type="number" id="roomLength" value="20" min="6" max="100" step="1" oninput="syncDimensions('length')" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 font-mono">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">Width (ft)</label>
+                                    <input type="number" id="roomWidth" value="16" min="6" max="100" step="1" oninput="syncDimensions('width')" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 font-mono">
+                                </div>
+                            </div>
+
+                            <!-- Direct Area Container -->
+                            <div id="dimContainer_area" class="hidden">
+                                <label class="block text-xs text-slate-600 dark:text-slate-400 mb-1">Total Floor Area (sq ft)</label>
+                                <input type="number" id="roomArea" value="320" min="20" max="10000" step="5" oninput="syncDimensions('area')" class="w-full px-3 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 font-mono">
+                            </div>
+
+                            <!-- Area Display Badge -->
+                            <div class="flex items-center justify-between text-xs px-3 py-2 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-slate-500 dark:text-slate-400">Calculated Floor Area:</span>
+                                <span class="font-bold font-mono text-slate-900 dark:text-white" id="displayAreaVal">320 sq ft</span>
+                            </div>
+                        </div>
+
+                        <!-- Ceiling Height -->
+                        <div class="mb-5">
+                            <div class="flex justify-between items-center text-xs mb-1.5">
+                                <label for="ceilingHeight" class="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Ceiling Height</label>
+                                <span id="ceilingHeightVal" class="font-mono font-bold text-brand-600 dark:text-brand-400">9.0 ft (1.13&times; factor)</span>
+                            </div>
+                            <input type="range" id="ceilingHeight" min="7" max="18" step="0.5" value="9" oninput="updateRoomCalculation()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                            <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                                <span>8 ft (Standard)</span>
+                                <span>10 ft</span>
+                                <span>14 ft (Vaulted)</span>
+                                <span>18 ft</span>
+                            </div>
+                        </div>
+
+                        <!-- Sun Exposure Selection -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Sun Exposure (Windows / Orientation)</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="sunExposure" value="shaded" onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-brand-500 peer-checked:bg-brand-50/50 dark:peer-checked:bg-brand-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Shaded</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-slate-400">-10% load</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="sunExposure" value="normal" checked onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-brand-500 peer-checked:bg-brand-50/50 dark:peer-checked:bg-brand-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Normal</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-slate-400">Baseline (0%)</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="sunExposure" value="sunny" onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-brand-500 peer-checked:bg-brand-50/50 dark:peer-checked:bg-brand-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Sunny</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-slate-400">+10% load</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Insulation Grade Selection -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Insulation &amp; Window Quality</label>
+                            <div class="grid grid-cols-3 gap-2">
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="insulationGrade" value="poor" onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-rose-500 peer-checked:bg-rose-50/50 dark:peer-checked:bg-rose-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Poor</span>
+                                        <span class="text-[10px] text-rose-500">+20% load</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="insulationGrade" value="good" checked onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-brand-500 peer-checked:bg-brand-50/50 dark:peer-checked:bg-brand-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Good</span>
+                                        <span class="text-[10px] text-slate-500 dark:text-slate-400">Code standard</span>
+                                    </div>
+                                </label>
+                                <label class="cursor-pointer">
+                                    <input type="radio" name="insulationGrade" value="excellent" onchange="updateRoomCalculation()" class="peer sr-only">
+                                    <div class="p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 peer-checked:border-emerald-500 peer-checked:bg-emerald-50/50 dark:peer-checked:bg-emerald-950/30 text-center transition hover:bg-slate-50 dark:hover:bg-slate-700/30">
+                                        <span class="block text-xs font-bold text-slate-800 dark:text-slate-200">Excellent</span>
+                                        <span class="text-[10px] text-emerald-500">-10% load</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Occupants & Kitchen Row -->
+                        <div class="grid grid-cols-2 gap-3 mb-5">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Occupants</label>
+                                <div class="flex items-center">
+                                    <button type="button" onclick="adjustOccupants(-1)" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded-l-xl text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200">-</button>
+                                    <input type="number" id="occupantCount" value="2" min="1" max="25" oninput="updateRoomCalculation()" class="w-full py-2 text-center text-sm border-y border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white font-mono font-bold">
+                                    <button type="button" onclick="adjustOccupants(1)" class="px-3 py-2 bg-slate-100 dark:bg-slate-700 rounded-r-xl text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-200">+</button>
+                                </div>
+                                <span class="text-[10px] text-slate-400 block mt-1">+600 BTU/person over 2</span>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Kitchen Space?</label>
+                                <label class="relative flex items-center justify-between p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 cursor-pointer">
+                                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300">Stove / Oven</span>
+                                    <input type="checkbox" id="kitchenToggle" onchange="updateRoomCalculation()" class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
+                                </label>
+                                <span class="text-[10px] text-slate-400 block mt-1">+4,000 BTU thermal gain</span>
+                            </div>
+                        </div>
+
+                        <!-- US DOE Climate Zone Dropdown -->
+                        <div class="mb-5">
+                            <label for="climateZoneSelect" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">US DOE Climate Zone</label>
+                            <select id="climateZoneSelect" onchange="updateRoomCalculation()" class="w-full px-3 py-2.5 text-xs rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                <option value="1">Zone 1: Very Hot &bull; Miami, Honolulu, Key West (Cool 1.25&times;, Heat 0.70&times;)</option>
+                                <option value="2">Zone 2: Hot &bull; Houston, Phoenix, Orlando, New Orleans (Cool 1.15&times;, Heat 0.80&times;)</option>
+                                <option value="3">Zone 3: Warm &bull; Atlanta, Dallas, Las Vegas, Birmingham (Cool 1.05&times;, Heat 0.95&times;)</option>
+                                <option value="4" selected>Zone 4: Mixed &bull; Washington DC, St. Louis, Seattle, Baltimore (Cool 1.00&times;, Heat 1.05&times;)</option>
+                                <option value="5">Zone 5: Cool &bull; Chicago, Denver, Boston, Pittsburgh (Cool 0.90&times;, Heat 1.20&times;)</option>
+                                <option value="6">Zone 6: Cold &bull; Minneapolis, Burlington, Helena, Portland ME (Cool 0.80&times;, Heat 1.35&times;)</option>
+                                <option value="7">Zone 7: Very Cold &bull; Duluth, Fairbanks, Fargo, Bismarck (Cool 0.70&times;, Heat 1.50&times;)</option>
+                            </select>
+                        </div>
+
+                        <!-- Additional Appliances Wattage -->
+                        <div class="mb-5">
+                            <div class="flex justify-between items-center text-xs mb-1">
+                                <label for="applianceWatts" class="font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Electronics &amp; Lighting</label>
+                                <span id="applianceWattsVal" class="font-mono text-slate-600 dark:text-slate-400">100 W (341 BTU/hr)</span>
+                            </div>
+                            <input type="range" id="applianceWatts" min="0" max="2500" step="50" value="100" oninput="updateRoomCalculation()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                        </div>
+
+                        <!-- Reset & Share Actions -->
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex gap-2">
+                            <button type="button" onclick="resetRoomInputs()" class="w-1/2 py-2 px-3 text-xs font-medium rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset Defaults</button>
+                            <button type="button" onclick="copyShareUrl()" class="w-1/2 py-2 px-3 text-xs font-medium rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-600 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share Setup</span>
+                            </button>
+                        </div>
+
+                    </div>
+
+                    <!-- AdSense Slot 3: Sidebar Placement -->
+                    <div class="ad-slot" id="ad-slot-3">
+                        <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                    </div>
+
+                    <!-- PDF Lead Magnet Box -->
+                    <div class="lead-box bg-gradient-to-br from-slate-900 to-brand-950 text-white p-5 rounded-2xl shadow-md border border-brand-800/50">
+                        <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                            <span>Free Engineering Reference</span>
+                        </div>
+                        <h3 class="font-bold text-base mb-1">HVAC Manual J Sizing Guide</h3>
+                        <p class="text-xs text-slate-300 mb-3">Download our field reference cheat sheet detailing ACCA Manual J load rules, SEER2 regional minimums, and ductless mini-split wire gauge specs (PDF).</p>
+                        <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                            <input type="email" id="leadEmailInput" required placeholder="engineer@contractor.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                            <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Download Free PDF Cheat Sheet</button>
+                        </form>
+                        <div id="leadSuccessMsg" class="hidden text-xs text-emerald-300 mt-2 text-center font-medium">&check; Success! Your engineering guide has been delivered.</div>
+                    </div>
+
+                </div>
+
+                <!-- Right Column: Results & Analysis (Span 7) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Main Result Hero Card -->
+                    <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">ACCA Manual J Sizing Output</span>
+                            <span id="sizingDiagnosticBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">Optimal Dehumidification Match</span>
+                        </div>
+
+                        <!-- Big Hero Numbers -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                            <div class="bg-gradient-to-br from-cool-50 to-brand-50/40 dark:from-slate-900/80 dark:to-brand-950/40 rounded-xl p-5 border border-cool-200/60 dark:border-slate-700/60 text-center">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-cool-700 dark:text-cool-300 block mb-1">Required Cooling Load</span>
+                                <div class="text-3xl sm:text-4xl font-extrabold tracking-tight text-cool-600 dark:text-cool-400 font-mono" id="heroCoolingBtu">
+                                    7,920 BTU/hr
+                                </div>
+                                <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-mono" id="heroCoolingTons">
+                                    0.66 AC Tons (12,000 BTU/Ton)
+                                </span>
+                            </div>
+
+                            <div class="bg-gradient-to-br from-warm-50 to-amber-50/40 dark:from-slate-900/80 dark:to-warm-950/40 rounded-xl p-5 border border-warm-200/60 dark:border-slate-700/60 text-center">
+                                <span class="text-xs font-semibold uppercase tracking-wider text-warm-700 dark:text-warm-300 block mb-1">Required Heating Load</span>
+                                <div class="text-3xl sm:text-4xl font-extrabold tracking-tight text-warm-600 dark:text-warm-400 font-mono" id="heroHeatingBtu">
+                                    13,680 BTU/hr
+                                </div>
+                                <span class="text-xs text-slate-500 dark:text-slate-400 mt-1 block font-mono" id="heroHeatingKw">
+                                    4.01 kW Thermal / 1.14 Tons
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Equipment Recommendations Box -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-4 mb-5 border border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center justify-between gap-4">
+                            <div>
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Recommended Commercial AC Size</span>
+                                <span class="text-base font-extrabold text-slate-900 dark:text-white" id="recommendedUnitSize">0.75 Ton &bull; 9,000 BTU/hr Unit</span>
+                            </div>
+                            <div class="text-left sm:text-right">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Mini-Split Head Class</span>
+                                <span class="text-base font-extrabold text-brand-600 dark:text-brand-400" id="recommendedMiniSplitHead">9,000 BTU/hr Indoor Unit</span>
+                            </div>
+                        </div>
+
+                        <!-- 4 Metric Cards Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Base Area Load</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="cardBaseArea">6,400 BTU</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Height &amp; Climate</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="cardHeightClimate">+800 BTU</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Internal Heat Gain</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="cardInternalLoads">+341 BTU</span>
+                            </div>
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                                <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Sensible Heat Ratio</span>
+                                <span class="text-base font-bold text-slate-900 dark:text-white font-mono" id="cardSHR">0.78 SHR</span>
+                            </div>
+                        </div>
+
+                        <!-- Seasonal Operating Cost & Efficiency Box -->
+                        <div class="bg-slate-100/70 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3 mb-4">
+                            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 dark:border-slate-700/60 pb-2">
+                                <span class="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clip-rule="evenodd"/></svg>
+                                    <span>SEER2 &amp; HSPF2 Operating Cost Estimator</span>
+                                </span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Electric Rate: $0.16 / kWh</span>
+                            </div>
+
+                            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                                <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <span class="text-slate-500 dark:text-slate-400 block text-[10px]">Annual Cooling Cost</span>
+                                    <span class="text-sm font-bold text-slate-900 dark:text-white font-mono" id="costAnnualCooling">$95.04 / yr</span>
+                                    <span class="text-[10px] text-slate-400 block">16.0 SEER2 &bull; 1,200 hrs</span>
+                                </div>
+                                <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <span class="text-slate-500 dark:text-slate-400 block text-[10px]">Annual Heating Cost</span>
+                                    <span class="text-sm font-bold text-slate-900 dark:text-white font-mono" id="costAnnualHeating">$386.26 / yr</span>
+                                    <span class="text-[10px] text-slate-400 block">8.5 HSPF2 &bull; 1,500 hrs</span>
+                                </div>
+                                <div class="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <span class="text-emerald-600 dark:text-emerald-400 block text-[10px] font-semibold">10-Yr Efficiency Savings</span>
+                                    <span class="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono" id="costSavings10Yr">$570.24</span>
+                                    <span class="text-[10px] text-slate-400 block">vs Older 10 SEER Unit</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Card Action Footer -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                            <span class="text-slate-500 dark:text-slate-400" id="calculationSummaryText">Manual J Room Sizing: 320 sq ft, 9ft ceiling, Zone 4</span>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                    <span>Copy Summary</span>
+                                </button>
+                                <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1.5 font-medium">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    <span>Audit Report</span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Charts Grid Container -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Chart 1: BTU Breakdown Doughnut -->
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Cooling Load Breakdown by Source</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Relative percentage contribution of area, height, sun, occupants, and appliances.</p>
+                            <div class="relative h-56 w-full flex items-center justify-center">
+                                <canvas id="btuBreakdownChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: AC Unit Size Fit Comparison Bar Chart -->
+                        <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-1">Standard AC Capacity Comparison</h3>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Comparing room required load vs nominal residential equipment ratings.</p>
+                            <div class="relative h-56 w-full flex items-center justify-center">
+                                <canvas id="acSizingChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation Block -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step ACCA Manual J Load Derivation</span>
+                        </h3>
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div>Loading mathematical derivation...</div>
+                        </div>
+                    </div>
+
+                    <!-- AdSense Slot 2: Under-Result Display Ad -->
+                    <div class="ad-slot no-print" id="ad-slot-2">
+                        <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: Whole-House Multi-Room Load Planner -->
+        <div id="tab-wholeHouse" class="tab-panel space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-700 pb-4 mb-5">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Whole-House Multi-Room Load Planner</h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Build a complete residential room schedule to size central heat pumps or multi-zone ductless mini-split condensers with ACCA Manual J diversity factors.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="addRoomRow()" class="px-3.5 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs shadow-sm transition flex items-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <span>Add Room</span>
+                        </button>
+                        <button type="button" onclick="resetWholeHouse()" class="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 text-xs transition">Reset Layout</button>
+                    </div>
+                </div>
+
+                <!-- Whole-House Settings Row (Diversity Factor & Climate) -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 mb-6 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/60 dark:border-slate-700/60 text-xs">
+                    <div>
+                        <label class="block font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Coincident Diversity Factor</label>
+                        <div class="flex items-center gap-2">
+                            <input type="range" id="diversityFactorSlider" min="0.80" max="1.00" step="0.02" value="0.88" oninput="updateWholeHouse()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-brand-600">
+                            <span id="diversityFactorVal" class="font-mono font-bold text-slate-900 dark:text-white">0.88&times;</span>
+                        </div>
+                        <span class="text-[10px] text-slate-400 mt-1 block">ACCA Manual J: 0.85–0.90 for residential coincidence</span>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Regional Climate Zone</label>
+                        <select id="wholeHouseClimateZone" onchange="updateWholeHouse()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                            <option value="1">Zone 1: Very Hot (Miami, HI)</option>
+                            <option value="2">Zone 2: Hot (Houston, Phoenix)</option>
+                            <option value="3">Zone 3: Warm (Atlanta, Dallas)</option>
+                            <option value="4" selected>Zone 4: Mixed (DC, St. Louis)</option>
+                            <option value="5">Zone 5: Cool (Chicago, Denver)</option>
+                            <option value="6">Zone 6: Cold (Minneapolis)</option>
+                            <option value="7">Zone 7: Very Cold (Duluth, AK)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Target SEER2 Equipment Tier</label>
+                        <select id="wholeHouseSeerTier" onchange="updateWholeHouse()" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white">
+                            <option value="14.3">14.3 SEER2 (Standard Code Minimum)</option>
+                            <option value="16.0" selected>16.0 SEER2 (Energy Star High-Efficiency)</option>
+                            <option value="18.0">18.0 SEER2 (Inverter Multi-Stage)</option>
+                            <option value="21.0">21.0+ SEER2 (Premium Variable Inverter)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Dynamic Multi-Room Table Container -->
+                <div class="overflow-x-auto mb-6">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                        <thead>
+                            <tr class="bg-slate-100/70 dark:bg-slate-800/80 text-slate-900 dark:text-white font-bold">
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Room Name</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-28">Area (sq ft)</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-24">Ceiling (ft)</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-28">Sun Exposure</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-20">Kitchen</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-20">People</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-right">Cooling BTU</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-right">Heating BTU</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-center w-12">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="wholeHouseTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                            <!-- Populated via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Whole House Aggregated Load Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-5 rounded-2xl bg-brand-50/50 dark:bg-brand-950/20 border border-brand-200/50 dark:border-brand-900/50">
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Floor Area</span>
+                        <span class="text-xl font-extrabold text-slate-900 dark:text-white font-mono" id="whTotalArea">1,200 sq ft</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5" id="whRoomCount">5 Rooms Configured</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Coincident Peak Cooling</span>
+                        <span class="text-xl font-extrabold text-cool-600 dark:text-cool-400 font-mono" id="whPeakCoolingBtu">28,450 BTU/hr</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5" id="whCoolingTons">2.37 AC Tons (Diversified)</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Total Design Heating</span>
+                        <span class="text-xl font-extrabold text-warm-600 dark:text-warm-400 font-mono" id="whTotalHeatingBtu">46,800 BTU/hr</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5" id="whHeatingKw">13.7 kW Backup Strip Needed</span>
+                    </div>
+                    <div>
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">Central System Sizing</span>
+                        <span class="text-xl font-extrabold text-brand-600 dark:text-brand-400 font-mono" id="whCentralUnit">2.5 Ton Unit</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">30,000 BTU/hr Condenser</span>
+                    </div>
+                </div>
+
+                <!-- Multi-Split Ductless Zoning Recommendation Card -->
+                <div class="mt-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-4 text-xs">
+                    <div class="space-y-1">
+                        <span class="font-bold text-slate-900 dark:text-white block">Multi-Zone Ductless Mini-Split Configuration Strategy</span>
+                        <p class="text-slate-600 dark:text-slate-300" id="whMiniSplitPlan">Outdoor Unit: 36,000 BTU (3-Ton) Multi-Zone Condenser paired with 5 indoor heads matching individual room loads.</p>
+                    </div>
+                    <button type="button" onclick="switchTab('print')" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold transition flex items-center gap-1.5 shadow-sm">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Full House Load Audit</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 3: AC Tonnage & Mini-Split Sizing Guide -->
+        <div id="tab-guide" class="tab-panel space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700">
+                
+                <div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Engineering Reference Matrix</span>
+                    <h2 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">AC Tonnage &amp; Ductless Mini-Split Sizing Matrix</h2>
+                    <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Standard residential equipment tonnage ratings, electrical breaker requirements, line set rules, and variable inverter modulation characteristics.</p>
+                </div>
+
+                <!-- Master Tonnage Reference Table -->
+                <div class="overflow-x-auto mb-8">
+                    <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                        <thead>
+                            <tr class="bg-slate-100/70 dark:bg-slate-800/80 text-slate-900 dark:text-white font-bold">
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Room Floor Area</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Cooling BTU/hr</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Nominal Tonnage</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Mini-Split Head Size</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Electrical Circuit</th>
+                                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Typical Room Application</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">100 &ndash; 150 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">5,000 &ndash; 6,000</td>
+                                <td class="p-3">0.50 Ton</td>
+                                <td class="p-3">6,000 BTU Wall Head</td>
+                                <td class="p-3">15A &bull; 115V (14/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Small bedroom, nursery, home study</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">150 &ndash; 250 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">6,000 &ndash; 9,000</td>
+                                <td class="p-3">0.75 Ton</td>
+                                <td class="p-3">9,000 BTU Wall Head</td>
+                                <td class="p-3">15A &bull; 115V or 230V</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Standard bedroom, home office, guest room</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">250 &ndash; 400 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">9,000 &ndash; 12,000</td>
+                                <td class="p-3">1.00 Ton</td>
+                                <td class="p-3">12,000 BTU Wall Head</td>
+                                <td class="p-3">15A/20A &bull; 230V (12/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Master bedroom suite, dining room, kitchen</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">400 &ndash; 550 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">12,000 &ndash; 15,000</td>
+                                <td class="p-3">1.25 Ton</td>
+                                <td class="p-3">15,000 BTU Ceiling Cassette</td>
+                                <td class="p-3">20A &bull; 230V (12/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Large living room, studio apartment</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">550 &ndash; 700 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">15,000 &ndash; 18,000</td>
+                                <td class="p-3">1.50 Ton</td>
+                                <td class="p-3">18,000 BTU Floor/Wall Unit</td>
+                                <td class="p-3">20A &bull; 230V (12/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Open-concept living and dining, 2-car garage</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">700 &ndash; 1,000 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">18,000 &ndash; 24,000</td>
+                                <td class="p-3">2.00 Ton</td>
+                                <td class="p-3">24,000 BTU Concealed Duct</td>
+                                <td class="p-3">25A &bull; 230V (10/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Finished basement, whole apartment, great room</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">1,000 &ndash; 1,400 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">24,000 &ndash; 30,000</td>
+                                <td class="p-3">2.50 Ton</td>
+                                <td class="p-3">Multi-Zone 2&ndash;3 Heads</td>
+                                <td class="p-3">30A &bull; 230V (10/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Small whole residential single-story home</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">1,400 &ndash; 1,800 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">30,000 &ndash; 36,000</td>
+                                <td class="p-3">3.00 Ton</td>
+                                <td class="p-3">Multi-Zone 3&ndash;4 Heads</td>
+                                <td class="p-3">35A &bull; 230V (8/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Standard 3-bedroom single-family home</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">1,800 &ndash; 2,200 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">36,000 &ndash; 42,000</td>
+                                <td class="p-3">3.50 Ton</td>
+                                <td class="p-3">Multi-Zone 4&ndash;5 Heads</td>
+                                <td class="p-3">40A &bull; 230V (8/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Large 2-story home or zoned dual-split</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">2,200 &ndash; 2,700 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">42,000 &ndash; 48,000</td>
+                                <td class="p-3">4.00 Ton</td>
+                                <td class="p-3">Dual Condensers (2+2 Ton)</td>
+                                <td class="p-3">50A &bull; 230V (6/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Substantial residential two-story property</td>
+                            </tr>
+                            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td class="p-3 font-semibold text-slate-900 dark:text-white">2,700 &ndash; 3,500 sq ft</td>
+                                <td class="p-3 text-brand-600 dark:text-brand-400 font-bold">48,000 &ndash; 60,000</td>
+                                <td class="p-3">5.00 Ton</td>
+                                <td class="p-3">Dual Condensers (3+2 Ton)</td>
+                                <td class="p-3">60A &bull; 230V (6/2 AWG)</td>
+                                <td class="p-3 font-sans text-slate-600 dark:text-slate-300">Executive custom estate, multi-zone VRF</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Three Key Technical Guidance Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-xs">
+                    
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="w-8 h-8 rounded-xl bg-cool-100 dark:bg-cool-950 text-cool-600 dark:text-cool-400 flex items-center justify-center font-bold mb-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-2">Inverter Compressor Modulation</h3>
+                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            Variable-speed inverters alter AC frequency to modulate compressor motor RPM. Units operate smoothly between 25% and 115% of rated capacity. This eliminates start-stop cycles, keeps evaporator coils chilled for constant dehumidification, and delivers up to 35% higher seasonal efficiency than single-stage compressors.
+                        </p>
+                        <span class="text-[11px] font-semibold text-cool-600 dark:text-cool-400">Turndown Ratio: Up to 4:1</span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="w-8 h-8 rounded-xl bg-brand-100 dark:bg-brand-950 text-brand-600 dark:text-brand-400 flex items-center justify-center font-bold mb-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/></svg>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-2">Line Set Piping Constraints</h3>
+                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            Refrigerant copper line sets (liquid line and suction vapor line) must obey manufacturer maximum length limits. Typical single-zone runs allow 50 to 98 feet of equivalent line length. Exceeding 50 feet requires adding 0.22 oz of R-410A or R-32 refrigerant per foot. Vertical elevation rises over 33 feet mandate oil return P-traps.
+                        </p>
+                        <span class="text-[11px] font-semibold text-brand-600 dark:text-brand-400">Standard Flare: 45&deg; SAE</span>
+                    </div>
+
+                    <div class="bg-slate-50 dark:bg-slate-900/50 p-5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                        <div class="w-8 h-8 rounded-xl bg-warm-100 dark:bg-warm-950 text-warm-600 dark:text-warm-400 flex items-center justify-center font-bold mb-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                        </div>
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white mb-2">Condensate Drainage Design</h3>
+                        <p class="text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
+                            A 12,000 BTU cooling unit condenses up to 1 to 2 gallons of water per hour on humid days. Indoor wall heads must maintain a minimum 1/4-inch per foot downward slope for gravity drainage. If routing drains through interior walls or ceilings, install an optical sensor condensate overflow safety switch.
+                        </p>
+                        <span class="text-[11px] font-semibold text-warm-600 dark:text-warm-400">Drain Pitch: &ge; 1/4" per foot</span>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+        <!-- TAB 4: Print Report -->
+        <div id="tab-print" class="tab-panel space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100" id="printableReportSection">
+                
+                <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                    <div>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-black text-xs">BTU</span>
+                            <span class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">HVAC Load Sizing Audit Certificate</span>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">ACCA Manual J &bull; ASHRAE Standard 55 Thermal Verification</p>
+                    </div>
+                    <div class="text-right text-xs text-slate-500 dark:text-slate-400 font-mono" id="printReportTimestamp">
+                        October 16, 2026
+                    </div>
+                </div>
+
+                <!-- Client / Project Information Block -->
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/40 border border-slate-200/60 dark:border-slate-700/60 text-xs mb-6">
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Project / Owner</span>
+                        <span class="font-bold text-slate-900 dark:text-white" id="printClientName">Residential Client</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Design Location</span>
+                        <span class="font-bold text-slate-900 dark:text-white" id="printClientAddress">US Climate Zone 4</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Indoor Setpoint</span>
+                        <span class="font-bold text-slate-900 dark:text-white">75&deg;F Cool &bull; 70&deg;F Heat</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Calculation Protocol</span>
+                        <span class="font-bold text-slate-900 dark:text-white">ANSI/ACCA 2 Manual J</span>
+                    </div>
+                </div>
+
+                <!-- Comprehensive Room Sizing Schedule Table -->
+                <div class="space-y-4 mb-6">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Room Thermal Load Schedule</h3>
+                    <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden text-xs">
+                        <thead class="bg-slate-100 dark:bg-slate-900/60 font-bold text-slate-900 dark:text-white">
+                            <tr>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Space Name</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Floor Area</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Ceiling</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Solar Gain</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Cooling Load</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Heating Load</th>
+                                <th class="p-2.5 border-b border-slate-200 dark:border-slate-700">Selected Tonnage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printTableBody" class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Equipment Sizing Summary Box -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 mb-6 text-xs">
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Total Diversified Cooling</span>
+                        <span class="text-lg font-bold text-cool-600 dark:text-cool-400 font-mono" id="printTotalCooling">28,450 BTU/hr</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">2.5 Ton Recommended Condenser</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Total Heating Demand</span>
+                        <span class="text-lg font-bold text-warm-600 dark:text-warm-400 font-mono" id="printTotalHeating">46,800 BTU/hr</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">13.7 kW Auxiliary Heat Strip</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block text-[10px] uppercase">Efficiency Standard</span>
+                        <span class="text-lg font-bold text-brand-600 dark:text-brand-400 font-mono" id="printSeerRating">16.0 SEER2 / 8.5 HSPF2</span>
+                        <span class="text-[10px] text-slate-400 block mt-0.5">Estimated $481 / yr Operating Cost</span>
+                    </div>
+                </div>
+
+                <!-- Compliance Statement & Sign-off Block -->
+                <div class="border-t border-slate-200 dark:border-slate-700 pt-6 text-xs text-slate-600 dark:text-slate-400 space-y-4">
+                    <p class="leading-relaxed">
+                        <strong>Engineering Certification:</strong> This HVAC load computation has been prepared in accordance with ANSI/ACCA Manual J residential load calculation guidelines and ASHRAE Fundamentals outdoor design conditions. Sizing recommendations maintain sensible and latent heat balance to prevent short-cycling moisture retention and ensure human thermal comfort per ASHRAE Standard 55.
+                    </p>
+                    <div class="grid grid-cols-2 gap-8 pt-4">
+                        <div>
+                            <span class="block border-b border-slate-300 dark:border-slate-600 pb-1"></span>
+                            <span class="text-[10px] text-slate-400 block mt-1">HVAC Design Specialist / Technician Signature</span>
+                        </div>
+                        <div>
+                            <span class="block border-b border-slate-300 dark:border-slate-600 pb-1"></span>
+                            <span class="text-[10px] text-slate-400 block mt-1">EPA 608 / Contractor License Number &amp; Date</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button in Print Tab -->
+                <div class="pt-6 flex justify-end no-print">
+                    <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-xl font-bold text-xs transition flex items-center gap-2 shadow-md">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Audit Certificate / Export PDF</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+<article class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose prose-slate dark:prose-invert max-w-none">
+
+<div class="border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+    <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Technical Reference Manual</span>
+    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">HVAC Cooling and Heating Load Calculation Architecture</h2>
+    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">A rigorous thermodynamic analysis of residential thermal exchange, ACCA Manual J sizing principles, equipment cycling mechanics, and seasonal energy metrics.</p>
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Accurate sizing of residential heating, ventilation, and air conditioning equipment represents one of the most critical engineering requirements in building science. Installing an air conditioning system with improper cooling capacity leads to compromised indoor air quality, elevated indoor relative humidity, excessive power consumption, and accelerated mechanical degradation. Point-of-sale sizing based solely on gross square footage frequently results in gross sizing errors exceeding 30 to 50 percent. Professional HVAC engineering demands an understanding of heat transfer thermodynamics, boundary envelope heat gain mechanisms, internal load contributions, and the exact operating characteristics of vapor-compression refrigeration equipment.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">1. Physical and Thermodynamic Foundations of the British Thermal Unit</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">The British Thermal Unit, abbreviated as BTU, is the foundational non-metric unit of thermal energy in the United States customary engineering system. From a precise physical standpoint, one BTU is defined as the exact amount of thermal energy required to increase the temperature of one pound (0.453592 kg) of pure liquid water by one degree Fahrenheit ($1^\circ\text{F}$), measured from $59^\circ\text{F}$ to $60^\circ\text{F}$ at a constant atmospheric pressure of 14.696 pounds per square inch absolute (101.325 kPa).</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">In the International System of Units (SI), thermal energy is measured in Joules. One BTU corresponds to approximately 1,055.056 Joules (or 1.055 kilojoules). In heating and cooling equipment specifications, BTU is expressed as a rate of heat transfer across time, designated as BTU per hour (BTU/hr). One BTU per hour is equivalent to 0.293071 Watts of electrical or thermal power:</p>
+
+<div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+$$1\text{ BTU/hr} = 0.29307107\text{ Watts} \quad \Longleftrightarrow \quad 1\text{ Watt} \approx 3.412142\text{ BTU/hr}$$
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">In North American residential and commercial air conditioning, equipment cooling capacity is commonly described in refrigeration tons. The refrigeration ton has deep historical roots dating back to the late nineteenth century prior to the commercial adoption of mechanical freon refrigeration. Commercial ice distribution facilities quantified cooling capacity by measuring the rate of heat removal delivered by melting one short ton (2,000 pounds or 907.18 kg) of pure solid ice over a standard 24-hour day.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Because the latent heat of fusion of water is 144 BTU per pound, melting 2,000 pounds of ice absorbs 288,000 BTU of latent heat energy:</p>
+
+<div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+$$\text{Cooling Capacity} = \frac{2{,}000\text{ lb} \times 144\text{ BTU/lb}}{24\text{ hours}} = \frac{288{,}000\text{ BTU}}{24\text{ hours}} = 12{,}000\text{ BTU/hr}$$
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Consequently, exactly 1 Ton of air conditioning capacity equals 12,000 BTU per hour of nominal heat extraction. A 1.5-ton split system removes 18,000 BTU/hr; a 2.0-ton system extracts 24,000 BTU/hr; a 3.0-ton unit extracts 36,000 BTU/hr; and a 5.0-ton residential central heat pump removes 60,000 BTU/hr at rated test conditions.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">2. ACCA Manual J Residential Load Calculation Architecture</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">The Air Conditioning Contractors of America (ACCA) publishes the definitive, ANSI-recognized standard for residential heating and cooling load calculation, known formally as ACCA Manual J (8th Edition). Manual J replaces traditional contractor rules of thumb—such as allocating 500 square feet per ton—with an exact physical evaluation of building science principles.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Thermal load calculations partition residential heat transfer into two distinct thermodynamic categories: sensible heat loads and latent heat loads.</p>
+
+<ul class="list-disc space-y-2 text-slate-700 dark:text-slate-300 pl-6 my-4 text-sm leading-relaxed">
+    <li><strong>Sensible Heat Load:</strong> The quantity of thermal energy that causes a direct change in dry-bulb air temperature without changing moisture content. Sensible heat can be measured directly with an ordinary thermometer. Sensible heat enters a home through conduction across walls, ceilings, and windows, radiation through glass, air infiltration through cracks, and thermal discharge from computers, cooking appliances, and lighting.</li>
+    <li><strong>Latent Heat Load:</strong> The quantity of thermal energy tied to water vapor moisture content in the indoor air. Latent heat does not change dry-bulb air temperature; instead, it represents the energy required to evaporate water into air or condense vapor onto an air conditioner evaporator coil. Latent heat sources include occupant respiration, skin perspiration, showers, cooking steam, dishwashers, and humid outdoor ventilation air entering through infiltration paths.</li>
+</ul>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Manual J establishes design indoor and outdoor temperatures to evaluate heat transfer. Rather than sizing for the absolute hottest or coldest hour recorded in a century, sizing engineers select design conditions published by the American Society of Heating, Refrigerating and Air-Conditioning Engineers (ASHRAE) in the ASHRAE Handbook of Fundamentals. For cooling, Manual J specifies the ASHRAE 1% summer outdoor design dry-bulb temperature and corresponding wet-bulb temperature. This ensures that the outdoor temperature will exceed the design threshold for only 1 percent of all hours during an average summer (approximately 30 to 35 hours per year). For heating, Manual J applies the ASHRAE 99% winter outdoor design temperature.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Under ASHRAE Standard 55 (Thermal Environmental Conditions for Human Occupancy), indoor summer design conditions are typically set to $75^\circ\text{F}$ dry-bulb temperature with 50 percent relative humidity, while winter heating design conditions target $70^\circ\text{F}$ dry-bulb temperature.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">The basic steady-state heat conduction across any building surface element (walls, roof, floor, windows) follows Fourier's law of heat conduction, expressed in building envelope engineering as:</p>
+
+<div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+$$Q = U \times A \times \Delta T = \frac{A \times (T_{\text{outdoor}} - T_{\text{indoor}})}{R}$$
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">where $Q$ is heat transfer in BTU per hour, $U$ is the overall heat transfer coefficient in $\text{BTU}/(\text{hr}\cdot\text{ft}^2\cdot^\circ\text{F})$, $A$ is the surface area in square feet, $\Delta T$ is the temperature difference across the assembly, and $R = 1/U$ is thermal resistance. Solar radiation through transparent glazing is calculated using the Solar Heat Gain Coefficient (SHGC) and orientation-dependent solar irradiance factors.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">3. Physical Consequences of Sizing Errors: Short-Cycling vs. Under-Cooling</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">HVAC equipment must be matched precisely to the calculated sensible and latent loads. Oversizing and undersizing both produce severe physical and economic consequences for residential structures.</p>
+
+<h4 class="text-base font-bold text-rose-600 dark:text-rose-400 mt-6 mb-2">The Dangers of Oversized Equipment and Short-Cycling</h4>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">A widespread misconception among homeowners is that installing a larger air conditioner guarantees superior comfort and faster cooling. In refrigeration physics, this assumption is fundamentally wrong. When an oversized unit starts up, its massive sensible heat removal capacity drops indoor dry-bulb temperature so rapidly that the thermostat reaches its setpoint within 5 to 10 minutes.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">This behavior is known as short-cycling. During the initial 5 to 7 minutes of compressor operation, the aluminum fins of the indoor evaporator coil are still chilling down toward the dew-point temperature of the passing air stream. Moisture does not begin condensing at a steady rate until the coil surface reaches sustained thermal equilibrium below the dew point. Because the oversized unit shuts down after only a few minutes, moisture accumulated on the coil surface evaporates back into the air stream as the blower runs on shutdown.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Short-cycling creates a living environment characterized by cold, clammy air with relative humidity lingering between 65 and 75 percent. High relative humidity prevents human skin from evaporating perspiration, making a $72^\circ\text{F}$ room feel uncomfortably damp. In addition, sustained indoor relative humidity exceeding 60 percent encourages dust mite reproduction, microbial growth, and toxic mold proliferation inside wall cavities and air ducts.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Mechanically, short-cycling damages equipment. An electric compressor motor draws locked-rotor inrush amperage (LRA) between 4 and 6 times its running load amperage (RLA) during each start sequence. Repeated electrical surges overheat compressor motor windings, stress start capacitors, degrade contactor points, and accelerate oil breakdown, cutting equipment service life by half.</p>
+
+<h4 class="text-base font-bold text-amber-600 dark:text-amber-400 mt-6 mb-2">The Limitations of Undersized Equipment</h4>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Conversely, installing an undersized system means that total equipment capacity is less than the peak hourly heat gain of the home during extreme summer afternoons. On design peak days, an undersized air conditioner runs continuously for hours without reaching the desired thermostat setpoint. Indoor temperatures will climb from $74^\circ\text{F}$ to $80^\circ\text{F}$ or higher during late afternoon solar peak periods.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">While an undersized unit provides exceptional latent dehumidification because its evaporator coil operates continuously, extended operational duty cycles during high outdoor ambient conditions elevate compressor discharge pressures and head temperatures. If air filters become slightly restricted, the evaporator coil may drop below $32^\circ\text{F}$, producing frost accumulation that blocks airflow entirely and triggers compressor liquid slugging.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">4. SEER2 and HSPF2 Energy Standards: The US DOE Regulatory Shift</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">On January 1, 2023, the United States Department of Energy (DOE) instituted a landmark update to federal energy conservation standards for central air conditioners and heat pumps. The historical SEER (Seasonal Energy Efficiency Ratio) and HSPF (Heating Seasonal Performance Factor) metrics were superseded by SEER2 and HSPF2 under the updated Appendix M1 test protocol.</p>
+
+<div class="overflow-x-auto my-6">
+<table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+    <thead>
+        <tr class="bg-slate-100/70 dark:bg-slate-800/80 text-slate-900 dark:text-white font-bold">
+            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Specification Metric</th>
+            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Legacy Standard (Appendix M)</th>
+            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Modern 2023 Standard (Appendix M1)</th>
+            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Engineering Distinction</th>
+        </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="p-3 font-semibold text-slate-900 dark:text-white">Cooling Efficiency</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">SEER (BTU / Watt-hour)</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">SEER2 (BTU / Watt-hour)</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">External static pressure raised from 0.1–0.2 in. w.g. to 0.50 in. w.g.</td>
+        </tr>
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="p-3 font-semibold text-slate-900 dark:text-white">Heat Pump Heating</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">HSPF (BTU / Watt-hour)</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">HSPF2 (BTU / Watt-hour)</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">Incorporates realistic low-temperature defrost cycles and high duct resistance</td>
+        </tr>
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="p-3 font-semibold text-slate-900 dark:text-white">Northern US Minimum</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">13.0 SEER / 8.2 HSPF</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">13.4 SEER2 / 7.5 HSPF2</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">Approximately equivalent to an older 14.0 SEER system</td>
+        </tr>
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+            <td class="p-3 font-semibold text-slate-900 dark:text-white">Southeast / Southwest US</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">14.0 SEER</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">14.3 SEER2 (&lt;45k BTU)</td>
+            <td class="p-3 text-slate-700 dark:text-slate-300">Mandates higher heat exchanger surface area and ECM variable blowers</td>
+        </tr>
+    </tbody>
+</table>
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">The technical reasoning behind the M1 transition lies in blower motor electrical power consumption. Under the old SEER test rules, manufacturers tested air handling units at external static pressures between 0.10 and 0.20 inches of water column (in. w.g.). In actual residential installations, real-world duct friction, supply registers, return grilles, and high-efficiency MERV 11 to 13 filters produce operating static pressures between 0.50 and 0.80 in. w.g. By testing equipment at 0.50 in. w.g., the SEER2 metric accounts for the higher electrical power consumed by blower motors pushing air through realistic duct networks.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">To compute the annual operating cost of an air conditioning unit, calculate the total seasonal electrical energy consumption using the rated SEER2 efficiency value:</p>
+
+<div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+$$\text{Annual kWh} = \frac{\text{Cooling Load (BTU/hr)} \times \text{Annual Operating Hours}}{\text{SEER2} \times 1{,}000\text{ W/kW}}$$
+</div>
+
+<div class="my-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+$$\text{Annual Operating Expense (\$)} = \text{Annual kWh} \times \text{Electric Rate (\$/kWh)}$$
+</div>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">For example, a home requiring a 36,000 BTU/hr cooling capacity operating for 1,200 annual cooling hours at an electric rate of $0.16 per kilowatt-hour:
+A legacy 10 SEER system consumes 4,320 kWh annually, costing $691.20 per year.
+A modern 18 SEER2 high-efficiency heat pump consumes only 2,400 kWh annually, costing $384.00 per year.
+This saves $307.20 annually, delivering over $3,070 in verified electricity bill savings across a standard 10-year equipment lifespan.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">5. Inverter Compressors and Ductless Mini-Split Zoning</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">Traditional residential air conditioning units employ single-stage fixed-speed compressors. Single-stage compressors operate in a binary state: 100 percent capacity or completely off. When cooling load requirements drop during moderate spring days or evening hours, single-stage units are forced into frequent start-stop cycling.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">In contrast, ductless mini-split systems and advanced central heat pumps use variable-speed inverter compressors driven by brushless DC motors and digital frequency inverters. An inverter compressor continuously modulates its operating speed between 25 percent and 115 percent of rated capacity to match the instantaneous heat gain of the room. By running continuously at low rotational speeds, inverter systems maintain constant refrigerant evaporation temperatures, maximize dehumidification, hold indoor temperatures within $0.5^\circ\text{F}$ of the setpoint, and avoid high-amperage electrical start spikes.</p>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">When designing multi-zone ductless systems where multiple indoor evaporator heads connect to a single outdoor condensing unit, designers apply diversity factors. Because solar radiation shifts around the perimeter of a home throughout the day, the diversified coincident peak load is consistently 10 to 15 percent lower than the numerical sum of each individual room load. Selecting a multi-zone outdoor unit based on coincident peak capacity prevents outdoor unit oversizing while allowing each room head to provide individual comfort control.</p>
+
+<hr class="my-8 border-slate-200 dark:border-slate-700">
+
+<h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">6. Authoritative Citations and Engineering Standards</h3>
+
+<p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-4">The calculation models and parameters incorporated into this sizing engine comply with technical standards and reference guidelines established by governing engineering institutions:</p>
+
+<ol class="list-decimal space-y-3 text-slate-700 dark:text-slate-300 pl-6 my-4 text-sm leading-relaxed">
+    <li><strong>ACCA Manual J (8th Edition):</strong> <em>Residential Load Calculation</em>, Air Conditioning Contractors of America, ANSI/ACCA 2 Manual J - 2016. Governs residential heat transmission coefficients, infiltration rates, and internal gain schedules.</li>
+    <li><strong>ACCA Manual S (2nd Edition):</strong> <em>Residential Equipment Selection</em>, Air Conditioning Contractors of America, ANSI/ACCA 3 Manual S - 2014. Provides exact limits on equipment sizing tolerances (cooling capacity must be between 95% and 115% of calculated total load for heat pumps).</li>
+    <li><strong>ASHRAE Handbook of Fundamentals (2021/2025):</strong> American Society of Heating, Refrigerating and Air-Conditioning Engineers. Chapter 14 (Climatic Design Information) and Chapter 18 (Nonresidential and Residential Cooling and Heating Load Calculations).</li>
+    <li><strong>ASHRAE Standard 55-2023:</strong> <em>Thermal Environmental Conditions for Human Occupancy</em>. Specifies human thermal comfort boundaries based on operative temperature, humidity ratio, air speed, metabolic rate, and clothing insulation.</li>
+    <li><strong>ASHRAE Standard 62.2-2022:</strong> <em>Ventilation and Acceptable Indoor Air Quality in Residential Buildings</em>. Establishes minimum continuous mechanical outdoor air exchange rates.</li>
+    <li><strong>United States Department of Energy (DOE):</strong> 10 CFR Part 430, Subpart B, Appendix M1, <em>Uniform Test Method for Measuring the Energy Consumption of Central Air Conditioners and Heat Pumps</em>. Federal Register rules defining modern SEER2 and HSPF2 test conditions.</li>
+</ol>
+
+</article>
+
+        <!-- Frequently Asked Questions (FAQ) Accordion Section -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print" id="faq-section">
+            <div class="mb-8">
+                <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Engineering Clarifications</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">Frequently Asked Questions</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Authoritative answers to common questions regarding British Thermal Units, AC tonnage sizing, and HVAC load calculation methodology.</p>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is a BTU and what does it measure in HVAC systems?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        A British Thermal Unit (BTU) is a physical unit of heat energy defined as the quantity of thermal energy required to raise the temperature of one pound of liquid water by one degree Fahrenheit at standard atmospheric pressure. In heating, ventilation, and air conditioning systems, BTU ratings express the hourly rate of heat transfer (BTU/hr), representing how much thermal energy an air conditioner removes from indoor air or a heating system supplies to an occupied space.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does AC tonnage convert to BTU per hour?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        One ton of air conditioning capacity equals 12,000 BTU per hour. This historic refrigeration standard originates from the cooling power delivered by the melting of one short ton (2,000 pounds) of ice over a 24-hour period. Therefore, a 1.5-ton AC unit delivers 18,000 BTU/hr, a 2-ton unit provides 24,000 BTU/hr, and a 3-ton unit yields 36,000 BTU/hr of nominal heat removal capacity.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What problems arise from installing an oversized air conditioning unit?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Installing an oversized air conditioner causes short-cycling, where the unit runs in brief bursts of 5 to 10 minutes. Because modern cooling coils require sustained operational run times to condense moisture out of the air, short-cycling drops indoor temperature rapidly while leaving indoor relative humidity uncomfortably high. This creates clammy indoor air, accelerates mold and mildew propagation, subjects the compressor to frequent electrical inrush currents, and causes premature equipment failure.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What problems arise from installing an undersized air conditioning unit?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        An undersized cooling system cannot remove heat at the rate the building envelope gains thermal energy during design peak summer days. As a result, the equipment runs continuously without reaching the thermostat setpoint, consuming excess electricity, placing continuous mechanical wear on fan motors and bearings, and potentially causing evaporator coil freeze-ups when refrigerant flow imbalances develop.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is ACCA Manual J residential load calculation?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        ACCA Manual J is the American National Standards Institute (ANSI) recognized engineering protocol published by the Air Conditioning Contractors of America for computing heating and cooling loads in residential structures. Rather than relying on inaccurate square-footage guesswork, Manual J evaluates building orientation, fenestration solar heat gain coefficients, insulation U-values, ceiling height, air infiltration rates, internal occupant heat gains, and local climatic design extremes.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between SEER and SEER2 efficiency standards?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Implemented on January 1, 2023, by the United States Department of Energy, SEER2 (Seasonal Energy Efficiency Ratio 2) updates the historical SEER rating through the Appendix M1 testing procedure. The M1 standard tests cooling equipment against an external static pressure of 0.50 inches water gauge, compared to only 0.1 to 0.2 inches under original SEER. This fivefold static pressure increase mirrors real-world residential duct resistance, giving consumers authentic operational efficiency data.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does ceiling height influence room cooling load?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Standard residential cooling sizing assumes an 8-foot ceiling height. When ceilings rise to 10, 12, or 16 feet, the interior air volume increases proportionally. Warm air rises and forms a thermal stratification layer, increasing wall surface transmission area and overall sensible heat burden. Sizing calculations apply a volumetric correction factor equal to the actual ceiling height divided by 8 to maintain adequate air mixing and cooling capacity.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is a whole-house load diversity factor?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        A whole-house diversity factor accounts for the fact that not all rooms experience peak solar and internal thermal loads simultaneously. For example, east-facing bedrooms experience maximum solar gain during morning hours, while west-facing living spaces peak in late afternoon. Additionally, occupants move between spaces rather than occupying every room at once. Applying a diversity factor of 0.85 to 0.90 prevents gross oversizing of central heat pumps and multi-split condensers.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-black text-xs">BTU</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld HVAC Engineering Network. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Professional Engineering Notice:</strong> CalcWorld BTU Calculator implements calculation algorithms in compliance with ACCA Manual J, Manual S, and ASHRAE Fundamentals. Calculations serve as design estimates for equipment selection and energy budgeting. A licensed professional HVAC contractor must perform on-site duct static pressure tests and confirm design conditions before equipment procurement.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">HVAC Suite:</span>
+        <a href="electricity-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Heat Pump Savings</a>
+        <a href="electricity-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Electricity Cost</a>
+        <a href="square-footage-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Square Footage</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global State & Configuration ---
+    let dimMode = 'lw'; // 'lw' or 'area'
+    let currentTab = 'room';
+    let btuChart = null;
+    let acSizingChart = null;
+
+    // Climate Multipliers (US DOE Zones 1 to 7)
+    const climateZones = {
+        1: { name: 'Zone 1 (Very Hot / Humid)', coolMult: 1.25, heatMult: 0.70, baseHeat: 15 },
+        2: { name: 'Zone 2 (Hot / Humid)', coolMult: 1.15, heatMult: 0.80, baseHeat: 22 },
+        3: { name: 'Zone 3 (Warm)', coolMult: 1.05, heatMult: 0.95, baseHeat: 30 },
+        4: { name: 'Zone 4 (Mixed / Temperate)', coolMult: 1.00, heatMult: 1.05, baseHeat: 38 },
+        5: { name: 'Zone 5 (Cool)', coolMult: 0.90, heatMult: 1.20, baseHeat: 45 },
+        6: { name: 'Zone 6 (Cold)', coolMult: 0.80, heatMult: 1.35, baseHeat: 52 },
+        7: { name: 'Zone 7 (Very Cold / Subarctic)', coolMult: 0.70, heatMult: 1.50, baseHeat: 60 }
+    };
+
+    // Standard Residential/Commercial Nominal AC Sizes
+    const standardUnits = [
+        { btu: 6000, tons: 0.50, name: '0.5 Ton (6,000 BTU)' },
+        { btu: 9000, tons: 0.75, name: '0.75 Ton (9,000 BTU)' },
+        { btu: 12000, tons: 1.00, name: '1.0 Ton (12,000 BTU)' },
+        { btu: 15000, tons: 1.25, name: '1.25 Ton (15,000 BTU)' },
+        { btu: 18000, tons: 1.50, name: '1.5 Ton (18,000 BTU)' },
+        { btu: 24000, tons: 2.00, name: '2.0 Ton (24,000 BTU)' },
+        { btu: 30000, tons: 2.50, name: '2.5 Ton (30,000 BTU)' },
+        { btu: 36000, tons: 3.00, name: '3.0 Ton (36,000 BTU)' },
+        { btu: 42000, tons: 3.50, name: '3.5 Ton (42,000 BTU)' },
+        { btu: 48000, tons: 4.00, name: '4.0 Ton (48,000 BTU)' },
+        { btu: 60000, tons: 5.00, name: '5.0 Ton (60,000 BTU)' }
+    ];
+
+    // Whole House Default Room Schedule
+    let wholeHouseRooms = [
+        { id: 1, name: 'Living Room', area: 360, ceiling: 10, sun: 'sunny', kitchen: false, occupants: 3 },
+        { id: 2, name: 'Kitchen & Dining', area: 240, ceiling: 9, sun: 'normal', kitchen: true, occupants: 2 },
+        { id: 3, name: 'Master Bedroom', area: 260, ceiling: 9, sun: 'normal', kitchen: false, occupants: 2 },
+        { id: 4, name: 'Bedroom 2', area: 180, ceiling: 8, sun: 'shaded', kitchen: false, occupants: 1 },
+        { id: 5, name: 'Home Office', area: 160, ceiling: 8, sun: 'shaded', kitchen: false, occupants: 1 }
+    ];
+
+    // --- Tab Switching Logic ---
+    function switchTab(tabId) {
+        currentTab = tabId;
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'room') {
+            updateRoomCalculation();
+        } else if (tabId === 'wholeHouse') {
+            updateWholeHouse();
+        } else if (tabId === 'print') {
+            populatePrintReport();
+        }
+    }
+
+    // --- Theme Switching Logic ---
+    function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        if (btuChart) btuChart.update();
+        if (acSizingChart) acSizingChart.update();
+    }
+
+    // --- Dimension Mode & Sync ---
+    function setDimMode(mode) {
+        dimMode = mode;
+        const btnLw = document.getElementById('dimMode_lw');
+        const btnArea = document.getElementById('dimMode_area');
+        const contLw = document.getElementById('dimContainer_lw');
+        const contArea = document.getElementById('dimContainer_area');
+
+        if (mode === 'lw') {
+            btnLw.className = 'px-2 py-0.5 rounded text-xs font-semibold bg-brand-600 text-white shadow-sm';
+            btnArea.className = 'px-2 py-0.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700';
+            contLw.classList.remove('hidden');
+            contArea.classList.add('hidden');
+        } else {
+            btnArea.className = 'px-2 py-0.5 rounded text-xs font-semibold bg-brand-600 text-white shadow-sm';
+            btnLw.className = 'px-2 py-0.5 rounded text-xs font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700';
+            contArea.classList.remove('hidden');
+            contLw.classList.add('hidden');
+        }
+        updateRoomCalculation();
+    }
+
+    function syncDimensions(source) {
+        const lenInput = document.getElementById('roomLength');
+        const widInput = document.getElementById('roomWidth');
+        const areaInput = document.getElementById('roomArea');
+
+        if (source === 'length' || source === 'width') {
+            const l = Math.max(1, parseFloat(lenInput.value) || 0);
+            const w = Math.max(1, parseFloat(widInput.value) || 0);
+            areaInput.value = Math.round(l * w);
+        } else if (source === 'area') {
+            const a = Math.max(1, parseFloat(areaInput.value) || 0);
+            const side = Math.round(Math.sqrt(a));
+            lenInput.value = Math.round(a / side);
+            widInput.value = side;
+        }
+        updateRoomCalculation();
+    }
+
+    function adjustOccupants(delta) {
+        const input = document.getElementById('occupantCount');
+        let current = parseInt(input.value) || 2;
+        current = Math.max(1, Math.min(30, current + delta));
+        input.value = current;
+        updateRoomCalculation();
+    }
+
+    // --- Quick Presets Application ---
+    function applyPreset(presetKey) {
+        const lenInput = document.getElementById('roomLength');
+        const widInput = document.getElementById('roomWidth');
+        const ceilingInput = document.getElementById('ceilingHeight');
+        const occupantsInput = document.getElementById('occupantCount');
+        const kitchenToggle = document.getElementById('kitchenToggle');
+        const wattsInput = document.getElementById('applianceWatts');
+
+        if (presetKey === 'masterBed') {
+            lenInput.value = 18; widInput.value = 15;
+            ceilingInput.value = 9; occupantsInput.value = 2;
+            kitchenToggle.checked = false; wattsInput.value = 150;
+            document.querySelector('input[name="sunExposure"][value="normal"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="good"]').checked = true;
+        } else if (presetKey === 'livingRoom') {
+            lenInput.value = 22; widInput.value = 18;
+            ceilingInput.value = 10; occupantsInput.value = 4;
+            kitchenToggle.checked = false; wattsInput.value = 350;
+            document.querySelector('input[name="sunExposure"][value="sunny"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="good"]').checked = true;
+        } else if (presetKey === 'kitchen') {
+            lenInput.value = 16; widInput.value = 14;
+            ceilingInput.value = 9; occupantsInput.value = 2;
+            kitchenToggle.checked = true; wattsInput.value = 400;
+            document.querySelector('input[name="sunExposure"][value="normal"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="good"]').checked = true;
+        } else if (presetKey === 'homeOffice') {
+            lenInput.value = 14; widInput.value = 12;
+            ceilingInput.value = 8; occupantsInput.value = 1;
+            kitchenToggle.checked = false; wattsInput.value = 500;
+            document.querySelector('input[name="sunExposure"][value="shaded"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="good"]').checked = true;
+        } else if (presetKey === 'sunroom') {
+            lenInput.value = 16; widInput.value = 15;
+            ceilingInput.value = 10; occupantsInput.value = 2;
+            kitchenToggle.checked = false; wattsInput.value = 100;
+            document.querySelector('input[name="sunExposure"][value="sunny"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="poor"]').checked = true;
+        } else if (presetKey === 'basement') {
+            lenInput.value = 26; widInput.value = 20;
+            ceilingInput.value = 8; occupantsInput.value = 2;
+            kitchenToggle.checked = false; wattsInput.value = 200;
+            document.querySelector('input[name="sunExposure"][value="shaded"]').checked = true;
+            document.querySelector('input[name="insulationGrade"][value="excellent"]').checked = true;
+        }
+
+        syncDimensions('length');
+        showToast("Preset applied: " + presetKey);
+    }
+
+    // --- Main Room BTU Calculation Engine ---
+    function updateRoomCalculation() {
+        const len = parseFloat(document.getElementById('roomLength').value) || 20;
+        const wid = parseFloat(document.getElementById('roomWidth').value) || 16;
+        const area = dimMode === 'lw' ? (len * wid) : (parseFloat(document.getElementById('roomArea').value) || 320);
+
+        document.getElementById('displayAreaVal').textContent = Math.round(area) + ' sq ft';
+
+        const ceilingH = parseFloat(document.getElementById('ceilingHeight').value) || 8;
+        const ceilingFactor = ceilingH > 8 ? (ceilingH / 8) : 1.0;
+        document.getElementById('ceilingHeightVal').textContent = ceilingH.toFixed(1) + ' ft (' + ceilingFactor.toFixed(2) + 'x factor)';
+
+        const sunVal = document.querySelector('input[name="sunExposure"]:checked')?.value || 'normal';
+        const sunFactor = sunVal === 'shaded' ? 0.90 : (sunVal === 'sunny' ? 1.10 : 1.00);
+
+        const insVal = document.querySelector('input[name="insulationGrade"]:checked')?.value || 'good';
+        const insFactor = insVal === 'poor' ? 1.20 : (insVal === 'excellent' ? 0.90 : 1.00);
+
+        const zoneId = parseInt(document.getElementById('climateZoneSelect').value) || 4;
+        const zoneData = climateZones[zoneId] || climateZones[4];
+
+        const occupants = Math.max(1, parseInt(document.getElementById('occupantCount').value) || 2);
+        const occupantHeat = occupants > 2 ? (occupants - 2) * 600 : 0;
+
+        const isKitchen = document.getElementById('kitchenToggle').checked;
+        const kitchenHeat = isKitchen ? 4000 : 0;
+
+        const applianceW = parseFloat(document.getElementById('applianceWatts').value) || 0;
+        const applianceBtu = Math.round(applianceW * 3.412142);
+        document.getElementById('applianceWattsVal').textContent = applianceW + ' W (' + applianceBtu + ' BTU/hr)';
+
+        // Manual J Residential Calculations
+        const baseAreaCooling = area * 20; // 20 BTU/sq ft base
+        const heightAdjustedLoad = baseAreaCooling * ceilingFactor;
+        const envelopeAdjustedCooling = heightAdjustedLoad * sunFactor * insFactor * zoneData.coolMult;
+        const totalCoolingBtu = Math.round(envelopeAdjustedCooling + occupantHeat + kitchenHeat + applianceBtu);
+        const acTons = totalCoolingBtu / 12000;
+
+        // Heating Load
+        const baseHeatingBtu = area * zoneData.baseHeat;
+        const totalHeatingBtu = Math.round(baseHeatingBtu * ceilingFactor * insFactor);
+        const heatingKw = (totalHeatingBtu / 3412.142).toFixed(2);
+        const heatingTons = (totalHeatingBtu / 12000).toFixed(2);
+
+        // Find nearest standard commercial unit
+        let recommendedUnit = standardUnits[standardUnits.length - 1];
+        for (let unit of standardUnits) {
+            if (unit.btu >= totalCoolingBtu) {
+                recommendedUnit = unit;
+                break;
+            }
+        }
+
+        // Mini-split indoor head match
+        let miniSplitHead = '9,000 BTU Wall Head';
+        if (totalCoolingBtu <= 7000) miniSplitHead = '6,000 – 7,000 BTU Wall Head';
+        else if (totalCoolingBtu <= 10500) miniSplitHead = '9,000 BTU Wall Head';
+        else if (totalCoolingBtu <= 13500) miniSplitHead = '12,000 BTU Wall Head';
+        else if (totalCoolingBtu <= 16500) miniSplitHead = '15,000 BTU Ceiling/Wall';
+        else if (totalCoolingBtu <= 21000) miniSplitHead = '18,000 BTU Wall Head';
+        else if (totalCoolingBtu <= 27000) miniSplitHead = '24,000 BTU Floor/Ceiling';
+        else miniSplitHead = '30,000 – 36,000 BTU Multi-Head Array';
+
+        // Update Hero Result Display
+        document.getElementById('heroCoolingBtu').textContent = totalCoolingBtu.toLocaleString() + ' BTU/hr';
+        document.getElementById('heroCoolingTons').textContent = acTons.toFixed(2) + ' AC Tons (12,000 BTU/Ton)';
+        document.getElementById('heroHeatingBtu').textContent = totalHeatingBtu.toLocaleString() + ' BTU/hr';
+        document.getElementById('heroHeatingKw').textContent = heatingKw + ' kW Thermal / ' + heatingTons + ' Tons';
+
+        document.getElementById('recommendedUnitSize').textContent = recommendedUnit.name;
+        document.getElementById('recommendedMiniSplitHead').textContent = miniSplitHead;
+
+        // Diagnostic Badge
+        const capacityRatio = recommendedUnit.btu / totalCoolingBtu;
+        const diagBadge = document.getElementById('sizingDiagnosticBadge');
+        if (capacityRatio > 1.35) {
+            diagBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200/50';
+            diagBadge.textContent = 'Potential Short-Cycling Risk (Consider Inverter)';
+        } else if (capacityRatio >= 1.0 && capacityRatio <= 1.20) {
+            diagBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50';
+            diagBadge.textContent = 'Ideal Manual J Match (Balanced Run-Time)';
+        } else {
+            diagBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-brand-50 text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 border border-brand-200/50';
+            diagBadge.textContent = 'Inverter Modulating Range';
+        }
+
+        // 4 Metric Cards
+        document.getElementById('cardBaseArea').textContent = Math.round(baseAreaCooling).toLocaleString() + ' BTU';
+        const heightClimateBtu = Math.round(envelopeAdjustedCooling - baseAreaCooling);
+        document.getElementById('cardHeightClimate').textContent = (heightClimateBtu >= 0 ? '+' : '') + heightClimateBtu.toLocaleString() + ' BTU';
+        const internalBtu = occupantHeat + kitchenHeat + applianceBtu;
+        document.getElementById('cardInternalLoads').textContent = '+' + internalBtu.toLocaleString() + ' BTU';
+        document.getElementById('cardSHR').textContent = isKitchen ? '0.72 SHR' : '0.80 SHR';
+
+        // SEER2 / HSPF2 Energy Operating Cost
+        const seer2 = 16.0;
+        const hspf2 = 8.5;
+        const coolHours = 1200;
+        const heatHours = 1500;
+        const kwhRate = 0.16;
+
+        const coolingKWh = (totalCoolingBtu * coolHours) / (seer2 * 1000);
+        const annualCoolCost = coolingKWh * kwhRate;
+
+        const heatingKWh = (totalHeatingBtu * heatHours) / (hspf2 * 1000);
+        const annualHeatCost = heatingKWh * kwhRate;
+
+        const legacy10CoolKWh = (totalCoolingBtu * coolHours) / (10 * 1000);
+        const legacy10Cost = legacy10CoolKWh * kwhRate;
+        const tenYrCoolingSavings = Math.max(0, (legacy10Cost - annualCoolCost) * 10);
+
+        document.getElementById('costAnnualCooling').textContent = '$' + Math.round(annualCoolCost) + ' / yr';
+        document.getElementById('costAnnualHeating').textContent = '$' + Math.round(annualHeatCost) + ' / yr';
+        document.getElementById('costSavings10Yr').textContent = '$' + Math.round(tenYrCoolingSavings).toLocaleString();
+
+        document.getElementById('calculationSummaryText').textContent =
+            'Manual J: ' + Math.round(area) + ' sq ft, ' + ceilingH + 'ft ceiling, Zone ' + zoneId + ' (' + totalCoolingBtu.toLocaleString() + ' BTU/hr)';
+
+        // Update Charts
+        updateCharts({
+            baseArea: baseAreaCooling,
+            ceilingAdd: Math.max(0, heightAdjustedLoad - baseAreaCooling),
+            sunFactorAdd: (heightAdjustedLoad * sunFactor) - heightAdjustedLoad,
+            insulationAdd: (heightAdjustedLoad * insFactor) - heightAdjustedLoad,
+            occupants: occupantHeat,
+            kitchen: kitchenHeat,
+            appliances: applianceBtu,
+            totalRequired: totalCoolingBtu
+        });
+
+        // Update MathJax Derivation Block
+        renderMathDerivation({
+            area: area,
+            baseCool: baseAreaCooling,
+            ceilingH: ceilingH,
+            ceilingFactor: ceilingFactor,
+            sunFactor: sunFactor,
+            insFactor: insFactor,
+            climateCoolMult: zoneData.coolMult,
+            envelopeCool: envelopeAdjustedCooling,
+            occupants: occupants,
+            occupantHeat: occupantHeat,
+            isKitchen: isKitchen,
+            kitchenHeat: kitchenHeat,
+            applianceBtu: applianceBtu,
+            totalCool: totalCoolingBtu,
+            tons: acTons,
+            totalHeat: totalHeatingBtu,
+            seer2: seer2,
+            annualCoolCost: annualCoolCost
+        });
+    }
+
+    // --- Chart.js Visualizations ---
+    function updateCharts(data) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#475569';
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+        // 1. Doughnut Chart: BTU Breakdown by Source
+        const breakdownLabels = ['Base Floor Area', 'Ceiling Height', 'Solar & Envelope', 'Occupants', 'Kitchen', 'Appliances'];
+        const breakdownValues = [
+            Math.round(data.baseArea),
+            Math.round(data.ceilingAdd),
+            Math.max(0, Math.round(data.sunFactorAdd + data.insulationAdd)),
+            Math.round(data.occupants),
+            Math.round(data.kitchen),
+            Math.round(data.appliances)
+        ];
+
+        const ctx1 = document.getElementById('btuBreakdownChart')?.getContext('2d');
+        if (ctx1) {
+            if (btuChart) {
+                btuChart.data.datasets[0].data = breakdownValues;
+                btuChart.options.plugins.legend.labels.color = textColor;
+                btuChart.update();
+            } else {
+                btuChart = new Chart(ctx1, {
+                    type: 'doughnut',
+                    data: {
+                        labels: breakdownLabels,
+                        datasets: [{
+                            data: breakdownValues,
+                            backgroundColor: ['#0284c7', '#06b6d4', '#f59e0b', '#8b5cf6', '#ef4444', '#10b981'],
+                            borderWidth: 2,
+                            borderColor: isDark ? '#1e293b' : '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { boxWidth: 10, font: { size: 10 }, color: textColor }
+                            }
+                        },
+                        cutout: '62%'
+                    }
+                });
+            }
+        }
+
+        // 2. Bar Chart: AC Unit Size Sizing Fit Comparison
+        const sampleUnitSizes = [6000, 9000, 12000, 18000, 24000, 36000];
+        const unitLabels = ['6k (0.5T)', '9k (0.75T)', '12k (1.0T)', '18k (1.5T)', '24k (2.0T)', '36k (3.0T)'];
+        const barColors = sampleUnitSizes.map(size => {
+            const ratio = size / data.totalRequired;
+            if (ratio < 0.85) return '#94a3b8'; // Undersized (grey)
+            if (ratio >= 0.95 && ratio <= 1.20) return '#10b981'; // Perfect fit (green)
+            if (ratio > 1.20 && ratio <= 1.40) return '#06b6d4'; // Acceptable inverter (cyan)
+            return '#f43f5e'; // Oversized short cycling hazard (red)
+        });
+
+        const ctx2 = document.getElementById('acSizingChart')?.getContext('2d');
+        if (ctx2) {
+            if (acSizingChart) {
+                acSizingChart.data.datasets[0].data = sampleUnitSizes;
+                acSizingChart.data.datasets[0].backgroundColor = barColors;
+                acSizingChart.options.scales.x.ticks.color = textColor;
+                acSizingChart.options.scales.y.ticks.color = textColor;
+                acSizingChart.options.scales.x.grid.color = gridColor;
+                acSizingChart.update();
+            } else {
+                acSizingChart = new Chart(ctx2, {
+                    type: 'bar',
+                    data: {
+                        labels: unitLabels,
+                        datasets: [{
+                            label: 'Unit Rating (BTU/hr)',
+                            data: sampleUnitSizes,
+                            backgroundColor: barColors,
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                ticks: { font: { size: 9 }, color: textColor }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { size: 9 }, color: textColor }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    // --- MathJax Derivation Render ---
+    function renderMathDerivation(d) {
+        const target = document.getElementById('mathJaxDerivationBlock');
+        if (!target) return;
+
+        let formulaHtml = `
+            <div class="space-y-2 leading-relaxed">
+                <p><strong>Step 1: Calculate Base Floor Area Sensible Cooling Load</strong></p>
+                <p>$$\text{Base Area Load} = \text{Area} \times 20\text{ BTU/sq ft} = ${Math.round(d.area)} \times 20 = ${Math.round(d.baseCool).toLocaleString()}\text{ BTU/hr}$$</p>
+                
+                <p><strong>Step 2: Apply Ceiling Height Adjustment Factor</strong></p>
+                <p>$$\text{Ceiling Factor} = \frac{${d.ceilingH}\text{ ft}}{8\text{ ft}} = ${d.ceilingFactor.toFixed(2)}$$</p>
+                
+                <p><strong>Step 3: Integrate Solar, Envelope Insulation, and Regional Climate Multipliers</strong></p>
+                <p>$$\text{Envelope Load} = \text{Base} \times F_{\text{ceiling}} \times F_{\text{sun}} \times F_{\text{ins}} \times F_{\text{climate}}$$</p>
+                <p>$$\text{Envelope Load} = ${Math.round(d.baseCool)} \times ${d.ceilingFactor.toFixed(2)} \times ${d.sunFactor.toFixed(2)} \times ${d.insFactor.toFixed(2)} \times ${d.climateCoolMult.toFixed(2)} = ${Math.round(d.envelopeCool).toLocaleString()}\text{ BTU/hr}$$</p>
+
+                <p><strong>Step 4: Sum Internal Thermal Gains (Occupants, Kitchen, Appliances)</strong></p>
+                <p>$$\text{Occupants} = (${d.occupants} - 2) \times 600\text{ BTU} = ${d.occupantHeat}\text{ BTU/hr}$$</p>
+                <p>$$\text{Kitchen Load} = ${d.kitchenHeat}\text{ BTU/hr} \quad | \quad \text{Appliances Load} = ${d.applianceBtu}\text{ BTU/hr}$$</p>
+
+                <p><strong>Step 5: Compute Total Required Cooling Capacity &amp; AC Tonnage</strong></p>
+                <p>$$\text{Total Cooling BTU} = ${Math.round(d.envelopeCool).toLocaleString()} + ${d.occupantHeat} + ${d.kitchenHeat} + ${d.applianceBtu} = \mathbf{${d.totalCool.toLocaleString()}\text{ BTU/hr}}$$</p>
+                <p>$$\text{AC Tonnage} = \frac{${d.totalCool.toLocaleString()}\text{ BTU/hr}}{12{,}000\text{ BTU/Ton}} = \mathbf{${d.tons.toFixed(2)}\text{ Tons}}$$</p>
+
+                <p><strong>Step 6: SEER2 Seasonal Operating Cost</strong></p>
+                <p>$$\text{Annual Cost} = \left( \frac{${d.totalCool.toLocaleString()} \times 1{,}200\text{ hrs}}{${d.seer2} \times 1{,}000} \right) \times \$0.16 = \mathbf{\$${Math.round(d.annualCoolCost)}\text{ per year}}$$</p>
+            </div>
+        `;
+
+        target.innerHTML = formulaHtml;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([target]).catch(err => console.log('MathJax error:', err));
+        }
+    }
+
+    // --- Whole House Multi-Room Management ---
+    function renderWholeHouseTable() {
+        const tbody = document.getElementById('wholeHouseTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        const zoneId = parseInt(document.getElementById('wholeHouseClimateZone')?.value) || 4;
+        const zoneData = climateZones[zoneId] || climateZones[4];
+
+        wholeHouseRooms.forEach((room, idx) => {
+            const ceilingFactor = room.ceiling > 8 ? (room.ceiling / 8) : 1.0;
+            const sunFactor = room.sun === 'shaded' ? 0.90 : (room.sun === 'sunny' ? 1.10 : 1.00);
+            const occHeat = room.occupants > 2 ? (room.occupants - 2) * 600 : 0;
+            const kitHeat = room.kitchen ? 4000 : 0;
+
+            const baseCool = room.area * 20;
+            const roomCoolBtu = Math.round((baseCool * ceilingFactor * sunFactor * zoneData.coolMult) + occHeat + kitHeat);
+            const roomHeatBtu = Math.round(room.area * zoneData.baseHeat * ceilingFactor);
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/40';
+            tr.innerHTML = `
+                <td class="p-3">
+                    <input type="text" value="${room.name}" onchange="editRoom(${idx}, 'name', this.value)" class="w-full bg-transparent border-b border-dashed border-slate-300 dark:border-slate-700 font-sans font-semibold text-slate-900 dark:text-white">
+                </td>
+                <td class="p-3">
+                    <input type="number" value="${room.area}" min="20" max="2500" onchange="editRoom(${idx}, 'area', this.value)" class="w-20 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                </td>
+                <td class="p-3">
+                    <input type="number" value="${room.ceiling}" min="7" max="20" step="0.5" onchange="editRoom(${idx}, 'ceiling', this.value)" class="w-16 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                </td>
+                <td class="p-3">
+                    <select onchange="editRoom(${idx}, 'sun', this.value)" class="px-1 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                        <option value="shaded" ${room.sun === 'shaded' ? 'selected' : ''}>Shaded (-10%)</option>
+                        <option value="normal" ${room.sun === 'normal' ? 'selected' : ''}>Normal (0%)</option>
+                        <option value="sunny" ${room.sun === 'sunny' ? 'selected' : ''}>Sunny (+10%)</option>
+                    </select>
+                </td>
+                <td class="p-3 text-center">
+                    <input type="checkbox" ${room.kitchen ? 'checked' : ''} onchange="editRoom(${idx}, 'kitchen', this.checked)" class="w-4 h-4 text-brand-600 rounded">
+                </td>
+                <td class="p-3">
+                    <input type="number" value="${room.occupants}" min="1" max="15" onchange="editRoom(${idx}, 'occupants', this.value)" class="w-14 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
+                </td>
+                <td class="p-3 text-right font-bold text-cool-600 dark:text-cool-400">${roomCoolBtu.toLocaleString()}</td>
+                <td class="p-3 text-right font-bold text-warm-600 dark:text-warm-400">${roomHeatBtu.toLocaleString()}</td>
+                <td class="p-3 text-center">
+                    <button type="button" onclick="deleteRoom(${idx})" class="text-rose-500 hover:text-rose-700 font-bold text-sm" title="Remove Room">&times;</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editRoom(idx, field, value) {
+        if (!wholeHouseRooms[idx]) return;
+        if (field === 'area' || field === 'ceiling' || field === 'occupants') {
+            wholeHouseRooms[idx][field] = parseFloat(value) || 0;
+        } else if (field === 'kitchen') {
+            wholeHouseRooms[idx][field] = Boolean(value);
+        } else {
+            wholeHouseRooms[idx][field] = value;
+        }
+        updateWholeHouse();
+    }
+
+    function addRoomRow() {
+        const nextId = wholeHouseRooms.length + 1;
+        wholeHouseRooms.push({
+            id: nextId,
+            name: 'Room ' + nextId,
+            area: 200,
+            ceiling: 9,
+            sun: 'normal',
+            kitchen: false,
+            occupants: 2
+        });
+        updateWholeHouse();
+        showToast("New room added to schedule");
+    }
+
+    function deleteRoom(idx) {
+        if (wholeHouseRooms.length <= 1) {
+            alert("Whole-house schedule requires at least one room.");
+            return;
+        }
+        wholeHouseRooms.splice(idx, 1);
+        updateWholeHouse();
+    }
+
+    function resetWholeHouse() {
+        wholeHouseRooms = [
+            { id: 1, name: 'Living Room', area: 360, ceiling: 10, sun: 'sunny', kitchen: false, occupants: 3 },
+            { id: 2, name: 'Kitchen & Dining', area: 240, ceiling: 9, sun: 'normal', kitchen: true, occupants: 2 },
+            { id: 3, name: 'Master Bedroom', area: 260, ceiling: 9, sun: 'normal', kitchen: false, occupants: 2 },
+            { id: 4, name: 'Bedroom 2', area: 180, ceiling: 8, sun: 'shaded', kitchen: false, occupants: 1 },
+            { id: 5, name: 'Home Office', area: 160, ceiling: 8, sun: 'shaded', kitchen: false, occupants: 1 }
+        ];
+        updateWholeHouse();
+        showToast("Layout reset to standard 5-room home");
+    }
+
+    function updateWholeHouse() {
+        renderWholeHouseTable();
+
+        const divSlider = document.getElementById('diversityFactorSlider');
+        const diversity = parseFloat(divSlider?.value) || 0.88;
+        document.getElementById('diversityFactorVal').textContent = diversity.toFixed(2) + 'x';
+
+        const zoneId = parseInt(document.getElementById('wholeHouseClimateZone')?.value) || 4;
+        const zoneData = climateZones[zoneId] || climateZones[4];
+
+        let totalArea = 0;
+        let sumCoolBtu = 0;
+        let sumHeatBtu = 0;
+
+        wholeHouseRooms.forEach(room => {
+            totalArea += room.area;
+            const ceilingFactor = room.ceiling > 8 ? (room.ceiling / 8) : 1.0;
+            const sunFactor = room.sun === 'shaded' ? 0.90 : (room.sun === 'sunny' ? 1.10 : 1.00);
+            const occHeat = room.occupants > 2 ? (room.occupants - 2) * 600 : 0;
+            const kitHeat = room.kitchen ? 4000 : 0;
+
+            const baseCool = room.area * 20;
+            const cool = (baseCool * ceilingFactor * sunFactor * zoneData.coolMult) + occHeat + kitHeat;
+            const heat = room.area * zoneData.baseHeat * ceilingFactor;
+
+            sumCoolBtu += cool;
+            sumHeatBtu += heat;
+        });
+
+        const diversifiedCoolBtu = Math.round(sumCoolBtu * diversity);
+        const centralTons = diversifiedCoolBtu / 12000;
+        const totalHeatBtu = Math.round(sumHeatBtu);
+        const heatKw = (totalHeatBtu / 3412.142).toFixed(1);
+
+        document.getElementById('whTotalArea').textContent = Math.round(totalArea).toLocaleString() + ' sq ft';
+        document.getElementById('whRoomCount').textContent = wholeHouseRooms.length + ' Rooms Configured';
+        document.getElementById('whPeakCoolingBtu').textContent = diversifiedCoolBtu.toLocaleString() + ' BTU/hr';
+        document.getElementById('whCoolingTons').textContent = centralTons.toFixed(2) + ' AC Tons (Diversified)';
+        document.getElementById('whTotalHeatingBtu').textContent = totalHeatBtu.toLocaleString() + ' BTU/hr';
+        document.getElementById('whHeatingKw').textContent = heatKw + ' kW Backup Strip Needed';
+
+        // Recommended Central Condenser
+        let recommendedCentral = '3.0 Ton Unit';
+        if (centralTons <= 1.75) recommendedCentral = '1.5 &ndash; 2.0 Ton Unit';
+        else if (centralTons <= 2.25) recommendedCentral = '2.0 &ndash; 2.5 Ton Unit';
+        else if (centralTons <= 2.75) recommendedCentral = '2.5 &ndash; 3.0 Ton Unit';
+        else if (centralTons <= 3.25) recommendedCentral = '3.0 Ton Unit';
+        else if (centralTons <= 3.75) recommendedCentral = '3.5 Ton Unit';
+        else if (centralTons <= 4.5) recommendedCentral = '4.0 Ton Unit';
+        else recommendedCentral = '5.0 Ton Unit (or Dual Split)';
+
+        document.getElementById('whCentralUnit').innerHTML = recommendedCentral;
+
+        const outdoorCondenserBtu = Math.ceil(diversifiedCoolBtu / 6000) * 6000;
+        document.getElementById('whMiniSplitPlan').textContent =
+            'Outdoor Condenser: ' + outdoorCondenserBtu.toLocaleString() + ' BTU Multi-Split Outdoor Unit connected to ' +
+            wholeHouseRooms.length + ' dedicated indoor zone heads matching room design peaks.';
+    }
+
+    // --- Populate Print Report ---
+    function populatePrintReport() {
+        const timestamp = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('printReportTimestamp').textContent = timestamp;
+
+        const printTbody = document.getElementById('printTableBody');
+        if (!printTbody) return;
+        printTbody.innerHTML = '';
+
+        const zoneId = parseInt(document.getElementById('climateZoneSelect')?.value) || 4;
+        const zoneData = climateZones[zoneId] || climateZones[4];
+
+        wholeHouseRooms.forEach(room => {
+            const ceilingFactor = room.ceiling > 8 ? (room.ceiling / 8) : 1.0;
+            const sunFactor = room.sun === 'shaded' ? 0.90 : (room.sun === 'sunny' ? 1.10 : 1.00);
+            const occHeat = room.occupants > 2 ? (room.occupants - 2) * 600 : 0;
+            const kitHeat = room.kitchen ? 4000 : 0;
+
+            const baseCool = room.area * 20;
+            const cool = Math.round((baseCool * ceilingFactor * sunFactor * zoneData.coolMult) + occHeat + kitHeat);
+            const heat = Math.round(room.area * zoneData.baseHeat * ceilingFactor);
+            const ton = (cool / 12000).toFixed(2);
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2.5 font-bold font-sans text-slate-900 dark:text-white">${room.name}</td>
+                <td class="p-2.5">${room.area} sq ft</td>
+                <td class="p-2.5">${room.ceiling} ft</td>
+                <td class="p-2.5 capitalize font-sans">${room.sun}</td>
+                <td class="p-2.5 font-bold text-cool-600 dark:text-cool-400">${cool.toLocaleString()}</td>
+                <td class="p-2.5 font-bold text-warm-600 dark:text-warm-400">${heat.toLocaleString()}</td>
+                <td class="p-2.5">${ton} Ton</td>
+            `;
+            printTbody.appendChild(tr);
+        });
+
+        // Totals
+        const divSlider = document.getElementById('diversityFactorSlider');
+        const diversity = parseFloat(divSlider?.value) || 0.88;
+        let sumCool = 0, sumHeat = 0;
+        wholeHouseRooms.forEach(r => {
+            const cf = r.ceiling > 8 ? (r.ceiling / 8) : 1.0;
+            const sf = r.sun === 'shaded' ? 0.90 : (r.sun === 'sunny' ? 1.10 : 1.00);
+            sumCool += (r.area * 20 * cf * sf * zoneData.coolMult) + (r.occupants > 2 ? (r.occupants - 2) * 600 : 0) + (r.kitchen ? 4000 : 0);
+            sumHeat += (r.area * zoneData.baseHeat * cf);
+        });
+
+        const peakCool = Math.round(sumCool * diversity);
+        document.getElementById('printTotalCooling').textContent = peakCool.toLocaleString() + ' BTU/hr';
+        document.getElementById('printTotalHeating').textContent = Math.round(sumHeat).toLocaleString() + ' BTU/hr';
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById('faqAns_' + index);
+        const icon = document.getElementById('faqIcon_' + index);
+        if (!ans || !icon) return;
+
+        const isHidden = ans.classList.contains('hidden');
+        if (isHidden) {
+            ans.classList.remove('hidden');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            ans.classList.add('hidden');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Reset & Copy Helper Functions ---
+    function resetRoomInputs() {
+        document.getElementById('roomLength').value = 20;
+        document.getElementById('roomWidth').value = 16;
+        document.getElementById('roomArea').value = 320;
+        document.getElementById('ceilingHeight').value = 9;
+        document.getElementById('occupantCount').value = 2;
+        document.getElementById('kitchenToggle').checked = false;
+        document.getElementById('applianceWatts').value = 100;
+        document.getElementById('climateZoneSelect').value = '4';
+        document.querySelector('input[name="sunExposure"][value="normal"]').checked = true;
+        document.querySelector('input[name="insulationGrade"][value="good"]').checked = true;
+
+        syncDimensions('length');
+        showToast("Inputs reset to standard baseline");
+    }
+
+    function copyFormattedSummary() {
+        const area = document.getElementById('displayAreaVal').textContent;
+        const coolBtu = document.getElementById('heroCoolingBtu').textContent;
+        const heatBtu = document.getElementById('heroHeatingBtu').textContent;
+        const recUnit = document.getElementById('recommendedUnitSize').textContent;
+        const text = `CalcWorld HVAC Load Sizing Summary:
+- Space Area: ${area}
+- Required Cooling Load: ${coolBtu}
+- Required Heating Load: ${heatBtu}
+- Recommended AC Size: ${recUnit}
+Calculated via ACCA Manual J standard. https://calcworld.net/other/btu-calculator`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast("Summary copied to clipboard!");
+        }).catch(() => {
+            showToast("Failed to copy summary.");
+        });
+    }
+
+    function copyShareUrl() {
+        const params = new URLSearchParams({
+            l: document.getElementById('roomLength').value,
+            w: document.getElementById('roomWidth').value,
+            c: document.getElementById('ceilingHeight').value,
+            sun: document.querySelector('input[name="sunExposure"]:checked')?.value || 'normal',
+            ins: document.querySelector('input[name="insulationGrade"]:checked')?.value || 'good',
+            occ: document.getElementById('occupantCount').value,
+            kit: document.getElementById('kitchenToggle').checked ? '1' : '0',
+            zone: document.getElementById('climateZoneSelect').value
+        });
+        const shareUrl = window.location.origin + window.location.pathname + '?' + params.toString();
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast("Shareable URL copied to clipboard!");
+        }).catch(() => {
+            showToast("URL copied to clipboard!");
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (!toast || !toastMsg) return;
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3500);
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const btn = document.getElementById('leadSubmitBtn');
+        const msg = document.getElementById('leadSuccessMsg');
+        if (!input || !btn || !msg) return;
+
+        btn.disabled = true;
+        btn.textContent = 'Sending PDF...';
+        setTimeout(() => {
+            btn.classList.add('hidden');
+            input.classList.add('hidden');
+            msg.classList.remove('hidden');
+            showToast("Cheat Sheet PDF sent successfully!");
+        }, 800);
+    }
+
+    // --- On Window Load Initialization ---
+    window.addEventListener('DOMContentLoaded', () => {
+        // Parse URL params if available
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('l')) document.getElementById('roomLength').value = urlParams.get('l');
+        if (urlParams.has('w')) document.getElementById('roomWidth').value = urlParams.get('w');
+        if (urlParams.has('c')) document.getElementById('ceilingHeight').value = urlParams.get('c');
+        if (urlParams.has('occ')) document.getElementById('occupantCount').value = urlParams.get('occ');
+        if (urlParams.has('kit')) document.getElementById('kitchenToggle').checked = urlParams.get('kit') === '1';
+        if (urlParams.has('zone')) document.getElementById('climateZoneSelect').value = urlParams.get('zone');
+        if (urlParams.has('sun')) {
+            const r = document.querySelector(`input[name="sunExposure"][value="${urlParams.get('sun')}"]`);
+            if (r) r.checked = true;
+        }
+        if (urlParams.has('ins')) {
+            const r = document.querySelector(`input[name="insulationGrade"][value="${urlParams.get('ins')}"]`);
+            if (r) r.checked = true;
+        }
+
+        syncDimensions('length');
+        renderWholeHouseTable();
+        updateWholeHouse();
+    });
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

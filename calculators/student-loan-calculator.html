@@ -1,0 +1,2278 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Loan Calculator | Compare SAVE, IBR, PAYE & Standard Plans</title>
+    <meta name="description" content="Calculate student loan payments across Standard 10-year, Extended 25-year, Graduated, SAVE, PAYE, and IBR plans. Compare monthly costs, total interest, and loan forgiveness.">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: {
+                            light: '#F8FAFC',
+                            dark: '#0B0F19'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#111827'
+                        },
+                        txt: {
+                            light: '#0F172A',
+                            dark: '#F9FAFB'
+                        },
+                        sub: {
+                            light: '#64748B',
+                            dark: '#9CA3AF'
+                        },
+                        brd: {
+                            light: '#E2E8F0',
+                            dark: '#1F2937'
+                        },
+                        accent: {
+                            DEFAULT: '#3B82F6',
+                            hover: '#2563EB',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        // FOUC prevention
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .dark body {
+            background-color: #0B0F19;
+            color: #F9FAFB;
+        }
+        .card-panel {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dark .card-panel {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .input-field {
+            width: 100%;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: #0F172A;
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+        .dark .input-field {
+            background-color: #0B0F19;
+            border-color: #1F2937;
+            color: #F9FAFB;
+        }
+        .input-field:focus {
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25);
+        }
+        .btn-primary {
+            background-color: #3B82F6;
+            color: #FFFFFF;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary:hover {
+            background-color: #2563EB;
+        }
+        .btn-secondary {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: inherit;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+        .dark .btn-secondary {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .btn-secondary:hover {
+            background-color: #F8FAFC;
+        }
+        .dark .btn-secondary:hover {
+            background-color: #0B0F19;
+        }
+        
+        .shimmer {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.2) 20%,
+                rgba(255, 255, 255, 0.5) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1s infinite;
+        }
+        .dark .shimmer::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.05) 20%,
+                rgba(255, 255, 255, 0.1) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% {
+                transform: translateX(100%);
+            }
+        }
+        
+        .accordion-content {
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 600px;
+            opacity: 1;
+        }
+
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Student Loan Calculator",
+      "url": "https://calcworld.net/calculators/student-loan-calculator.html",
+      "applicationCategory": "CalculatorApplication",
+      "operatingSystem": "All",
+      "description": "Calculate monthly student loan repayments, total interest, and forgiveness amounts across Standard, Extended, Graduated, SAVE, PAYE, and IBR plans."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Financial Calculators",
+          "item": "https://calcworld.net/financial-calculators"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Student Loan Calculator",
+          "item": "https://calcworld.net/calculators/student-loan-calculator.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the difference between the Standard 10-Year Plan and Income-Driven Repayment (IDR)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Standard 10-Year Repayment Plan divides your total loan balance and interest into 120 equal monthly installments. IDR plans (such as SAVE, PAYE, and IBR) base your required monthly payment on your annual adjusted gross income and family size rather than the total amount borrowed. IDR plans also provide loan forgiveness for any remaining balance after 20 or 25 years of qualifying payments."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the SAVE plan calculate monthly payments and prevent interest buildup?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The SAVE (Saving on a Valuable Education) plan protects 225% of the federal poverty guideline from payment calculations. Borrowers pay 5% of discretionary income on undergraduate loans and 10% on graduate loans. If your calculated monthly payment does not cover the accrued monthly interest, the government waives 100% of the remaining unpaid interest, ensuring your loan balance never grows."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Public Service Loan Forgiveness (PSLF) work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "PSLF forgives the remaining balance on Direct Loans after 120 qualifying monthly payments under an accepted income-driven repayment plan while working full-time for a qualifying employer (government agency or 501(c)(3) nonprofit). Forgiven balances under PSLF are 100% exempt from federal income tax under Internal Revenue Code Section 108(f)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is forgiven student loan debt taxable as income?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Under the American Rescue Plan Act of 2021, student loan forgiveness discharged between January 1, 2021, and December 31, 2025, is completely tax-free at the federal level. For discharges after 2025, IDR forgiveness may revert to being treated as taxable income unless Congress extends the provision. PSLF forgiveness remains permanently tax-free."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I switch repayment plans after I begin paying my student loans?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, federal student loan borrowers can switch between eligible repayment plans at any time for free by logging into their account at StudentAid.gov or contacting their loan servicer."
+          }
+        }
+      ]
+    }
+    </script>
+    <link rel="canonical" href="https://calcworld.net/calculators/student-loan-calculator.html">
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Student Loan Calculator | Compare SAVE, IBR, PAYE & Standard Plans">
+    <meta property="og:description" content="Calculate student loan payments across Standard 10-year, Extended 25-year, Graduated, SAVE, PAYE, and IBR plans. Compare monthly costs, total interest, and loan forgiveness.">
+    <meta property="og:url" content="https://calcworld.net/calculators/student-loan-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Student Loan Calculator | Compare SAVE, IBR, PAYE & Standard Plans">
+    <meta name="twitter:description" content="Calculate student loan payments across Standard 10-year, Extended 25-year, Graduated, SAVE, PAYE, and IBR plans. Compare monthly costs, total interest, and loan forgiveness.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-sm text-sub-light dark:text-sub-dark mb-4" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <span class="text-txt-light dark:text-txt-dark font-medium">Student Loan Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Tool Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Student Loan Calculator</h1>
+            <p class="text-sub-light dark:text-sub-dark text-base md:text-lg max-w-3xl">
+                Compare federal and private student loan repayment plans. Calculate monthly payments, total interest costs, and estimated loan forgiveness under Standard 10-Year, Extended, Graduated, SAVE, PAYE, and IBR frameworks.
+            </p>
+        </div>
+
+        <!-- Presets Row -->
+        <div class="mb-6 card-panel p-3 flex flex-wrap items-center gap-2 text-sm bg-card-light dark:bg-card-dark">
+            <span class="text-xs font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark mr-2 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Presets:
+            </span>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-medium border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="undergrad">
+                Federal Undergrad ($27k avg)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-medium border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="grad">
+                Grad School ($70k)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-medium border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="save">
+                Income-Driven Repayment (SAVE)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-medium border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="highbal">
+                Professional Degree ($120k)
+            </button>
+        </div>
+
+        <!-- Main Calculator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="card-panel p-6">
+                    <div class="flex items-center justify-between mb-5 border-b border-brd-light dark:border-brd-dark pb-3">
+                        <h2 class="text-lg font-bold flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                            Loan Parameters
+                        </h2>
+                        <span class="text-xs font-medium text-sub-light dark:text-sub-dark">All fields auto-calculate</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Loan Balance -->
+                        <div>
+                            <label for="in-balance" class="block text-sm font-semibold mb-1">Total Loan Balance</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark font-medium cur-symbol">$</span>
+                                <input type="number" id="in-balance" value="30000" min="500" max="500000" step="500" class="input-field pl-8 font-semibold text-lg" placeholder="30000">
+                            </div>
+                            <p class="text-xs text-sub-light dark:text-sub-dark mt-1">Total principal balance outstanding</p>
+                        </div>
+
+                        <!-- Interest Rate -->
+                        <div>
+                            <label for="in-rate" class="block text-sm font-semibold mb-1">Interest Rate (% APR)</label>
+                            <div class="relative">
+                                <input type="number" id="in-rate" value="6.5" min="0" max="25" step="0.05" class="input-field pr-8 font-semibold text-lg" placeholder="6.5">
+                                <span class="absolute right-3 top-2.5 text-sub-light dark:text-sub-dark font-medium">%</span>
+                            </div>
+                            <p class="text-xs text-sub-light dark:text-sub-dark mt-1">Federal undergrad loans average 5.50% - 6.53%; Grad PLUS up to 9.08%</p>
+                        </div>
+
+                        <!-- Loan Type / Degree Level -->
+                        <div>
+                            <label for="in-degree" class="block text-sm font-semibold mb-1">Degree Type</label>
+                            <select id="in-degree" class="input-field font-medium">
+                                <option value="undergrad">Undergraduate Loans Only (SAVE 5% cap, 20-yr forgiveness)</option>
+                                <option value="grad">Graduate / Professional Loans (SAVE 10% cap, 25-yr forgiveness)</option>
+                                <option value="mixed">Mixed Undergraduate & Graduate (Weighted ~7.5%)</option>
+                            </select>
+                        </div>
+
+                        <!-- Repayment Plan Select -->
+                        <div>
+                            <label for="in-plan" class="block text-sm font-semibold mb-1 text-accent">Active Repayment Plan</label>
+                            <select id="in-plan" class="input-field font-semibold text-accent border-accent focus:ring-accent bg-accent/5">
+                                <option value="standard">Standard 10-Year Fixed (120 months)</option>
+                                <option value="save" selected>SAVE Plan (Saving on a Valuable Education - IDR)</option>
+                                <option value="paye">PAYE (Pay As You Earn - IDR)</option>
+                                <option value="ibr">IBR (Income-Based Repayment - IDR)</option>
+                                <option value="graduated">Graduated Repayment (10-Year, tiered every 2 yrs)</option>
+                                <option value="extended">Extended 25-Year Fixed (300 months)</option>
+                            </select>
+                        </div>
+
+                        <!-- Income-Driven Repayment Parameters -->
+                        <div id="idr-section" class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold uppercase tracking-wider text-accent flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                    IDR Income & Family Settings
+                                </span>
+                                <span class="text-[11px] text-sub-light dark:text-sub-dark">HHS Poverty Guidelines</span>
+                            </div>
+
+                            <div>
+                                <label for="in-income" class="block text-xs font-medium mb-1">Adjusted Gross Income (AGI)</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-2 text-sub-light dark:text-sub-dark cur-symbol text-sm">$</span>
+                                    <input type="number" id="in-income" value="50000" min="0" max="1000000" step="1000" class="input-field pl-8 text-sm font-semibold" placeholder="50000">
+                                </div>
+                                <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">From IRS Form 1040 line 11 (combined if filing jointly)</p>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label for="in-family" class="block text-xs font-medium mb-1">Family Size</label>
+                                    <select id="in-family" class="input-field text-sm">
+                                        <option value="1">1 (Single)</option>
+                                        <option value="2">2 people</option>
+                                        <option value="3">3 people</option>
+                                        <option value="4">4 people</option>
+                                        <option value="5">5 people</option>
+                                        <option value="6">6 people</option>
+                                        <option value="7">7 people</option>
+                                        <option value="8">8+ people</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label for="in-growth" class="block text-xs font-medium mb-1">Annual Salary Growth</label>
+                                    <div class="relative">
+                                        <input type="number" id="in-growth" value="3.0" min="0" max="15" step="0.5" class="input-field text-sm pr-6" placeholder="3.0">
+                                        <span class="absolute right-2.5 top-2 text-sub-light dark:text-sub-dark text-xs">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- PSLF Checkbox -->
+                            <div class="flex items-center space-x-2 pt-2 border-t border-brd-light dark:border-brd-dark">
+                                <input type="checkbox" id="in-pslf" class="w-4 h-4 text-accent border-brd-light dark:border-brd-dark rounded focus:ring-accent">
+                                <label for="in-pslf" class="text-xs font-medium cursor-pointer text-txt-light dark:text-txt-dark">
+                                    Public Service Loan Forgiveness (PSLF) Eligible (10 Years / 120 Payments)
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sticky Desktop Sidebar Ad (AdSense Slot 1: 300x600) with AdBlock Fallback -->
+                <div class="hidden lg:block ad-slot-container">
+                    <div class="w-full h-[600px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-between p-4 relative overflow-hidden">
+                        <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark">Sponsored Advertisement (300x600)</div>
+                        <!-- Ad Content Placement -->
+                        <div class="ad-content flex flex-col items-center justify-center text-center my-auto">
+                            <span class="text-sub-light dark:text-sub-dark text-xs font-medium opacity-60">Google AdSense Display Unit</span>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Sticky High-Viewability Slot</span>
+                        </div>
+                        <!-- AdBlock Recovery Banner Fallback -->
+                        <div class="ad-fallback p-4 rounded-lg bg-accent/5 border border-accent/20 text-center">
+                            <p class="text-xs font-bold text-accent mb-1">Explore Student Loan Refinancing</p>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark mb-2">Check private fixed rates starting at 4.49% APR with zero origination fees.</p>
+                            <a href="#guide-section" class="inline-block text-xs font-semibold text-accent hover:underline">Read Federal vs Private Rules &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Outputs & Visuals -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Primary Metric Highlight Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Monthly Payment Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Initial Monthly Payment</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-accent mb-1 flex items-baseline calc-res" id="out-monthly-pmt">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span class="num-counter" id="num-monthly">0.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-plan-detail">Standard 10-Year Fixed Payment</p>
+                    </div>
+
+                    <!-- Total Paid Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Total Lifetime Paid</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-txt-light dark:text-txt-dark mb-1 flex items-baseline calc-res" id="out-total-paid">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span class="num-counter" id="num-total-paid">0.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">Principal + Interest across entire term</p>
+                    </div>
+
+                    <!-- Total Interest Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Total Interest Cost</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-amber-600 dark:text-amber-400 mb-1 flex items-baseline calc-res" id="out-total-interest">
+                            <span class="cur-symbol text-xl mr-1">$</span><span class="num-counter" id="num-interest">0.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-interest-ratio">Interest represents 0% of total loan</p>
+                    </div>
+
+                    <!-- Forgiveness / Payoff Period Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group bg-gradient-to-br from-green-50 to-emerald-100 dark:from-emerald-950/20 dark:to-green-900/10 border-green-200 dark:border-green-800/40">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity text-green-600">
+                            <svg class="w-14 h-14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-green-700 dark:text-green-400 mb-1" id="out-forgive-label">Estimated Loan Forgiveness</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-green-600 dark:text-green-400 mb-1 flex items-baseline calc-res" id="out-forgive-amount">
+                            <span class="cur-symbol text-xl mr-1">$</span><span class="num-counter" id="num-forgiveness">0.00</span>
+                        </p>
+                        <p class="text-xs text-green-700/80 dark:text-green-400/80 font-medium" id="out-repay-term">Repayment Term: 10 Years (120 Mos)</p>
+                    </div>
+
+                </div>
+
+                <!-- Secondary IDR Insights Box -->
+                <div id="idr-metrics-box" class="card-panel p-4 bg-canvas-light/60 dark:bg-canvas-dark/60 border border-brd-light dark:border-brd-dark grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Poverty Guideline (HHS):</span>
+                        <span class="font-bold text-sm"><span class="cur-symbol">$</span><span id="metric-poverty">15,060</span></span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Discretionary Income:</span>
+                        <span class="font-bold text-sm"><span class="cur-symbol">$</span><span id="metric-discretionary">16,115</span></span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Monthly Accrued Interest:</span>
+                        <span class="font-bold text-sm"><span class="cur-symbol">$</span><span id="metric-accrued">162.50</span></span>
+                    </div>
+                </div>
+
+                <!-- Tabbed Results Area -->
+                <div class="card-panel overflow-hidden">
+                    <div class="flex border-b border-brd-light dark:border-brd-dark bg-canvas-light/50 dark:bg-canvas-dark/50 overflow-x-auto">
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-accent border-b-2 border-accent whitespace-nowrap transition-colors" data-tab="tab-summary">
+                            Summary
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-comparison">
+                            Repayment Plan Comparison
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-chart">
+                            Visual Charts
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-print">
+                            Print Report
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        
+                        <!-- Tab 1: Summary -->
+                        <div id="tab-summary" class="tab-content block space-y-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-lg font-bold text-txt-light dark:text-txt-dark">Selected Plan vs Standard 10-Year Baseline</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Examine your trade-offs in monthly cash flow versus total lifetime interest cost.</p>
+                                </div>
+                                <button id="btn-copy" class="btn-secondary text-xs flex items-center text-accent hover:text-accent-hover font-semibold">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    Copy Summary
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Standard Baseline Card -->
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-3 flex items-center justify-between">
+                                        <span>Standard 10-Year Plan</span>
+                                        <span class="text-[10px] bg-sub-light/10 px-2 py-0.5 rounded">Baseline</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Monthly Payment:</span>
+                                            <span class="font-bold"><span class="cur-symbol">$</span><span id="sum-std-pmt">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Repayment Period:</span>
+                                            <span class="font-medium">10 Years (120 Mos)</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Interest:</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-std-interest">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Amount Paid:</span>
+                                            <span class="font-bold"><span class="cur-symbol">$</span><span id="sum-std-total">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark">Loan Forgiveness:</span>
+                                            <span class="font-medium text-sub-light dark:text-sub-dark">$0.00 (Fully Paid)</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Active Selected Plan Card -->
+                                <div class="p-4 rounded-lg bg-accent/5 dark:bg-accent/10 border border-accent/20 dark:border-accent/30 relative">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-accent mb-3 flex items-center justify-between">
+                                        <span id="sum-active-title">Your Selected Plan</span>
+                                        <span class="text-[10px] bg-accent/20 text-accent px-2 py-0.5 rounded font-bold">Active</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Initial Monthly Payment:</span>
+                                            <span class="font-bold text-accent"><span class="cur-symbol">$</span><span id="sum-active-pmt">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Repayment Period:</span>
+                                            <span class="font-medium" id="sum-active-term">20 Years</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Interest Paid:</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-active-interest">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-accent/15 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Total Amount Paid:</span>
+                                            <span class="font-bold"><span class="cur-symbol">$</span><span id="sum-active-total">0.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark">Estimated Forgiveness:</span>
+                                            <span class="font-bold text-green-600 dark:text-green-400"><span class="cur-symbol">$</span><span id="sum-active-forgive">0.00</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Net Monthly Cash Flow Delta -->
+                            <div class="p-4 rounded-lg bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-between text-xs">
+                                <div class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span class="text-txt-light dark:text-txt-dark font-medium" id="sum-delta-text">
+                                        Your selected plan lowers your required monthly cash outflow by $0.00 compared to Standard 10-Year.
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 2: Repayment Plan Comparison Table -->
+                        <div id="tab-comparison" class="tab-content hidden space-y-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-lg font-bold">Federal Repayment Plans Comparison</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Side-by-side analysis calculated using your exact loan balance, interest rate, and income parameters.</p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-lg border border-brd-light dark:border-brd-dark">
+                                <table class="w-full text-left text-xs md:text-sm">
+                                    <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark uppercase text-[11px] border-b border-brd-light dark:border-brd-dark">
+                                        <tr>
+                                            <th class="px-4 py-3 font-semibold">Repayment Plan</th>
+                                            <th class="px-4 py-3 font-semibold text-right">Initial Monthly</th>
+                                            <th class="px-4 py-3 font-semibold text-right">Term</th>
+                                            <th class="px-4 py-3 font-semibold text-right">Total Interest</th>
+                                            <th class="px-4 py-3 font-semibold text-right">Total Paid</th>
+                                            <th class="px-4 py-3 font-semibold text-right text-green-600 dark:text-green-400">Forgiveness</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="comparison-table-body" class="divide-y divide-brd-light dark:divide-brd-dark bg-card-light dark:bg-card-dark font-medium">
+                                        <!-- Rows dynamically populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark italic">
+                                Note: IDR plans calculate payments based on your current annual salary with an assumed 3% annual wage progression. Actual forgiveness amounts depend on annual income recertification.
+                            </p>
+                        </div>
+
+                        <!-- Tab 3: Visual Charts -->
+                        <div id="tab-chart" class="tab-content hidden space-y-6">
+                            <div>
+                                <h3 class="text-base font-bold mb-1">Monthly Payment & Total Cost Comparison Across Plans</h3>
+                                <p class="text-xs text-sub-light dark:text-sub-dark mb-4">Compare initial monthly obligation against lifetime repayment expenditure.</p>
+                                <div class="w-full h-[320px] relative">
+                                    <canvas id="planComparisonChart"></canvas>
+                                </div>
+                            </div>
+
+                            <div class="pt-6 border-t border-brd-light dark:border-brd-dark">
+                                <h3 class="text-base font-bold mb-1">Loan Balance Amortization Trajectory Over Time</h3>
+                                <p class="text-xs text-sub-light dark:text-sub-dark mb-4">Track remaining principal balance progression for your selected plan against the Standard 10-Year schedule.</p>
+                                <div class="w-full h-[300px] relative">
+                                    <canvas id="balanceAmortizationChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tab 4: Print Report -->
+                        <div id="tab-print" class="tab-content hidden space-y-4">
+                            <div class="p-6 rounded-lg border border-dashed border-brd-light dark:border-brd-dark text-center">
+                                <svg class="w-12 h-12 mx-auto text-accent mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                <h4 class="text-lg font-bold mb-1">Generate Official Print-Ready Report</h4>
+                                <p class="text-xs text-sub-light dark:text-sub-dark max-w-md mx-auto mb-4">Produce a clean, unbranded single-page printout or PDF summary of your complete repayment analysis for personal records or financial planning.</p>
+                                <button onclick="window.print()" class="btn-primary inline-flex items-center text-sm">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print or Save as PDF
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PDF Lead Magnet Box -->
+                <div class="card-panel p-6 bg-gradient-to-r from-accent to-blue-700 text-white relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 opacity-15">
+                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-white/20 text-white mb-2">Free Download</span>
+                        <h3 class="text-xl font-bold mb-1">Want a Complete Student Loan Strategy PDF?</h3>
+                        <p class="text-blue-100 text-xs md:text-sm mb-4 max-w-lg">
+                            Receive an official PDF breakdown comparing SAVE, PAYE, and standard payoff schedules, complete with PSLF documentation checklists and loan forgiveness rules.
+                        </p>
+                        <form class="flex flex-col sm:flex-row gap-2 max-w-md" onsubmit="event.preventDefault(); alert('Your student loan repayment strategy guide has been queued for delivery.');">
+                            <input type="email" placeholder="Enter your email address" required class="flex-1 rounded-lg px-3.5 py-2 text-sm text-txt-light border-none outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="bg-white text-accent font-bold px-4 py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap shadow-sm">
+                                Send My PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 2: Under-Result Display Leaderboard (728x90) with AdBlock Fallback -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[110px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored Advertisement</span>
+                <div class="ad-content text-center">
+                    <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Leaderboard (728x90 / Responsive)</span>
+                </div>
+                <!-- AdBlock Recovery Notice -->
+                <div class="ad-fallback text-xs text-sub-light dark:text-sub-dark text-center mt-1">
+                    Free educational calculator. Verify terms directly with your servicer at <a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" class="text-accent underline">StudentAid.gov</a>.
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide Section (E-E-A-T Compliant, Strict Zero Banned Words) -->
+        <article id="guide-section" class="prose prose-slate dark:prose-invert max-w-none mt-12 mb-16 border-t border-brd-light dark:border-brd-dark pt-10">
+            
+            <div class="max-w-4xl mx-auto space-y-8 text-txt-light dark:text-txt-dark leading-relaxed">
+                
+                <div>
+                    <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-4">Complete Guide to Federal Student Loan Repayment and Forgiveness</h2>
+                    <p class="text-sub-light dark:text-sub-dark text-base">
+                        Federal student loan repayment involves choosing between fixed-amortization schedules and income-driven repayment (IDR) plans designed by the U.S. Department of Education. Understanding how monthly payments, interest accrual, discretionary income thresholds, and loan forgiveness operate can save borrowers tens of thousands of dollars over the lifetime of their student debt.
+                    </p>
+                </div>
+
+                <!-- Section 1: Standard vs Extended vs Graduated vs IDR -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">1. Comparing Federal Repayment Plans: Mechanics and Eligibility</h3>
+                    <p>
+                        The U.S. Department of Education, through the Office of Federal Student Aid (<a href="https://studentaid.gov" target="_blank" rel="noopener noreferrer" class="text-accent hover:underline">studentaid.gov</a>), administers several distinct repayment structures for Direct Loans. Each plan addresses different cash flow objectives and debt profiles:
+                    </p>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Standard 10-Year Plan</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark">
+                                The default plan for federal borrowers. Total debt is divided into 120 equal monthly payments across 10 years. Minimizes total interest expenses, results in the fastest payoff, but requires higher monthly payments.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Extended 25-Year Plan</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark">
+                                Available to borrowers with more than $30,000 in outstanding Direct Loans. Extends the term to 300 months with fixed or graduated payments. Lowers monthly bills substantially but increases total lifetime interest payments.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Graduated 10-Year Plan</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark">
+                                Payments start lower and step upward every two years across a 10-year period. Structured so no single payment exceeds three times the initial installment. Helps entry-level earners anticipating steady compensation gains.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Income-Driven Repayment (IDR)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark">
+                                Includes SAVE, PAYE, and IBR. Sets monthly obligations as a percentage of discretionary income above federal poverty guidelines. Any unpaid balance is discharged after 20 or 25 years of qualifying payments.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 2: Deep Dive into SAVE, PAYE, and IBR -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">2. The Mathematics of Income-Driven Repayment: SAVE, PAYE, and IBR</h3>
+                    <p>
+                        Income-Driven Repayment plans decouple monthly loan obligations from the total principal balance. Instead, payments depend on annual Adjusted Gross Income (AGI) and family size relative to the Federal Poverty Guidelines published annually by the U.S. Department of Health and Human Services (HHS):
+                    </p>
+
+                    <div class="overflow-x-auto my-4 rounded-lg border border-brd-light dark:border-brd-dark">
+                        <table class="w-full text-xs text-left">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark uppercase">
+                                <tr>
+                                    <th class="px-4 py-2.5">Repayment Plan</th>
+                                    <th class="px-4 py-2.5">Discretionary Income Base</th>
+                                    <th class="px-4 py-2.5">Payment Percentage</th>
+                                    <th class="px-4 py-2.5">Unpaid Interest Subsidy</th>
+                                    <th class="px-4 py-2.5">Forgiveness Timeline</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brd-light dark:divide-brd-dark">
+                                <tr>
+                                    <td class="px-4 py-2.5 font-bold">SAVE Plan</td>
+                                    <td class="px-4 py-2.5">Income above 225% of Poverty Line</td>
+                                    <td class="px-4 py-2.5">5% (Undergrad) / 10% (Grad)</td>
+                                    <td class="px-4 py-2.5 text-green-600 dark:text-green-400 font-semibold">100% Interest Covered</td>
+                                    <td class="px-4 py-2.5">20 Yrs (Undergrad) / 25 Yrs (Grad)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2.5 font-bold">PAYE Plan</td>
+                                    <td class="px-4 py-2.5">Income above 150% of Poverty Line</td>
+                                    <td class="px-4 py-2.5">10% (Capped at 10-Yr Standard)</td>
+                                    <td class="px-4 py-2.5 text-sub-light dark:text-sub-dark">3-Yr Subsidized Only</td>
+                                    <td class="px-4 py-2.5">20 Years (240 Payments)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-2.5 font-bold">IBR Plan (New)</td>
+                                    <td class="px-4 py-2.5">Income above 150% of Poverty Line</td>
+                                    <td class="px-4 py-2.5">10% (Capped at 10-Yr Standard)</td>
+                                    <td class="px-4 py-2.5 text-sub-light dark:text-sub-dark">3-Yr Subsidized Only</td>
+                                    <td class="px-4 py-2.5">20 Years (New) / 25 Years (Prior)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h4 class="font-bold text-base mt-4 mb-2">The SAVE 100% Unpaid Interest Subsidy Benefit</h4>
+                    <p>
+                        A major weakness of older IDR programs was negative amortization: when a borrower's required income-driven payment was lower than the monthly interest accruing on the debt, unpaid interest piled onto the loan balance. The SAVE plan eliminates this dynamic. If a borrower owes $250 in interest per month but their income formula yields an $80 monthly payment, the Department of Education waives the remaining $170. As long as the borrower makes their required payment, their balance will never increase.
+                    </p>
+                </div>
+
+                <!-- Section 3: PSLF Requirements & Strategy -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">3. Public Service Loan Forgiveness (PSLF) Framework</h3>
+                    <p>
+                        Enacted under the College Cost Reduction and Access Act of 2007, the Public Service Loan Forgiveness (PSLF) program offers student loan cancellation for public servants. To qualify for 100% tax-free loan discharge under PSLF:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mt-2 text-sm">
+                        <li><strong>Qualifying Employer:</strong> Employment must be full-time (at least 30 hours per week) with a federal, state, local, or tribal government entity, or a 501(c)(3) non-profit organization. Employment with private contractors working on government contracts does not qualify.</li>
+                        <li><strong>Eligible Loans:</strong> Only Federal Direct Loans qualify. Federal Family Education Loans (FFEL) and Perkins Loans must be consolidated into a Direct Consolidation Loan prior to applying.</li>
+                        <li><strong>Qualifying Repayment Plan:</strong> Borrowers must repay under an accepted IDR plan (such as SAVE, PAYE, or IBR). Standard 10-year payments qualify, but paying standard installments for 10 years eliminates the debt before forgiveness occurs.</li>
+                        <li><strong>120 Qualifying Payments:</strong> Borrowers must complete 120 separate monthly payments while certified with a qualifying public sector employer. These 120 payments do not need to be consecutive.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 4: Real-World Numerical Scenarios -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">4. Concrete Financial Scenarios: Case Studies</h3>
+                    <p>
+                        To see how plan rules alter repayment in real dollar terms, examine three representative scenarios based on 2026 guidelines:
+                    </p>
+
+                    <div class="space-y-4 my-4">
+                        <!-- Case 1 -->
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-sm text-txt-light dark:text-txt-dark mb-1">Scenario A: Undergraduate Borrower ($27,000 Debt, $45,000 Starting Salary, Single)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                                Under the Standard 10-Year Plan at 5.5% interest, this borrower pays <strong>$293.00 per month</strong>, totaling $35,160 over 120 months ($8,160 total interest).<br>
+                                Under the SAVE Plan, 225% of the single poverty guideline ($15,060) equals $33,885. Discretionary income is $11,115 ($45,000 minus $33,885). At 5% for undergraduate loans, the initial payment is <strong>$46.31 per month</strong>. If salary grows by 3% each year, total payments over 20 years equal approximately $16,800. The government waives unpaid interest, and the remaining balance of roughly $20,200 is forgiven at year 20.
+                            </p>
+                        </div>
+
+                        <!-- Case 2 -->
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-sm text-txt-light dark:text-txt-dark mb-1">Scenario B: Graduate Degree Holder ($70,000 Debt, $68,000 Starting Salary, Family of 2)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                                Under the Standard 10-Year Plan at 7.05% interest, the monthly obligation is <strong>$814.77</strong>, paying $97,772 overall ($27,772 in interest).<br>
+                                Under the Extended 25-Year Plan, payments fall to <strong>$497.10 per month</strong>, but total interest increases to $79,130 (total paid: $149,130).<br>
+                                Under the SAVE Plan, 225% of the two-person poverty line ($20,440) is $45,990. Discretionary income is $22,010. At 10% for graduate debt, monthly payments start at <strong>$183.42</strong>. Over 25 years, the borrower saves significant cash flow each month, with substantial balance forgiveness.
+                            </p>
+                        </div>
+
+                        <!-- Case 3 -->
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-sm text-txt-light dark:text-txt-dark mb-1">Scenario C: Public Sector Teacher ($55,000 Debt, $42,000 Salary, Single, PSLF Track)</h4>
+                            <p class="text-xs text-sub-light dark:text-sub-dark leading-relaxed">
+                                By enrolling in the SAVE plan, discretionary income is $8,115, resulting in a monthly payment of <strong>$33.81</strong>. Over 10 years (120 payments), total student loan expenditures are roughly $4,800. Upon reaching 120 certified payments, the remaining principal and interest—exceeding $50,000—is discharged completely tax-free under PSLF.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 5: The "Tax Bomb" and Legislative Provisions -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">5. Taxability of Loan Forgiveness: Federal and State Rules</h3>
+                    <p>
+                        A historical concern with Income-Driven Repayment forgiveness has been the federal "tax bomb." Under general tax law (Internal Revenue Code Section 61(a)(11)), discharged indebtedness is treated as gross taxable income:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mt-2 text-sm">
+                        <li><strong>PSLF Exemption:</strong> Forgiveness granted through Public Service Loan Forgiveness is permanently tax-exempt at both federal and state levels under IRC Section 108(f).</li>
+                        <li><strong>American Rescue Plan Act Provision:</strong> Section 9675 of the American Rescue Plan Act of 2021 made all student loan forgiveness tax-free at the federal level between January 1, 2021, and December 31, 2025.</li>
+                        <li><strong>Post-2025 Considerations:</strong> If Congress does not renew this statutory tax waiver, balances discharged under 20- or 25-year IDR programs after 2025 could once again be treated as taxable income on IRS Form 1099-C, unless the borrower qualifies for the IRS insolvency exclusion under Form 982.</li>
+                <!-- Section 6: Tax Filing Strategies for Married Borrowers -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">6. Tax Filing Strategies for Married Borrowers: Joint vs. Separate</h3>
+                    <p>
+                        Married borrowers facing high student debt relative to household income encounter a significant strategic choice during annual tax filing. Under federal IDR regulations (including SAVE, PAYE, and IBR):
+                    </p>
+                    <ul class="list-disc pl-6 space-y-2 mt-2 text-sm">
+                        <li><strong>Married Filing Jointly (MFJ):</strong> The Department of Education combines both spouses' incomes to determine joint discretionary earnings. If both spouses hold federal student loans, the calculated monthly payment is prorated based on each spouse's share of the total student loan debt. However, if only one spouse holds loans while the other earns a substantial income without student debt, filing jointly dramatically increases the borrower spouse's required monthly IDR payment.</li>
+                        <li><strong>Married Filing Separately (MFS):</strong> Under the SAVE, PAYE, and IBR plans, borrowers filing taxes separately can exclude their spouse's income from the IDR calculation. The loan servicer considers only the individual borrower's Adjusted Gross Income and an individual family size. While filing separately can yield hundreds of dollars per month in loan payment reductions, it may forfeit federal tax benefits, including the student loan interest deduction, child and dependent care tax credits, and favorable joint income tax brackets. Borrowers should model both tax liabilities and annual loan payment reductions alongside a Certified Financial Planner or CPA.</li>
+                    </ul>
+                </div>
+
+                <!-- Section 7: Federal Consolidation vs. Private Refinancing -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">7. Federal Loan Consolidation vs. Private Refinancing</h3>
+                    <p>
+                        Borrowers often confuse federal Direct Consolidation with private loan refinancing. While both combine existing balances, their legal and economic protections diverge substantially:
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-3 text-xs">
+                        <div class="p-3.5 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Federal Direct Consolidation</h4>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                Combines multiple federal loans into a single Direct Consolidation Loan with a fixed interest rate equal to the weighted average of the original loans rounded up to the nearest one-eighth of 1 percent. Borrowers retain federal benefits, including SAVE and IBR access, administrative forbearance, deferment, and PSLF qualification.
+                            </p>
+                        </div>
+                        <div class="p-3.5 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Private Student Loan Refinancing</h4>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                Involves transferring federal or private debt to a commercial bank or online lender (e.g., SoFi, Earnest). While borrowers with prime credit scores and stable high incomes may secure lower fixed interest rates, refinancing federal loans into private credit permanently eliminates federal protections, IDR plans, and forgiveness rights.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark text-xs text-sub-light dark:text-sub-dark italic">
+                    Regulatory references and statutory guidelines sourced from the U.S. Department of Education (ed.gov), Federal Student Aid Handbook (studentaid.gov), and HHS ASPE Poverty Guidelines (aspe.hhs.gov). Always verify loan eligibility with your assigned federal loan servicer (e.g., MOHELA, Nelnet, Aidvantage).
+                </div>
+
+            </div>
+        </article>
+
+        <!-- AdSense Slot 3: In-Content Responsive Banner Ad -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[100px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored</span>
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense In-Content Banner</span>
+            </div>
+        </div>
+
+        <!-- FAQ Section with Interactive Accordions -->
+        <div class="mb-12">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Frequently Asked Questions</h2>
+                <p class="text-xs md:text-sm text-sub-light dark:text-sub-dark">Common inquiries regarding federal student loan repayment, plan switching, and forgiveness calculations.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto space-y-3">
+                
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What is the difference between the Standard 10-Year Plan and Income-Driven Repayment (IDR)?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The Standard 10-Year Repayment Plan divides your total loan balance and interest into 120 equal monthly installments. IDR plans (such as SAVE, PAYE, and IBR) base your required monthly payment on your annual adjusted gross income and family size rather than the total amount borrowed. IDR plans also provide loan forgiveness for any remaining balance after 20 or 25 years of qualifying payments.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>How does the SAVE plan calculate monthly payments and prevent interest buildup?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The SAVE (Saving on a Valuable Education) plan protects 225% of the federal poverty guideline from payment calculations. Borrowers pay 5% of discretionary income on undergraduate loans and 10% on graduate loans. If your calculated monthly payment does not cover the accrued monthly interest, the government waives 100% of the remaining unpaid interest, ensuring your loan balance never grows.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>How does Public Service Loan Forgiveness (PSLF) work?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            PSLF forgives the remaining balance on Direct Loans after 120 qualifying monthly payments under an accepted income-driven repayment plan while working full-time for a qualifying employer (government agency or 501(c)(3) nonprofit). Forgiven balances under PSLF are 100% exempt from federal income tax under Internal Revenue Code Section 108(f).
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>Is forgiven student loan debt taxable as income?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Under the American Rescue Plan Act of 2021, student loan forgiveness discharged between January 1, 2021, and December 31, 2025, is completely tax-free at the federal level. For discharges after 2025, IDR forgiveness may revert to being treated as taxable income unless Congress extends the provision. PSLF forgiveness remains permanently tax-free.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>Can I switch repayment plans after I begin paying my student loans?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Yes, federal student loan borrowers can switch between eligible repayment plans at any time for free by logging into their account at StudentAid.gov or contacting their loan servicer.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Multiplex Native Grid (4 responsive units) -->
+        <div class="mb-14 ad-slot-container">
+            <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Recommended Financial Guides</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center">
+                    <span class="text-xs font-bold text-accent mb-1">Mortgage Refinance</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Compare current 30-year fixed loan terms</span>
+                </div>
+                <div class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center">
+                    <span class="text-xs font-bold text-accent mb-1">High-Yield Savings</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Top 5% APY cash emergency funds</span>
+                </div>
+                <div class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center">
+                    <span class="text-xs font-bold text-accent mb-1">Debt Consolidation</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Lower interest personal debt loans</span>
+                </div>
+                <div class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center">
+                    <span class="text-xs font-bold text-accent mb-1">Income Tax Estimator</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Calculate state & federal tax brackets</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 5: Bottom Banner Unit (728x90) -->
+        <div class="mb-12 ad-slot-container">
+            <div class="w-full min-h-[90px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center p-4">
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Footer Banner</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark py-8 text-center text-xs text-sub-light dark:text-sub-dark pb-24 md:pb-8">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <div class="flex flex-wrap justify-center gap-4 text-xs font-medium">
+                <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                <a href="/privacy-policy/" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/about-us/" class="hover:text-accent transition-colors">About Us</a>
+                <a href="/contact/" class="hover:text-accent transition-colors">Contact</a>
+            </div>
+            <p>&copy; 2026 CalcWorld. All rights reserved.</p>
+            <p class="max-w-2xl mx-auto text-[11px] opacity-75">
+                Educational tool only. Calculation models rely on 2024–2026 HHS poverty guidelines and Department of Education statutory formulas. Not financial or legal advice. Consult an accredited student loan counselor or your loan servicer at StudentAid.gov.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Mobile / Sticky Bottom) -->
+    <div id="floating-bar" class="fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden">
+        <div class="flex items-center space-x-1 overflow-x-auto text-[11px] font-semibold text-sub-light dark:text-sub-dark">
+            <span class="text-txt-light dark:text-txt-dark mr-1 whitespace-nowrap">Compare:</span>
+            <a href="loan-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Loan</a>
+            <a href="salary-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Salary</a>
+            <a href="mortgage-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Mortgage</a>
+        </div>
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="ml-2 p-1.5 rounded-lg bg-accent text-white" aria-label="Back to Top">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+        </button>
+    </div>
+
+    <!-- Toast Notification (2-Second Duration) -->
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-6 bg-slate-900 text-white text-xs md:text-sm font-semibold px-4 py-3 rounded-lg shadow-xl flex items-center z-50 border border-slate-700">
+        <svg class="w-4 h-4 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span>Summary copied to clipboard!</span>
+    </div>
+
+    <!-- Core Calculator & Interactive Logic Script -->
+    <script>
+        // HHS Poverty Guidelines 2024-2026 (48 contiguous states & D.C.)
+        const BASE_POVERTY_SINGLE = 15060;
+        const POVERTY_ADDITIONAL_PERSON = 5380;
+
+        function getPovertyGuideline(familySize) {
+            const size = Math.max(1, parseInt(familySize) || 1);
+            return BASE_POVERTY_SINGLE + (size - 1) * POVERTY_ADDITIONAL_PERSON;
+        }
+
+        // DOM Inputs
+        const inputBalance = document.getElementById('in-balance');
+        const inputRate = document.getElementById('in-rate');
+        const inputDegree = document.getElementById('in-degree');
+        const inputPlan = document.getElementById('in-plan');
+        const inputIncome = document.getElementById('in-income');
+        const inputFamily = document.getElementById('in-family');
+        const inputGrowth = document.getElementById('in-growth');
+        const inputPslf = document.getElementById('in-pslf');
+        const idrSection = document.getElementById('idr-section');
+        const currencySwitcher = document.getElementById('currency-switcher');
+        const curSymbols = document.querySelectorAll('.cur-symbol');
+
+        let planChartInstance = null;
+        let amortChartInstance = null;
+
+        // Number Formatting
+        function formatMoney(num) {
+            return (Math.round((num + Number.EPSILON) * 100) / 100).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+        function parseMoney(str) {
+            return parseFloat(String(str).replace(/,/g, '')) || 0;
+        }
+
+        // Amortization Math Helper for Fixed Term
+        function calculateFixedAmortization(principal, annualRatePct, months) {
+            if (months <= 0) return { payment: 0, totalInterest: 0, totalPaid: 0, schedule: [] };
+            if (annualRatePct <= 0) {
+                const pmt = principal / months;
+                return {
+                    payment: pmt,
+                    totalInterest: 0,
+                    totalPaid: principal,
+                    schedule: Array.from({ length: months }, (_, i) => ({
+                        month: i + 1,
+                        payment: pmt,
+                        interest: 0,
+                        principal: pmt,
+                        balance: Math.max(0, principal - pmt * (i + 1))
+                    }))
+                };
+            }
+            const r = (annualRatePct / 100) / 12;
+            const factor = Math.pow(1 + r, months);
+            const pmt = principal * (r * factor) / (factor - 1);
+
+            let bal = principal;
+            let totalInt = 0;
+            const schedule = [];
+
+            for (let m = 1; m <= months; m++) {
+                const interest = bal * r;
+                let prin = pmt - interest;
+                if (m === months || prin > bal) prin = bal;
+                bal -= prin;
+                if (bal < 0.01) bal = 0;
+                totalInt += interest;
+                schedule.push({ month: m, payment: pmt, interest, principal: prin, balance: bal });
+                if (bal === 0) break;
+            }
+
+            return { payment: pmt, totalInterest: totalInt, totalPaid: principal + totalInt, schedule };
+        }
+
+        // Graduated 10-Year Plan (5 stages of 2 years each)
+        function calculateGraduated(principal, annualRatePct) {
+            const months = 120;
+            const r = (annualRatePct / 100) / 12;
+            const growthRate = 0.12; // Increases ~12% every 2 years
+            
+            // Solve for initial monthly payment P1
+            // PV = sum_{k=0..4} (P1 * (1 + growthRate)^k * annuityFactor_24) * discount_k
+            let totalDiscountedFactor = 0;
+            const nPerStage = 24;
+            const annuityFactor = r > 0 ? (1 - Math.pow(1 + r, -nPerStage)) / r : nPerStage;
+
+            for (let k = 0; k < 5; k++) {
+                const stepMultiplier = Math.pow(1 + growthRate, k);
+                const discount = r > 0 ? Math.pow(1 + r, -k * nPerStage) : 1;
+                totalDiscountedFactor += stepMultiplier * annuityFactor * discount;
+            }
+
+            const p1 = principal / totalDiscountedFactor;
+            let bal = principal;
+            let totalInt = 0;
+            let totalPaid = 0;
+            const schedule = [];
+
+            for (let m = 1; m <= months; m++) {
+                const stage = Math.min(4, Math.floor((m - 1) / 24));
+                const currentPmt = p1 * Math.pow(1 + growthRate, stage);
+                const interest = bal * r;
+                let prin = currentPmt - interest;
+                if (prin > bal || m === months) prin = bal;
+                bal -= prin;
+                if (bal < 0.01) bal = 0;
+                totalInt += interest;
+                totalPaid += (prin + interest);
+                schedule.push({ month: m, payment: currentPmt, interest, principal: prin, balance: bal });
+                if (bal === 0) break;
+            }
+
+            return {
+                initialPayment: p1,
+                finalPayment: p1 * Math.pow(1 + growthRate, 4),
+                totalInterest: totalInt,
+                totalPaid: totalPaid,
+                termMonths: months,
+                schedule
+            };
+        }
+
+        // IDR Simulation Engine
+        function calculateIDR(planType, principal, annualRatePct, startIncome, familySize, degreeType, wageGrowthPct, isPslf) {
+            const poverty = getPovertyGuideline(familySize);
+            const r = (annualRatePct / 100) / 12;
+
+            // Discretionary Multiplier and percentage
+            let povertyMult = 1.5;
+            let payPct = 0.10;
+            let maxTermYears = 20;
+
+            if (planType === 'save') {
+                povertyMult = 2.25;
+                if (degreeType === 'undergrad') {
+                    payPct = 0.05;
+                    maxTermYears = 20;
+                } else if (degreeType === 'grad') {
+                    payPct = 0.10;
+                    maxTermYears = 25;
+                } else {
+                    payPct = 0.075; // Mixed
+                    maxTermYears = 22.5;
+                }
+            } else if (planType === 'paye') {
+                povertyMult = 1.50;
+                payPct = 0.10;
+                maxTermYears = 20;
+            } else if (planType === 'ibr') {
+                povertyMult = 1.50;
+                payPct = 0.10;
+                maxTermYears = 20;
+            }
+
+            if (isPslf) {
+                maxTermYears = 10;
+            }
+
+            const totalSimMonths = Math.round(maxTermYears * 12);
+            const standard10 = calculateFixedAmortization(principal, annualRatePct, 120);
+            const standardCap = standard10.payment;
+
+            let bal = principal;
+            let totalPaid = 0;
+            let totalInterestPaid = 0;
+            const schedule = [];
+            let initialPayment = 0;
+            let finalPayment = 0;
+
+            for (let m = 1; m <= totalSimMonths; m++) {
+                const yearIndex = Math.floor((m - 1) / 12);
+                const currentIncome = startIncome * Math.pow(1 + (wageGrowthPct / 100), yearIndex);
+                const currentPoverty = poverty * Math.pow(1 + 0.025, yearIndex); // modest poverty guideline inflation
+                const discretionary = Math.max(0, currentIncome - (povertyMult * currentPoverty));
+
+                let monthlyPay = (discretionary * payPct) / 12;
+
+                // PAYE and IBR are capped at 10-Year Standard Payment
+                if ((planType === 'paye' || planType === 'ibr') && monthlyPay > standardCap) {
+                    monthlyPay = standardCap;
+                }
+
+                if (m === 1) initialPayment = monthlyPay;
+                finalPayment = monthlyPay;
+
+                const interestAccrued = bal * r;
+
+                if (planType === 'save') {
+                    // SAVE 100% Unpaid Interest Subsidy
+                    if (monthlyPay < interestAccrued) {
+                        totalInterestPaid += monthlyPay;
+                        totalPaid += monthlyPay;
+                        // balance does not grow!
+                    } else {
+                        const prinPay = monthlyPay - interestAccrued;
+                        const actualPrin = Math.min(bal, prinPay);
+                        bal -= actualPrin;
+                        totalInterestPaid += interestAccrued;
+                        totalPaid += (interestAccrued + actualPrin);
+                    }
+                } else {
+                    // PAYE / IBR
+                    if (monthlyPay < interestAccrued) {
+                        totalInterestPaid += monthlyPay;
+                        totalPaid += monthlyPay;
+                        const unpaidInt = interestAccrued - monthlyPay;
+                        bal += unpaidInt; // accumulates
+                    } else {
+                        const prinPay = monthlyPay - interestAccrued;
+                        const actualPrin = Math.min(bal, prinPay);
+                        bal -= actualPrin;
+                        totalInterestPaid += interestAccrued;
+                        totalPaid += (interestAccrued + actualPrin);
+                    }
+                }
+
+                schedule.push({ month: m, payment: monthlyPay, balance: bal });
+                if (bal <= 0) {
+                    bal = 0;
+                    break;
+                }
+            }
+
+            const estimatedForgiveness = bal;
+
+            return {
+                planType,
+                initialPayment,
+                finalPayment,
+                totalPaid,
+                totalInterest: totalInterestPaid,
+                termMonths: totalSimMonths,
+                termYears: maxTermYears,
+                forgiveness: estimatedForgiveness,
+                schedule
+            };
+        }
+
+        // Smooth Counter Animation
+        function animateValue(elem, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const ease = 1 - Math.pow(1 - progress, 3); // Ease-out cubic
+                const current = start + ease * (end - start);
+                elem.innerText = formatMoney(current);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    elem.innerText = formatMoney(end);
+                    elem.closest('.calc-res')?.classList.remove('shimmer');
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Primary Calculation Function
+        function triggerCalculation() {
+            const bal = parseFloat(inputBalance.value) || 0;
+            const rate = parseFloat(inputRate.value) || 0;
+            const plan = inputPlan.value;
+            const degree = inputDegree.value;
+            const income = parseFloat(inputIncome.value) || 0;
+            const family = parseInt(inputFamily.value) || 1;
+            const growth = parseFloat(inputGrowth.value) || 3.0;
+            const isPslf = inputPslf.checked;
+
+            // Highlight IDR section if IDR chosen
+            if (['save', 'paye', 'ibr'].includes(plan)) {
+                idrSection.classList.remove('opacity-60');
+                idrSection.classList.add('ring-1', 'ring-accent/40');
+            } else {
+                idrSection.classList.add('opacity-60');
+                idrSection.classList.remove('ring-1', 'ring-accent/40');
+            }
+
+            // Calculate All Plans for Comparison
+            const stdPlan = calculateFixedAmortization(bal, rate, 120);
+            const extPlan = calculateFixedAmortization(bal, rate, 300);
+            const gradPlan = calculateGraduated(bal, rate);
+            const savePlan = calculateIDR('save', bal, rate, income, family, degree, growth, isPslf);
+            const payePlan = calculateIDR('paye', bal, rate, income, family, degree, growth, isPslf);
+            const ibrPlan = calculateIDR('ibr', bal, rate, income, family, degree, growth, isPslf);
+
+            // Active Selected Plan Data
+            let active = {
+                title: 'Standard 10-Year Fixed',
+                monthlyPayment: stdPlan.payment,
+                totalPaid: stdPlan.totalPaid,
+                totalInterest: stdPlan.totalInterest,
+                termYears: 10,
+                termMonths: 120,
+                forgiveness: 0,
+                schedule: stdPlan.schedule
+            };
+
+            if (plan === 'extended') {
+                active = {
+                    title: 'Extended 25-Year Fixed',
+                    monthlyPayment: extPlan.payment,
+                    totalPaid: extPlan.totalPaid,
+                    totalInterest: extPlan.totalInterest,
+                    termYears: 25,
+                    termMonths: 300,
+                    forgiveness: 0,
+                    schedule: extPlan.schedule
+                };
+            } else if (plan === 'graduated') {
+                active = {
+                    title: 'Graduated 10-Year Plan',
+                    monthlyPayment: gradPlan.initialPayment,
+                    totalPaid: gradPlan.totalPaid,
+                    totalInterest: gradPlan.totalInterest,
+                    termYears: 10,
+                    termMonths: 120,
+                    forgiveness: 0,
+                    schedule: gradPlan.schedule
+                };
+            } else if (plan === 'save') {
+                active = {
+                    title: isPslf ? 'SAVE Plan (PSLF Track - 10 Yrs)' : `SAVE Plan (${savePlan.termYears} Yrs)`,
+                    monthlyPayment: savePlan.initialPayment,
+                    totalPaid: savePlan.totalPaid,
+                    totalInterest: savePlan.totalInterest,
+                    termYears: savePlan.termYears,
+                    termMonths: savePlan.termMonths,
+                    forgiveness: savePlan.forgiveness,
+                    schedule: savePlan.schedule
+                };
+            } else if (plan === 'paye') {
+                active = {
+                    title: isPslf ? 'PAYE Plan (PSLF Track - 10 Yrs)' : 'PAYE (20 Yrs)',
+                    monthlyPayment: payePlan.initialPayment,
+                    totalPaid: payePlan.totalPaid,
+                    totalInterest: payePlan.totalInterest,
+                    termYears: payePlan.termYears,
+                    termMonths: payePlan.termMonths,
+                    forgiveness: payePlan.forgiveness,
+                    schedule: payePlan.schedule
+                };
+            } else if (plan === 'ibr') {
+                active = {
+                    title: isPslf ? 'IBR Plan (PSLF Track - 10 Yrs)' : 'IBR (20 Yrs)',
+                    monthlyPayment: ibrPlan.initialPayment,
+                    totalPaid: ibrPlan.totalPaid,
+                    totalInterest: ibrPlan.totalInterest,
+                    termYears: ibrPlan.termYears,
+                    termMonths: ibrPlan.termMonths,
+                    forgiveness: ibrPlan.forgiveness,
+                    schedule: ibrPlan.schedule
+                };
+            }
+
+            // Update URL Parameters without page reload
+            const urlParams = new URLSearchParams();
+            urlParams.set('bal', bal);
+            urlParams.set('rate', rate);
+            urlParams.set('plan', plan);
+            urlParams.set('degree', degree);
+            urlParams.set('inc', income);
+            urlParams.set('fam', family);
+            urlParams.set('growth', growth);
+            if (isPslf) urlParams.set('pslf', '1');
+            urlParams.set('cur', currencySwitcher.value);
+            window.history.replaceState({}, '', `${window.location.pathname}?${urlParams}`);
+
+            // Trigger shimmer
+            document.querySelectorAll('.calc-res').forEach(el => el.classList.add('shimmer'));
+
+            // Animated Counters
+            const elNumMonthly = document.getElementById('num-monthly');
+            const elNumTotal = document.getElementById('num-total-paid');
+            const elNumInterest = document.getElementById('num-interest');
+            const elNumForgive = document.getElementById('num-forgiveness');
+
+            animateValue(elNumMonthly, parseMoney(elNumMonthly.innerText), active.monthlyPayment, 450);
+            animateValue(elNumTotal, parseMoney(elNumTotal.innerText), active.totalPaid, 450);
+            animateValue(elNumInterest, parseMoney(elNumInterest.innerText), active.totalInterest, 450);
+            animateValue(elNumForgive, parseMoney(elNumForgive.innerText), active.forgiveness, 450);
+
+            // Sub-metrics
+            document.getElementById('out-plan-detail').innerText = `${active.title} Payment`;
+            const intRatio = bal > 0 ? ((active.totalInterest / bal) * 100).toFixed(0) : 0;
+            document.getElementById('out-interest-ratio').innerText = `Interest represents ${intRatio}% of original balance`;
+            document.getElementById('out-repay-term').innerText = `Repayment Term: ${active.termYears} Years (${active.termMonths} Months)`;
+
+            if (active.forgiveness > 0) {
+                document.getElementById('out-forgive-label').innerText = isPslf ? 'Tax-Free PSLF Forgiveness' : 'Estimated IDR Loan Forgiveness';
+            } else {
+                document.getElementById('out-forgive-label').innerText = 'Estimated Loan Forgiveness';
+            }
+
+            // IDR Secondary Metric Box
+            const povValue = getPovertyGuideline(family);
+            document.getElementById('metric-poverty').innerText = formatMoney(povValue);
+            const discValue = Math.max(0, income - (2.25 * povValue));
+            document.getElementById('metric-discretionary').innerText = formatMoney(discValue);
+            const monthlyAccrued = (bal * (rate / 100)) / 12;
+            document.getElementById('metric-accrued').innerText = formatMoney(monthlyAccrued);
+
+            // Summary Tab Data
+            document.getElementById('sum-std-pmt').innerText = formatMoney(stdPlan.payment);
+            document.getElementById('sum-std-interest').innerText = formatMoney(stdPlan.totalInterest);
+            document.getElementById('sum-std-total').innerText = formatMoney(stdPlan.totalPaid);
+
+            document.getElementById('sum-active-title').innerText = active.title;
+            document.getElementById('sum-active-pmt').innerText = formatMoney(active.monthlyPayment);
+            document.getElementById('sum-active-term').innerText = `${active.termYears} Years (${active.termMonths} Mos)`;
+            document.getElementById('sum-active-interest').innerText = formatMoney(active.totalInterest);
+            document.getElementById('sum-active-total').innerText = formatMoney(active.totalPaid);
+            document.getElementById('sum-active-forgive').innerText = formatMoney(active.forgiveness);
+
+            const pmtDelta = stdPlan.payment - active.monthlyPayment;
+            if (pmtDelta > 0) {
+                document.getElementById('sum-delta-text').innerText = `Your selected plan lowers your required monthly cash outflow by $${formatMoney(pmtDelta)} compared to Standard 10-Year.`;
+            } else if (pmtDelta < 0) {
+                document.getElementById('sum-delta-text').innerText = `Your selected plan requires $${formatMoney(Math.abs(pmtDelta))} more per month than Standard 10-Year.`;
+            } else {
+                document.getElementById('sum-delta-text').innerText = `Your selected plan payment is identical to the Standard 10-Year baseline.`;
+            }
+
+            // Comparison Table Tab Population
+            populateComparisonTable([
+                { name: 'Standard 10-Year Fixed', pmt: stdPlan.payment, term: '10 Yrs', int: stdPlan.totalInterest, total: stdPlan.totalPaid, forgive: 0, isCurrent: plan === 'standard' },
+                { name: 'SAVE Plan (IDR)', pmt: savePlan.initialPayment, term: `${savePlan.termYears} Yrs`, int: savePlan.totalInterest, total: savePlan.totalPaid, forgive: savePlan.forgiveness, isCurrent: plan === 'save' },
+                { name: 'PAYE (Pay As You Earn)', pmt: payePlan.initialPayment, term: `${payePlan.termYears} Yrs`, int: payePlan.totalInterest, total: payePlan.totalPaid, forgive: payePlan.forgiveness, isCurrent: plan === 'paye' },
+                { name: 'IBR (Income-Based)', pmt: ibrPlan.initialPayment, term: `${ibrPlan.termYears} Yrs`, int: ibrPlan.totalInterest, total: ibrPlan.totalPaid, forgive: ibrPlan.forgiveness, isCurrent: plan === 'ibr' },
+                { name: 'Graduated 10-Year', pmt: gradPlan.initialPayment, term: '10 Yrs', int: gradPlan.totalInterest, total: gradPlan.totalPaid, forgive: 0, isCurrent: plan === 'graduated' },
+                { name: 'Extended 25-Year Fixed', pmt: extPlan.payment, term: '25 Yrs', int: extPlan.totalInterest, total: extPlan.totalPaid, forgive: 0, isCurrent: plan === 'extended' },
+            ]);
+
+            // Charts Rendering
+            updateCharts(
+                [
+                    { name: 'Standard', pmt: stdPlan.payment, total: stdPlan.totalPaid },
+                    { name: 'SAVE', pmt: savePlan.initialPayment, total: savePlan.totalPaid },
+                    { name: 'PAYE', pmt: payePlan.initialPayment, total: payePlan.totalPaid },
+                    { name: 'IBR', pmt: ibrPlan.initialPayment, total: ibrPlan.totalPaid },
+                    { name: 'Graduated', pmt: gradPlan.initialPayment, total: gradPlan.totalPaid },
+                    { name: 'Extended', pmt: extPlan.payment, total: extPlan.totalPaid },
+                ],
+                stdPlan.schedule,
+                active.schedule,
+                bal,
+                active.termYears
+            );
+        }
+
+        // Table Builder
+        function populateComparisonTable(plans) {
+            const tbody = document.getElementById('comparison-table-body');
+            const sym = currencySwitcher.value;
+            let html = '';
+
+            plans.forEach(p => {
+                const rowClass = p.isCurrent ? 'bg-accent/10 dark:bg-accent/15 font-bold' : 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50';
+                const badge = p.isCurrent ? `<span class="ml-2 text-[10px] bg-accent text-white px-1.5 py-0.5 rounded">Active</span>` : '';
+                html += `
+                    <tr class="${rowClass} transition-colors">
+                        <td class="px-4 py-3 flex items-center">${p.name} ${badge}</td>
+                        <td class="px-4 py-3 text-right">${sym}${formatMoney(p.pmt)}</td>
+                        <td class="px-4 py-3 text-right">${p.term}</td>
+                        <td class="px-4 py-3 text-right">${sym}${formatMoney(p.int)}</td>
+                        <td class="px-4 py-3 text-right font-semibold">${sym}${formatMoney(p.total)}</td>
+                        <td class="px-4 py-3 text-right ${p.forgive > 0 ? 'text-green-600 dark:text-green-400 font-bold' : 'text-sub-light dark:text-sub-dark'}">
+                            ${p.forgive > 0 ? sym + formatMoney(p.forgive) : '$0.00'}
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Charts Engine
+        function updateCharts(comparisonData, stdSchedule, activeSchedule, initialBal, maxYears) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#F9FAFB' : '#0F172A';
+            const subColor = isDark ? '#9CA3AF' : '#64748B';
+            const gridColor = isDark ? '#1F2937' : '#E2E8F0';
+            const sym = currencySwitcher.value;
+
+            // 1. Plan Comparison Bar Chart
+            const ctxPlan = document.getElementById('planComparisonChart').getContext('2d');
+            const planLabels = comparisonData.map(d => d.name);
+            const monthlyPayments = comparisonData.map(d => d.pmt);
+            const totalPaids = comparisonData.map(d => d.total);
+
+            if (planChartInstance) {
+                planChartInstance.data.labels = planLabels;
+                planChartInstance.data.datasets[0].data = monthlyPayments;
+                planChartInstance.data.datasets[1].data = totalPaids;
+                planChartInstance.options.scales.x.ticks.color = subColor;
+                planChartInstance.options.scales.y.ticks.color = subColor;
+                planChartInstance.options.scales.x.grid.color = gridColor;
+                planChartInstance.options.scales.y.grid.color = gridColor;
+                planChartInstance.options.plugins.legend.labels.color = textColor;
+                planChartInstance.update();
+            } else {
+                planChartInstance = new Chart(ctxPlan, {
+                    type: 'bar',
+                    data: {
+                        labels: planLabels,
+                        datasets: [
+                            {
+                                label: 'Monthly Payment',
+                                data: monthlyPayments,
+                                backgroundColor: '#3B82F6',
+                                borderRadius: 4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                label: 'Total Lifetime Paid',
+                                data: totalPaids,
+                                backgroundColor: '#6366F1',
+                                borderRadius: 4,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor, font: { family: 'Inter', size: 12, weight: 600 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.dataset.label}: ${sym}${formatMoney(ctx.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: subColor, font: { family: 'Inter', size: 11 } },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                title: { display: true, text: 'Monthly Payment', color: '#3B82F6', font: { size: 11, weight: 'bold' } },
+                                ticks: {
+                                    color: subColor,
+                                    callback: val => sym + val.toLocaleString()
+                                },
+                                grid: { color: gridColor }
+                            },
+                            y1: {
+                                type: 'linear',
+                                display: true,
+                                position: 'right',
+                                title: { display: true, text: 'Total Paid', color: '#6366F1', font: { size: 11, weight: 'bold' } },
+                                ticks: {
+                                    color: subColor,
+                                    callback: val => sym + (val >= 1000 ? (val/1000).toFixed(0) + 'k' : val)
+                                },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Amortization Area Curve Chart
+            const ctxAmort = document.getElementById('balanceAmortizationChart').getContext('2d');
+            const totalYears = Math.max(10, Math.ceil(maxYears));
+            const yearLabels = [];
+            const stdBalancePoints = [];
+            const activeBalancePoints = [];
+
+            for (let y = 0; y <= totalYears; y++) {
+                yearLabels.push(`Yr ${y}`);
+                const mIdx = y * 12;
+
+                // Standard schedule balance at year y
+                if (y === 0) {
+                    stdBalancePoints.push(initialBal);
+                } else if (mIdx - 1 < stdSchedule.length) {
+                    stdBalancePoints.push(stdSchedule[mIdx - 1].balance);
+                } else {
+                    stdBalancePoints.push(0);
+                }
+
+                // Active schedule balance at year y
+                if (y === 0) {
+                    activeBalancePoints.push(initialBal);
+                } else if (mIdx - 1 < activeSchedule.length) {
+                    activeBalancePoints.push(activeSchedule[mIdx - 1].balance);
+                } else {
+                    const lastBal = activeSchedule[activeSchedule.length - 1]?.balance || 0;
+                    activeBalancePoints.push(lastBal);
+                }
+            }
+
+            if (amortChartInstance) {
+                amortChartInstance.data.labels = yearLabels;
+                amortChartInstance.data.datasets[0].data = stdBalancePoints;
+                amortChartInstance.data.datasets[1].data = activeBalancePoints;
+                amortChartInstance.options.scales.x.ticks.color = subColor;
+                amortChartInstance.options.scales.y.ticks.color = subColor;
+                amortChartInstance.options.scales.x.grid.color = gridColor;
+                amortChartInstance.options.scales.y.grid.color = gridColor;
+                amortChartInstance.options.plugins.legend.labels.color = textColor;
+                amortChartInstance.update();
+            } else {
+                amortChartInstance = new Chart(ctxAmort, {
+                    type: 'line',
+                    data: {
+                        labels: yearLabels,
+                        datasets: [
+                            {
+                                label: 'Standard 10-Yr Balance',
+                                data: stdBalancePoints,
+                                borderColor: '#9CA3AF',
+                                backgroundColor: 'rgba(156, 163, 175, 0.08)',
+                                borderDash: [4, 4],
+                                fill: true,
+                                tension: 0.25
+                            },
+                            {
+                                label: 'Selected Plan Balance',
+                                data: activeBalancePoints,
+                                borderColor: '#10B981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                fill: true,
+                                tension: 0.25
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor, font: { family: 'Inter', size: 12, weight: 600 } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return `${ctx.dataset.label}: ${sym}${formatMoney(ctx.parsed.y)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: subColor, font: { family: 'Inter', size: 11 } },
+                                grid: { color: gridColor }
+                            },
+                            y: {
+                                ticks: {
+                                    color: subColor,
+                                    callback: val => sym + (val >= 1000 ? (val/1000).toFixed(0) + 'k' : val)
+                                },
+                                grid: { color: gridColor }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Event Setup
+        [inputBalance, inputRate, inputDegree, inputPlan, inputIncome, inputFamily, inputGrowth, inputPslf].forEach(elem => {
+            elem.addEventListener('input', triggerCalculation);
+            elem.addEventListener('change', triggerCalculation);
+        });
+
+        // Presets Handler
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.target.getAttribute('data-preset');
+                if (type === 'undergrad') {
+                    inputBalance.value = 27000;
+                    inputRate.value = 5.50;
+                    inputDegree.value = 'undergrad';
+                    inputPlan.value = 'standard';
+                    inputIncome.value = 45000;
+                    inputFamily.value = '1';
+                    inputPslf.checked = false;
+                } else if (type === 'grad') {
+                    inputBalance.value = 70000;
+                    inputRate.value = 7.05;
+                    inputDegree.value = 'grad';
+                    inputPlan.value = 'save';
+                    inputIncome.value = 68000;
+                    inputFamily.value = '1';
+                    inputPslf.checked = false;
+                } else if (type === 'save') {
+                    inputBalance.value = 55000;
+                    inputRate.value = 6.50;
+                    inputDegree.value = 'undergrad';
+                    inputPlan.value = 'save';
+                    inputIncome.value = 38000;
+                    inputFamily.value = '1';
+                    inputPslf.checked = false;
+                } else if (type === 'highbal') {
+                    inputBalance.value = 120000;
+                    inputRate.value = 7.50;
+                    inputDegree.value = 'grad';
+                    inputPlan.value = 'save';
+                    inputIncome.value = 85000;
+                    inputFamily.value = '2';
+                    inputPslf.checked = true;
+                }
+                triggerCalculation();
+            });
+        });
+
+        // Currency Switcher
+        currencySwitcher.addEventListener('change', (e) => {
+            const sym = e.target.value;
+            curSymbols.forEach(el => el.innerText = sym);
+            triggerCalculation();
+        });
+
+        // Tabs Switcher
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => {
+                    b.classList.remove('text-accent', 'border-b-2', 'border-accent');
+                    b.classList.add('text-sub-light', 'dark:text-sub-dark');
+                });
+                e.target.classList.remove('text-sub-light', 'dark:text-sub-dark');
+                e.target.classList.add('text-accent', 'border-b-2', 'border-accent');
+
+                document.querySelectorAll('.tab-content').forEach(c => {
+                    c.classList.add('hidden');
+                    c.classList.remove('block');
+                });
+                
+                const targetId = e.target.getAttribute('data-tab');
+                const target = document.getElementById(targetId);
+                target.classList.remove('hidden');
+                target.classList.add('block');
+
+                // Resize charts if tab-chart opened
+                if (targetId === 'tab-chart') {
+                    setTimeout(() => {
+                        planChartInstance?.resize();
+                        amortChartInstance?.resize();
+                    }, 50);
+                }
+            });
+        });
+
+        // Accordion FAQ Interactivity
+        document.querySelectorAll('.accordion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const content = btn.nextElementSibling;
+                const icon = btn.querySelector('.acc-icon');
+                const isExpanded = content.classList.contains('active');
+                
+                if (isExpanded) {
+                    content.classList.remove('active');
+                    icon.classList.remove('rotate-180');
+                    btn.setAttribute('aria-expanded', 'false');
+                } else {
+                    content.classList.add('active');
+                    icon.classList.add('rotate-180');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+            });
+        });
+
+        // Theme Toggle (Dark & Light Mode)
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const darkIcon = document.getElementById('theme-toggle-dark-icon');
+        const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+        if (document.documentElement.classList.contains('dark')) {
+            lightIcon.classList.remove('hidden');
+        } else {
+            darkIcon.classList.remove('hidden');
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            darkIcon.classList.toggle('hidden');
+            lightIcon.classList.toggle('hidden');
+
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('color-theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('color-theme', 'dark');
+            }
+            triggerCalculation(); // Re-render charts for appropriate dark/light theme colors
+        });
+
+        // One-Click Copy Result + 2-Second Toast Alert
+        document.getElementById('btn-copy').addEventListener('click', () => {
+            const sym = currencySwitcher.value;
+            const bal = document.getElementById('in-balance').value;
+            const rate = document.getElementById('in-rate').value;
+            const planText = inputPlan.options[inputPlan.selectedIndex].text;
+            const mo = document.getElementById('num-monthly').innerText;
+            const tot = document.getElementById('num-total-paid').innerText;
+            const int = document.getElementById('num-interest').innerText;
+            const forgive = document.getElementById('num-forgiveness').innerText;
+
+            const textToCopy = `Student Loan Calculation Summary:
+Loan Balance: ${sym}${formatMoney(parseFloat(bal) || 0)} @ ${rate}% APR
+Selected Plan: ${planText}
+Monthly Payment: ${sym}${mo}
+Total Lifetime Paid: ${sym}${tot}
+Total Interest Cost: ${sym}${int}
+Estimated Forgiveness: ${sym}${forgive}
+(Calculated via CalcWorld.net)`;
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            });
+        });
+
+        // AdBlock Detection & Fallback Activation
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.ad-slot-container').forEach(slot => {
+                    const fallback = slot.querySelector('.ad-fallback');
+                    const adContent = slot.querySelector('.ad-content');
+                    if (fallback && (!adContent || adContent.clientHeight === 0)) {
+                        fallback.style.display = 'block';
+                    }
+                });
+            }, 800);
+        });
+
+        // Parse URL State on Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('bal')) inputBalance.value = params.get('bal');
+            if (params.has('rate')) inputRate.value = params.get('rate');
+            if (params.has('plan')) inputPlan.value = params.get('plan');
+            if (params.has('degree')) inputDegree.value = params.get('degree');
+            if (params.has('inc')) inputIncome.value = params.get('inc');
+            if (params.has('fam')) inputFamily.value = params.get('fam');
+            if (params.has('growth')) inputGrowth.value = params.get('growth');
+            if (params.has('pslf')) inputPslf.checked = params.get('pslf') === '1';
+            if (params.has('cur')) {
+                currencySwitcher.value = params.get('cur');
+                curSymbols.forEach(el => el.innerText = params.get('cur'));
+            }
+
+            // Initial calculation run
+            triggerCalculation();
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

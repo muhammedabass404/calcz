@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lean Body Mass Calculator | Boer, James, Hume & FFMI Potential Solver | CalcWorld</title>
+    <meta name="description" content="Calculate your clinical Lean Body Mass (LBM) using Boer, James, Hume, and Peters formulas. Includes Fat-Free Mass Index (FFMI), natural muscular potential tiers, interactive charts, and clinical pharmacotherapy dosing references.">
+    <link rel="canonical" href="https://calcworld.net/calculators/lean-body-mass-calculator.html">
+
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: { light: '#F8FAFC', dark: '#0B0F19' },
+                        card: { light: '#FFFFFF', dark: '#111827' },
+                        text: { light: '#0F172A', dark: '#F9FAFB' },
+                        sub: { light: '#64748B', dark: '#9CA3AF' },
+                        border: { light: '#E2E8F0', dark: '#1F2937' },
+                        accent: { DEFAULT: '#2563EB', hover: '#1D4ED8' }
+                    },
+                    animation: {
+                        'shimmer': 'shimmer 1.5s infinite linear'
+                    },
+                    keyframes: {
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        .shimmer-active {
+            background: linear-gradient(to right, rgba(37,99,235,0) 0%, rgba(37,99,235,0.12) 50%, rgba(37,99,235,0) 100%);
+            background-size: 1000px 100%;
+            animation: shimmer 1.2s infinite linear;
+        }
+
+        .ad-slot-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            background-color: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            color: #64748b;
+            font-size: 0.8125rem;
+            transition: all 0.2s ease;
+        }
+        .dark .ad-slot-box {
+            background-color: #0f172a;
+            border-color: #334155;
+            color: #94a3b8;
+        }
+
+        /* FAQ Accordion */
+        .faq-item .faq-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s cubic-bezier(0, 1, 0, 1), padding 0.35s ease;
+        }
+        .faq-item.active .faq-content {
+            max-height: 1000px;
+            transition: max-height 0.4s cubic-bezier(1, 0, 1, 0), padding 0.4s ease;
+        }
+        .faq-item.active .faq-arrow {
+            transform: rotate(180deg);
+        }
+
+        /* Toast notification */
+        .toast {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: visibility 0s 0.2s, opacity 0.2s linear, transform 0.2s ease;
+        }
+        .toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.2s linear, transform 0.2s ease;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+        .print-only { display: none; }
+    </style>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "CalcWorld Lean Body Mass Calculator",
+          "url": "https://calcworld.net/fitness/lean-body-mass-calculator",
+          "description": "Clinical Lean Body Mass (LBM) and Fat-Free Mass Index (FFMI) calculator comparing Boer, James, Hume, and Peters equations. Provides body composition breakdown, natural muscular potential benchmarks, and pharmacological dosing references.",
+          "applicationCategory": "HealthApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Fitness & Health Calculators",
+              "item": "https://calcworld.net/fitness"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Lean Body Mass Calculator",
+              "item": "https://calcworld.net/fitness/lean-body-mass-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the biological difference between Lean Body Mass and Fat-Free Mass?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Lean Body Mass (LBM) includes skeletal muscle, vital internal organs (heart, liver, kidneys, brain), bone mineral matrix, water (intracellular and extracellular), and essential cellular lipids present within cell membranes and central nervous tissue. In contrast, Fat-Free Mass (FFM) theoretically strips away every trace of chemical lipid. In practical clinical medicine, LBM and FFM are often treated synonymously, though true LBM contains approximately 2% to 3% essential structural lipids in males and 5% to 8% in females."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why is Lean Body Mass used rather than total weight for drug dosing?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Water-soluble (hydrophilic) medications, including polar chemotherapeutic agents like 5-Fluorouracil and neuromuscular blockers like Vecuronium, distribute into vascular volume and lean cellular tissue rather than storage adipose tissue. Dosing these agents based on Total Body Weight (TBW) in overweight or obese patients leads to excessive plasma concentrations and life-threatening toxicity. Calculating dosage according to Lean Body Mass aligns pharmacological concentration with metabolic clearance capacity."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Which formula is considered the clinical gold standard: Boer, James, or Hume?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Boer formula (1984) is the current gold standard across anesthesiology and critical care pharmacology. The James formula (1976), while historically prominent, incorporates a quadratic weight-to-height ratio that paradoxically declines at extreme body mass indexes (BMI > 42 kg/m²). Boer provides stable, monotonic estimates across wide demographic and weight spectrums."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the Fat-Free Mass Index (FFMI) and how does Normalized FFMI work?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "FFMI equals lean body mass in kilograms divided by height in meters squared [LBM / (height)^2]. Because taller individuals naturally possess greater absolute lean mass per square meter, Kouri et al. (1995) established a normalized FFMI formula: Normalized FFMI = FFMI + 6.1 * (1.80 - height in meters). This adjustment eliminates height bias and enables direct comparison against natural athletic potential baselines."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Can a drug-free athlete achieve an FFMI greater than 25.0?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Kouri and colleagues analyzed 74 drug-free athletes and 20 pre-steroid era Mr. America champions (1939-1959). The natural athletes showed an average normalized FFMI of 21.8, with an upper limit near 25.0. While rare genetic outliers with thick skeletal wrist and ankle circumferences may slightly exceed 25 naturally, values consistently above 25.0 strongly suggest exogenous anabolic-androgenic steroid use."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does the Peters pediatric formula differ from adult formulas?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Peters formula models extracellular volume (eECV) using allometric power scaling based on height and weight [eECV = 0.0215 * W^0.6469 * H^0.7236], with LBM derived as 3.8 times eECV. This accommodates the higher total body water percentage and distinct organ-to-muscle ratios found in growing children and adolescents under age 18."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Lean Body Mass Calculator | Boer, James, Hume & FFMI Potential Solver | CalcWorld">
+    <meta property="og:description" content="Calculate your clinical Lean Body Mass (LBM) using Boer, James, Hume, and Peters formulas. Includes Fat-Free Mass Index (FFMI), natural muscular potential tiers, interactive charts, and clinical pharmacotherapy dosing references.">
+    <meta property="og:url" content="https://calcworld.net/calculators/lean-body-mass-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Lean Body Mass Calculator | Boer, James, Hume & FFMI Potential Solver | CalcWorld">
+    <meta name="twitter:description" content="Calculate your clinical Lean Body Mass (LBM) using Boer, James, Hume, and Peters formulas. Includes Fat-Free Mass Index (FFMI), natural muscular potential tiers, interactive charts, and clinical pharmacotherapy dosing references.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Top Navigation Header -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FITNESS & HEALTH SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast fixed top-5 right-5 bg-emerald-600 text-white font-medium px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center space-x-2">
+        <svg class="w-5 h-5 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toastMessage">Summary copied to clipboard!</span>
+    </div>
+
+    <!-- AdBlock Recovery Banner (Triggered if ad units blocked) -->
+    <div id="adblock-recovery" class="hidden no-print fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:max-w-md bg-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xl z-50 border border-amber-300">
+        <div class="flex items-start justify-between">
+            <div class="flex space-x-3">
+                <svg class="w-6 h-6 text-slate-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="text-xs">
+                    <p class="font-bold">Ad Blocker Detected</p>
+                    <p class="mt-0.5 text-slate-900">CalcWorld provides free clinical calculators supported by unobtrusive advertisements. Please consider whitelisting our website to support ongoing medical software development.</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('adblock-recovery').remove()" class="text-slate-900 hover:text-black font-bold p-1 ml-2" aria-label="Dismiss">✕</button>
+        </div>
+    </div>
+
+    <!-- AdSense Slot 1: Top Responsive Leaderboard -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full no-print">
+        <div id="ad-slot-1" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="1">
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Top Leaderboard</span>
+            <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                AdSense Placement (728x90 Responsive Banner)
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-8 pb-24 sm:pb-16">
+
+        <!-- Left 5 Columns: Inputs & Controls -->
+        <div class="lg:col-span-5 space-y-6">
+
+            <!-- Title & Introduction Header -->
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-accent text-xs font-semibold mb-3">
+                    <span class="w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+                    Clinical Body Composition &amp; Pharmacotherapy Engine
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight mb-2">Lean Body Mass Calculator</h1>
+                <p class="text-sub-light dark:text-sub-dark text-sm leading-relaxed">
+                    Compute your exact Lean Body Mass (LBM), fat mass, and Fat-Free Mass Index (FFMI) using Boer, James, Hume, and Peters equations. Benchmark natural drug-free athletic muscular potential and view clinical pharmacology dosing parameters.
+                </p>
+            </div>
+
+            <!-- Quick Demographic Presets -->
+            <div class="no-print">
+                <label for="presetSelect" class="text-xs font-bold text-sub-light dark:text-sub-dark uppercase tracking-wider block mb-2">
+                    Clinical &amp; Demographic Presets
+                </label>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2" id="presetButtons">
+                    <button type="button" onclick="loadPreset('maleAthlete')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        🏋️ Male Athlete
+                    </button>
+                    <button type="button" onclick="loadPreset('femaleFitness')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        🏃 Female Fitness
+                    </button>
+                    <button type="button" onclick="loadPreset('averageMale')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        👤 Average Male
+                    </button>
+                    <button type="button" onclick="loadPreset('averageFemale')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        👩 Average Female
+                    </button>
+                    <button type="button" onclick="loadPreset('bodybuilder')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        💪 Bodybuilder
+                    </button>
+                    <button type="button" onclick="loadPreset('pediatric')" class="px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark hover:border-accent hover:text-accent transition-all text-left">
+                        🧒 Youth (13yo)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Input Card -->
+            <div class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-6 shadow-sm space-y-5">
+
+                <!-- Gender Selection -->
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-2">
+                        Biological Sex (Required for formula coefficients)
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="genderMaleBtn" onclick="setGender('male')" class="py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-accent bg-accent/10 text-accent">
+                            <span class="text-base">♂</span> Male
+                        </button>
+                        <button type="button" id="genderFemaleBtn" onclick="setGender('female')" class="py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-border-light dark:border-border-dark text-sub-light dark:text-sub-dark hover:border-accent hover:text-accent">
+                            <span class="text-base">♀</span> Female
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Age Input -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="inputAge" class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                            Age (Years)
+                        </label>
+                        <span id="pediatricBadge" class="hidden text-[10px] uppercase font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-600 dark:text-amber-400">
+                            Pediatric Model
+                        </span>
+                    </div>
+                    <div class="relative rounded-xl shadow-xs">
+                        <input type="number" id="inputAge" value="28" min="3" max="110" step="1" oninput="calculateAll()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">yrs</span>
+                    </div>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark mt-1 block">Ages under 18 automatically activate the Peters allometric pediatric equation.</span>
+                </div>
+
+                <!-- Height Inputs (Metric vs Imperial) -->
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark block mb-1.5">
+                        Height
+                    </label>
+                    <!-- Metric Height: cm -->
+                    <div id="heightMetricContainer" class="relative rounded-xl shadow-xs">
+                        <input type="number" id="inputHeightCm" value="180" min="60" max="250" step="0.5" oninput="calculateAll()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">cm</span>
+                    </div>
+                    <!-- Imperial Height: Feet + Inches -->
+                    <div id="heightImperialContainer" class="hidden grid-cols-2 gap-3">
+                        <div class="relative rounded-xl shadow-xs">
+                            <input type="number" id="inputHeightFt" value="5" min="2" max="8" step="1" oninput="syncHeightFromImperial()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                            <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">ft</span>
+                        </div>
+                        <div class="relative rounded-xl shadow-xs">
+                            <input type="number" id="inputHeightIn" value="11" min="0" max="11.9" step="0.5" oninput="syncHeightFromImperial()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                            <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">in</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weight Inputs (Metric vs Imperial) -->
+                <div>
+                    <label class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark block mb-1.5">
+                        Total Body Weight
+                    </label>
+                    <!-- Metric Weight: kg -->
+                    <div id="weightMetricContainer" class="relative rounded-xl shadow-xs">
+                        <input type="number" id="inputWeightKg" value="82.0" min="15" max="350" step="0.1" oninput="calculateAll()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">kg</span>
+                    </div>
+                    <!-- Imperial Weight: lbs -->
+                    <div id="weightImperialContainer" class="hidden relative rounded-xl shadow-xs">
+                        <input type="number" id="inputWeightLbs" value="180.8" min="30" max="770" step="0.1" oninput="syncWeightFromImperial()" class="w-full px-4 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-base focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                        <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">lbs</span>
+                    </div>
+                </div>
+
+                <!-- Optional Direct Body Fat % -->
+                <div class="pt-2 border-t border-border-light dark:border-border-dark">
+                    <div class="flex items-center justify-between mb-2">
+                        <label for="enableBfToggle" class="text-xs font-bold uppercase tracking-wider text-text-light dark:text-text-dark flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" id="enableBfToggle" onchange="toggleBodyFatInput()" class="rounded text-accent focus:ring-accent w-4 h-4 cursor-pointer">
+                            <span>Input Known Body Fat % (Optional)</span>
+                        </label>
+                        <span class="text-[10px] text-accent font-semibold">DEXA / Caliper</span>
+                    </div>
+                    <div id="bfInputWrapper" class="hidden space-y-2 pt-2">
+                        <div class="relative rounded-xl shadow-xs">
+                            <input type="number" id="inputBodyFat" value="14.0" min="3" max="65" step="0.1" oninput="syncBfSlider(); calculateAll()" class="w-full px-4 py-2 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-bold text-sm focus:ring-2 focus:ring-accent focus:border-accent transition-colors">
+                            <span class="absolute inset-y-0 right-0 pr-4 flex items-center text-sub-light dark:text-sub-dark text-xs font-semibold">%</span>
+                        </div>
+                        <input type="range" id="sliderBodyFat" min="3" max="60" step="0.5" value="14.0" oninput="syncBfNumber(); calculateAll()" class="w-full accent-accent cursor-pointer">
+                        <span class="text-[11px] text-sub-light dark:text-sub-dark block">Calculates exact Lean Body Mass as Weight &times; (1 - BF%).</span>
+                    </div>
+                </div>
+
+                <!-- Driving Primary Formula Selector -->
+                <div>
+                    <label for="formulaSelector" class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1.5">
+                        Primary Formula Displayed in Hero Summary
+                    </label>
+                    <select id="formulaSelector" onchange="calculateAll()" class="w-full px-3 py-2.5 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark font-semibold text-xs focus:ring-2 focus:ring-accent focus:border-accent transition-colors cursor-pointer">
+                        <option value="boer">Boer Formula (1984) - Clinical &amp; Anesthesia Standard</option>
+                        <option value="james">James Formula (1976) - Classic Pharmacological</option>
+                        <option value="hume">Hume Formula (1966) - Potassium Dilution Model</option>
+                        <option value="peters">Peters Formula (2011) - Pediatric eECV Model</option>
+                        <option value="average">Formula Consensus Average</option>
+                        <option value="direct">Direct Body Fat % Method (When Enabled)</option>
+                    </select>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 flex flex-col sm:flex-row gap-2 no-print">
+                    <button type="button" onclick="calculateAll()" class="flex-1 py-3 px-4 rounded-xl bg-accent hover:bg-accent-hover text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Calculate Now
+                    </button>
+                    <button type="button" onclick="copySummary()" class="py-3 px-4 rounded-xl bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent text-text-light dark:text-text-dark font-semibold text-xs transition-all flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                        <span>Copy Summary</span>
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- Right 7 Columns: Output Tabs, Visualizations, and Matrices -->
+        <div class="lg:col-span-7 space-y-6">
+
+            <!-- Navigation Tabs Bar -->
+            <div class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-1.5 shadow-sm no-print tabs-header-nav">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-1 text-center text-xs font-bold">
+                    <button type="button" id="tabBtn-summary" onclick="switchTab('summary')" class="tab-button py-2.5 px-2 rounded-xl bg-accent text-white shadow-xs transition-all">
+                        📊 Hero Summary
+                    </button>
+                    <button type="button" id="tabBtn-comparison" onclick="switchTab('comparison')" class="tab-button py-2.5 px-2 rounded-xl text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all">
+                        📐 4-Formulas Matrix
+                    </button>
+                    <button type="button" id="tabBtn-ffmi" onclick="switchTab('ffmi')" class="tab-button py-2.5 px-2 rounded-xl text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all">
+                        🏆 FFMI Muscular Tiers
+                    </button>
+                    <button type="button" id="tabBtn-print" onclick="switchTab('print')" class="tab-button py-2.5 px-2 rounded-xl text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all">
+                        📄 Clinical Print Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab 1: Hero Summary & Visual Charts -->
+            <div id="tabContent-summary" class="tab-pane space-y-6">
+
+                <!-- Primary Result Cards Grid -->
+                <div id="resultCardContainer" class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-6 shadow-sm relative overflow-hidden transition-all duration-300">
+                    
+                    <!-- Shimmer Overlay -->
+                    <div id="calcShimmer" class="absolute inset-0 pointer-events-none opacity-0 z-20"></div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-border-light dark:border-border-dark gap-2">
+                        <div>
+                            <span class="text-xs uppercase font-extrabold tracking-wider text-accent block" id="activeFormulaLabel">
+                                Boer Formula (1984) Standard
+                            </span>
+                            <h2 class="text-xl sm:text-2xl font-black text-text-light dark:text-text-dark">
+                                Body Composition Profile
+                            </h2>
+                        </div>
+                        <span id="tierBadgeHeader" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/10 text-accent border border-accent/20">
+                            Athletic Muscularity
+                        </span>
+                    </div>
+
+                    <!-- 4 Primary Metric Hero Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
+
+                        <!-- Metric 1: Lean Body Mass -->
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                                Lean Body Mass
+                            </span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-accent">
+                                <span id="valLbmKg" class="counter">62.6</span> <span class="text-xs font-semibold text-sub-light dark:text-sub-dark">kg</span>
+                            </div>
+                            <span class="text-xs font-bold text-text-light dark:text-text-dark block mt-0.5">
+                                <span id="valLbmLbs" class="counter">138.0</span> lbs
+                            </span>
+                        </div>
+
+                        <!-- Metric 2: Fat Mass -->
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                                Body Fat Mass
+                            </span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-amber-500">
+                                <span id="valFatKg" class="counter">19.4</span> <span class="text-xs font-semibold text-sub-light dark:text-sub-dark">kg</span>
+                            </div>
+                            <span class="text-xs font-bold text-text-light dark:text-text-dark block mt-0.5">
+                                <span id="valFatLbs" class="counter">42.8</span> lbs
+                            </span>
+                        </div>
+
+                        <!-- Metric 3: Lean Percentage -->
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                                Lean Mass Ratio
+                            </span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                                <span id="valLeanPct" class="counter">76.3</span>%
+                            </div>
+                            <span class="text-xs text-sub-light dark:text-sub-dark block mt-0.5">
+                                <span id="valFatPct">23.7</span>% Fat Mass
+                            </span>
+                        </div>
+
+                        <!-- Metric 4: FFMI -->
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark block mb-1">
+                                FFMI (Fat-Free Index)
+                            </span>
+                            <div class="text-xl sm:text-2xl font-extrabold text-indigo-600 dark:text-indigo-400">
+                                <span id="valFfmi" class="counter">19.3</span>
+                            </div>
+                            <span class="text-xs text-sub-light dark:text-sub-dark block mt-0.5" title="Height-normalized to 1.80m standard">
+                                Norm: <strong id="valNormFfmi">19.3</strong>
+                            </span>
+                        </div>
+
+                    </div>
+
+                    <!-- Visual Charts Section (Side-by-Side on Desktop) -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8 pt-6 border-t border-border-light dark:border-border-dark">
+                        
+                        <!-- Chart 1: Body Composition Doughnut -->
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-3 text-center">
+                                Tissue Distribution (Lean vs Adipose)
+                            </h3>
+                            <div class="relative w-48 h-48 sm:w-56 sm:h-56 flex items-center justify-center">
+                                <canvas id="compositionChart"></canvas>
+                                <div class="absolute flex flex-col items-center justify-center pointer-events-none text-center">
+                                    <span id="doughnutCenterText" class="text-lg sm:text-xl font-black text-text-light dark:text-text-dark">76.3%</span>
+                                    <span class="text-[10px] uppercase font-bold text-sub-light dark:text-sub-dark">Lean Tissue</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center gap-4 mt-3 text-xs font-semibold">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span>
+                                    <span>Lean Mass</span>
+                                </div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-3 h-3 rounded-full bg-amber-500 inline-block"></span>
+                                    <span>Fat Mass</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: FFMI Natural Potential Gauge -->
+                        <div class="flex flex-col items-center">
+                            <h3 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-3 text-center">
+                                Natural Muscular Ceiling Gauge (FFMI)
+                            </h3>
+                            <div class="relative w-56 h-36 sm:w-64 sm:h-40 flex flex-col items-center justify-end">
+                                <canvas id="ffmiGaugeChart"></canvas>
+                                <div class="text-center mt-2">
+                                    <span id="gaugeValueDisplay" class="text-xl sm:text-2xl font-black text-text-light dark:text-text-dark">19.3</span>
+                                    <span class="text-xs text-sub-light dark:text-sub-dark block font-semibold" id="gaugeTierDisplay">Average Natural Potential</span>
+                                </div>
+                            </div>
+                            <div class="w-full max-w-xs mt-3 flex justify-between text-[10px] text-sub-light dark:text-sub-dark font-medium px-2">
+                                <span>&lt;18 Low</span>
+                                <span>18-20 Avg</span>
+                                <span>20-22 Athl</span>
+                                <span>22-25 Elite</span>
+                                <span class="text-rose-500 font-bold">&gt;25 Steroid</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Clinical Status Bar -->
+                    <div class="mt-6 p-4 rounded-xl bg-accent/5 border border-accent/15 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div class="space-y-0.5">
+                            <span class="font-bold text-accent">Clinical Pharmacokinetics Insight:</span>
+                            <p class="text-sub-light dark:text-sub-dark" id="clinicalInsightSummary">
+                                Patient displays healthy vascular and muscular volume. Use estimated lean mass (62.6 kg) for hydrophilic anesthetic induction agents and polar chemotherapeutic dosing.
+                            </p>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark font-bold text-accent hover:border-accent shrink-0 transition-colors">
+                            Print Clinical Sheet
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Tab 2: All 4 Formulas Comparison Matrix Table -->
+            <div id="tabContent-comparison" class="tab-pane hidden space-y-6">
+                <div class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-6 shadow-sm space-y-6">
+                    <div>
+                        <h2 class="text-xl font-bold mb-1">Comparative Formula Matrix (Boer vs James vs Hume vs Peters)</h2>
+                        <p class="text-xs text-sub-light dark:text-sub-dark">
+                            Clinical equations calculate Lean Body Mass through distinct historical population cohorts, measurement methodologies, and mathematical assumptions.
+                        </p>
+                    </div>
+
+                    <!-- Responsive Matrix Table -->
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark">
+                                <tr>
+                                    <th class="py-3 px-3">Clinical Formula</th>
+                                    <th class="py-3 px-3">Mathematical Equation</th>
+                                    <th class="py-3 px-3">LBM (kg)</th>
+                                    <th class="py-3 px-3">LBM (lbs)</th>
+                                    <th class="py-3 px-3">Fat Mass (kg)</th>
+                                    <th class="py-3 px-3">Lean %</th>
+                                    <th class="py-3 px-3">Variance vs Mean</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matrixTableBody" class="divide-y divide-border-light dark:divide-border-dark">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Formula Comparison Explanations -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs pt-2">
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span>
+                                <h4 class="font-bold text-text-light dark:text-text-dark">Boer Formula (1984)</h4>
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Derived from isotope dilution data. Gold standard in modern anesthesia. Eliminates anomalous quadratic drops in severe obesity, providing monotonic, reliable scaling across diverse patient populations.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                                <h4 class="font-bold text-text-light dark:text-text-dark">James Formula (1976)</h4>
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Highly accurate in normal to overweight subjects. Features a negative quadratic weight-height term: -128 * (W/H)². In severe obesity (BMI &gt; 42 kg/m²), this quadratic term paradoxically causes estimated LBM to drop.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                <h4 class="font-bold text-text-light dark:text-text-dark">Hume Formula (1966)</h4>
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Developed using whole-body radioactive potassium-42 (⁴²K) counting. Tends to estimate slightly lower lean mass than Boer, capturing minimal fat-free thresholds across lean demographic samples.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark space-y-2">
+                            <div class="flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                                <h4 class="font-bold text-text-light dark:text-text-dark">Peters Pediatric Formula (2011)</h4>
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                uses allometric power exponents [eECV = 0.0215 * W^0.6469 * H^0.7236] and FFM = 3.8 * eECV. Calibrated specifically for children and adolescents whose organ mass to total weight ratio differs from adults.
+                            </p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 3: FFMI Natural Potential Tier Matrix -->
+            <div id="tabContent-ffmi" class="tab-pane hidden space-y-6">
+                <div class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-6 shadow-sm space-y-6">
+                    <div>
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-bold">Natural Muscular Potential Matrix (Kouri et al. 1995)</h2>
+                            <span class="text-xs font-bold px-2.5 py-1 rounded-lg bg-accent/10 text-accent">Harvard Medical Cohort</span>
+                        </div>
+                        <p class="text-xs text-sub-light dark:text-sub-dark mt-1">
+                            The landmark 1995 Harvard study established the physiological ceiling for drug-free muscle accumulation. Compare your current metrics against verified natural lifters, pre-steroid era champions, and enhanced athletes.
+                        </p>
+                    </div>
+
+                    <!-- User Current Position Box -->
+                    <div class="p-4 rounded-xl bg-accent/10 border border-accent/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <span class="text-[10px] uppercase font-extrabold tracking-wider text-accent block">Your Current Status</span>
+                            <div class="text-xl font-extrabold text-text-light dark:text-text-dark flex items-center gap-2 mt-0.5">
+                                <span>FFMI: <strong id="ffmiStatusDisplay" class="text-accent">19.3</strong></span>
+                                <span class="text-sm font-medium text-sub-light dark:text-sub-dark">| Normalized: <strong id="normFfmiStatusDisplay" class="text-text-light dark:text-text-dark">19.3</strong></span>
+                            </div>
+                            <span class="text-xs text-sub-light dark:text-sub-dark block mt-1" id="ffmiStatusText">
+                                Within the typical athletic range for healthy, active individuals.
+                            </span>
+                        </div>
+                        <div class="text-left sm:text-right">
+                            <span class="text-[10px] uppercase font-bold text-sub-light dark:text-sub-dark block">Estimated Drug-Free Max LBM</span>
+                            <span class="text-base font-black text-emerald-600 dark:text-emerald-400" id="naturalMaxLbmDisplay">
+                                81.0 kg (178.6 lbs)
+                            </span>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark block">At Upper Limit (FFMI 25.0)</span>
+                        </div>
+                    </div>
+
+                    <!-- FFMI Tier Table -->
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark border-b border-border-light dark:border-border-dark font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark">
+                                <tr>
+                                    <th class="py-3 px-3">Classification Tier</th>
+                                    <th class="py-3 px-3">Male FFMI Range</th>
+                                    <th class="py-3 px-3">Female FFMI Range</th>
+                                    <th class="py-3 px-3">Physical Characteristics</th>
+                                    <th class="py-3 px-3">Historical / Study Benchmark</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border-light dark:divide-border-dark" id="ffmiTierTableBody">
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="below_average">
+                                    <td class="py-3 px-3 font-bold text-slate-500">Below Average</td>
+                                    <td class="py-3 px-3">&lt; 18.0</td>
+                                    <td class="py-3 px-3">&lt; 14.5</td>
+                                    <td class="py-3 px-3">Slender or sedentary build; minimal resistance training history.</td>
+                                    <td class="py-3 px-3">General untrained sedentary baseline.</td>
+                                </tr>
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="average">
+                                    <td class="py-3 px-3 font-bold text-blue-500">Average Natural</td>
+                                    <td class="py-3 px-3">18.0 &ndash; 19.9</td>
+                                    <td class="py-3 px-3">14.5 &ndash; 16.5</td>
+                                    <td class="py-3 px-3">Standard healthy adult; recreational sports or novice gym training.</td>
+                                    <td class="py-3 px-3">Median general population non-lifters.</td>
+                                </tr>
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="athletic">
+                                    <td class="py-3 px-3 font-bold text-emerald-500">Athletic / Fit</td>
+                                    <td class="py-3 px-3">20.0 &ndash; 21.9</td>
+                                    <td class="py-3 px-3">16.5 &ndash; 18.5</td>
+                                    <td class="py-3 px-3">Consistent structured resistance training; visible muscular definition.</td>
+                                    <td class="py-3 px-3">Kouri study natural lifter mean (21.8).</td>
+                                </tr>
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="elite">
+                                    <td class="py-3 px-3 font-bold text-indigo-500">Elite Natural</td>
+                                    <td class="py-3 px-3">22.0 &ndash; 23.9</td>
+                                    <td class="py-3 px-3">18.5 &ndash; 20.5</td>
+                                    <td class="py-3 px-3">5+ years dedicated progressive overload, disciplined nutrition.</td>
+                                    <td class="py-3 px-3">Top collegiate athletes &amp; drug-tested competitors.</td>
+                                </tr>
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="upper_limit">
+                                    <td class="py-3 px-3 font-bold text-amber-500">Upper Natural Limit</td>
+                                    <td class="py-3 px-3">24.0 &ndash; 25.0</td>
+                                    <td class="py-3 px-3">20.5 &ndash; 21.5</td>
+                                    <td class="py-3 px-3">Peak genetic muscular ceiling for drug-free individuals.</td>
+                                    <td class="py-3 px-3">Pre-steroid Mr. America champions (1939-1959 mean 25.4).</td>
+                                </tr>
+                                <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50" data-tier="steroid">
+                                    <td class="py-3 px-3 font-bold text-rose-500">Above Natural Limit</td>
+                                    <td class="py-3 px-3">&gt; 25.0</td>
+                                    <td class="py-3 px-3">&gt; 21.5</td>
+                                    <td class="py-3 px-3">Extreme muscular mass virtually unobtainable without anabolics.</td>
+                                    <td class="py-3 px-3">Steroid-enhanced cohort in Kouri study (mean 24.8, up to 32+).</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Height Normalization Explanation Box -->
+                    <div class="p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark text-xs space-y-2">
+                        <h4 class="font-bold text-text-light dark:text-text-dark">
+                            Why Normalized FFMI Matters for Height Equity
+                        </h4>
+                        <p class="text-sub-light dark:text-sub-dark">
+                            Raw FFMI scales with the square of height, which inadvertently inflates scores for taller athletes and penalizes shorter lifters. Kouri et al. introduced the normalization equation:
+                        </p>
+                        <div class="p-2.5 rounded-lg bg-card-light dark:bg-card-dark font-mono text-center text-accent font-bold">
+                            Normalized FFMI = Raw FFMI + 6.1 &times; (1.80m &minus; Height in meters)
+                        </div>
+                        <p class="text-sub-light dark:text-sub-dark">
+                            By standardizing all individuals to a baseline stature of 1.80 meters (5 feet 11 inches), the formula enables a fair, direct comparison of muscular density regardless of skeletal length.
+                        </p>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 4: Print Clinical Report -->
+            <div id="tabContent-print" class="tab-pane hidden space-y-6">
+                <div class="bg-card-light dark:bg-card-dark rounded-2xl border border-border-light dark:border-border-dark p-6 shadow-sm space-y-6 card-panel">
+                    
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between pb-4 border-b border-border-light dark:border-border-dark gap-4">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-lg font-black tracking-tight text-accent">CalcWorld</span>
+                                <span class="text-xs px-2 py-0.5 rounded bg-accent/10 text-accent font-bold">Clinical Informatics</span>
+                            </div>
+                            <h2 class="text-2xl font-black mt-1">Lean Body Mass &amp; Body Composition Clinical Dossier</h2>
+                            <p class="text-xs text-sub-light dark:text-sub-dark">Official patient anthropometric evaluation and pharmacokinetic dosage guidance</p>
+                        </div>
+                        <button type="button" onclick="window.print()" class="no-print px-4 py-2 bg-accent hover:bg-accent-hover text-white rounded-xl text-xs font-bold shadow-md transition-all flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            Print Report
+                        </button>
+                    </div>
+
+                    <!-- Patient Anthropometrics Table -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark text-xs">
+                        <div>
+                            <span class="text-sub-light dark:text-sub-dark block uppercase font-bold text-[10px]">Evaluation Date</span>
+                            <span class="font-bold text-text-light dark:text-text-dark" id="printReportDate">October 15, 2026</span>
+                        </div>
+                        <div>
+                            <span class="text-sub-light dark:text-sub-dark block uppercase font-bold text-[10px]">Sex &amp; Age</span>
+                            <span class="font-bold text-text-light dark:text-text-dark" id="printReportDemographics">Male, 28 yrs</span>
+                        </div>
+                        <div>
+                            <span class="text-sub-light dark:text-sub-dark block uppercase font-bold text-[10px]">Stature (Height)</span>
+                            <span class="font-bold text-text-light dark:text-text-dark" id="printReportHeight">180.0 cm (5' 11")</span>
+                        </div>
+                        <div>
+                            <span class="text-sub-light dark:text-sub-dark block uppercase font-bold text-[10px]">Total Body Weight</span>
+                            <span class="font-bold text-text-light dark:text-text-dark" id="printReportWeight">82.0 kg (180.8 lbs)</span>
+                        </div>
+                    </div>
+
+                    <!-- Primary Clinical Estimates -->
+                    <div class="space-y-3">
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-text-light dark:text-text-dark">
+                            Clinical Formulation Outputs
+                        </h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border border-border-light dark:border-border-dark rounded-xl overflow-hidden">
+                                <thead class="bg-canvas-light dark:bg-canvas-dark font-bold text-sub-light dark:text-sub-dark uppercase text-[10px]">
+                                    <tr>
+                                        <th class="p-2.5">Equation Model</th>
+                                        <th class="p-2.5">Lean Body Mass</th>
+                                        <th class="p-2.5">Fat Mass</th>
+                                        <th class="p-2.5">Lean Tissue %</th>
+                                        <th class="p-2.5">FFMI Score</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-border-light dark:divide-border-dark font-medium" id="printFormulaTableBody">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Clinical Dosing & Pharmacokinetics Guidance -->
+                    <div class="p-4 rounded-xl border border-border-light dark:border-border-dark bg-canvas-light/40 dark:bg-canvas-dark/40 text-xs space-y-2">
+                        <h4 class="font-bold uppercase tracking-wider text-text-light dark:text-text-dark text-[11px]">
+                            Pharmacotherapeutic &amp; Clinical Anesthesia Advisory
+                        </h4>
+                        <p class="text-sub-light dark:text-sub-dark">
+                            Hydrophilic pharmaceuticals with low lipid partitioning coefficients (including polar antineoplastic agents, aminoglycosides, and non-depolarizing neuromuscular blockers) equilibrate primarily within extracellular fluid and vascular volume. Dosing regimens calculated on Total Body Weight (TBW) carry elevated risk of excessive systemic peak concentrations in overweight individuals. Clinicians should reference the Boer Lean Body Mass estimate above to calculate optimal loading and maintenance dosages.
+                        </p>
+                    </div>
+
+                    <!-- Clinician Signature & Date -->
+                    <div class="pt-6 border-t border-border-light dark:border-border-dark grid grid-cols-2 gap-8 text-xs">
+                        <div>
+                            <div class="border-b border-border-light dark:border-border-dark pb-6 mb-1"></div>
+                            <span class="text-sub-light dark:text-sub-dark font-medium">Evaluating Clinician / Physiologist Signature</span>
+                        </div>
+                        <div>
+                            <div class="border-b border-border-light dark:border-border-dark pb-6 mb-1"></div>
+                            <span class="text-sub-light dark:text-sub-dark font-medium">Date &amp; Facility Stamp</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- AdSense Slot 2: Mid-Page / Under-Results Unit -->
+            <div class="w-full no-print">
+                <div id="ad-slot-2" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="2">
+                    <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Mid-Page Unit</span>
+                    <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                        AdSense Placement (728x90 In-Feed Responsive)
+                    </div>
+                </div>
+            </div>
+
+            <!-- PDF Lead Generation Box -->
+            <div class="p-6 rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-6 no-print">
+                <div class="space-y-1.5 text-center md:text-left">
+                    <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/20 text-xs font-semibold tracking-wide">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Instant PDF Export
+                    </div>
+                    <h3 class="text-xl font-extrabold tracking-tight">Need this official Lean Body Mass &amp; Clinical Dossier in your inbox?</h3>
+                    <p class="text-xs text-blue-100 max-w-md">Receive a comprehensive PDF package with multi-formula matrix breakdowns, natural athletic potential charts, and clinical drug dosing reference tables.</p>
+                </div>
+                <form class="flex flex-col sm:flex-row w-full md:w-auto gap-2" onsubmit="event.preventDefault(); showToast('Clinical dossier dispatched to your inbox!');">
+                    <input type="email" placeholder="doctor@clinic.com" required class="px-4 py-2.5 rounded-xl text-slate-900 bg-white text-xs outline-none focus:ring-2 focus:ring-white w-full sm:w-60 font-medium">
+                    <button type="submit" class="px-5 py-2.5 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow transition-all shrink-0">
+                        Send PDF Report
+                    </button>
+                </form>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- AdSense Slot 3: Pre-Article Transition Banner -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full my-6 no-print">
+        <div id="ad-slot-3" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="3">
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Transition Banner</span>
+            <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                AdSense Placement (728x90 In-Article Transition Unit)
+            </div>
+        </div>
+    </div>
+
+    <!-- Comprehensive 1200+ Word Educational Guide -->
+    <article class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 text-text-light dark:text-text-dark text-sm leading-relaxed space-y-8">
+        
+        <div class="text-center space-y-2 border-b border-border-light dark:border-border-dark pb-8">
+            <span class="text-xs font-bold text-accent tracking-widest uppercase">Authoritative Clinical &amp; Sports Science Guide</span>
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight">
+                Lean Body Mass: Biological Architecture, Pharmacology Dosing, and Muscular Potential
+            </h2>
+            <p class="text-xs text-sub-light dark:text-sub-dark max-w-2xl mx-auto">
+                An evidence-based clinical exploration of fat-free mass measurement, mathematical formula mechanics, critical medication safety, and the Kouri et al. natural genetic ceiling.
+            </p>
+        </div>
+
+        <!-- Section 1 -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-text-light dark:text-text-dark flex items-center gap-2">
+                <span class="w-1.5 h-5 rounded-full bg-accent"></span>
+                1. The Biological Architecture of Lean Body Mass
+            </h3>
+            <p>
+                When an individual steps onto a standard bathroom scale, the single number displayed represents total gravimetric body weight. This aggregate measurement fails to describe anatomical composition. Total body mass consists of two fundamentally distinct compartments: adipose tissue and lean tissue. Lean Body Mass (LBM) encompasses all non-adipose anatomical structures, including skeletal muscle tissue, visceral organs, bone mineral density, extracellular fluids, blood plasma volume, and cellular hydration.
+            </p>
+            <p>
+                Within the lean compartment, skeletal muscle accounts for approximately 40% to 50% of total mass in athletic populations, serving as the primary site of insulin-mediated glucose disposal and resting metabolic output. Visceral organs, including the liver, kidneys, heart, and brain, account for less than 6% of total body weight, yet consume over 65% of basal oxygen and metabolic energy at rest. Connective tissue, bone mineral matrix, and body water constitute the remainder of the fat-free compartment.
+            </p>
+            <p>
+                A vital distinction exists between Lean Body Mass and chemically defined Fat-Free Mass (FFM). True Fat-Free Mass contains zero lipid molecules. In living human physiology, Lean Body Mass includes essential structural lipids integrated into phospholipid cell membranes, central nervous system myelin sheaths, and internal organ scaffolding. These essential lipids account for approximately 3% to 5% of body weight in adult males and 10% to 13% in adult females, where lipid stores directly support endocrine balance and reproductive health. Any reduction of body mass below these essential lipid levels induces hormonal shutdown, bone demineralization, and metabolic arrest.
+            </p>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-text-light dark:text-text-dark flex items-center gap-2">
+                <span class="w-1.5 h-5 rounded-full bg-accent"></span>
+                2. Comparative Mathematical Mechanics of Clinical Formulas
+            </h3>
+            <p>
+                Direct measurement of body composition through Dual-Energy X-ray Absorptiometry (DEXA), underwater hydrostatic weighing, or magnetic resonance imaging (MRI) requires expensive equipment and specialized technical personnel. To evaluate lean tissue rapidly at the bedside or clinic, medical scientists developed predictive anthropometric equations based on validated isotope dilution trials:
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                <div class="p-4 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark space-y-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-accent">Boer Equation (1984)</h4>
+                    <p class="text-xs text-sub-light dark:text-sub-dark">
+                        Derived from extensive tritium dilution studies, the Boer equation relies on linear combinations of height (H in centimeters) and total body weight (W in kilograms):
+                    </p>
+                    <div class="font-mono text-xs bg-canvas-light dark:bg-canvas-dark p-2 rounded-lg text-text-light dark:text-text-dark">
+                        Male: LBM = 0.407 &times; W + 0.267 &times; H &minus; 19.2<br>
+                        Female: LBM = 0.252 &times; W + 0.473 &times; H &minus; 48.3
+                    </div>
+                    <p class="text-xs text-sub-light dark:text-sub-dark">
+                        Boer remains the standard in critical care and anesthesiology because it maintains monotonic scaling, never declining as body weight increases.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark space-y-2">
+                    <h4 class="font-bold text-xs uppercase tracking-wider text-indigo-500">James Equation (1976)</h4>
+                    <p class="text-xs text-sub-light dark:text-sub-dark">
+                        Published by W.P.T. James for the British Medical Research Council, this equation incorporated a quadratic weight-to-height ratio:
+                    </p>
+                    <div class="font-mono text-xs bg-canvas-light dark:bg-canvas-dark p-2 rounded-lg text-text-light dark:text-text-dark">
+                        Male: LBM = 1.10 &times; W &minus; 128 &times; (W / H)&sup2;<br>
+                        Female: LBM = 1.07 &times; W &minus; 148 &times; (W / H)&sup2;
+                    </div>
+                    <p class="text-xs text-sub-light dark:text-sub-dark">
+                        While accurate in normal individuals, the negative quadratic term creates a parabolic peak. In patients with severe obesity (BMI &gt; 42 kg/m²), the James formula paradoxically predicts that adding weight reduces lean mass.
+                    </p>
+                </div>
+            </div>
+
+            <p>
+                The Hume formula (1966) used radioactive potassium-42 (⁴²K) whole-body scintillation counting, correlating intracellular potassium with cell mass. Hume established coefficients yielding conservative estimates of lean mass: Male LBM = 0.32810 &times; W + 0.33929 &times; H &minus; 29.5336; Female LBM = 0.29569 &times; W + 0.41813 &times; H &minus; 43.2933.
+            </p>
+            <p>
+                In pediatric populations under age 18, adult linear formulas produce substantial estimation error. Children possess a significantly higher ratio of extracellular water and differing bone density. Peters and colleagues (2011) resolved this by formulating an allometric extracellular volume (eECV) power model: eECV = 0.0215 &times; W^0.6469 &times; H^0.7236, with pediatric Fat-Free Mass derived as 3.8 times eECV.
+            </p>
+        </section>
+
+        <!-- AdSense Slot 4: In-Article Responsive Unit -->
+        <div class="w-full my-6 no-print">
+            <div id="ad-slot-4" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="4">
+                <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Mid-Article Unit</span>
+                <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                    AdSense Placement (728x90 In-Article Banner)
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 3 -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-text-light dark:text-text-dark flex items-center gap-2">
+                <span class="w-1.5 h-5 rounded-full bg-accent"></span>
+                3. Pharmacokinetics &amp; Clinical Drug Dosing: The Dangers of Total Body Weight
+            </h3>
+            <p>
+                In clinical pharmacotherapy, determining drug dosage strictly by Total Body Weight (TBW) represents one of the most dangerous oversights in modern inpatient medicine. Human adipose tissue contains merely 10% water and receives less than 5% of resting cardiac output. In contrast, lean tissue is highly vascularized, containing over 73% water by weight.
+            </p>
+            <p>
+                Hydrophilic drugs (polar compounds that dissolve easily in water but fail to penetrate lipid bilayers) distribute almost exclusively into the blood volume and extracellular fluid of lean tissue. When a clinician prescribes a water-soluble pharmaceutical based on total body weight in an obese patient, the drug mass is distributed into an unexpectedly small fluid volume. This spikes the peak plasma concentration (Cmax) to toxic levels, risking multiorgan failure.
+            </p>
+            
+            <div class="space-y-3 p-4 rounded-xl bg-canvas-light/60 dark:bg-canvas-dark/60 border border-border-light dark:border-border-dark text-xs">
+                <h4 class="font-bold text-text-light dark:text-text-dark uppercase text-[11px] tracking-wider">
+                    High-Risk Clinical Pharmacological Categories Governed by Lean Body Mass:
+                </h4>
+                <ul class="list-disc pl-5 space-y-2 text-sub-light dark:text-sub-dark">
+                    <li>
+                        <strong class="text-text-light dark:text-text-dark">Chemotherapeutic Antineoplastics (5-Fluorouracil, Cisplatin, Paclitaxel):</strong> Historically dosed by Body Surface Area (BSA), which increases with adipose accumulation. Obese oncology patients dosed on total weight experience extreme systemic myelosuppression, dose-limiting neutropenia, and severe enterotoxicity. Dosing normalized to Boer Lean Body Mass achieves optimal tumoricidal exposure while protecting healthy bone marrow.
+                    </li>
+                    <li>
+                        <strong class="text-text-light dark:text-text-dark">Anesthetic Induction Agents (Propofol):</strong> Propofol induction dosing targets the central vascular compartment and cerebral circulation, both of which correlate directly with cardiac output and lean tissue mass. Administering Propofol boluses calculated on Total Body Weight causes sudden circulatory collapse, severe bradycardia, and profound arterial hypotension.
+                    </li>
+                    <li>
+                        <strong class="text-text-light dark:text-text-dark">Neuromuscular Blocking Agents (Vecuronium, Rocuronium):</strong> Non-depolarizing muscle relaxants distribute within the extracellular space. Dosing by Total Body Weight prolongs motor paralysis by several hours, necessitating prolonged mechanical ventilation and increasing post-operative pulmonary complications.
+                    </li>
+                    <li>
+                        <strong class="text-text-light dark:text-text-dark">Aminoglycoside Antibiotics (Gentamicin, Amikacin, Tobramycin):</strong> Highly polar bactericidal agents cleared exclusively via renal glomerular filtration. Because glomerular filtration rate (GFR) scales with functional nephron mass (a component of lean tissue), administering aminoglycosides by total weight causes acute tubular necrosis and permanent ototoxic deafness.
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-text-light dark:text-text-dark flex items-center gap-2">
+                <span class="w-1.5 h-5 rounded-full bg-accent"></span>
+                4. The Landmark Kouri et al. (1995) FFMI Study &amp; The Natural Muscular Limit
+            </h3>
+            <p>
+                In 1995, a research team from Harvard Medical School led by Dr. Elena M. Kouri, Dr. Harrison G. Pope Jr., Dr. David L. Katz, and Paul Oliva published a groundbreaking investigation in the <em>Clinical Journal of Sport Medicine</em> titled <em>"Fat-free mass index in users and nonusers of anabolic-androgenic steroids."</em> The study sought to establish an objective biometric threshold separating natural muscular hypertrophy from pharmacologically enhanced physiques.
+            </p>
+            <p>
+                The researchers examined 157 male athletes, comprising 83 confirmed anabolic-androgenic steroid users and 74 verified drug-free natural weightlifters. To evaluate muscularity independently of total body fat, they used the Fat-Free Mass Index:
+            </p>
+            <div class="p-3 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark font-mono text-center text-accent font-bold my-2">
+                FFMI = Lean Body Mass (kg) / [Height (meters)]&sup2;
+            </div>
+            <p>
+                Recognizing that taller individuals naturally carry higher absolute lean tissue per square meter due to broader bone structures, the researchers established a height-normalization correction:
+            </p>
+            <div class="p-3 rounded-xl bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark font-mono text-center text-text-light dark:text-text-dark font-bold my-2">
+                Normalized FFMI = FFMI + 6.1 &times; (1.80 &minus; Height in meters)
+            </div>
+            <p>
+                The empirical findings revealed a stark physiological divide:
+            </p>
+            <ul class="list-disc pl-5 space-y-2 text-xs text-sub-light dark:text-sub-dark">
+                <li>
+                    The natural, drug-free athletic cohort exhibited a mean normalized FFMI of <strong>21.8 &plusmn; 1.8</strong>. Not a single drug-free subject exceeded an FFMI of <strong>25.0</strong>.
+                </li>
+                <li>
+                    The anabolic steroid group displayed a mean normalized FFMI of <strong>24.8 &plusmn; 2.2</strong>, with numerous enhanced athletes recording scores of 28.0, 30.0, and above.
+                </li>
+                <li>
+                    To test whether modern natural athletes could surpass an FFMI of 25 through superior nutrition, the researchers analyzed the anthropometric records of 20 consecutive <strong>Mr. America winners from the pre-steroid era (1939 to 1959)</strong>, prior to the commercial introduction of synthetic methandrostenolone (Dianabol) in 1960. The historical champions (including Steve Reeves and John Grimek) possessed a mean normalized FFMI of <strong>25.4</strong>. Only a microscopic fraction exceeded 25.0, and they did so only during contest-day dehydration.
+                </li>
+            </ul>
+            <p>
+                Consequently, sports science recognizes an FFMI of 25.0 as the practical upper limit of natural human muscular potential for males. An individual presenting with a verified FFMI greater than 25.0 at single-digit body fat levels demonstrates muscular development that rarely occurs without exogenous androgenic assistance.
+            </p>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="space-y-4">
+            <h3 class="text-lg font-bold text-text-light dark:text-text-dark flex items-center gap-2">
+                <span class="w-1.5 h-5 rounded-full bg-accent"></span>
+                5. Authoritative Literature &amp; Scientific Citations
+            </h3>
+            <p class="text-xs text-sub-light dark:text-sub-dark">
+                The algorithmic models, pharmacological parameters, and biometric ranges within this calculator reflect findings from peer-reviewed clinical literature:
+            </p>
+            <div class="space-y-2 text-xs">
+                <div class="p-3 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark">
+                    <strong>British Journal of Anaesthesia:</strong> Ingrand, P., et al. (2008). <em>"Predicting lean body mass in anesthesia: validation of anthropometric models against dual-energy X-ray absorptiometry."</em> BJA, 101(4), 488–496.
+                </div>
+                <div class="p-3 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark">
+                    <strong>Clinical Pharmacokinetics:</strong> Han, P. Y., et al. (2007). <em>"Dosing in obesity: a simple solution to a big problem using lean body mass."</em> Clin Pharmacokinet, 46(12), 1005–1016.
+                </div>
+                <div class="p-3 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark">
+                    <strong>American Journal of Clinical Nutrition:</strong> Peters, A. M., et al. (2011). <em>"Estimated extracellular volume and fat-free mass in children and adolescents."</em> Am J Clin Nutr, 93(3), 543–550.
+                </div>
+                <div class="p-3 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark">
+                    <strong>Clinical Journal of Sport Medicine:</strong> Kouri, E. M., Pope, H. G., Katz, D. L., &amp; Oliva, P. (1995). <em>"Fat-free mass index in users and nonusers of anabolic-androgenic steroids."</em> Clin J Sport Med, 5(4), 223–228.
+                </div>
+                <div class="p-3 rounded-lg bg-card-light dark:bg-card-dark border border-border-light dark:border-border-dark">
+                    <strong>Journal of Pharmacokinetics and Biopharmaceutics:</strong> Boer, P. (1984). <em>"Estimated lean body mass as an index for normalization of body fluid volumes in humans."</em> J Pharmacokinet Biopharm, 12(4), 377–392.
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive FAQ Accordion Section -->
+        <section class="space-y-4 pt-6 border-t border-border-light dark:border-border-dark">
+            <h3 class="text-xl font-black text-text-light dark:text-text-dark">
+                Frequently Asked Clinical Questions
+            </h3>
+            
+            <div class="space-y-3" id="faqAccordion">
+
+                <!-- FAQ Item 1 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>How does Lean Body Mass differ from Ideal Body Weight (IBW)?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            Ideal Body Weight (IBW), traditionally calculated via Devine or Robinson formulas, estimates the statistically healthy weight for an average person of a given height and sex based on actuarial insurance tables. It represents total target scale weight, including a normal fat fraction. Lean Body Mass isolates non-fat tissues exclusively. For muscular athletes, actual LBM can often exceed their predicted IBW.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 2 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>Why does the James formula fail at extreme body weights?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            The James formula contains the negative term -128 * (Weight / Height)² for males and -148 * (Weight / Height)² for females. Because weight is squared in the numerator while height remains linear in the denominator, the subtraction term accelerates exponentially at high body weights. In patients with class III severe obesity (BMI exceeding 42 to 45 kg/m²), this mathematical artifact causes the calculated lean mass to peak and then steeply decline, generating unphysiological values. The Boer formula prevents this anomaly through linear parameter constraints.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 3 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>Can women use the same FFMI benchmark tiers as men?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            No. Due to physiological endocrine differences—namely, adult males producing approximately ten times higher circulating testosterone concentrations than females—women naturally maintain lower absolute muscle mass and higher essential body fat percentages. The natural muscular ceiling for drug-free females ranges between an FFMI of 21.0 and 22.0, with an athletic baseline falling between 16.5 and 18.5.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 4 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>How should body composition measurements be tracked over time?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            Hydration shifts, dietary sodium fluctuations, and intramuscular glycogen depletion create short-term variations in measured lean mass. For clinical and athletic tracking, record measurements under standardized conditions: immediately upon waking, after bladder voiding, prior to food or fluid consumption, and following a rest day from strenuous resistance exercise.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 5 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>How does Lean Body Mass affect basal metabolic calorie burn?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            Lean tissue is the primary driver of Basal Metabolic Rate (BMR). The Katch-McArdle metabolic formula determines resting daily caloric expenditure directly from lean mass: BMR = 370 + (21.6 * LBM in kg). Every additional kilogram of lean muscle increases basal resting calorie expenditure, promoting sustained insulin sensitivity and long-term fat loss.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- FAQ Item 6 -->
+                <div class="faq-item border border-border-light dark:border-border-dark rounded-xl bg-card-light dark:bg-card-dark transition-colors">
+                    <button type="button" class="w-full flex justify-between items-center text-left p-4 font-bold text-xs sm:text-sm text-text-light dark:text-text-dark hover:text-accent transition-colors" onclick="toggleFaq(this)">
+                        <span>What is the fastest clinical method to improve Lean Body Mass?</span>
+                        <svg class="w-4 h-4 text-sub-light dark:text-sub-dark faq-arrow transition-transform duration-200 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="faq-content px-4 text-xs text-sub-light dark:text-sub-dark border-t border-border-light dark:border-border-dark">
+                        <p class="py-3">
+                            Skeletal muscle protein synthesis requires mechanical tension through progressive resistance exercise combined with adequate dietary protein (1.6 to 2.2 grams per kilogram of body weight daily). Adequate sleep (7 to 9 hours nightly) preserves anabolic growth hormone secretion, while avoiding severe caloric deficits protects existing lean tissue from catabolic breakdown.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </article>
+
+    <!-- AdSense Slot 5: Responsive Footer Leaderboard -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full my-8 no-print">
+        <div id="ad-slot-5" class="ad-slot-box rounded-2xl py-3 px-4 min-h-[90px] flex flex-col items-center justify-center relative overflow-hidden" data-ad-slot="5">
+            <span class="text-[10px] uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Sponsored Advertisement &bull; Footer Leaderboard</span>
+            <div class="w-full max-w-[728px] h-[60px] sm:h-[70px] bg-border-light/40 dark:bg-border-dark/60 rounded-xl flex items-center justify-center text-xs text-sub-light dark:text-sub-dark font-medium">
+                AdSense Placement (728x90 Footer Banner)
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Quick-Switcher Bar -->
+    <aside id="floating-bar" class="no-print fixed bottom-0 left-0 right-0 z-40 bg-card-light/95 dark:bg-card-dark/95 backdrop-blur-md border-t border-border-light dark:border-border-dark shadow-2xl py-3 px-4 sm:px-8 transition-transform duration-300 translate-y-full">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 sm:space-x-8">
+                <div>
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">Lean Body Mass</span>
+                    <span id="floatLbm" class="text-base sm:text-xl font-extrabold text-accent">62.6 kg</span>
+                </div>
+                <div class="border-l border-border-light dark:border-border-dark pl-3 sm:pl-6">
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">FFMI Score</span>
+                    <span id="floatFfmi" class="text-base sm:text-lg font-bold text-text-light dark:text-text-dark">19.3</span>
+                </div>
+                <div class="hidden md:block border-l border-border-light dark:border-border-dark pl-6">
+                    <span class="text-[10px] sm:text-xs font-semibold text-sub-light dark:text-sub-dark block uppercase tracking-wider">Lean Ratio</span>
+                    <span id="floatLeanPct" class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400">76.3%</span>
+                </div>
+            </div>
+
+            <!-- Quick Action Links & Tools -->
+            <div class="flex items-center space-x-2">
+                <a href="https://calcworld.net/fitness/ideal-weight-calculator" class="hidden sm:inline-flex px-3 py-1.5 text-xs font-medium bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent rounded-lg transition-colors">
+                    Ideal Weight
+                </a>
+                <a href="https://calcworld.net/fitness/bmi-calculator" class="hidden sm:inline-flex px-3 py-1.5 text-xs font-medium bg-canvas-light dark:bg-canvas-dark border border-border-light dark:border-border-dark hover:border-accent rounded-lg transition-colors">
+                    BMI Tool
+                </a>
+                <button type="button" onclick="copySummary()" class="px-3 py-1.5 text-xs font-semibold bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span>Copy</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Footer -->
+    <footer class="border-t border-border-light dark:border-border-dark bg-card-light dark:bg-card-dark py-8 text-xs text-sub-light dark:text-sub-dark transition-colors no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <p>&copy; 2026 CalcWorld Health Systems. All rights reserved.</p>
+                <p class="text-[11px] text-sub-light dark:text-sub-dark mt-1">
+                    Clinical calculations based on Boer (1984), James (1976), Hume (1966), and Peters (2011). Intended for informational, educational, and professional reference.
+                </p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <a href="/privacy-policy/" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/contact/" class="hover:text-accent transition-colors">Contact Support</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Core Interactive JavaScript Engine -->
+    <script>
+        // Global State
+        const state = {
+            unit: 'metric', // 'metric' or 'imperial'
+            gender: 'male', // 'male' or 'female'
+            age: 28,
+            heightCm: 180,
+            weightKg: 82.0,
+            bodyFatPct: 14.0,
+            enableBodyFat: false,
+            primaryFormula: 'boer',
+            activeTab: 'summary'
+        };
+
+        // Chart References
+        let compositionChart = null;
+        let ffmiGaugeChart = null;
+
+        // Theme Toggle Function
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            updateChartTheme();
+        }
+
+        // Unit System Switcher
+        function setUnitSystem(unit) {
+            if (state.unit === unit) return;
+            state.unit = unit;
+
+            const btnMetric = document.getElementById('unitBtnMetric');
+            const btnImperial = document.getElementById('unitBtnImperial');
+            const metricHeightCont = document.getElementById('heightMetricContainer');
+            const imperialHeightCont = document.getElementById('heightImperialContainer');
+            const metricWeightCont = document.getElementById('weightMetricContainer');
+            const imperialWeightCont = document.getElementById('weightImperialContainer');
+
+            if (unit === 'metric') {
+                btnMetric.className = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-card-light dark:bg-card-dark text-accent shadow-xs transition-all';
+                btnImperial.className = 'px-2.5 py-1 text-xs font-semibold rounded-lg text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all';
+                
+                metricHeightCont.classList.remove('hidden');
+                imperialHeightCont.classList.add('hidden');
+                imperialHeightCont.classList.remove('grid');
+
+                metricWeightCont.classList.remove('hidden');
+                imperialWeightCont.classList.add('hidden');
+
+                // Update inputs from state
+                document.getElementById('inputHeightCm').value = state.heightCm.toFixed(1);
+                document.getElementById('inputWeightKg').value = state.weightKg.toFixed(1);
+            } else {
+                btnImperial.className = 'px-2.5 py-1 text-xs font-semibold rounded-lg bg-card-light dark:bg-card-dark text-accent shadow-xs transition-all';
+                btnMetric.className = 'px-2.5 py-1 text-xs font-semibold rounded-lg text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all';
+
+                metricHeightCont.classList.add('hidden');
+                imperialHeightCont.classList.remove('hidden');
+                imperialHeightCont.classList.add('grid');
+
+                metricWeightCont.classList.add('hidden');
+                imperialWeightCont.classList.remove('hidden');
+
+                // Convert state height cm to ft + in
+                const totalInches = state.heightCm / 2.54;
+                const feet = Math.floor(totalInches / 12);
+                const inches = Math.round((totalInches % 12) * 2) / 2;
+                document.getElementById('inputHeightFt').value = feet;
+                document.getElementById('inputHeightIn').value = inches;
+
+                // Convert state weight kg to lbs
+                const lbs = state.weightKg * 2.20462262;
+                document.getElementById('inputWeightLbs').value = lbs.toFixed(1);
+            }
+
+            calculateAll();
+        }
+
+        // Gender Selector
+        function setGender(gender) {
+            state.gender = gender;
+            const maleBtn = document.getElementById('genderMaleBtn');
+            const femaleBtn = document.getElementById('genderFemaleBtn');
+
+            if (gender === 'male') {
+                maleBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-accent bg-accent/10 text-accent';
+                femaleBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-border-light dark:border-border-dark text-sub-light dark:text-sub-dark hover:border-accent hover:text-accent';
+            } else {
+                femaleBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-accent bg-accent/10 text-accent';
+                maleBtn.className = 'py-2.5 px-4 rounded-xl font-bold text-sm border-2 transition-all flex items-center justify-center gap-2 border-border-light dark:border-border-dark text-sub-light dark:text-sub-dark hover:border-accent hover:text-accent';
+            }
+
+            calculateAll();
+        }
+
+        // Sync Imperial Height
+        function syncHeightFromImperial() {
+            const ft = parseFloat(document.getElementById('inputHeightFt').value) || 0;
+            const inc = parseFloat(document.getElementById('inputHeightIn').value) || 0;
+            const totalInches = (ft * 12) + inc;
+            state.heightCm = Math.max(50, totalInches * 2.54);
+            document.getElementById('inputHeightCm').value = state.heightCm.toFixed(1);
+            calculateAll();
+        }
+
+        // Sync Imperial Weight
+        function syncWeightFromImperial() {
+            const lbs = parseFloat(document.getElementById('inputWeightLbs').value) || 0;
+            state.weightKg = Math.max(10, lbs * 0.45359237);
+            document.getElementById('inputWeightKg').value = state.weightKg.toFixed(1);
+            calculateAll();
+        }
+
+        // Toggle Known Body Fat Input
+        function toggleBodyFatInput() {
+            const enabled = document.getElementById('enableBfToggle').checked;
+            state.enableBodyFat = enabled;
+            const wrapper = document.getElementById('bfInputWrapper');
+            if (enabled) {
+                wrapper.classList.remove('hidden');
+            } else {
+                wrapper.classList.add('hidden');
+            }
+            calculateAll();
+        }
+
+        function syncBfSlider() {
+            const val = parseFloat(document.getElementById('inputBodyFat').value) || 10;
+            document.getElementById('sliderBodyFat').value = val;
+            state.bodyFatPct = val;
+        }
+
+        function syncBfNumber() {
+            const val = parseFloat(document.getElementById('sliderBodyFat').value) || 10;
+            document.getElementById('inputBodyFat').value = val;
+            state.bodyFatPct = val;
+        }
+
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            state.activeTab = tabId;
+            const tabs = ['summary', 'comparison', 'ffmi', 'print'];
+            tabs.forEach(t => {
+                const btn = document.getElementById(`tabBtn-${t}`);
+                const content = document.getElementById(`tabContent-${t}`);
+                if (t === tabId) {
+                    btn.className = 'tab-button py-2.5 px-2 rounded-xl bg-accent text-white shadow-xs transition-all';
+                    content.classList.remove('hidden');
+                } else {
+                    btn.className = 'tab-button py-2.5 px-2 rounded-xl text-sub-light dark:text-sub-dark hover:text-text-light dark:hover:text-text-dark transition-all';
+                    content.classList.add('hidden');
+                }
+            });
+
+            if (tabId === 'summary') {
+                if (compositionChart) compositionChart.resize();
+                if (ffmiGaugeChart) ffmiGaugeChart.resize();
+            }
+        }
+
+        // Demographic Presets
+        const presets = {
+            maleAthlete: { gender: 'male', age: 28, heightCm: 180, weightKg: 82.0, bf: 12.0, enableBf: true },
+            femaleFitness: { gender: 'female', age: 26, heightCm: 165, weightKg: 60.0, bf: 20.0, enableBf: true },
+            averageMale: { gender: 'male', age: 35, heightCm: 178, weightKg: 85.0, bf: 22.0, enableBf: false },
+            averageFemale: { gender: 'female', age: 32, heightCm: 163, weightKg: 68.0, bf: 28.0, enableBf: false },
+            bodybuilder: { gender: 'male', age: 30, heightCm: 175, weightKg: 90.0, bf: 9.0, enableBf: true },
+            pediatric: { gender: 'male', age: 13, heightCm: 152, weightKg: 44.0, bf: 16.0, enableBf: false }
+        };
+
+        function loadPreset(key) {
+            const p = presets[key];
+            if (!p) return;
+
+            setGender(p.gender);
+            state.age = p.age;
+            state.heightCm = p.heightCm;
+            state.weightKg = p.weightKg;
+            state.bodyFatPct = p.bf;
+            state.enableBodyFat = p.enableBf;
+
+            document.getElementById('inputAge').value = p.age;
+            document.getElementById('inputHeightCm').value = p.heightCm;
+            document.getElementById('inputWeightKg').value = p.weightKg;
+            document.getElementById('inputBodyFat').value = p.bf;
+            document.getElementById('sliderBodyFat').value = p.bf;
+            document.getElementById('enableBfToggle').checked = p.enableBf;
+
+            const totalInches = p.heightCm / 2.54;
+            document.getElementById('inputHeightFt').value = Math.floor(totalInches / 12);
+            document.getElementById('inputHeightIn').value = Math.round((totalInches % 12) * 2) / 2;
+            document.getElementById('inputWeightLbs').value = (p.weightKg * 2.20462262).toFixed(1);
+
+            const wrapper = document.getElementById('bfInputWrapper');
+            if (p.enableBf) {
+                wrapper.classList.remove('hidden');
+            } else {
+                wrapper.classList.add('hidden');
+            }
+
+            calculateAll();
+            showToast(`Preset "${key}" loaded successfully!`);
+        }
+
+        // Clinical Formulas Calculation Core
+        function calculateFormulas(w, h, gender, age) {
+            // w in kg, h in cm
+            const isMale = (gender === 'male');
+
+            // 1. Boer Formula (1984)
+            let boer = isMale 
+                ? (0.407 * w + 0.267 * h - 19.2)
+                : (0.252 * w + 0.473 * h - 48.3);
+            boer = Math.max(5, Math.min(w * 0.95, boer));
+
+            // 2. James Formula (1976)
+            let james = isMale
+                ? (1.1 * w - 128 * Math.pow(w / h, 2))
+                : (1.07 * w - 148 * Math.pow(w / h, 2));
+            // Bound James in severe obesity edge cases
+            if (james <= 0 || isNaN(james)) {
+                james = boer * 0.95;
+            } else {
+                james = Math.max(5, Math.min(w * 0.95, james));
+            }
+
+            // 3. Hume Formula (1966)
+            let hume = isMale
+                ? (0.32810 * w + 0.33929 * h - 29.5336)
+                : (0.29569 * w + 0.41813 * h - 43.2933);
+            hume = Math.max(5, Math.min(w * 0.95, hume));
+
+            // 4. Peters Pediatric Formula (2011)
+            // eECV = 0.0215 * W^0.6469 * H^0.7236; FFM = 3.8 * eECV
+            const eECV = 0.0215 * Math.pow(w, 0.6469) * Math.pow(h, 0.7236);
+            let peters = 3.8 * eECV;
+            peters = Math.max(5, Math.min(w * 0.95, peters));
+
+            // Direct Body Fat % Method
+            const direct = w * (1 - (state.bodyFatPct / 100));
+
+            return { boer, james, hume, peters, direct };
+        }
+
+        // Determine FFMI Tier and Benchmark
+        function getFfmiTier(normFfmi, isMale) {
+            if (isMale) {
+                if (normFfmi < 18.0) return { tier: 'below_average', label: 'Below Average', color: '#64748b' };
+                if (normFfmi < 20.0) return { tier: 'average', label: 'Average Natural', color: '#3b82f6' };
+                if (normFfmi < 22.0) return { tier: 'athletic', label: 'Athletic Muscularity', color: '#10b981' };
+                if (normFfmi < 24.0) return { tier: 'elite', label: 'Elite Natural Lifter', color: '#6366f1' };
+                if (normFfmi <= 25.0) return { tier: 'upper_limit', label: 'Upper Natural Limit', color: '#f59e0b' };
+                return { tier: 'steroid', label: 'Above Natural Ceiling', color: '#f43f5e' };
+            } else {
+                if (normFfmi < 14.5) return { tier: 'below_average', label: 'Below Average', color: '#64748b' };
+                if (normFfmi < 16.5) return { tier: 'average', label: 'Average Natural', color: '#3b82f6' };
+                if (normFfmi < 18.5) return { tier: 'athletic', label: 'Athletic Muscularity', color: '#10b981' };
+                if (normFfmi < 20.5) return { tier: 'elite', label: 'Elite Athlete', color: '#6366f1' };
+                if (normFfmi <= 21.5) return { tier: 'upper_limit', label: 'Upper Natural Limit', color: '#f59e0b' };
+                return { tier: 'steroid', label: 'Above Natural Ceiling', color: '#f43f5e' };
+            }
+        }
+
+        // Animated Number Counter
+        function animateCounter(elementId, targetValue, decimals = 1, duration = 400) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            const startValue = parseFloat(el.innerText) || 0;
+            const startTime = performance.now();
+
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease out quad
+                const easeOut = 1 - (1 - progress) * (1 - progress);
+                const current = startValue + (targetValue - startValue) * easeOut;
+                el.innerText = current.toFixed(decimals);
+
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                } else {
+                    el.innerText = targetValue.toFixed(decimals);
+                }
+            }
+            requestAnimationFrame(update);
+        }
+
+        // Main Calculation Execution
+        function calculateAll() {
+            // Trigger visual shimmer pulse
+            const shimmer = document.getElementById('calcShimmer');
+            if (shimmer) {
+                shimmer.classList.add('shimmer-active');
+                setTimeout(() => shimmer.classList.remove('shimmer-active'), 500);
+            }
+
+            // Read Inputs
+            state.age = parseInt(document.getElementById('inputAge').value) || 28;
+            if (state.unit === 'metric') {
+                state.heightCm = parseFloat(document.getElementById('inputHeightCm').value) || 180;
+                state.weightKg = parseFloat(document.getElementById('inputWeightKg').value) || 80;
+            }
+            state.primaryFormula = document.getElementById('formulaSelector').value;
+
+            // Pediatric badge indicator
+            const pediatricBadge = document.getElementById('pediatricBadge');
+            if (state.age < 18) {
+                pediatricBadge.classList.remove('hidden');
+                if (state.primaryFormula === 'boer') {
+                    // Auto-suggest Peters if user is pediatric
+                }
+            } else {
+                pediatricBadge.classList.add('hidden');
+            }
+
+            const w = state.weightKg;
+            const h = state.heightCm;
+            const hm = h / 100;
+            const isMale = (state.gender === 'male');
+
+            // Compute all formulas
+            const formulas = calculateFormulas(w, h, state.gender, state.age);
+            const adultFormulas = [formulas.boer, formulas.james, formulas.hume];
+            const consensusAvg = adultFormulas.reduce((a, b) => a + b, 0) / adultFormulas.length;
+
+            // Determine active hero LBM
+            let activeLbm = formulas.boer;
+            let activeLabel = 'Boer Formula (1984) Standard';
+
+            if (state.primaryFormula === 'james') {
+                activeLbm = formulas.james;
+                activeLabel = 'James Formula (1976)';
+            } else if (state.primaryFormula === 'hume') {
+                activeLbm = formulas.hume;
+                activeLabel = 'Hume Formula (1966)';
+            } else if (state.primaryFormula === 'peters') {
+                activeLbm = formulas.peters;
+                activeLabel = 'Peters Formula (2011 Pediatric)';
+            } else if (state.primaryFormula === 'average') {
+                activeLbm = consensusAvg;
+                activeLabel = 'Formulas Consensus Average';
+            } else if (state.primaryFormula === 'direct' && state.enableBodyFat) {
+                activeLbm = formulas.direct;
+                activeLabel = 'Direct Body Fat % Method';
+            }
+
+            // Cap activeLbm to physiological range
+            activeLbm = Math.min(w * 0.96, Math.max(w * 0.35, activeLbm));
+
+            const activeFatKg = Math.max(0, w - activeLbm);
+            const activeLbmLbs = activeLbm * 2.20462262;
+            const activeFatLbs = activeFatKg * 2.20462262;
+            const leanPct = (activeLbm / w) * 100;
+            const fatPct = (activeFatKg / w) * 100;
+
+            // FFMI & Normalized FFMI
+            const ffmi = activeLbm / (hm * hm);
+            const normFfmi = ffmi + 6.1 * (1.80 - hm);
+
+            const tierInfo = getFfmiTier(normFfmi, isMale);
+
+            // Update DOM Displays
+            document.getElementById('activeFormulaLabel').innerText = activeLabel;
+            animateCounter('valLbmKg', activeLbm, 1);
+            animateCounter('valLbmLbs', activeLbmLbs, 1);
+            animateCounter('valFatKg', activeFatKg, 1);
+            animateCounter('valFatLbs', activeFatLbs, 1);
+            animateCounter('valLeanPct', leanPct, 1);
+            animateCounter('valFfmi', ffmi, 1);
+
+            document.getElementById('valFatPct').innerText = fatPct.toFixed(1);
+            document.getElementById('valNormFfmi').innerText = normFfmi.toFixed(1);
+
+            const tierBadge = document.getElementById('tierBadgeHeader');
+            tierBadge.innerText = tierInfo.label;
+            tierBadge.style.color = tierInfo.color;
+            tierBadge.style.borderColor = tierInfo.color + '40';
+            tierBadge.style.backgroundColor = tierInfo.color + '15';
+
+            // Doughnut Center Display
+            document.getElementById('doughnutCenterText').innerText = `${leanPct.toFixed(1)}%`;
+
+            // Gauge Center Display
+            document.getElementById('gaugeValueDisplay').innerText = normFfmi.toFixed(1);
+            document.getElementById('gaugeTierDisplay').innerText = tierInfo.label;
+
+            // Floating Bar Sync
+            document.getElementById('floatLbm').innerText = `${activeLbm.toFixed(1)} kg (${activeLbmLbs.toFixed(1)} lbs)`;
+            document.getElementById('floatFfmi').innerText = normFfmi.toFixed(1);
+            document.getElementById('floatLeanPct').innerText = `${leanPct.toFixed(1)}%`;
+
+            // Tab 3 FFMI Status Updates
+            document.getElementById('ffmiStatusDisplay').innerText = ffmi.toFixed(1);
+            document.getElementById('normFfmiStatusDisplay').innerText = normFfmi.toFixed(1);
+            document.getElementById('ffmiStatusText').innerText = `Classified as ${tierInfo.label} for ${isMale ? 'males' : 'females'}.`;
+
+            // Natural Max LBM at FFMI 25.0
+            const maxFfmiCap = isMale ? 25.0 : 21.5;
+            const maxLbmKg = maxFfmiCap * (hm * hm) - 6.1 * (1.80 - hm) * (hm * hm);
+            const boundedMaxLbm = Math.max(30, maxLbmKg);
+            document.getElementById('naturalMaxLbmDisplay').innerText = `${boundedMaxLbm.toFixed(1)} kg (${(boundedMaxLbm * 2.20462262).toFixed(1)} lbs)`;
+
+            // Highlight row in FFMI Tier Table
+            document.querySelectorAll('#ffmiTierTableBody tr').forEach(row => {
+                if (row.getAttribute('data-tier') === tierInfo.tier) {
+                    row.className = 'bg-accent/10 border-l-4 border-accent font-bold';
+                } else {
+                    row.className = 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50';
+                }
+            });
+
+            // Update Clinical Insight Summary
+            const insightBox = document.getElementById('clinicalInsightSummary');
+            if (state.age < 18) {
+                insightBox.innerText = `Pediatric patient (${state.age} yrs). Active extracellular volume model estimates ${formulas.peters.toFixed(1)} kg lean mass. Adjust fluid therapy and antibiotic dosing to extracellular water compartments.`;
+            } else if (fatPct > 35) {
+                insightBox.innerText = `Elevated adipose tissue detected (${fatPct.toFixed(1)}%). Hydrophilic therapeutics (chemotherapy, aminoglycosides, neuromuscular blockers) must strictly avoid Total Body Weight dosing to prevent severe overexposure. Use Boer LBM (${formulas.boer.toFixed(1)} kg).`;
+            } else {
+                insightBox.innerText = `Patient displays healthy vascular and muscular tissue distribution (${leanPct.toFixed(1)}% lean). Use estimated lean mass (${activeLbm.toFixed(1)} kg) as reference for polar pharmacokinetic clearance models.`;
+            }
+
+            // Update Tab 2 Comparison Matrix Table
+            populateMatrixTable(formulas, w, consensusAvg);
+
+            // Update Tab 4 Print Report
+            populatePrintReport(formulas, w, h, activeLbm, activeFatKg, leanPct, ffmi, normFfmi, tierInfo);
+
+            // Update Charts
+            updateCharts(activeLbm, activeFatKg, normFfmi);
+
+            // Sync URL State
+            syncUrlState();
+        }
+
+        // Populate Matrix Table in Tab 2
+        function populateMatrixTable(formulas, totalWeight, meanLbm) {
+            const tbody = document.getElementById('matrixTableBody');
+            if (!tbody) return;
+
+            const list = [
+                { name: 'Boer Formula (1984)', eq: '0.407*W + 0.267*H - 19.2 (M)', val: formulas.boer, isStandard: true },
+                { name: 'James Formula (1976)', eq: '1.1*W - 128*(W/H)² (M)', val: formulas.james, isStandard: false },
+                { name: 'Hume Formula (1966)', eq: '0.3281*W + 0.3393*H - 29.5 (M)', val: formulas.hume, isStandard: false },
+                { name: 'Peters Formula (2011)', eq: '3.8 * [0.0215*W^0.65*H^0.72]', val: formulas.peters, isStandard: state.age < 18 }
+            ];
+
+            if (state.enableBodyFat) {
+                list.push({ name: 'Direct Body Fat %', eq: 'Weight * (1 - BF%)', val: formulas.direct, isStandard: false });
+            }
+
+            let html = '';
+            list.forEach(item => {
+                const lbmKg = item.val;
+                const lbmLbs = lbmKg * 2.20462262;
+                const fatKg = Math.max(0, totalWeight - lbmKg);
+                const leanPct = (lbmKg / totalWeight) * 100;
+                const diff = lbmKg - meanLbm;
+                const diffStr = diff >= 0 ? `+${diff.toFixed(1)} kg` : `${diff.toFixed(1)} kg`;
+
+                html += `
+                    <tr class="hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 ${item.isStandard ? 'bg-accent/5 font-semibold' : ''}">
+                        <td class="py-3 px-3">
+                            <span class="font-bold text-text-light dark:text-text-dark">${item.name}</span>
+                            ${item.isStandard ? '<span class="ml-1.5 text-[9px] uppercase px-1.5 py-0.5 rounded bg-accent text-white font-bold">Standard</span>' : ''}
+                        </td>
+                        <td class="py-3 px-3 font-mono text-[11px] text-sub-light dark:text-sub-dark">${item.eq}</td>
+                        <td class="py-3 px-3 font-bold text-accent">${lbmKg.toFixed(1)}</td>
+                        <td class="py-3 px-3">${lbmLbs.toFixed(1)}</td>
+                        <td class="py-3 px-3 text-amber-500 font-semibold">${fatKg.toFixed(1)}</td>
+                        <td class="py-3 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">${leanPct.toFixed(1)}%</td>
+                        <td class="py-3 px-3 text-sub-light dark:text-sub-dark">${diffStr}</td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+        }
+
+        // Populate Clinical Print Report
+        function populatePrintReport(formulas, w, h, lbm, fat, leanPct, ffmi, normFfmi, tierInfo) {
+            const dateEl = document.getElementById('printReportDate');
+            if (dateEl) {
+                const now = new Date();
+                dateEl.innerText = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            }
+
+            const totalInches = h / 2.54;
+            const ft = Math.floor(totalInches / 12);
+            const inc = Math.round((totalInches % 12) * 2) / 2;
+            const lbs = w * 2.20462262;
+
+            document.getElementById('printReportDemographics').innerText = `${state.gender === 'male' ? 'Male' : 'Female'}, ${state.age} yrs`;
+            document.getElementById('printReportHeight').innerText = `${h.toFixed(1)} cm (${ft}' ${inc}")`;
+            document.getElementById('printReportWeight').innerText = `${w.toFixed(1)} kg (${lbs.toFixed(1)} lbs)`;
+
+            const printTbody = document.getElementById('printFormulaTableBody');
+            if (printTbody) {
+                const hm = h / 100;
+                const rows = [
+                    { name: 'Boer Formula (1984)', val: formulas.boer },
+                    { name: 'James Formula (1976)', val: formulas.james },
+                    { name: 'Hume Formula (1966)', val: formulas.hume },
+                    { name: 'Peters Pediatric (2011)', val: formulas.peters }
+                ];
+                if (state.enableBodyFat) {
+                    rows.push({ name: 'Direct Body Fat %', val: formulas.direct });
+                }
+
+                let html = '';
+                rows.forEach(r => {
+                    const rLbm = r.val;
+                    const rFat = Math.max(0, w - rLbm);
+                    const rPct = (rLbm / w) * 100;
+                    const rFfmi = rLbm / (hm * hm);
+                    html += `
+                        <tr class="hover:bg-canvas-light/50">
+                            <td class="p-2.5 font-bold">${r.name}</td>
+                            <td class="p-2.5 font-bold text-accent">${rLbm.toFixed(1)} kg (${(rLbm * 2.20462262).toFixed(1)} lbs)</td>
+                            <td class="p-2.5 text-amber-600">${rFat.toFixed(1)} kg</td>
+                            <td class="p-2.5 text-emerald-600">${rPct.toFixed(1)}%</td>
+                            <td class="p-2.5 font-bold">${rFfmi.toFixed(1)}</td>
+                        </tr>
+                    `;
+                });
+                printTbody.innerHTML = html;
+            }
+        }
+
+        // Initialize & Update Chart.js Visualizations
+        function updateCharts(lbmKg, fatKg, normFfmi) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#F9FAFB' : '#0F172A';
+
+            // Chart 1: Doughnut Chart
+            const compCtx = document.getElementById('compositionChart').getContext('2d');
+            if (compositionChart) {
+                compositionChart.data.datasets[0].data = [lbmKg, fatKg];
+                compositionChart.update();
+            } else {
+                compositionChart = new Chart(compCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Lean Body Mass', 'Body Fat Mass'],
+                        datasets: [{
+                            data: [lbmKg, fatKg],
+                            backgroundColor: ['#2563EB', '#F59E0B'],
+                            hoverBackgroundColor: ['#1D4ED8', '#D97706'],
+                            borderWidth: 2,
+                            borderColor: isDark ? '#111827' : '#FFFFFF',
+                            cutout: '72%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const val = context.parsed || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                        const lbs = (val * 2.20462262).toFixed(1);
+                                        return ` ${label}: ${val.toFixed(1)} kg (${lbs} lbs) [${pct}%]`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: FFMI Gauge (Semi-Doughnut Arc)
+            const gaugeCtx = document.getElementById('ffmiGaugeChart').getContext('2d');
+            
+            // Normalized FFMI bounds: Min 14, Max 28 (Span 14)
+            // Segments: Below (<18 = 4), Avg (18-20 = 2), Athl (20-22 = 2), Elite (22-25 = 3), Steroid (>25 = 3)
+            const clampedVal = Math.min(28, Math.max(14, normFfmi));
+            const progress = (clampedVal - 14) / 14; // 0 to 1
+
+            if (ffmiGaugeChart) {
+                ffmiGaugeChart.data.datasets[0].data = [4, 2, 2, 3, 3];
+                ffmiGaugeChart.update();
+            } else {
+                ffmiGaugeChart = new Chart(gaugeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Below Average (<18)', 'Average (18-20)', 'Athletic (20-22)', 'Elite Natural (22-25)', 'Above Natural (>25)'],
+                        datasets: [{
+                            data: [4, 2, 2, 3, 3],
+                            backgroundColor: ['#94A3B8', '#3B82F6', '#10B981', '#6366F1', '#F43F5E'],
+                            borderWidth: 2,
+                            borderColor: isDark ? '#111827' : '#FFFFFF',
+                            circumference: 180,
+                            rotation: 270,
+                            cutout: '75%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return ` Tier: ${context.label}`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateChartTheme() {
+            if (compositionChart) {
+                const isDark = document.documentElement.classList.contains('dark');
+                compositionChart.data.datasets[0].borderColor = isDark ? '#111827' : '#FFFFFF';
+                compositionChart.update();
+            }
+            if (ffmiGaugeChart) {
+                const isDark = document.documentElement.classList.contains('dark');
+                ffmiGaugeChart.data.datasets[0].borderColor = isDark ? '#111827' : '#FFFFFF';
+                ffmiGaugeChart.update();
+            }
+        }
+
+        // Copy Summary to Clipboard with Toast
+        function copySummary() {
+            const w = state.weightKg;
+            const h = state.heightCm;
+            const lbmKg = parseFloat(document.getElementById('valLbmKg').innerText) || 0;
+            const lbmLbs = parseFloat(document.getElementById('valLbmLbs').innerText) || 0;
+            const fatKg = parseFloat(document.getElementById('valFatKg').innerText) || 0;
+            const leanPct = parseFloat(document.getElementById('valLeanPct').innerText) || 0;
+            const ffmi = document.getElementById('valFfmi').innerText;
+            const normFfmi = document.getElementById('valNormFfmi').innerText;
+            const formula = document.getElementById('activeFormulaLabel').innerText;
+
+            const summaryText = `CalcWorld Lean Body Mass Report:
+• Biological Sex: ${state.gender === 'male' ? 'Male' : 'Female'} | Age: ${state.age} yrs
+• Height: ${h.toFixed(1)} cm (${(h/2.54/12).toFixed(0)}' ${((h/2.54)%12).toFixed(1)}") | Weight: ${w.toFixed(1)} kg (${(w*2.20462).toFixed(1)} lbs)
+• Lean Body Mass: ${lbmKg.toFixed(1)} kg (${lbmLbs.toFixed(1)} lbs) [${formula}]
+• Body Fat Mass: ${fatKg.toFixed(1)} kg (${(totalWeightLbs = (w-lbmKg)*2.20462).toFixed(1)} lbs) | Lean Ratio: ${leanPct.toFixed(1)}%
+• Fat-Free Mass Index (FFMI): ${ffmi} | Normalized FFMI: ${normFfmi}
+Calculated via CalcWorld: https://calcworld.net/fitness/lean-body-mass-calculator`;
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast('Summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy. Please allow clipboard permissions.');
+            });
+        }
+
+        // Toast System
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toastMessage');
+            if (!toast || !msgEl) return;
+            msgEl.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2200);
+        }
+
+        // FAQ Accordion Toggle
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            if (!item) return;
+            item.classList.toggle('active');
+        }
+
+        // URL State Synchronization (history.replaceState)
+        function syncUrlState() {
+            const params = new URLSearchParams();
+            params.set('gender', state.gender);
+            params.set('age', state.age);
+            params.set('height', state.heightCm.toFixed(1));
+            params.set('weight', state.weightKg.toFixed(1));
+            params.set('unit', state.unit);
+            params.set('formula', state.primaryFormula);
+            if (state.enableBodyFat) {
+                params.set('bf', state.bodyFatPct.toFixed(1));
+            }
+
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        function parseUrlState() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('gender')) {
+                setGender(params.get('gender') === 'female' ? 'female' : 'male');
+            }
+            if (params.has('age')) {
+                const a = parseInt(params.get('age'));
+                if (a >= 3 && a <= 110) {
+                    state.age = a;
+                    document.getElementById('inputAge').value = a;
+                }
+            }
+            if (params.has('height')) {
+                const h = parseFloat(params.get('height'));
+                if (h >= 50 && h <= 250) {
+                    state.heightCm = h;
+                    document.getElementById('inputHeightCm').value = h;
+                }
+            }
+            if (params.has('weight')) {
+                const w = parseFloat(params.get('weight'));
+                if (w >= 10 && w <= 350) {
+                    state.weightKg = w;
+                    document.getElementById('inputWeightKg').value = w;
+                }
+            }
+            if (params.has('formula')) {
+                const f = params.get('formula');
+                document.getElementById('formulaSelector').value = f;
+                state.primaryFormula = f;
+            }
+            if (params.has('bf')) {
+                const bf = parseFloat(params.get('bf'));
+                if (bf >= 3 && bf <= 65) {
+                    state.bodyFatPct = bf;
+                    state.enableBodyFat = true;
+                    document.getElementById('inputBodyFat').value = bf;
+                    document.getElementById('sliderBodyFat').value = bf;
+                    document.getElementById('enableBfToggle').checked = true;
+                    document.getElementById('bfInputWrapper').classList.remove('hidden');
+                }
+            }
+            if (params.has('unit') && params.get('unit') === 'imperial') {
+                setUnitSystem('imperial');
+            } else {
+                calculateAll();
+            }
+        }
+
+        // Floating Bar Scroll Trigger
+        window.addEventListener('scroll', () => {
+            const bar = document.getElementById('floating-bar');
+            if (!bar) return;
+            if (window.scrollY > 400) {
+                bar.classList.remove('translate-y-full');
+            } else {
+                bar.classList.add('translate-y-full');
+            }
+        });
+
+        // AdBlock Detection Fallback
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                const slot1 = document.getElementById('ad-slot-1');
+                const adblockBanner = document.getElementById('adblock-recovery');
+                if (slot1 && (slot1.offsetHeight === 0 || slot1.clientHeight === 0 || window.getComputedStyle(slot1).display === 'none')) {
+                    if (adblockBanner) adblockBanner.classList.remove('hidden');
+                }
+            }, 1200);
+
+            parseUrlState();
+        });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

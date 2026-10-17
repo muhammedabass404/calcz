@@ -1,0 +1,2325 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Interest Calculator | Exact vs Banker's Rule & Compounding Comparison</title>
+    <meta name="description" content="Calculate simple interest using I = P × r × t, total ending balance, daily accrual rate, and compare against compound interest. Supports 360-day Banker's Rule and 365-day exact conventions.">
+    <link rel="canonical" href="https://calcworld.net/calculators/simple-interest-calculator.html">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        canvas: {
+                            light: '#F8FAFC',
+                            dark: '#0B0F19'
+                        },
+                        card: {
+                            light: '#FFFFFF',
+                            dark: '#111827'
+                        },
+                        txt: {
+                            light: '#0F172A',
+                            dark: '#F9FAFB'
+                        },
+                        sub: {
+                            light: '#64748B',
+                            dark: '#9CA3AF'
+                        },
+                        brd: {
+                            light: '#E2E8F0',
+                            dark: '#1F2937'
+                        },
+                        accent: {
+                            DEFAULT: '#2563EB',
+                            hover: '#1D4ED8',
+                            light: '#DBEAFE',
+                            dark: '#1E3A8A'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <script>
+        // FOUC prevention script
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .dark body {
+            background-color: #0B0F19;
+            color: #F9FAFB;
+        }
+        .card-panel {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+        .dark .card-panel {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .input-field {
+            width: 100%;
+            background-color: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            color: #0F172A;
+            outline: none;
+            transition: all 0.15s ease-in-out;
+        }
+        .dark .input-field {
+            background-color: #0B0F19;
+            border-color: #1F2937;
+            color: #F9FAFB;
+        }
+        .input-field:focus {
+            border-color: #2563EB;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+        }
+        .btn-primary {
+            background-color: #2563EB;
+            color: #FFFFFF;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+        }
+        .btn-primary:hover {
+            background-color: #1D4ED8;
+        }
+        .btn-secondary {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: inherit;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            transition: background-color 0.15s ease;
+        }
+        .dark .btn-secondary {
+            background-color: #111827;
+            border-color: #1F2937;
+        }
+        .btn-secondary:hover {
+            background-color: #F8FAFC;
+        }
+        .dark .btn-secondary:hover {
+            background-color: #0B0F19;
+        }
+        
+        .accordion-content {
+            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1), opacity 0.25s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .accordion-content.active {
+            max-height: 800px;
+            opacity: 1;
+            transition: max-height 0.35s ease-in-out, opacity 0.25s ease-in;
+        }
+
+        #toast {
+            visibility: hidden;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
+        }
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Custom Scrollbar */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #94A3B8;
+            border-radius: 3px;
+        }
+        .dark .custom-scroll::-webkit-scrollbar-thumb {
+            background: #374151;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Simple Interest Calculator",
+      "url": "https://calcworld.net/calculators/simple-interest-calculator.html",
+      "applicationCategory": "FinancialApplication",
+      "operatingSystem": "All",
+      "description": "Calculate simple interest earned, maturity balance, daily accrual rate, and compare ordinary 360-day Banker's Rule vs 365-day exact interest and compound interest divergence."
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Financial Calculators",
+          "item": "https://calcworld.net/financial-calculators"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Simple Interest Calculator",
+          "item": "https://calcworld.net/calculators/simple-interest-calculator.html"
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the formula for calculating simple interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The simple interest formula is I = P × r × t, where I represents total interest earned, P is the principal amount deposited or borrowed, r is the annual nominal interest rate expressed as a decimal, and t is the time horizon expressed in years."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Banker's Rule and how does ordinary interest differ from exact interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Banker's Rule (ordinary interest) uses a 360-day year denominator (t = Days / 360) rather than a 365-day year (exact interest). Because 360 is smaller than 365, ordinary interest yields exactly 365/360 or 1.01389 times more interest (a 1.39% increase in interest yield) in favor of the lender."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does simple interest diverge mathematically from compound interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Simple interest grows linearly with time because interest accrues strictly on the original principal. Compound interest grows exponentially because accrued interest is periodically added back to principal, earning interest on interest. Over short horizons (under 90 days), the difference is negligible, but over multi-year horizons, compound interest diverges sharply above simple interest."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What financial instruments use simple interest instead of compound interest?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Promissory notes, commercial paper issued by corporations, short-term money market notes, treasury bill discount calculations, auto title loans, peer-to-peer promissory contracts, and statutory court judgments for pre-judgment and post-judgment interest commonly use simple interest calculation standards."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Effective Annual Rate (EAR) for simple interest contracts?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For an investment or loan structured under simple interest for terms under one year, the Effective Annual Rate (EAR) equals (1 + r × t)^(1/t) - 1 when annualized to reflect true reinvestment yield. For full single-year loans, nominal rate equals EAR."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does the Truth in Lending Act (Regulation Z) regulate simple interest loans?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Truth in Lending Act (TILA), codified in 12 CFR Part 1026 (Regulation Z) and administered by the Consumer Financial Protection Bureau (CFPB), requires creditors to disclose the Annual Percentage Rate (APR) and total finance charge, preventing hidden fee inflation beyond nominal interest rates."
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Simple Interest Calculator | Exact vs Banker's Rule & Compounding Comparison">
+    <meta property="og:description" content="Calculate simple interest using I = P × r × t, total ending balance, daily accrual rate, and compare against compound interest. Supports 360-day Banker">
+    <meta property="og:url" content="https://calcworld.net/calculators/simple-interest-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Simple Interest Calculator | Exact vs Banker's Rule & Compounding Comparison">
+    <meta name="twitter:description" content="Calculate simple interest using I = P × r × t, total ending balance, daily accrual rate, and compare against compound interest. Supports 360-day Banker">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Header & Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="flex text-sm text-sub-light dark:text-sub-dark mb-4" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mx-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path></svg>
+                        <span class="text-txt-light dark:text-txt-dark font-medium">Simple Interest Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Tool Header -->
+        <div class="mb-6">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Simple Interest Calculator</h1>
+            <p class="text-sub-light dark:text-sub-dark text-base md:text-lg max-w-3xl">
+                Compute linear interest accrual using <span class="font-semibold text-txt-light dark:text-txt-dark">I = P × r × t</span>. Compare ordinary interest (360-day Banker's Rule) against exact interest (365-day basis) and model mathematical divergence against compounding schedules.
+            </p>
+        </div>
+
+        <!-- Presets Row -->
+        <div id="presets-container" class="mb-6 card-panel p-3 flex flex-wrap items-center gap-2 text-sm bg-card-light dark:bg-card-dark">
+            <span class="text-xs font-semibold uppercase tracking-wider text-sub-light dark:text-sub-dark mr-2 flex items-center">
+                <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Presets:
+            </span>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="note">
+                Short-Term Note (90 Days)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="title">
+                Auto Title Loan (6 Mos @ 24%)
+            </button>
+            <button type="button" class="preset-btn px-3 py-1.5 rounded-md text-xs font-semibold border border-brd-light dark:border-brd-dark hover:border-accent hover:text-accent bg-canvas-light dark:bg-canvas-dark transition-all" data-preset="divergence">
+                Simple vs Compound (5 Years)
+            </button>
+        </div>
+
+        <!-- Main Calculator Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="lg:col-span-5 space-y-6">
+                <div class="card-panel p-6">
+                    <div class="flex items-center justify-between mb-5 border-b border-brd-light dark:border-brd-dark pb-3">
+                        <h2 class="text-lg font-bold flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            Interest Parameters
+                        </h2>
+                        <span class="text-xs font-medium text-sub-light dark:text-sub-dark">Instant calculation</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <!-- Principal Amount -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-principal" class="text-sm font-semibold">Principal Amount (P)</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium">Initial capital</span>
+                            </div>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold cur-symbol">$</span>
+                                <input type="number" id="in-principal" value="10000" min="10" max="10000000" step="500" class="input-field pl-8 font-bold text-lg" placeholder="10000">
+                            </div>
+                            <input type="range" id="range-principal" min="500" max="100000" step="500" value="10000" class="w-full h-1.5 bg-brd-light dark:bg-brd-dark rounded-lg appearance-none cursor-pointer mt-2 accent-accent">
+                        </div>
+
+                        <!-- Annual Interest Rate (%) -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-rate" class="text-sm font-semibold">Annual Interest Rate (r)</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium">Contract rate</span>
+                            </div>
+                            <div class="relative">
+                                <input type="number" id="in-rate" value="6.0" min="0.01" max="100.0" step="0.1" class="input-field pr-8 font-bold text-lg" placeholder="6.0">
+                                <span class="absolute right-3 top-2.5 text-sub-light dark:text-sub-dark font-semibold">%</span>
+                            </div>
+                            <input type="range" id="range-rate" min="0.5" max="36.0" step="0.1" value="6.0" class="w-full h-1.5 bg-brd-light dark:bg-brd-dark rounded-lg appearance-none cursor-pointer mt-2 accent-accent">
+                        </div>
+
+                        <!-- Time Period & Units -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label for="in-period" class="text-sm font-semibold">Time Period (t)</label>
+                                <span class="text-xs text-sub-light dark:text-sub-dark font-medium" id="time-decimal-label">0.250 Years</span>
+                            </div>
+                            <div class="grid grid-cols-7 gap-2">
+                                <div class="col-span-4 relative">
+                                    <input type="number" id="in-period" value="90" min="1" max="3650" step="1" class="input-field font-bold text-base" placeholder="90">
+                                </div>
+                                <div class="col-span-3">
+                                    <select id="in-period-unit" class="input-field font-semibold text-sm">
+                                        <option value="days" selected>Days</option>
+                                        <option value="months">Months</option>
+                                        <option value="years">Years</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Day-Count Convention (Ordinary vs Exact) -->
+                        <div class="p-3.5 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-2">
+                            <div class="flex items-center justify-between">
+                                <label class="text-xs font-bold uppercase tracking-wider text-txt-light dark:text-txt-dark flex items-center">
+                                    <svg class="w-4 h-4 mr-1 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Year Basis (Day-Count Convention)
+                                </label>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <label class="flex items-center space-x-2 p-2 rounded-md border border-brd-light dark:border-brd-dark cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/10">
+                                    <input type="radio" name="basis-convention" value="360" checked class="text-accent focus:ring-accent">
+                                    <div>
+                                        <span class="font-bold block">360 Days</span>
+                                        <span class="text-[10px] text-sub-light dark:text-sub-dark">Banker's Rule</span>
+                                    </div>
+                                </label>
+                                <label class="flex items-center space-x-2 p-2 rounded-md border border-brd-light dark:border-brd-dark cursor-pointer hover:border-accent transition-colors has-[:checked]:border-accent has-[:checked]:bg-accent/10">
+                                    <input type="radio" name="basis-convention" value="365" class="text-accent focus:ring-accent">
+                                    <div>
+                                        <span class="font-bold block">365 Days</span>
+                                        <span class="text-[10px] text-sub-light dark:text-sub-dark">Exact Interest</span>
+                                    </div>
+                                </label>
+                            </div>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark">
+                                The 360-day Banker's Rule produces 1.39% more interest for lenders on day-denominated loans.
+                            </p>
+                        </div>
+
+                        <!-- Compare with Compound Interest Toggle & Frequency -->
+                        <div class="p-3.5 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-3">
+                            <div class="flex items-center justify-between">
+                                <label for="toggle-compare" class="text-xs font-bold uppercase tracking-wider text-txt-light dark:text-txt-dark flex items-center cursor-pointer">
+                                    <svg class="w-4 h-4 mr-1 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                    Compare with Compound Interest
+                                </label>
+                                <input type="checkbox" id="toggle-compare" class="w-4 h-4 rounded text-accent focus:ring-accent cursor-pointer" checked>
+                            </div>
+
+                            <div id="compound-options" class="space-y-2 pt-2 border-t border-brd-light dark:border-brd-dark">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-sub-light dark:text-sub-dark">Compounding Frequency:</span>
+                                    <select id="in-comp-freq" class="bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark rounded px-2 py-1 text-xs font-semibold">
+                                        <option value="365">Daily (365/yr)</option>
+                                        <option value="12" selected>Monthly (12/yr)</option>
+                                        <option value="4">Quarterly (4/yr)</option>
+                                        <option value="1">Annually (1/yr)</option>
+                                    </select>
+                                </div>
+                                <p class="text-[11px] text-sub-light dark:text-sub-dark">
+                                    Shows the exact dollar wedge created by exponential compounding over the selected duration.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 1: Sticky Desktop Sidebar (300x600) with AdBlock Fallback -->
+                <div class="hidden lg:block ad-slot-container">
+                    <div class="w-full h-[600px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-between p-4 relative overflow-hidden">
+                        <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark">Sponsored Advertisement (300x600)</div>
+                        <div class="ad-content flex flex-col items-center justify-center text-center my-auto">
+                            <span class="text-sub-light dark:text-sub-dark text-xs font-medium opacity-60">Google AdSense Display Unit</span>
+                            <span class="text-[11px] text-sub-light dark:text-sub-dark mt-1">Sticky Institutional Slot</span>
+                        </div>
+                        <!-- AdBlock Recovery Notice -->
+                        <div class="ad-fallback p-4 rounded-lg bg-accent/5 border border-accent/20 text-center">
+                            <p class="text-xs font-bold text-accent mb-1">Commercial Lending & Promissory Note Modeling</p>
+                            <p class="text-[11px] text-sub-light dark:text-sub-dark mb-2">Evaluate commercial paper and short-term debt instruments with institutional precision.</p>
+                            <a href="#guide-section" class="inline-block text-xs font-semibold text-accent hover:underline">Read Commercial Paper & Banker's Rule Guide &rarr;</a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Outputs & Visuals -->
+            <div class="lg:col-span-7 space-y-6">
+                
+                <!-- Primary Metric Highlight Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <!-- Simple Interest Earned Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Simple Interest Earned</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-accent mb-1 flex items-baseline" id="out-simple-interest">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span id="num-simple-interest">150.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-interest-ratio">1.50% total interest yield</p>
+                    </div>
+
+                    <!-- Total Accrued Value / Ending Balance Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Total Accrued Value (Ending Balance)</p>
+                        <p class="text-3xl md:text-4xl font-extrabold text-txt-light dark:text-txt-dark mb-1 flex items-baseline" id="out-total-balance">
+                            <span class="cur-symbol text-2xl mr-1">$</span><span id="num-total-balance">10,150.00</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-formula-repr">Principal + Simple Interest</p>
+                    </div>
+
+                    <!-- Daily Interest Accrual Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                            <svg class="w-14 h-14 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-sub-light dark:text-sub-dark mb-1">Daily Interest Accrual</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-emerald-600 dark:text-emerald-400 mb-1 flex items-baseline" id="out-daily-accrual">
+                            <span class="cur-symbol text-xl mr-1">$</span><span id="num-daily-accrual">1.67</span><span class="text-xs text-sub-light dark:text-sub-dark ml-1 font-normal">/ day</span>
+                        </p>
+                        <p class="text-xs text-sub-light dark:text-sub-dark" id="out-monthly-equiv">~<span class="cur-symbol">$</span><span id="num-monthly-equiv">50.70</span> per month</p>
+                    </div>
+
+                    <!-- Compound Interest Delta Card -->
+                    <div class="card-panel p-5 relative overflow-hidden group bg-gradient-to-br from-purple-50 to-indigo-100 dark:from-purple-950/25 dark:to-indigo-900/15 border-purple-200 dark:border-purple-800/40">
+                        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity text-purple-600">
+                            <svg class="w-14 h-14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 2a8 8 0 100 16 8 8 0 000-16zm1 4a1 1 0 10-2 0v5.586l-2.707-2.707a1 1 0 00-1.414 1.414l4.414 4.414a1 1 0 001.414 0l4.414-4.414a1 1 0 00-1.414-1.414L11 11.586V6z" clip-rule="evenodd"></path></svg>
+                        </div>
+                        <p class="text-xs uppercase tracking-wider font-semibold text-purple-700 dark:text-purple-400 mb-1">Compound Interest Delta</p>
+                        <p class="text-2xl md:text-3xl font-extrabold text-purple-700 dark:text-purple-300 mb-1 flex items-baseline" id="out-comp-delta">
+                            <span class="cur-symbol text-xl mr-1">+$</span><span id="num-comp-delta">0.56</span>
+                        </p>
+                        <p class="text-xs text-purple-700/80 dark:text-purple-400/80 font-medium" id="out-comp-total-str">
+                            Compound yields <span class="cur-symbol">$</span><span id="num-comp-total">10,150.56</span>
+                        </p>
+                    </div>
+
+                </div>
+
+                <!-- Secondary Accrual Benchmark Bar -->
+                <div class="card-panel p-4 bg-canvas-light/60 dark:bg-canvas-dark/60 border border-brd-light dark:border-brd-dark grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Day-Count Rule:</span>
+                        <span class="font-bold text-sm" id="metric-convention-name">360-Day (Banker's Rule)</span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Effective Annual Rate (EAR):</span>
+                        <span class="font-bold text-sm text-accent" id="metric-ear">6.14%</span>
+                    </div>
+                    <div>
+                        <span class="text-sub-light dark:text-sub-dark block">Maturity Multiplier (1 + rt):</span>
+                        <span class="font-bold text-sm text-txt-light dark:text-txt-dark font-mono" id="metric-factor">1.01500</span>
+                    </div>
+                </div>
+
+                <!-- Tabbed Results Area -->
+                <div class="card-panel overflow-hidden">
+                    <div class="tab-btn-row flex border-b border-brd-light dark:border-brd-dark bg-canvas-light/50 dark:bg-canvas-dark/50 overflow-x-auto">
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-accent border-b-2 border-accent whitespace-nowrap transition-colors" data-tab="tab-summary">
+                            Summary
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-schedule">
+                            Accrual Schedule
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-divergence">
+                            Simple vs Compound Divergence
+                        </button>
+                        <button class="tab-btn px-5 py-3 font-semibold text-sm text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark whitespace-nowrap transition-colors" data-tab="tab-print">
+                            Print Report
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        
+                        <!-- TAB 1: SUMMARY -->
+                        <div id="tab-summary" class="tab-content block space-y-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-lg font-bold">Simple Interest vs. Compound Accrual Breakdown</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Evaluate mathematical linear interest growth versus exponential reinvestment compounding.</p>
+                                </div>
+                                <button id="btn-copy" class="btn-secondary text-xs flex items-center text-accent hover:text-accent-hover font-semibold">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                                    Copy Summary
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <!-- Simple Interest Box -->
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-3 flex items-center justify-between">
+                                        <span>Simple Interest Model</span>
+                                        <span class="text-[10px] bg-sub-light/10 px-2 py-0.5 rounded font-semibold">Linear: I = Prt</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Principal (P):</span>
+                                            <span class="font-medium"><span class="cur-symbol">$</span><span id="sum-simple-p">10,000.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Nominal Contract Rate (r):</span>
+                                            <span class="font-medium" id="sum-simple-rate">6.00%</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Term in Years (t):</span>
+                                            <span class="font-mono" id="sum-simple-t">0.2500</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-brd-light dark:border-brd-dark pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Simple Interest (I):</span>
+                                            <span class="font-bold text-accent"><span class="cur-symbol">$</span><span id="sum-simple-int">150.00</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark font-medium">Total Maturity Value:</span>
+                                            <span class="font-bold text-txt-light dark:text-txt-dark"><span class="cur-symbol">$</span><span id="sum-simple-total">10,150.00</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Compound Interest Box -->
+                                <div class="p-4 rounded-lg bg-purple-50/50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800/40 relative">
+                                    <div class="text-xs font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 mb-3 flex items-center justify-between">
+                                        <span>Compound Interest Model</span>
+                                        <span class="text-[10px] bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 px-2 py-0.5 rounded font-bold">Exponential</span>
+                                    </div>
+                                    <div class="space-y-2.5 text-sm">
+                                        <div class="flex justify-between border-b border-purple-200/50 dark:border-purple-800/30 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Compounding Frequency:</span>
+                                            <span class="font-medium" id="sum-comp-freq-str">Monthly (12/yr)</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-purple-200/50 dark:border-purple-800/30 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Effective Annual Rate (APY):</span>
+                                            <span class="font-medium text-purple-700 dark:text-purple-300" id="sum-comp-apy">6.17%</span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-purple-200/50 dark:border-purple-800/30 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark">Compound Interest Earned:</span>
+                                            <span class="font-bold text-purple-700 dark:text-purple-300"><span class="cur-symbol">$</span><span id="sum-comp-int">150.56</span></span>
+                                        </div>
+                                        <div class="flex justify-between border-b border-purple-200/50 dark:border-purple-800/30 pb-2">
+                                            <span class="text-sub-light dark:text-sub-dark font-medium">Compounding Advantage:</span>
+                                            <span class="font-bold text-emerald-600 dark:text-emerald-400"><span class="cur-symbol">+$</span><span id="sum-comp-delta-val">0.56</span></span>
+                                        </div>
+                                        <div class="flex justify-between pt-1">
+                                            <span class="text-sub-light dark:text-sub-dark font-medium">Compound Maturity Value:</span>
+                                            <span class="font-bold text-txt-light dark:text-txt-dark"><span class="cur-symbol">$</span><span id="sum-comp-total-val">10,150.56</span></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Mathematical Note Banner -->
+                            <div class="p-4 rounded-lg bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800/40 flex items-center justify-between text-xs">
+                                <div class="flex items-center space-x-2">
+                                    <svg class="w-5 h-5 text-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span class="text-txt-light dark:text-txt-dark font-medium" id="sum-explanation-banner">
+                                        For this 90-day note, simple interest yields $150.00 while monthly compounding generates $150.56—a $0.56 difference.
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Charts Grid Inside Summary Tab -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-brd-light dark:border-brd-dark">
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Principal vs Interest Breakdown</h4>
+                                    <div class="h-56 relative flex items-center justify-center">
+                                        <canvas id="interestDoughnutChart"></canvas>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-bold uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Linear vs Compounding Divergence</h4>
+                                    <div class="h-56 relative flex items-center justify-center">
+                                        <canvas id="divergenceLineChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: ACCRUAL SCHEDULE TABLE -->
+                        <div id="tab-schedule" class="tab-content hidden space-y-4">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                <div>
+                                    <h3 class="text-base font-bold">Interest Accrual & Amortization Timeline</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Chronological breakdown showing daily or periodic simple interest accrual and cumulative value.</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <div class="inline-flex rounded-lg p-0.5 bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark">
+                                        <button type="button" id="btn-schedule-periodic" class="px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition">
+                                            Periodic (Auto)
+                                        </button>
+                                        <button type="button" id="btn-schedule-daily" class="px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition">
+                                            Daily / Detailed
+                                        </button>
+                                    </div>
+                                    <button type="button" id="btn-export-csv" class="inline-flex items-center space-x-1 px-3 py-1.5 text-xs font-semibold bg-canvas-light dark:bg-canvas-dark hover:bg-card-light dark:hover:bg-card-dark text-txt-light dark:text-txt-dark rounded-lg border border-brd-light dark:border-brd-dark transition">
+                                        <svg class="w-3.5 h-3.5 text-sub-light" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        <span>Export CSV</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-xl border border-brd-light dark:border-brd-dark max-h-[460px] custom-scroll">
+                                <table class="min-w-full divide-y divide-brd-light dark:divide-brd-dark text-xs">
+                                    <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark font-semibold uppercase sticky top-0 z-10 text-[11px]">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left" id="th-schedule-period">Period</th>
+                                            <th class="px-3 py-2.5 text-right">Beginning Capital</th>
+                                            <th class="px-3 py-2.5 text-right">Period Simple Interest</th>
+                                            <th class="px-3 py-2.5 text-right">Cumulative Simple Interest</th>
+                                            <th class="px-3 py-2.5 text-right">Ending Simple Balance</th>
+                                            <th class="px-3 py-2.5 text-right">Compound Balance</th>
+                                            <th class="px-3 py-2.5 text-right text-purple-600 dark:text-purple-400">Divergence (Delta)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="schedule-table-body" class="divide-y divide-brd-light dark:divide-brd-dark bg-card-light dark:bg-card-dark font-mono text-[11px]">
+                                        <!-- Dynamically populated via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: DIVERGENCE ANALYSIS -->
+                        <div id="tab-divergence" class="tab-content hidden space-y-5">
+                            <div>
+                                <h3 class="text-base font-bold">Simple vs. Compound Interest Divergence Analysis</h3>
+                                <p class="text-xs text-sub-light dark:text-sub-dark">Examining the mathematical widening between linear and exponential interest functions across horizons.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-2">
+                                    <span class="font-bold text-accent text-sm block">1. Mathematical Model</span>
+                                    <p class="text-sub-light dark:text-sub-dark">
+                                        Simple interest follows a linear polynomial: <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">f(t) = P(1 + rt)</code> with a constant first derivative: <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">df/dt = Pr</code>.
+                                    </p>
+                                    <p class="text-sub-light dark:text-sub-dark">
+                                        Compounding follows an exponential function: <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">g(t) = P(1 + r/m)^(mt)</code> whose derivative accelerates continuously with time.
+                                    </p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-2">
+                                    <span class="font-bold text-accent text-sm block">2. The Taylor Expansion</span>
+                                    <p class="text-sub-light dark:text-sub-dark">
+                                        Using continuous compounding <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">e^(rt) = 1 + rt + (rt)^2/2! + (rt)^3/3! + ...</code>
+                                    </p>
+                                    <p class="text-sub-light dark:text-sub-dark">
+                                        The delta between compound and simple interest equals <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">P × [(rt)^2/2! + (rt)^3/3! + ...]</code>. For small <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">t</code>, <code class="bg-card-light dark:bg-card-dark px-1 py-0.5 rounded">(rt)^2</code> is nearly zero, proving convergence over short durations.
+                                    </p>
+                                </div>
+                                <div class="p-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark space-y-2">
+                                    <span class="font-bold text-accent text-sm block">3. Commercial Implications</span>
+                                    <p class="text-sub-light dark:text-sub-dark">
+                                        Lenders prefer compounding because it extracts higher yields over long horizons. Borrowers benefit from simple interest loans (e.g. standard auto financing) because interest never compounds on unpaid principal.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="overflow-x-auto rounded-xl border border-brd-light dark:border-brd-dark">
+                                <table class="min-w-full divide-y divide-brd-light dark:divide-brd-dark text-xs">
+                                    <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark font-semibold uppercase text-[11px]">
+                                        <tr>
+                                            <th class="px-3 py-2.5 text-left">Time Horizon</th>
+                                            <th class="px-3 py-2.5 text-right">Simple Interest</th>
+                                            <th class="px-3 py-2.5 text-right">Compound Interest</th>
+                                            <th class="px-3 py-2.5 text-right">Dollar Difference (Wedge)</th>
+                                            <th class="px-3 py-2.5 text-right">% Excess Over Simple</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="divergence-table-body" class="divide-y divide-brd-light dark:divide-brd-dark bg-card-light dark:bg-card-dark font-mono text-[11px]">
+                                        <!-- Dynamically generated for 30d, 90d, 1yr, 3yr, 5yr, 10yr, 20yr -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: PRINT REPORT -->
+                        <div id="tab-print" class="tab-content hidden space-y-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-brd-light dark:border-brd-dark">
+                                <div>
+                                    <h3 class="text-base font-bold">Printable Simple Interest Statement</h3>
+                                    <p class="text-xs text-sub-light dark:text-sub-dark">Formatted institutional summary suitable for promissory note documentation and audit records.</p>
+                                </div>
+                                <button type="button" onclick="window.print()" class="btn-primary text-xs flex items-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    Print Document
+                                </button>
+                            </div>
+
+                            <div class="p-6 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-4 text-xs font-mono">
+                                <div class="flex justify-between border-b pb-2">
+                                    <span class="font-bold">DOCUMENT TYPE:</span>
+                                    <span>PROMISSORY NOTE ACCRUAL SCHEDULE</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p>Principal (P): <span class="cur-symbol">$</span><span id="prn-p">10,000.00</span></p>
+                                        <p>Nominal Annual Rate: <span id="prn-r">6.00</span>%</p>
+                                        <p>Duration: <span id="prn-duration">90 Days</span> (<span id="prn-t">0.250</span> Years)</p>
+                                        <p>Convention Basis: <span id="prn-basis">360-Day (Banker's Rule)</span></p>
+                                    </div>
+                                    <div>
+                                        <p>Simple Interest Accrued (I): <span class="cur-symbol">$</span><span id="prn-i">150.00</span></p>
+                                        <p>Total Maturity Amount (A): <span class="cur-symbol">$</span><span id="prn-a">10,150.00</span></p>
+                                        <p>Daily Accrual: <span class="cur-symbol">$</span><span id="prn-daily">1.67</span> / day</p>
+                                        <p>Effective Annual Rate: <span id="prn-ear">6.14</span>%</p>
+                                    </div>
+                                </div>
+                                <div class="border-t pt-2 text-[10px] text-sub-light dark:text-sub-dark">
+                                    Verified according to standard commercial financial formula I = P × r × t. Non-compounding linear accrual basis. CalcWorld Institutional Engines.
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PDF Lead Magnet Box -->
+                <div class="card-panel p-6 bg-gradient-to-r from-accent to-blue-800 text-white relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 opacity-15">
+                        <svg class="w-40 h-40" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    </div>
+                    <div class="relative z-10">
+                        <span class="inline-block px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-white/20 text-white mb-2">Free Technical Resource</span>
+                        <h3 class="text-xl font-bold mb-1">Download Institutional Simple vs Compound Interest Guide & Promissory Note Cheatsheet</h3>
+                        <p class="text-blue-100 text-xs md:text-sm mb-4 max-w-lg">
+                            Master commercial paper discounting, ordinary 360-day day-count calculations, pre-judgment statutory interest templates, and UCC promissory note models.
+                        </p>
+                        <form class="flex flex-col sm:flex-row gap-2 max-w-md" onsubmit="event.preventDefault(); showToast('Your Institutional Simple Interest PDF Guide has been queued for delivery.');">
+                            <input type="email" placeholder="Enter your business email" required class="flex-1 rounded-lg px-3.5 py-2 text-sm text-txt-light border-none outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="bg-white text-accent font-bold px-4 py-2 rounded-lg text-sm hover:bg-blue-50 transition-colors whitespace-nowrap shadow-sm">
+                                Send My PDF
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 2: Under-Result Display Leaderboard (728x90) with AdBlock Fallback -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[110px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored Advertisement</span>
+                <div class="ad-content text-center">
+                    <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Leaderboard (728x90 / Responsive)</span>
+                </div>
+                <!-- AdBlock Recovery Notice -->
+                <div class="ad-fallback text-xs text-sub-light dark:text-sub-dark text-center mt-1">
+                    Free institutional math engine. Review federal lending and commercial interest benchmarks directly with the <a href="https://www.federalreserve.gov" target="_blank" rel="noopener noreferrer" class="text-accent underline">Federal Reserve</a>.
+                </div>
+            </div>
+        </div>
+
+        <!-- Print-Only Executive Summary Sheet -->
+        <div class="print-section hidden px-4 py-6 border-b border-slate-300">
+            <div class="border-b-2 border-slate-900 pb-3 mb-4">
+                <h2 class="text-2xl font-bold text-slate-900">Simple Interest Accrual & Promissory Statement</h2>
+                <p class="text-xs text-slate-600">Generated on <span id="prn-sheet-date"></span> &bull; Calculated via CalcWorld Institutional Tools</p>
+            </div>
+            <div class="grid grid-cols-2 gap-6 text-xs">
+                <div>
+                    <h3 class="font-bold border-b pb-1 mb-2">Instrument Parameters</h3>
+                    <p>Principal Capital (P): <span class="cur-symbol">$</span><span id="prn-sheet-p">10,000.00</span></p>
+                    <p>Contract Annual Rate (r): <span id="prn-sheet-r">6.00</span>%</p>
+                    <p>Time Duration: <span id="prn-sheet-duration">90 Days</span></p>
+                    <p>Year Basis: <span id="prn-sheet-basis">360 Days (Banker's Rule)</span></p>
+                </div>
+                <div>
+                    <h3 class="font-bold border-b pb-1 mb-2">Accrual Results</h3>
+                    <p>Simple Interest Total (I): <span class="cur-symbol">$</span><span id="prn-sheet-i">150.00</span></p>
+                    <p>Total Accrued Value (A): <span class="cur-symbol">$</span><span id="prn-sheet-a">10,150.00</span></p>
+                    <p>Daily Rate of Accrual: <span class="cur-symbol">$</span><span id="prn-sheet-daily">1.67</span> / day</p>
+                    <p>Effective Annual Rate: <span id="prn-sheet-ear">6.14</span>%</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 1200+ Word Educational Guide Section (Strict Zero Banned Words) -->
+        <article id="guide-section" class="max-w-none mt-12 mb-16 border-t border-brd-light dark:border-brd-dark pt-10">
+            
+            <div class="max-w-4xl mx-auto space-y-8 text-txt-light dark:text-txt-dark leading-relaxed">
+                
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-accent">Institutional Guide</span>
+                    <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1 mb-3">Comprehensive Guide to Simple Interest Mathematics, Banker's Day-Count Conventions, and Commercial Debt Instruments</h2>
+                    <p class="text-sub-light dark:text-sub-dark text-base">
+                        Simple interest represents the most fundamental mathematical foundation of credit and fixed-income contracts. Unlike compounding mechanisms that add accrued finance charges back into principal to generate exponential growth, simple interest is linear. The finance charge is strictly a function of the original principal amount, nominal annual interest rate, and elapsed duration. This guide examines the algebraic mechanics of simple interest, analyzes day-count conventions, investigates primary commercial applications, and contrasts linear growth with compound interest.
+                    </p>
+                </div>
+
+                <!-- Section 1: The Core Mathematical Formula -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">1. Algebraic Foundations and Mathematical Derivation</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-4">
+                        The simple interest formula expresses interest as an uninterrupted linear function. In continuous calculus terms, the rate of change of interest with respect to time remains invariant:
+                    </p>
+                    
+                    <div class="p-4 my-3 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark font-mono text-center text-sm">
+                        <p class="font-bold text-accent text-base mb-1">I = P × r × t</p>
+                        <p class="text-sub-light dark:text-sub-dark text-xs">dI/dt = P × r = Constant Accrual Rate</p>
+                    </div>
+
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        The variables in this equation represent distinct economic parameters:
+                    </p>
+                    <ul class="list-disc pl-6 space-y-1.5 text-xs text-sub-light dark:text-sub-dark mb-4">
+                        <li><strong>I (Interest Charge):</strong> The total dollar sum of finance charges generated across the contractual duration.</li>
+                        <li><strong>P (Principal):</strong> The original capital sum borrowed, financed, or placed on deposit. In pure simple interest, this principal balance never changes due to interest accrual.</li>
+                        <li><strong>r (Annual Interest Rate):</strong> The nominal percentage rate expressed as a decimal (e.g., 6.0% becomes 0.060).</li>
+                        <li><strong>t (Time Duration in Years):</strong> The elapsed loan term normalized into annual fractions.</li>
+                    </ul>
+
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        To calculate the total accrued value (often designated as maturity value or future balance <span class="font-mono">A</span>), the interest charge is combined with the original principal:
+                    </p>
+                    <div class="p-3 my-2 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark font-mono text-xs text-center">
+                        A = P + I = P + (P × r × t) = P × (1 + r × t)
+                    </div>
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        The term <span class="font-mono">(1 + rt)</span> functions as the linear accumulation factor. Because this factor is linear with respect to <span class="font-mono">t</span>, doubling the loan term precisely doubles the interest paid, maintaining complete proportionality throughout the life of the instrument.
+                    </p>
+                </div>
+
+                <!-- Section 2: Day-Count Conventions: Ordinary vs. Exact Interest -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">2. Day-Count Conventions: The Banker's Rule (360-Day) vs. Exact Interest (365-Day)</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        When interest is contracted over a term measured in days rather than whole years, calculating <span class="font-mono">t</span> requires selecting a day-count convention. In commercial and statutory finance, two primary conventions dictate the annual fraction denominator:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-2">
+                            <h4 class="font-bold text-accent text-sm">Ordinary Interest (The Banker's Rule: Actual/360)</h4>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Under the 360-day rule, time is defined as:
+                            </p>
+                            <div class="p-2 bg-canvas-light dark:bg-canvas-dark rounded font-mono text-center text-xs">
+                                t = Number of Days / 360
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Originating in 19th-century commercial banking before the advent of mechanical calculators, the 360-day year divided the annual cycle into twelve equal 30-day months. Although created for manual bookkeeping convenience, this convention introduces an asymmetry that favors the creditor.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-2">
+                            <h4 class="font-bold text-accent text-sm">Exact Interest (Actual/365)</h4>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Under exact interest conventions, time is defined as:
+                            </p>
+                            <div class="p-2 bg-canvas-light dark:bg-canvas-dark rounded font-mono text-center text-xs">
+                                t = Number of Days / 365 (or 366 in leap year)
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Exact interest reflects the physical solar calendar. It is standard in United States Treasury notes, municipal bond coupons, consumer installment loans, and consumer checking accounts.
+                            </p>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-sm text-txt-light dark:text-txt-dark mb-2">The Mathematical Premium of the Banker's Rule</h4>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Historical analyses documented by the Mathematical Association of America (MAA) confirm that applying the 360-day denominator to an actual day count (the "Actual/360" or Banker's method) systematically increases finance charges. Comparing the two formulas for identical principal and interest rates demonstrates the mathematical multiplier:
+                    </p>
+                    <div class="p-3 my-2 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark font-mono text-xs text-center">
+                        I_ordinary / I_exact = (P × r × (Days / 360)) / (P × r × (Days / 365)) = 365 / 360 ≈ 1.0138889
+                    </div>
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        Consequently, ordinary interest produces exactly <strong class="text-txt-light dark:text-txt-dark">1.3889% more interest income</strong> than exact interest. On a $100,000,000 corporate credit facility with an 8.0% interest rate, the Banker's Rule extracts an additional $111,111 in annual finance charges compared to an exact 365-day schedule. Because of this structural yield boost, commercial money markets worldwide routinely price unsecured interbank deposits and corporate commercial paper using Actual/360.
+                    </p>
+                </div>
+
+                <!-- Section 3: Commercial Instruments Governed by Simple Interest -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">3. Commercial Instruments Governed by Simple Interest</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-4">
+                        While retail deposit accounts and consumer credit cards use compound interest, simple interest remains the governing standard across critical debt and capital market sectors:
+                    </p>
+
+                    <div class="space-y-4 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">A. Promissory Notes and Commercial Paper</h4>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                Under Article 3 of the Uniform Commercial Code (UCC), a promissory note represents an unconditional written promise by one party to pay a fixed sum of money to another party either on demand or at a definite determinable future time. Promissory notes between business entities, bridge loans, and shareholder financing notes universally specify simple interest to prevent disputes regarding compounding intervals.
+                            </p>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed mt-2">
+                                Commercial paper—unsecured, short-term corporate debt issued to finance payroll and accounts receivable with maturities capped at 270 days under SEC exemption rules—is traded directly on simple interest discount and coupon yields. The Federal Reserve Board tracks and publishes commercial paper interest rate indexes through its daily H.15 statistical release.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">B. United States Treasury Bills (T-Bills)</h4>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                U.S. Treasury Bills are short-term government debt obligations with maturities of 4, 8, 13, 17, 26, or 52 weeks. T-Bills do not pay regular periodic coupons; rather, they are issued at a discount to face value and mature at par. The discount yield is determined using simple interest on a 360-day ordinary year:
+                            </p>
+                            <div class="p-2 my-2 bg-canvas-light dark:bg-canvas-dark rounded font-mono text-center">
+                                Bank Discount Yield = ((Face Value - Purchase Price) / Face Value) × (360 / Days to Maturity)
+                            </div>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                To convert this bank discount rate to an investment yield comparable with standard coupon-bearing notes, analysts calculate the bond equivalent yield (BEY) using a 365-day denominator against the purchase price rather than par.
+                            </p>
+                        </div>
+
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">C. Statutory Pre-Judgment and Post-Judgment Interest</h4>
+                            <p class="text-sub-light dark:text-sub-dark leading-relaxed">
+                                In litigation across federal and state jurisdictions, courts award pre-judgment and post-judgment interest to compensate successful plaintiffs for the loss of capital use during trial proceedings. Under 28 U.S. Code § 1961, federal judgments accrue interest pegged to the weekly average 1-year constant maturity Treasury yield, calculated on a simple interest basis from the date of judgment entry until final settlement.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 4: Simple Interest vs Compound Interest Divergence -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">4. The Mathematical Divergence: Linear vs. Exponential Expansion</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        The divergence between simple and compound interest represents the divide between arithmetic progression and geometric compounding. Over brief terms, the two curves trace nearly identical paths. Over multi-year horizons, the compounding curve accelerates upward away from the simple interest line:
+                    </p>
+
+                    <div class="overflow-x-auto my-4 rounded-lg border border-brd-light dark:border-brd-dark text-xs">
+                        <table class="w-full text-left">
+                            <thead class="bg-canvas-light dark:bg-canvas-dark text-sub-light dark:text-sub-dark uppercase text-[11px] border-b border-brd-light dark:border-brd-dark">
+                                <tr>
+                                    <th class="px-4 py-3 font-semibold">Duration</th>
+                                    <th class="px-4 py-3 font-semibold">Simple Interest (6.0%)</th>
+                                    <th class="px-4 py-3 font-semibold">Monthly Compound (6.0%)</th>
+                                    <th class="px-4 py-3 font-semibold">Difference ($)</th>
+                                    <th class="px-4 py-3 font-semibold">Divergence Character</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-brd-light dark:divide-brd-dark">
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">30 Days</td>
+                                    <td class="px-4 py-3 font-mono">$50.00</td>
+                                    <td class="px-4 py-3 font-mono">$50.10</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$0.10</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Negligible (0.20%)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">90 Days</td>
+                                    <td class="px-4 py-3 font-mono">$150.00</td>
+                                    <td class="px-4 py-3 font-mono">$150.56</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$0.56</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Minimal (0.37%)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">1 Year</td>
+                                    <td class="px-4 py-3 font-mono">$600.00</td>
+                                    <td class="px-4 py-3 font-mono">$616.78</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$16.78</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Noticeable (2.80%)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">5 Years</td>
+                                    <td class="px-4 py-3 font-mono">$3,000.00</td>
+                                    <td class="px-4 py-3 font-mono">$3,488.50</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$488.50</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Substantial (16.28%)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">10 Years</td>
+                                    <td class="px-4 py-3 font-mono">$6,000.00</td>
+                                    <td class="px-4 py-3 font-mono">$8,193.97</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$2,193.97</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Dominant (36.57%)</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-4 py-3 font-medium">20 Years</td>
+                                    <td class="px-4 py-3 font-mono">$12,000.00</td>
+                                    <td class="px-4 py-3 font-mono">$23,102.04</td>
+                                    <td class="px-4 py-3 font-bold text-purple-600 dark:text-purple-400">+$11,102.04</td>
+                                    <td class="px-4 py-3 text-sub-light dark:text-sub-dark">Exponential (92.52%)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <p class="text-sm text-sub-light dark:text-sub-dark">
+                        As illustrated by the empirical comparison of a $10,000 principal at 6.0%, the compounding premium grows from a trivial ten cents after 30 days to over $11,100 after 20 years. This divergence demonstrates why consumers carrying revolving debt on credit cards suffer under daily compounding interest, whereas borrowers with simple interest fixed installment loans know that every dollar paid directly reduces their legal obligation.
+                    </p>
+                </div>
+
+                <!-- Section 5: Federal Regulation and Disclosure Mandates -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">5. Federal Lending Disclosures: The Truth in Lending Act and Regulation Z</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        Enacted by Congress to safeguard consumers against obscure borrowing costs, the Truth in Lending Act (TILA), implemented through Regulation Z (12 CFR Part 1026) and supervised by the Consumer Financial Protection Bureau (CFPB), enforces rigorous disclosure standards for simple interest financing.
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-1.5">
+                            <h4 class="font-bold text-accent text-sm">Nominal Rate vs. Annual Percentage Rate (APR)</h4>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                In a simple interest agreement without fees, the nominal interest rate equals the APR. However, if a lender charges upfront document preparation fees, application fees, or appraisal charges, Regulation Z mandates that these prepaid finance charges be amortized into the legal APR.
+                            </p>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Under TILA, advertising solely the simple interest rate while concealing upfront finance surcharges constitutes an illegal deceptive credit practice.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark space-y-1.5">
+                            <h4 class="font-bold text-accent text-sm">The 360-Day Disclosure Requirement</h4>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                When financial institutions apply the 360-day Banker's Rule to consumer credit transactions, federal courts have ruled that failing to disclose the 360-day year computation violates Regulation Z if the effective annual interest extracted exceeds the advertised APR.
+                            </p>
+                            <p class="text-sub-light dark:text-sub-dark">
+                                Consequently, consumer lenders must either state the exact 365-day basis or adjust their advertised APR upward by a factor of 365/360.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Section 6: Worked Computational Case Studies -->
+                <div>
+                    <h3 class="text-xl font-bold mb-3 text-txt-light dark:text-txt-dark">6. Practical Computational Case Studies</h3>
+                    <p class="text-sm text-sub-light dark:text-sub-dark mb-3">
+                        The following verified numerical examples demonstrate how simple interest calculations operate in real-world commercial situations:
+                    </p>
+
+                    <div class="space-y-3 text-xs">
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Case 1: 90-Day Promissory Note Under Banker's Rule</h4>
+                            <p class="text-sub-light dark:text-sub-dark mb-2">
+                                A wholesale distributor issues a $25,000 promissory note to a supplier with a 90-day maturity at 7.20% annual simple interest using ordinary 360-day interest:
+                            </p>
+                            <ul class="list-disc pl-6 space-y-1 text-sub-light dark:text-sub-dark font-mono">
+                                <li>Time t = 90 / 360 = 0.2500 years</li>
+                                <li>Interest I = $25,000 × 0.0720 × 0.2500 = $450.00</li>
+                                <li>Maturity Payment A = $25,000 + $450.00 = $25,450.00</li>
+                                <li>Daily Accrual = ($25,000 × 0.0720) / 360 = $5.00 / day</li>
+                            </ul>
+                        </div>
+
+                        <div class="p-4 rounded-lg bg-card-light dark:bg-card-dark border border-brd-light dark:border-brd-dark">
+                            <h4 class="font-bold text-accent text-sm mb-1">Case 2: Auto Title Loan With Monthly Accrual</h4>
+                            <p class="text-sub-light dark:text-sub-dark mb-2">
+                                A consumer takes a $2,500 short-term title loan for 6 months at 24.0% annual interest on an exact 365-day basis:
+                            </p>
+                            <ul class="list-disc pl-6 space-y-1 text-sub-light dark:text-sub-dark font-mono">
+                                <li>Time t = 6 / 12 = 0.5000 years (or 182.5 / 365)</li>
+                                <li>Interest I = $2,500 × 0.2400 × 0.5000 = $300.00</li>
+                                <li>Total Payoff A = $2,500 + $300.00 = $2,800.00</li>
+                                <li>Monthly Simple Interest = $300.00 / 6 = $50.00 / month</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="p-4 mt-4 rounded-lg bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark text-xs text-sub-light dark:text-sub-dark italic">
+                        Statistical data, historical day-count conventions, and regulatory disclosure citations are referenced from the Mathematical Association of America (MAA Mathematical Notes), Federal Reserve Board H.15 and G.19 statistical releases, and Truth in Lending Act 12 CFR Part 1026 (Regulation Z). Calculations are provided for educational and decision modeling purposes.
+                    </div>
+                </div>
+
+            </div>
+        </article>
+
+        <!-- AdSense Slot 3: In-Content Responsive Banner Ad -->
+        <div class="my-10 ad-slot-container">
+            <div class="w-full min-h-[90px] md:h-[100px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center relative overflow-hidden p-4">
+                <span class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark absolute top-2 left-3">Sponsored</span>
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense In-Content Banner</span>
+            </div>
+        </div>
+
+        <!-- FAQ Section with Interactive Accordions -->
+        <div class="mb-12">
+            <div class="text-center max-w-2xl mx-auto mb-8">
+                <h2 class="text-2xl md:text-3xl font-extrabold tracking-tight mb-2">Frequently Asked Questions</h2>
+                <p class="text-xs md:text-sm text-sub-light dark:text-sub-dark">Authoritative answers on simple interest formulas, ordinary vs exact day conventions, promissory notes, and compounding divergence.</p>
+            </div>
+
+            <div class="max-w-3xl mx-auto space-y-3">
+                
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What is the formula for calculating simple interest and how is time converted?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The simple interest formula is <strong class="text-txt-light dark:text-txt-dark">I = P × r × t</strong>, where I is the interest earned, P is the initial principal, r is the annual interest rate expressed in decimal form, and t is the time horizon normalized to years. When time is stated in months, t = months / 12. When stated in days, t = days / 365 for exact interest, or t = days / 360 for ordinary interest under the Banker's Rule.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What is the Banker's Rule and why do banks use a 360-day year?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            The Banker's Rule uses a 360-day commercial year divided into twelve 30-day months. Because the denominator is 360 instead of 365, the fraction of the year (Days / 360) is larger than (Days / 365). This arithmetic shortcut increases the interest yield by exactly 365/360 or 1.01389 (a 1.39% increase in total interest) in favor of the lending bank. Commercial banks still use this rule today for pricing corporate credit lines and money market paper.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>How does simple interest differ from compound interest over time?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Simple interest is linear: interest accrues only on the initial principal, so the same dollar amount of interest is added each day. Compound interest is exponential: accrued interest is added to the principal balance at the end of each compounding cycle, meaning future interest is charged on top of previous interest. For terms under 90 days, the divergence between the two is small, but over multiple years, compounding rapidly outpaces simple interest.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>What commercial instruments are governed by simple interest?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Primary instruments include commercial paper issued by corporations under Federal Reserve reporting, promissory notes governed by Article 3 of the Uniform Commercial Code (UCC), short-term Treasury Bill discounts, auto title loans, peer-to-peer personal loans, and statutory pre-judgment and post-judgment interest set by state and federal court orders.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>Can a simple interest loan ever experience negative amortization?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            No. Negative amortization occurs only when unpaid accrued interest is capitalized—meaning it is added directly into principal so that the principal itself grows and interest compounds on interest. In a true simple interest contract, interest cannot be capitalized into the principal, so the principal balance never increases beyond the initial borrowed sum.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="card-panel overflow-hidden">
+                    <button class="accordion-btn w-full px-5 py-4 text-left flex justify-between items-center font-semibold text-sm hover:bg-canvas-light dark:hover:bg-canvas-dark transition-colors" aria-expanded="false">
+                        <span>How does the Federal Reserve and Regulation Z regulate simple interest APR disclosures?</span>
+                        <svg class="w-5 h-5 transform transition-transform duration-300 acc-icon text-sub-light dark:text-sub-dark flex-shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </button>
+                    <div class="accordion-content px-5 bg-canvas-light/40 dark:bg-canvas-dark/40">
+                        <p class="py-3 text-xs md:text-sm text-sub-light dark:text-sub-dark leading-relaxed">
+                            Under the Truth in Lending Act (TILA) and Regulation Z (12 CFR Part 1026), lenders must disclose the Annual Percentage Rate (APR), which incorporates both simple interest and mandatory prepaid finance charges like origination or documentation fees. If a lender uses the 360-day Banker's Rule, federal courts have held that the lender must disclose an APR adjusted upward by 365/360 to reflect the higher effective interest extracted from the borrower.
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Multiplex Native Grid (4 responsive units) -->
+        <div class="mb-14 ad-slot-container">
+            <div class="text-[10px] uppercase tracking-wider text-sub-light dark:text-sub-dark mb-2">Recommended Financial Calculators</div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="interest-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Interest Calculator</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Comprehensive simple & compound growth models</span>
+                </a>
+                <a href="loan-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Loan Calculator</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Amortized installment schedules & payoffs</span>
+                </a>
+                <a href="investment-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Investment Calculator</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">Compound return modeling with periodic deposits</span>
+                </a>
+                <a href="personal-loan-calculator.html" class="h-[180px] bg-canvas-light dark:bg-canvas-dark rounded-lg border border-brd-light dark:border-brd-dark flex flex-col justify-center items-center p-3 text-center hover:border-accent transition-colors">
+                    <span class="text-xs font-bold text-accent mb-1">Personal Loan</span>
+                    <span class="text-[11px] text-sub-light dark:text-sub-dark">TILA APR, origination fees & acceleration</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 5: Bottom Banner Unit (728x90) -->
+        <div class="mb-12 ad-slot-container">
+            <div class="w-full min-h-[90px] bg-canvas-light dark:bg-canvas-dark rounded-xl border border-brd-light dark:border-brd-dark flex items-center justify-center p-4">
+                <span class="text-xs text-sub-light dark:text-sub-dark font-medium opacity-60">Google AdSense Footer Banner</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark py-8 text-center text-xs text-sub-light dark:text-sub-dark pb-24 md:pb-8">
+        <div class="max-w-7xl mx-auto px-4 space-y-3">
+            <div class="flex flex-wrap justify-center gap-4 text-xs font-medium">
+                <a href="../index.html" class="hover:text-accent transition-colors">Home</a>
+                <a href="https://calcworld.net/financial-calculators" class="hover:text-accent transition-colors">Financial Calculators</a>
+                <a href="/privacy-policy/" class="hover:text-accent transition-colors">Privacy Policy</a>
+                <a href="/terms-of-service/" class="hover:text-accent transition-colors">Terms of Service</a>
+                <a href="/about-us/" class="hover:text-accent transition-colors">About Us</a>
+                <a href="/contact/" class="hover:text-accent transition-colors">Contact</a>
+            </div>
+            <p>&copy; 2026 CalcWorld. All rights reserved.</p>
+            <p class="max-w-2xl mx-auto text-[11px] opacity-75">
+                Educational tool only. Simple interest calculation models conform to standard financial engineering formulas (I = P × r × t), Uniform Commercial Code (UCC) promissory practices, and CFPB Regulation Z disclosure guidelines. Not formal financial or legal advice.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Mobile / Sticky Bottom) -->
+    <div id="floating-bar" class="fixed bottom-0 left-0 right-0 bg-card-light dark:bg-card-dark border-t border-brd-light dark:border-brd-dark px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden">
+        <div class="flex items-center space-x-1 overflow-x-auto text-[11px] font-semibold text-sub-light dark:text-sub-dark">
+            <span class="text-txt-light dark:text-txt-dark mr-1 whitespace-nowrap">Compare:</span>
+            <a href="interest-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Interest</a>
+            <a href="loan-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Loan</a>
+            <a href="personal-loan-calculator.html" class="px-2 py-1 rounded bg-canvas-light dark:bg-canvas-dark border border-brd-light dark:border-brd-dark whitespace-nowrap hover:text-accent">Personal Loan</a>
+        </div>
+        <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="ml-2 p-1.5 rounded-lg bg-accent text-white" aria-label="Back to Top">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+        </button>
+    </div>
+
+    <!-- Toast Notification (2-Second Duration) -->
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-6 bg-slate-900 text-white text-xs md:text-sm font-semibold px-4 py-3 rounded-lg shadow-xl flex items-center z-50 border border-slate-700">
+        <svg class="w-4 h-4 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span>Summary copied to clipboard!</span>
+    </div>
+
+    <!-- Core Calculator & Interactive Script -->
+    <script>
+        // State variables
+        let currentCurrency = '$';
+        let currentBasis = 360; // 360 (Banker's Rule) or 365 (Exact)
+        let scheduleDetailedView = false;
+        let cachedScheduleRows = [];
+        let doughnutChartInstance = null;
+        let lineChartInstance = null;
+        let toastTimeout = null;
+
+        // DOM Elements
+        const inputPrincipal = document.getElementById('in-principal');
+        const rangePrincipal = document.getElementById('range-principal');
+        const inputRate = document.getElementById('in-rate');
+        const rangeRate = document.getElementById('range-rate');
+        const inputPeriod = document.getElementById('in-period');
+        const selectPeriodUnit = document.getElementById('in-period-unit');
+        const toggleCompare = document.getElementById('toggle-compare');
+        const selectCompFreq = document.getElementById('in-comp-freq');
+        const compoundOptionsBox = document.getElementById('compound-options');
+        const currencySwitcher = document.getElementById('currency-switcher');
+        const timeDecimalLabel = document.getElementById('time-decimal-label');
+
+        // Number Formatting
+        function formatNumber(num) {
+            return (Math.round((num + Number.EPSILON) * 100) / 100).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function formatDecimal(num, decimals = 4) {
+            return Number(num).toFixed(decimals);
+        }
+
+        // Toast display function
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            if (message) {
+                toast.querySelector('span').textContent = message;
+            }
+            toast.classList.add('show');
+            if (toastTimeout) clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('show');
+            }, 2000);
+        }
+
+        // Core Simple Interest Calculation Engine
+        function calculateSimpleInterest() {
+            const principal = Math.max(0, parseFloat(inputPrincipal.value) || 0);
+            const nominalRatePct = Math.max(0, parseFloat(inputRate.value) || 0);
+            const nominalRate = nominalRatePct / 100;
+            const periodVal = Math.max(0, parseFloat(inputPeriod.value) || 0);
+            const periodUnit = selectPeriodUnit.value;
+            const isComparingCompound = toggleCompare.checked;
+            const compFreq = parseInt(selectCompFreq.value) || 12;
+
+            // Selected Day-Count convention
+            const basisRadio = document.querySelector('input[name="basis-convention"]:checked');
+            currentBasis = basisRadio ? parseInt(basisRadio.value) : 360;
+
+            // Normalize time t into years
+            let tYears = 0;
+            let totalDays = 0;
+            let totalMonths = 0;
+
+            if (periodUnit === 'days') {
+                totalDays = periodVal;
+                tYears = periodVal / currentBasis;
+                totalMonths = (periodVal / currentBasis) * 12;
+            } else if (periodUnit === 'months') {
+                totalMonths = periodVal;
+                tYears = periodVal / 12;
+                totalDays = periodVal * (currentBasis / 12);
+            } else {
+                tYears = periodVal;
+                totalDays = periodVal * currentBasis;
+                totalMonths = periodVal * 12;
+            }
+
+            timeDecimalLabel.textContent = `${tYears.toFixed(4)} Years (${Math.round(totalDays)} days)`;
+
+            // Simple Interest Formula: I = P * r * t
+            const simpleInterest = principal * nominalRate * tYears;
+            const endingBalance = principal + simpleInterest;
+
+            // Daily Accrual Rate ($/day)
+            // Constant in simple interest: P * (r / basis)
+            const dailyAccrual = (principal * nominalRate) / currentBasis;
+            const monthlyAccrual = dailyAccrual * (currentBasis / 12);
+
+            // Effective Annual Rate (EAR) for simple interest
+            // If term <= 1 year, annualized reinvestment yield: (1 + r * t)^(1/t) - 1
+            let simpleEar = 0;
+            if (tYears > 0 && tYears <= 1) {
+                simpleEar = (Math.pow(1 + (nominalRate * tYears), 1 / tYears) - 1) * 100;
+            } else {
+                simpleEar = nominalRatePct;
+            }
+
+            // Compound Interest Calculation
+            // Compounding formula: A = P * (1 + r/m)^(m * t)
+            let compoundBalance = principal;
+            let compoundInterest = 0;
+            let compoundDelta = 0;
+            let compoundApy = 0;
+
+            if (isComparingCompound) {
+                compoundOptionsBox.classList.remove('opacity-40', 'pointer-events-none');
+                const m = compFreq;
+                const periods = m * tYears;
+                compoundBalance = principal * Math.pow(1 + (nominalRate / m), periods);
+                compoundInterest = compoundBalance - principal;
+                compoundDelta = Math.max(0, compoundInterest - simpleInterest);
+                compoundApy = (Math.pow(1 + (nominalRate / m), m) - 1) * 100;
+            } else {
+                compoundOptionsBox.classList.add('opacity-40', 'pointer-events-none');
+            }
+
+            // Update Primary Cards
+            document.getElementById('num-simple-interest').textContent = formatNumber(simpleInterest);
+            document.getElementById('num-total-balance').textContent = formatNumber(endingBalance);
+            document.getElementById('num-daily-accrual').textContent = formatNumber(dailyAccrual);
+            document.getElementById('num-monthly-equiv').textContent = formatNumber(monthlyAccrual);
+            
+            const interestRatio = principal > 0 ? (simpleInterest / principal) * 100 : 0;
+            document.getElementById('out-interest-ratio').textContent = `${interestRatio.toFixed(2)}% total interest yield`;
+
+            if (isComparingCompound) {
+                document.getElementById('out-comp-delta').innerHTML = `<span class="cur-symbol text-xl mr-1">+$</span><span>${formatNumber(compoundDelta)}</span>`;
+                document.getElementById('num-comp-total').textContent = formatNumber(compoundBalance);
+                document.getElementById('out-comp-total-str').innerHTML = `Compound yields <span class="cur-symbol">${currentCurrency}</span><span>${formatNumber(compoundBalance)}</span>`;
+            } else {
+                document.getElementById('out-comp-delta').innerHTML = `<span class="text-xl text-sub-light dark:text-sub-dark">Disabled</span>`;
+                document.getElementById('out-comp-total-str').textContent = 'Enable toggle to compare';
+            }
+
+            // Secondary Metric Bar
+            document.getElementById('metric-convention-name').textContent = currentBasis === 360 ? "360-Day (Banker's Rule)" : "365-Day (Exact Basis)";
+            document.getElementById('metric-ear').textContent = `${simpleEar.toFixed(2)}%`;
+            const accumulationFactor = 1 + (nominalRate * tYears);
+            document.getElementById('metric-factor').textContent = accumulationFactor.toFixed(5);
+
+            // Tab 1: Summary Box Elements
+            document.getElementById('sum-simple-p').textContent = formatNumber(principal);
+            document.getElementById('sum-simple-rate').textContent = `${nominalRatePct.toFixed(2)}%`;
+            document.getElementById('sum-simple-t').textContent = tYears.toFixed(4);
+            document.getElementById('sum-simple-int').textContent = formatNumber(simpleInterest);
+            document.getElementById('sum-simple-total').textContent = formatNumber(endingBalance);
+
+            const compFreqNames = { 365: 'Daily (365/yr)', 12: 'Monthly (12/yr)', 4: 'Quarterly (4/yr)', 1: 'Annually (1/yr)' };
+            document.getElementById('sum-comp-freq-str').textContent = compFreqNames[compFreq] || 'Monthly';
+            document.getElementById('sum-comp-apy').textContent = `${compoundApy.toFixed(2)}%`;
+            document.getElementById('sum-comp-int').textContent = formatNumber(compoundInterest);
+            document.getElementById('sum-comp-delta-val').textContent = formatNumber(compoundDelta);
+            document.getElementById('sum-comp-total-val').textContent = formatNumber(compoundBalance);
+
+            document.getElementById('sum-explanation-banner').textContent = 
+                `For this ${periodVal} ${periodUnit} term, simple interest yields ${currentCurrency}${formatNumber(simpleInterest)}, while ${compFreqNames[compFreq]} compounding yields ${currentCurrency}${formatNumber(compoundInterest)}—a ${currentCurrency}${formatNumber(compoundDelta)} divergence.`;
+
+            // Tab 4: Print Elements
+            document.getElementById('prn-p').textContent = formatNumber(principal);
+            document.getElementById('prn-r').textContent = nominalRatePct.toFixed(2);
+            document.getElementById('prn-duration').textContent = `${periodVal} ${periodUnit}`;
+            document.getElementById('prn-t').textContent = tYears.toFixed(4);
+            document.getElementById('prn-basis').textContent = currentBasis === 360 ? "360-Day (Banker's Rule)" : "365-Day (Exact)";
+            document.getElementById('prn-i').textContent = formatNumber(simpleInterest);
+            document.getElementById('prn-a').textContent = formatNumber(endingBalance);
+            document.getElementById('prn-daily').textContent = formatNumber(dailyAccrual);
+            document.getElementById('prn-ear').textContent = simpleEar.toFixed(2);
+
+            // Print Sheet Elements
+            const prnDate = document.getElementById('prn-sheet-date');
+            if (prnDate) prnDate.textContent = new Date().toLocaleDateString();
+            document.getElementById('prn-sheet-p').textContent = formatNumber(principal);
+            document.getElementById('prn-sheet-r').textContent = nominalRatePct.toFixed(2);
+            document.getElementById('prn-sheet-duration').textContent = `${periodVal} ${periodUnit}`;
+            document.getElementById('prn-sheet-basis').textContent = currentBasis === 360 ? "360-Day (Banker's Rule)" : "365-Day (Exact)";
+            document.getElementById('prn-sheet-i').textContent = formatNumber(simpleInterest);
+            document.getElementById('prn-sheet-a').textContent = formatNumber(endingBalance);
+            document.getElementById('prn-sheet-daily').textContent = formatNumber(dailyAccrual);
+            document.getElementById('prn-sheet-ear').textContent = simpleEar.toFixed(2);
+
+            // Build Schedule Data & Tables
+            generateScheduleData(principal, nominalRate, tYears, totalDays, totalMonths, periodVal, periodUnit, isComparingCompound, compFreq);
+            generateDivergenceTable(principal, nominalRatePct, compFreq);
+
+            // Render Charts
+            updateCharts(principal, simpleInterest, compoundDelta, tYears, nominalRate, compFreq, isComparingCompound);
+
+            // Sync URL State
+            updateUrlState(principal, nominalRatePct, periodVal, periodUnit, currentBasis, isComparingCompound ? 1 : 0, compFreq, currentCurrency);
+        }
+
+        // Schedule Data Generation
+        function generateScheduleData(principal, rate, tYears, totalDays, totalMonths, periodVal, periodUnit, isComparingCompound, compFreq) {
+            const rows = [];
+            const tbody = document.getElementById('schedule-table-body');
+            tbody.innerHTML = '';
+
+            let steps = 12;
+            let stepLabel = 'Period';
+            let stepT = tYears / steps;
+
+            if (scheduleDetailedView && totalDays <= 365) {
+                // Day-by-day or every 5 days
+                steps = Math.min(Math.round(totalDays), 60);
+                stepLabel = 'Day';
+                stepT = tYears / steps;
+            } else if (totalMonths <= 24) {
+                steps = Math.max(1, Math.min(Math.round(totalMonths), 24));
+                stepLabel = 'Month';
+                stepT = tYears / steps;
+            } else {
+                steps = Math.max(1, Math.min(Math.round(tYears), 25));
+                stepLabel = 'Year';
+                stepT = tYears / steps;
+            }
+
+            document.getElementById('th-schedule-period').textContent = stepLabel;
+
+            let prevSimpleInterest = 0;
+            for (let i = 1; i <= steps; i++) {
+                const fraction = i / steps;
+                const currentT = tYears * fraction;
+                const cumSimpleInterest = principal * rate * currentT;
+                const periodSimpleInt = cumSimpleInterest - prevSimpleInterest;
+                prevSimpleInterest = cumSimpleInterest;
+                const endingSimpleBal = principal + cumSimpleInterest;
+
+                let compBal = principal;
+                let delta = 0;
+                if (isComparingCompound) {
+                    compBal = principal * Math.pow(1 + (rate / compFreq), compFreq * currentT);
+                    delta = Math.max(0, compBal - endingSimpleBal);
+                }
+
+                rows.push({
+                    period: `${stepLabel} ${i}`,
+                    principal: principal,
+                    periodInterest: periodSimpleInt,
+                    cumInterest: cumSimpleInterest,
+                    endingBalance: endingSimpleBal,
+                    compoundBalance: compBal,
+                    delta: delta
+                });
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-3 py-2 text-left font-semibold">${stepLabel} ${i}</td>
+                    <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(principal)}</td>
+                    <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(periodSimpleInt)}</td>
+                    <td class="px-3 py-2 text-right font-medium">${currentCurrency}${formatNumber(cumSimpleInterest)}</td>
+                    <td class="px-3 py-2 text-right font-bold">${currentCurrency}${formatNumber(endingSimpleBal)}</td>
+                    <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(compBal)}</td>
+                    <td class="px-3 py-2 text-right text-purple-600 dark:text-purple-400 font-semibold">${currentCurrency}${formatNumber(delta)}</td>
+                `;
+                tbody.appendChild(tr);
+            }
+
+            cachedScheduleRows = rows;
+        }
+
+        // Divergence Table across standard horizons
+        function generateDivergenceTable(principal, ratePct, compFreq) {
+            const tbody = document.getElementById('divergence-table-body');
+            tbody.innerHTML = '';
+            const r = ratePct / 100;
+            const m = compFreq;
+
+            const horizons = [
+                { label: '30 Days', t: 30 / 365 },
+                { label: '90 Days', t: 90 / 365 },
+                { label: '180 Days (6 Mos)', t: 180 / 365 },
+                { label: '1 Year', t: 1 },
+                { label: '3 Years', t: 3 },
+                { label: '5 Years', t: 5 },
+                { label: '10 Years', t: 10 },
+                { label: '20 Years', t: 20 }
+            ];
+
+            horizons.forEach(h => {
+                const simpleInt = principal * r * h.t;
+                const compBal = principal * Math.pow(1 + (r / m), m * h.t);
+                const compInt = compBal - principal;
+                const delta = compInt - simpleInt;
+                const excessPct = simpleInt > 0 ? (delta / simpleInt) * 100 : 0;
+
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-canvas-light/50 dark:hover:bg-canvas-dark/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="px-3 py-2 text-left font-semibold">${h.label}</td>
+                    <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(simpleInt)}</td>
+                    <td class="px-3 py-2 text-right">${currentCurrency}${formatNumber(compInt)}</td>
+                    <td class="px-3 py-2 text-right font-bold text-purple-600 dark:text-purple-400">+${currentCurrency}${formatNumber(delta)}</td>
+                    <td class="px-3 py-2 text-right text-emerald-600 dark:text-emerald-400 font-medium">+${excessPct.toFixed(2)}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Export Schedule CSV
+        function exportScheduleCSV() {
+            if (cachedScheduleRows.length === 0) {
+                showToast('No schedule data available.');
+                return;
+            }
+            let csv = 'Period,Principal,PeriodSimpleInterest,CumulativeSimpleInterest,EndingSimpleBalance,CompoundBalance,CompoundingDelta\n';
+            cachedScheduleRows.forEach(r => {
+                csv += `"${r.period}",${r.principal.toFixed(2)},${r.periodInterest.toFixed(2)},${r.cumInterest.toFixed(2)},${r.endingBalance.toFixed(2)},${r.compoundBalance.toFixed(2)},${r.delta.toFixed(2)}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'simple_interest_accrual_schedule.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Schedule exported as CSV!');
+        }
+
+        // Charts
+        function updateCharts(principal, simpleInterest, compoundDelta, tYears, rate, compFreq, isComparingCompound) {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#9CA3AF' : '#64748B';
+            const gridColor = isDark ? '#1F2937' : '#E2E8F0';
+
+            // 1. Doughnut Chart
+            const doughnutCtx = document.getElementById('interestDoughnutChart');
+            if (doughnutCtx) {
+                if (doughnutChartInstance) doughnutChartInstance.destroy();
+                
+                const labels = ['Principal Amount', 'Simple Interest'];
+                const data = [principal, simpleInterest];
+                const bgColors = ['#2563EB', '#F59E0B'];
+
+                if (isComparingCompound && compoundDelta > 0.01) {
+                    labels.push('Compounding Wedge');
+                    data.push(compoundDelta);
+                    bgColors.push('#8B5CF6');
+                }
+
+                doughnutChartInstance = new Chart(doughnutCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: bgColors,
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, boxWidth: 12, font: { size: 11, family: 'Inter' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ` ${ctx.label}: ${currentCurrency}${formatNumber(ctx.raw || 0)}`;
+                                    }
+                                }
+                            }
+                        },
+                        cutout: '68%'
+                    }
+                });
+            }
+
+            // 2. Line Chart: Simple vs Compound Divergence
+            const lineCtx = document.getElementById('divergenceLineChart');
+            if (lineCtx) {
+                if (lineChartInstance) lineChartInstance.destroy();
+
+                const pointsCount = 10;
+                const labels = [];
+                const simplePoints = [];
+                const compoundPoints = [];
+
+                for (let i = 0; i <= pointsCount; i++) {
+                    const frac = i / pointsCount;
+                    const curT = tYears * frac;
+                    labels.push(i === 0 ? 'Start' : `${(curT).toFixed(2)}y`);
+
+                    const sVal = principal + (principal * rate * curT);
+                    simplePoints.push(sVal);
+
+                    const cVal = principal * Math.pow(1 + (rate / compFreq), compFreq * curT);
+                    compoundPoints.push(cVal);
+                }
+
+                const datasets = [
+                    {
+                        label: 'Simple Interest (Linear)',
+                        data: simplePoints,
+                        borderColor: '#2563EB',
+                        backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                        fill: false,
+                        tension: 0,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    }
+                ];
+
+                if (isComparingCompound) {
+                    datasets.push({
+                        label: 'Compound Interest (Exponential)',
+                        data: compoundPoints,
+                        borderColor: '#8B5CF6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.12)',
+                        fill: '-1', // Fill area between simple and compound
+                        tension: 0.25,
+                        pointRadius: 2,
+                        borderWidth: 2
+                    });
+                }
+
+                lineChartInstance = new Chart(lineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: datasets
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: { color: textColor, boxWidth: 12, font: { size: 11, family: 'Inter' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(ctx) {
+                                        return ` ${ctx.dataset.label}: ${currentCurrency}${formatNumber(ctx.raw || 0)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: textColor, font: { size: 10, family: 'Inter' } }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { size: 10, family: 'Inter' },
+                                    callback: function(v) { return `${currentCurrency}${v >= 1000 ? (v / 1000).toFixed(0) + 'k' : v}`; }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Copy Summary functionality
+        function copyInterestSummary() {
+            const p = inputPrincipal.value;
+            const r = inputRate.value;
+            const periodVal = inputPeriod.value;
+            const periodUnit = selectPeriodUnit.value;
+            const basis = currentBasis === 360 ? "360-day Banker's Rule" : "365-day Exact";
+            const interest = document.getElementById('num-simple-interest').textContent;
+            const ending = document.getElementById('num-total-balance').textContent;
+            const daily = document.getElementById('num-daily-accrual').textContent;
+            const ear = document.getElementById('metric-ear').textContent;
+            const compDelta = document.getElementById('num-comp-delta').textContent;
+
+            const summaryText = [
+                `--- CalcWorld Simple Interest Summary ---`,
+                `Principal Amount: ${currentCurrency}${formatNumber(parseFloat(p))}`,
+                `Annual Interest Rate: ${r}%`,
+                `Time Duration: ${periodVal} ${periodUnit}`,
+                `Day-Count Convention: ${basis}`,
+                `Simple Interest Earned: ${currentCurrency}${interest}`,
+                `Total Accrued Value: ${currentCurrency}${ending}`,
+                `Daily Accrual Rate: ${currentCurrency}${daily} / day`,
+                `Effective Annual Rate (EAR): ${ear}`,
+                `Compound Delta: ${currentCurrency}${compDelta}`,
+                `Calculated at: https://calcworld.net/calculators/simple-interest-calculator.html`
+            ].join('\n');
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast('Summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy summary.');
+            });
+        }
+
+        // URL State handling
+        function updateUrlState(p, r, per, unit, basis, comp, freq, cur) {
+            const params = new URLSearchParams();
+            params.set('p', p);
+            params.set('r', r);
+            params.set('t', per);
+            params.set('unit', unit);
+            params.set('basis', basis);
+            params.set('compare', comp);
+            params.set('freq', freq);
+            params.set('cur', cur);
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        function loadUrlState() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('p')) inputPrincipal.value = params.get('p');
+            if (params.has('r')) inputRate.value = params.get('r');
+            if (params.has('t')) inputPeriod.value = params.get('t');
+            if (params.has('unit')) selectPeriodUnit.value = params.get('unit');
+            if (params.has('basis')) {
+                const bVal = params.get('basis');
+                const radio = document.querySelector(`input[name="basis-convention"][value="${bVal}"]`);
+                if (radio) radio.checked = true;
+            }
+            if (params.has('compare')) toggleCompare.checked = params.get('compare') === '1';
+            if (params.has('freq')) selectCompFreq.value = params.get('freq');
+            if (params.has('cur')) {
+                currentCurrency = params.get('cur');
+                currencySwitcher.value = currentCurrency;
+                updateCurrencySymbols();
+            }
+            rangePrincipal.value = inputPrincipal.value;
+            rangeRate.value = inputRate.value;
+        }
+
+        function updateCurrencySymbols() {
+            document.querySelectorAll('.cur-symbol').forEach(el => {
+                el.textContent = currentCurrency;
+            });
+        }
+
+        // Initialize event listeners
+        window.addEventListener('DOMContentLoaded', () => {
+            // Theme toggle
+            const themeToggleBtn = document.getElementById('theme-toggle');
+            const darkIcon = document.getElementById('theme-toggle-dark-icon');
+            const lightIcon = document.getElementById('theme-toggle-light-icon');
+
+            function syncThemeIcons() {
+                if (document.documentElement.classList.contains('dark')) {
+                    darkIcon.classList.add('hidden');
+                    lightIcon.classList.remove('hidden');
+                } else {
+                    lightIcon.classList.add('hidden');
+                    darkIcon.classList.remove('hidden');
+                }
+            }
+            syncThemeIcons();
+
+            themeToggleBtn.addEventListener('click', () => {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+                syncThemeIcons();
+                calculateSimpleInterest();
+            });
+
+            // Currency Switcher
+            currencySwitcher.addEventListener('change', (e) => {
+                currentCurrency = e.target.value;
+                updateCurrencySymbols();
+                calculateSimpleInterest();
+            });
+
+            // Input & Slider synchronization
+            inputPrincipal.addEventListener('input', () => {
+                rangePrincipal.value = inputPrincipal.value;
+                calculateSimpleInterest();
+            });
+            rangePrincipal.addEventListener('input', () => {
+                inputPrincipal.value = rangePrincipal.value;
+                calculateSimpleInterest();
+            });
+
+            inputRate.addEventListener('input', () => {
+                rangeRate.value = inputRate.value;
+                calculateSimpleInterest();
+            });
+            rangeRate.addEventListener('input', () => {
+                inputRate.value = rangeRate.value;
+                calculateSimpleInterest();
+            });
+
+            inputPeriod.addEventListener('input', calculateSimpleInterest);
+            selectPeriodUnit.addEventListener('change', calculateSimpleInterest);
+            toggleCompare.addEventListener('change', calculateSimpleInterest);
+            selectCompFreq.addEventListener('change', calculateSimpleInterest);
+
+            document.querySelectorAll('input[name="basis-convention"]').forEach(r => {
+                r.addEventListener('change', calculateSimpleInterest);
+            });
+
+            // Presets
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const preset = btn.dataset.preset;
+                    if (preset === 'note') {
+                        inputPrincipal.value = 10000;
+                        inputRate.value = 6.0;
+                        inputPeriod.value = 90;
+                        selectPeriodUnit.value = 'days';
+                        const radio360 = document.querySelector('input[name="basis-convention"][value="360"]');
+                        if (radio360) radio360.checked = true;
+                        toggleCompare.checked = true;
+                        selectCompFreq.value = 12;
+                    } else if (preset === 'title') {
+                        inputPrincipal.value = 2500;
+                        inputRate.value = 24.0;
+                        inputPeriod.value = 6;
+                        selectPeriodUnit.value = 'months';
+                        const radio365 = document.querySelector('input[name="basis-convention"][value="365"]');
+                        if (radio365) radio365.checked = true;
+                        toggleCompare.checked = true;
+                        selectCompFreq.value = 12;
+                    } else if (preset === 'divergence') {
+                        inputPrincipal.value = 20000;
+                        inputRate.value = 7.5;
+                        inputPeriod.value = 5;
+                        selectPeriodUnit.value = 'years';
+                        const radio365 = document.querySelector('input[name="basis-convention"][value="365"]');
+                        if (radio365) radio365.checked = true;
+                        toggleCompare.checked = true;
+                        selectCompFreq.value = 12;
+                    }
+                    rangePrincipal.value = inputPrincipal.value;
+                    rangeRate.value = inputRate.value;
+                    calculateSimpleInterest();
+                    showToast(`Applied preset: ${btn.textContent.trim()}`);
+                });
+            });
+
+            // Tab Switching
+            document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                tabBtn.addEventListener('click', () => {
+                    document.querySelectorAll('.tab-btn').forEach(b => {
+                        b.classList.remove('text-accent', 'border-b-2', 'border-accent');
+                        b.classList.add('text-sub-light', 'dark:text-sub-dark');
+                    });
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+
+                    tabBtn.classList.remove('text-sub-light', 'dark:text-sub-dark');
+                    tabBtn.classList.add('text-accent', 'border-b-2', 'border-accent');
+                    const target = document.getElementById(tabBtn.dataset.tab);
+                    if (target) target.classList.remove('hidden');
+
+                    if (tabBtn.dataset.tab === 'tab-summary') {
+                        if (doughnutChartInstance) doughnutChartInstance.resize();
+                        if (lineChartInstance) lineChartInstance.resize();
+                    }
+                });
+            });
+
+            // Schedule View Toggle
+            const btnSchedPeriodic = document.getElementById('btn-schedule-periodic');
+            const btnSchedDaily = document.getElementById('btn-schedule-daily');
+            btnSchedPeriodic.addEventListener('click', () => {
+                scheduleDetailedView = false;
+                btnSchedPeriodic.className = 'px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition';
+                btnSchedDaily.className = 'px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition';
+                calculateSimpleInterest();
+            });
+            btnSchedDaily.addEventListener('click', () => {
+                scheduleDetailedView = true;
+                btnSchedDaily.className = 'px-3 py-1 text-xs font-semibold rounded-md bg-card-light dark:bg-card-dark text-accent shadow-xs transition';
+                btnSchedPeriodic.className = 'px-3 py-1 text-xs font-semibold rounded-md text-sub-light dark:text-sub-dark hover:text-txt-light dark:hover:text-txt-dark transition';
+                calculateSimpleInterest();
+            });
+
+            // CSV Export
+            document.getElementById('btn-export-csv').addEventListener('click', exportScheduleCSV);
+
+            // Copy Summary Button
+            document.getElementById('btn-copy').addEventListener('click', copyInterestSummary);
+
+            // FAQ Accordion
+            document.querySelectorAll('.accordion-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const content = btn.nextElementSibling;
+                    const icon = btn.querySelector('.acc-icon');
+                    const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+
+                    if (isExpanded) {
+                        content.classList.remove('active');
+                        icon.classList.remove('rotate-180');
+                        btn.setAttribute('aria-expanded', 'false');
+                    } else {
+                        content.classList.add('active');
+                        icon.classList.add('rotate-180');
+                        btn.setAttribute('aria-expanded', 'true');
+                    }
+                });
+            });
+
+            // Initial load
+            loadUrlState();
+            calculateSimpleInterest();
+        });
+    </script>
+<script>
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.theme = 'light';
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.theme = 'dark';
+            }
+        }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

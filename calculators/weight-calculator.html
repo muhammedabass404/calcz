@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weight Calculator | Mass, Gravitational Force & Luggage Checker</title>
+    <meta name="description" content="Free scientific weight and mass calculator. Convert across metric, avoirdupois, troy, and imperial units, calculate gravitational weight force (W = mg) with WGS 84 ellipsoid gravity, and check airline baggage limits.">
+    <link rel="canonical" href="https://calcworld.net/calculators/weight-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(99, 102, 241, 0.08) 20%,
+                rgba(99, 102, 241, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .scale-dial-needle {
+            transform-origin: 150px 150px;
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #floatingBar {
+            transition: transform 0.35s ease, opacity 0.35s ease;
+        }
+        #floatingBar.hidden-bar {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #toast {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        #toast.show {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Weight Calculator",
+              "item": "https://calcworld.net/other/weight-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Weight Calculator",
+          "url": "https://calcworld.net/other/weight-calculator",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Scientific weight and mass conversion engine. Convert across kilograms, pounds, stones, ounces, grams, troy ounces, and carats, compute gravitational force (W = mg) with WGS 84 ellipsoidal gravity, and verify airline baggage limits against 23 kg and 32 kg standards."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the physical difference between mass and weight?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Mass is an intrinsic scalar property representing the quantity of matter in an object and its resistance to acceleration (inertia), measured in kilograms (kg) or pounds-mass (lbm). Weight is a downward gravitational force vector exerted on that mass by a gravitational field (W = m * g), measured in Newtons (N), pound-force (lbf), or dynes. Your mass remains identical on Earth and the Moon, while your weight changes proportionally with local gravity."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why are precious metals like gold and silver weighed in troy ounces instead of avoirdupois ounces?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Precious metals trade exclusively in troy weight, an ancient medieval standard originating from the trade fairs of Troyes, France. A troy ounce (oz t) equals exactly 31.1034768 grams (480 grains), which is about 9.7% heavier than a common grocery avoirdupois ounce (28.349523125 grams or 437.5 grains). A troy pound contains only 12 troy ounces (5,760 grains), whereas an avoirdupois pound contains 16 ounces (7,000 grains)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How was the kilogram redefined by the BIPM in 2019?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "On May 20, 2019, the General Conference on Weights and Measures (CGPM) and the Bureau International des Poids et Mesures (BIPM) replaced the physical platinum-iridium cylinder (the International Prototype Kilogram or IPK) stored in Sevres, France. The kilogram is now defined by fixing the exact numerical value of the Planck constant (h = 6.62607015 x 10^-34 J s), realized through Kibble balances and silicon sphere interferometry."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does a person weigh less at the equator than at the Earth's poles?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Two geophysical mechanisms cause surface gravity to vary from approximately 9.780 m/s^2 at the equator to 9.832 m/s^2 at the poles: Earth's rotation creates outward centrifugal acceleration that peaks at the equator, and Earth's oblateness (equatorial bulge modeled by the WGS 84 ellipsoid) places the equator roughly 21.4 kilometers farther from Earth's center of mass than the poles. As a result, an object weighs approximately 0.5% less at the equator than at the poles."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What are the standard airline baggage weight limits and overweight thresholds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Commercial airlines following IATA regulations enforce a standard checked luggage allowance of 23 kilograms (50.7 pounds, or 50 pounds domestically in the United States). Bags weighing between 23.1 kg and 32.0 kg incur heavy luggage surcharge fees, typically ranging from $75 to $200. Any bag exceeding 32 kilograms (70.5 pounds) is strictly rejected at check-in counters due to occupational safety standards protecting airport baggage handlers, requiring separate air cargo shipment."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does elevation or altitude reduce scale weight?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "According to Newton's law of universal gravitation, gravitational acceleration decreases with the square of the distance from Earth's center. The free-air correction indicates that gravity decreases by roughly 3.086 x 10^-6 m/s^2 per meter of elevation (about 0.03 milligals per meter). At the summit of Mount Everest (8,848 meters), an object weighs approximately 0.28% less than at sea level."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the exact mathematical conversion between pounds and kilograms?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under the International Yard and Pound Agreement of 1959 signed by the United States, United Kingdom, Canada, Australia, New Zealand, and South Africa, one international avoirdupois pound (lb) is legally defined as exactly 0.45359237 kilograms. Conversely, one kilogram equals approximately 2.20462262185 pounds."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is a stone and how is British body weight expressed?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A stone (abbreviated st) is an imperial unit of mass equal to exactly 14 avoirdupois pounds (6.35029318 kilograms). In the United Kingdom and Ireland, human body weight is customary stated in stone and pounds, such as 11 stone 4 pounds (11 st 4 lb), which corresponds to 158 pounds or approximately 71.67 kilograms."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Weight Calculator | Mass, Gravitational Force & Luggage Checker">
+    <meta property="og:description" content="Free scientific weight and mass calculator. Convert across metric, avoirdupois, troy, and imperial units, calculate gravitational weight force (W = mg) with WGS 84 ellipsoid gravity, and check airline baggage limits.">
+    <meta property="og:url" content="https://calcworld.net/calculators/weight-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Weight Calculator | Mass, Gravitational Force & Luggage Checker">
+    <meta name="twitter:description" content="Free scientific weight and mass calculator. Convert across metric, avoirdupois, troy, and imperial units, calculate gravitational weight force (W = mg) with WGS 84 ellipsoid gravity, and check airline baggage limits.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Metrology Engine:</strong> CalcWorld provides peer-reviewed scientific calculation tools 100% free with zero login. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Weight Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Weight Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Comprehensive weight and mass conversion engine. Convert across metric, avoirdupois, troy, and imperial units, compute gravitational force (\(W = mg\)) with the WGS 84 ellipsoid gravity model, and verify airline luggage limits against international 23 kg and 32 kg flight safety standards.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Navigation Tabs Bar -->
+        <div id="tabButtons" class="no-scrollbar scroll-smooth whitespace-nowrap flex border-b border-slate-200 dark:border-slate-800 mb-6 gap-2 sm:gap-6 overflow-x-auto no-print text-sm font-semibold">
+            <button onclick="switchTab('converter')" id="tabBtn_converter" class="tab-btn pb-3 px-1 border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 6l3 18h12l3-18H3z"/></svg>
+                <span>Weight Unit Converter &amp; Precision Matrix</span>
+            </button>
+            <button onclick="switchTab('force')" id="tabBtn_force" class="tab-btn pb-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Gravitational Force (\(W = mg\)) Explorer</span>
+            </button>
+            <button onclick="switchTab('baggage')" id="tabBtn_baggage" class="tab-btn pb-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                <span>Airline Baggage Weight Checker</span>
+            </button>
+            <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn pb-3 px-1 border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 whitespace-nowrap flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>Print Report</span>
+            </button>
+        </div>
+
+        <!-- ==================== TAB 1: WEIGHT CONVERTER & PRECISION MATRIX ==================== -->
+        <div id="tab-converter" class="tab-panel active">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Converter Controls (Span 5) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+                            <h2 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                Weight &amp; Mass Input
+                            </h2>
+                            <button onclick="resetConverter()" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">Reset</button>
+                        </div>
+
+                        <!-- Magnitude Value Input -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="weightInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Enter Magnitude</label>
+                                <div class="relative rounded-xl shadow-sm">
+                                    <input type="number" id="weightInput" value="70" step="any" min="0" oninput="runAllCalculations()" class="w-full text-2xl font-bold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-3 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none transition">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span id="inputUnitBadge" class="text-xs font-bold px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-md uppercase">kg</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Unit Selection Grid with Swap Button -->
+                            <div class="grid grid-cols-1 sm:grid-cols-11 gap-2 items-center">
+                                <div class="sm:col-span-5">
+                                    <label for="fromUnitSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">From Unit</label>
+                                    <select id="fromUnitSelect" onchange="runAllCalculations()" class="w-full text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                        <optgroup label="Metric (SI) Units">
+                                            <option value="kg" selected>Kilograms (kg)</option>
+                                            <option value="g">Grams (g)</option>
+                                            <option value="mg">Milligrams (mg)</option>
+                                            <option value="mcg">Micrograms (&mu;g)</option>
+                                            <option value="t">Metric Tonnes (t)</option>
+                                        </optgroup>
+                                        <optgroup label="Avoirdupois / Imperial">
+                                            <option value="lb">Pounds (lbs / avoirdupois)</option>
+                                            <option value="oz">Ounces (oz / avoirdupois)</option>
+                                            <option value="st">Stones (st)</option>
+                                            <option value="short_ton">US Short Tons (2,000 lbs)</option>
+                                            <option value="long_ton">Imperial Long Tons (2,240 lbs)</option>
+                                        </optgroup>
+                                        <optgroup label="Precious Metals &amp; Gemstones">
+                                            <option value="troy_oz">Troy Ounces (oz t - gold/silver)</option>
+                                            <option value="troy_lb">Troy Pounds (lb t)</option>
+                                            <option value="carat">Carats (ct - gemstones)</option>
+                                            <option value="grain">Grains (gr)</option>
+                                        </optgroup>
+                                        <optgroup label="Scientific Units">
+                                            <option value="slug">Slugs (slug)</option>
+                                            <option value="atomic_mass">Atomic Mass Units (u / Da)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+
+                                <div class="sm:col-span-1 flex justify-center pt-5">
+                                    <button onclick="swapConverterUnits()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-600 dark:text-slate-300 hover:text-brand-600 transition" title="Swap units" aria-label="Swap units">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+                                    </button>
+                                </div>
+
+                                <div class="sm:col-span-5">
+                                    <label for="toUnitSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">To Unit</label>
+                                    <select id="toUnitSelect" onchange="runAllCalculations()" class="w-full text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                        <optgroup label="Metric (SI) Units">
+                                            <option value="kg">Kilograms (kg)</option>
+                                            <option value="g">Grams (g)</option>
+                                            <option value="mg">Milligrams (mg)</option>
+                                            <option value="mcg">Micrograms (&mu;g)</option>
+                                            <option value="t">Metric Tonnes (t)</option>
+                                        </optgroup>
+                                        <optgroup label="Avoirdupois / Imperial">
+                                            <option value="lb" selected>Pounds (lbs / avoirdupois)</option>
+                                            <option value="oz">Ounces (oz / avoirdupois)</option>
+                                            <option value="st">Stones (st)</option>
+                                            <option value="short_ton">US Short Tons (2,000 lbs)</option>
+                                            <option value="long_ton">Imperial Long Tons (2,240 lbs)</option>
+                                        </optgroup>
+                                        <optgroup label="Precious Metals &amp; Gemstones">
+                                            <option value="troy_oz">Troy Ounces (oz t - gold/silver)</option>
+                                            <option value="troy_lb">Troy Pounds (lb t)</option>
+                                            <option value="carat">Carats (ct - gemstones)</option>
+                                            <option value="grain">Grains (gr)</option>
+                                        </optgroup>
+                                        <optgroup label="Scientific Units">
+                                            <option value="slug">Slugs (slug)</option>
+                                            <option value="atomic_mass">Atomic Mass Units (u / Da)</option>
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Quick Preset Buttons -->
+                            <div>
+                                <span class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Popular Presets</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button onclick="applyPreset(1, 'kg', 'lb')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">1 kg &rarr; lb</button>
+                                    <button onclick="applyPreset(70, 'kg', 'lb')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">70 kg (Human)</button>
+                                    <button onclick="applyPreset(23, 'kg', 'lb')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">23 kg (Luggage)</button>
+                                    <button onclick="applyPreset(50, 'lb', 'kg')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">50 lb &rarr; kg</button>
+                                    <button onclick="applyPreset(1, 'troy_oz', 'g')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">1 oz t (Gold)</button>
+                                    <button onclick="applyPreset(1, 'carat', 'mg')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">1 ct (Diamond)</button>
+                                    <button onclick="applyPreset(1, 'st', 'lb')" class="text-xs px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 dark:hover:bg-brand-900/40 text-slate-700 dark:text-slate-300 font-medium transition">1 Stone &rarr; lb</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Interactive Analog Scale Weight Dial Graphic -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Analog Scale Dial (0 - 50 kg)
+                            </h3>
+                            <button onclick="toggleTareScale()" id="tareBtn" class="text-xs px-2.5 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-300 font-semibold transition">Tare: Zero</button>
+                        </div>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Visual representation of spring scale tension calibrated with color-coded airline zones.</p>
+
+                        <!-- SVG Dial Graphic -->
+                        <div class="flex justify-center items-center py-2">
+                            <svg class="w-64 h-64" viewBox="0 0 300 300">
+                                <!-- Dial Outer Ring -->
+                                <circle cx="150" cy="150" r="135" fill="none" stroke="currentColor" class="text-slate-200 dark:text-slate-700" stroke-width="8"/>
+                                
+                                <!-- Zone Arcs: Green 0-20kg (0 to 108 deg), Yellow 20-23kg (108 to 124.2 deg), Orange 23-32kg (124.2 to 172.8 deg), Red 32-50kg (172.8 to 270 deg) -->
+                                <!-- Base angle offset: 135 deg to 405 deg (270 deg span) -->
+                                <!-- Green Zone (0 - 20 kg): Safe baggage / standard -->
+                                <path d="M 54.54 245.46 A 135 135 0 0 1 150 15" fill="none" stroke="#22c55e" stroke-width="12" stroke-linecap="round"/>
+                                <!-- Yellow Zone (20 - 23 kg): Standard airline limit -->
+                                <path d="M 150 15 A 135 135 0 0 1 184.28 19.4" fill="none" stroke="#eab308" stroke-width="12"/>
+                                <!-- Orange Zone (23 - 32 kg): Overweight surcharge -->
+                                <path d="M 184.28 19.4 A 135 135 0 0 1 268.4 87.2" fill="none" stroke="#f97316" stroke-width="12"/>
+                                <!-- Red Zone (32 - 50 kg): Heavy / Safety ceiling -->
+                                <path d="M 268.4 87.2 A 135 135 0 0 1 245.46 245.46" fill="none" stroke="#ef4444" stroke-width="12" stroke-linecap="round"/>
+
+                                <!-- Center Hub -->
+                                <circle cx="150" cy="150" r="115" class="fill-white dark:fill-slate-900"/>
+                                <circle cx="150" cy="150" r="12" fill="#6366f1"/>
+                                <circle cx="150" cy="150" r="5" fill="#ffffff"/>
+
+                                <!-- Dial Calibration Numbers -->
+                                <text x="65" y="235" font-size="11" font-weight="bold" text-anchor="middle" class="fill-slate-500">0</text>
+                                <text x="60" y="155" font-size="11" font-weight="bold" text-anchor="middle" class="fill-slate-500">10</text>
+                                <text x="150" y="45" font-size="11" font-weight="bold" text-anchor="middle" class="fill-slate-500">20</text>
+                                <text x="195" y="55" font-size="10" font-weight="bold" text-anchor="middle" fill="#eab308">23</text>
+                                <text x="235" y="105" font-size="10" font-weight="bold" text-anchor="middle" fill="#f97316">32</text>
+                                <text x="245" y="155" font-size="11" font-weight="bold" text-anchor="middle" class="fill-slate-500">40</text>
+                                <text x="230" y="235" font-size="11" font-weight="bold" text-anchor="middle" fill="#ef4444">50 kg</text>
+
+                                <!-- Rotating Needle -->
+                                <g id="dialNeedle" class="scale-dial-needle" style="transform: rotate(-135deg);">
+                                    <polygon points="150,40 146,150 154,150" fill="#4f46e5"/>
+                                    <circle cx="150" cy="40" r="3" fill="#ef4444"/>
+                                </g>
+
+                                <!-- Digital Dial Center Display -->
+                                <text id="dialDigitalValue" x="150" y="190" font-size="18" font-weight="800" text-anchor="middle" class="fill-slate-900 dark:fill-white font-mono">70.0 kg</text>
+                                <text id="dialDigitalLabel" x="150" y="208" font-size="9" font-weight="bold" text-anchor="middle" class="fill-slate-400 uppercase tracking-widest">Weight on Scale</text>
+                            </svg>
+                        </div>
+                        <div class="flex justify-between items-center text-[11px] text-slate-500 pt-1">
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> 0-20kg Safe</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-yellow-500"></span> 23kg Limit</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-orange-500"></span> 23-32kg Overweight</span>
+                            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> &gt;32kg Cargo Only</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Conversion Results, Matrix & Chart (Span 7) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Primary Conversion Card -->
+                    <div class="bg-gradient-to-br from-white to-brand-50/50 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <span class="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Converted Equivalent</span>
+                                <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+                                    <span id="primaryResultVal" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">154.32358</span>
+                                    <span id="primaryResultUnit" class="text-xl font-bold text-slate-600 dark:text-slate-300">lbs</span>
+                                </div>
+                            </div>
+                            <button onclick="copyPrimaryResult()" class="p-2.5 rounded-xl bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:text-brand-600 border border-slate-200 dark:border-slate-600 shadow-sm transition" title="Copy to clipboard" aria-label="Copy result">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                            </button>
+                        </div>
+
+                        <!-- Secondary Notations: Stones & Pounds + Exact Ratio -->
+                        <div class="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-700/60 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="p-2.5 bg-white/70 dark:bg-slate-900/50 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
+                                <span class="text-slate-400 block font-medium">UK Body Weight Notation</span>
+                                <span id="stoneNotationVal" class="font-bold text-sm text-slate-800 dark:text-slate-200">11 st 0.3 lb</span>
+                            </div>
+                            <div class="p-2.5 bg-white/70 dark:bg-slate-900/50 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
+                                <span class="text-slate-400 block font-medium">Conversion Factor</span>
+                                <span id="conversionFactorVal" class="font-bold text-sm text-slate-800 dark:text-slate-200">1 kg = 2.20462262 lbs</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AdSense Slot 2: Mid Content -->
+                    <div class="ad-slot no-print" id="ad-slot-2">
+                        <span>Sponsored Advertisement &bull; Content Banner Slot 2</span>
+                    </div>
+
+                    <!-- Full Precision Conversion Matrix Table -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="p-4 sm:p-5 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Multi-Unit Precision Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Synchronized values across standard international metrological measurement units.</p>
+                            </div>
+                            <button onclick="copyEntireMatrix()" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline">Copy Table</button>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                                        <th class="py-2.5 px-4 font-semibold">Unit Name</th>
+                                        <th class="py-2.5 px-4 font-semibold">Symbol</th>
+                                        <th class="py-2.5 px-4 font-semibold text-right">Standard Value</th>
+                                        <th class="py-2.5 px-4 font-semibold text-right">Scientific Notation</th>
+                                        <th class="py-2.5 px-3 font-semibold text-center w-12">Copy</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="precisionMatrixBody" class="divide-y divide-slate-100 dark:divide-slate-700/50 font-mono text-slate-700 dark:text-slate-300">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Chart.js Visual Unit Equivalency Bar Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Relative Mass Scale Comparison</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Visual magnitude distribution across common benchmark units.</p>
+                            </div>
+                            <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs">
+                                <button onclick="setChartScale('logarithmic')" id="btnScaleLog" class="px-2 py-0.5 rounded font-medium bg-white dark:bg-slate-900 text-brand-600 shadow-xs">Log</button>
+                                <button onclick="setChartScale('linear')" id="btnScaleLin" class="px-2 py-0.5 rounded font-medium text-slate-500 dark:text-slate-400">Lin</button>
+                            </div>
+                        </div>
+                        <div class="relative h-64 w-full">
+                            <canvas id="unitEquivalencyChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 2: GRAVITATIONAL FORCE (W = mg) EXPLORER ==================== -->
+        <div id="tab-force" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Force Controls (Span 5) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+                            <h2 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                Gravitational Parameters
+                            </h2>
+                            <span class="text-xs text-brand-600 dark:text-brand-400 font-bold font-mono">W = m &times; g</span>
+                        </div>
+
+                        <!-- Mass Input -->
+                        <div class="space-y-4">
+                            <div>
+                                <label for="forceMassInput" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Object Mass (\(m\))</label>
+                                <div class="grid grid-cols-7 gap-2">
+                                    <input type="number" id="forceMassInput" value="70" step="any" min="0" oninput="runForceCalculations()" class="col-span-4 text-xl font-bold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <select id="forceMassUnit" onchange="runForceCalculations()" class="col-span-3 text-sm font-semibold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-2 text-slate-900 dark:text-white">
+                                        <option value="kg" selected>Kilograms (kg)</option>
+                                        <option value="g">Grams (g)</option>
+                                        <option value="lb">Pounds (lb)</option>
+                                        <option value="slug">Slugs (slug)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Gravity Selection Tabs -->
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Gravity Model (\(g\))</label>
+                                <div class="grid grid-cols-3 gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl text-xs font-semibold text-center mb-3">
+                                    <button onclick="setGravityMode('presets')" id="gravMode_presets" class="py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 shadow-xs">Celestial Body</button>
+                                    <button onclick="setGravityMode('wgs84')" id="gravMode_wgs84" class="py-1.5 rounded-lg text-slate-500 dark:text-slate-400">WGS 84 Earth</button>
+                                    <button onclick="setGravityMode('custom')" id="gravMode_custom" class="py-1.5 rounded-lg text-slate-500 dark:text-slate-400">Custom \(g\)</button>
+                                </div>
+
+                                <!-- Preset Bodies Selector -->
+                                <div id="gravityPresetsBox">
+                                    <select id="celestialBodySelect" onchange="applyCelestialGravity()" class="w-full text-sm font-medium rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2.5 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                        <option value="9.80665" selected>Earth (Standard ISO 80000: 9.80665 m/s&sup2;)</option>
+                                        <option value="1.622">Moon (Lunar surface: 1.622 m/s&sup2; ~ 0.165 g)</option>
+                                        <option value="3.721">Mars (Martian surface: 3.721 m/s&sup2; ~ 0.379 g)</option>
+                                        <option value="8.87">Venus (Cytherean surface: 8.87 m/s&sup2; ~ 0.904 g)</option>
+                                        <option value="3.7">Mercury (Mercurian surface: 3.7 m/s&sup2; ~ 0.377 g)</option>
+                                        <option value="24.79">Jupiter (Cloud tops: 24.79 m/s&sup2; ~ 2.528 g)</option>
+                                        <option value="10.44">Saturn (Equatorial cloud level: 10.44 m/s&sup2; ~ 1.065 g)</option>
+                                        <option value="8.69">Uranus (Cloud tops: 8.69 m/s&sup2; ~ 0.886 g)</option>
+                                        <option value="11.15">Neptune (Cloud tops: 11.15 m/s&sup2; ~ 1.137 g)</option>
+                                        <option value="0.62">Pluto (Dwarf planet surface: 0.62 m/s&sup2; ~ 0.063 g)</option>
+                                        <option value="274.0">Sun (Photosphere: 274.0 m/s&sup2; ~ 27.94 g)</option>
+                                        <option value="0.0001">International Space Station (Microgravity: 0.0001 m/s&sup2;)</option>
+                                    </select>
+                                </div>
+
+                                <!-- WGS 84 Earth Latitude & Altitude Calculator -->
+                                <div id="gravityWgs84Box" class="hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                                    <div>
+                                        <div class="flex justify-between text-xs mb-1">
+                                            <label for="wgsLatitude" class="font-medium text-slate-700 dark:text-slate-300">Geographic Latitude (\(\phi\))</label>
+                                            <span id="latDisplay" class="font-bold text-brand-600">45.0&deg;</span>
+                                        </div>
+                                        <input type="range" id="wgsLatitude" min="0" max="90" step="0.1" value="45" oninput="calculateWgs84Gravity()" class="w-full accent-brand-600">
+                                        <div class="flex justify-between text-[10px] text-slate-400">
+                                            <span>0&deg; (Equator)</span>
+                                            <span>45&deg; (Mid-lat)</span>
+                                            <span>90&deg; (Poles)</span>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label for="wgsAltitude" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Elevation Above Sea Level (\(h\))</label>
+                                        <div class="flex gap-2">
+                                            <input type="number" id="wgsAltitude" value="0" min="-500" max="15000" step="10" oninput="calculateWgs84Gravity()" class="w-full text-sm font-semibold rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-1.5 text-slate-900 dark:text-white">
+                                            <span class="text-xs self-center font-bold text-slate-500">meters</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-[11px] text-slate-500 border-t border-slate-200 dark:border-slate-700 pt-2">
+                                        <span>Computed local \(g(\phi, h)\): </span>
+                                        <span id="wgsComputedG" class="font-bold font-mono text-brand-600 dark:text-brand-400">9.80619 m/s&sup2;</span>
+                                    </div>
+                                </div>
+
+                                <!-- Custom Gravity Input -->
+                                <div id="gravityCustomBox" class="hidden">
+                                    <div class="flex gap-2">
+                                        <input type="number" id="customGravityInput" value="9.80665" step="0.0001" min="0" oninput="applyCustomGravity()" class="w-full text-sm font-bold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white">
+                                        <span class="text-xs font-semibold self-center text-slate-500">m/s&sup2;</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Current Effective Gravity Readout -->
+                            <div class="p-3 bg-brand-50/50 dark:bg-brand-950/30 rounded-xl border border-brand-200/50 dark:border-brand-800/50 flex justify-between items-center text-xs">
+                                <span class="font-medium text-slate-600 dark:text-slate-300">Effective Field Strength (\(g\)):</span>
+                                <span id="effectiveGReadout" class="font-bold font-mono text-brand-700 dark:text-brand-300">9.80665 m/s&sup2; (1.000 g)</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Force Outputs & Solar System Chart (Span 7) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Primary Force Card -->
+                    <div class="bg-gradient-to-br from-white to-indigo-50/40 dark:from-slate-800 dark:to-slate-800/80 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <span class="text-xs font-semibold text-brand-600 dark:text-brand-400 uppercase tracking-wider">Weight as Gravitational Force</span>
+                        
+                        <div class="mt-2 flex items-baseline gap-2 flex-wrap">
+                            <span id="forceNewtonsVal" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight">686.47</span>
+                            <span class="text-xl font-bold text-brand-600 dark:text-brand-400">Newtons (N)</span>
+                        </div>
+
+                        <!-- Force Multi-Unit Grid -->
+                        <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                            <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-400 block font-medium">Pound-Force</span>
+                                <span id="forceLbfVal" class="font-bold text-base text-slate-800 dark:text-slate-100 font-mono">154.32 lbf</span>
+                            </div>
+                            <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-400 block font-medium">Kiloponds (kgf)</span>
+                                <span id="forceKgfVal" class="font-bold text-base text-slate-800 dark:text-slate-100 font-mono">70.00 kgf</span>
+                            </div>
+                            <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-400 block font-medium">Dynes</span>
+                                <span id="forceDyneVal" class="font-bold text-base text-slate-800 dark:text-slate-100 font-mono">6.86&times;10&#8311; dyn</span>
+                            </div>
+                            <div class="p-3 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-700">
+                                <span class="text-slate-400 block font-medium">Poundals</span>
+                                <span id="forcePdlVal" class="font-bold text-base text-slate-800 dark:text-slate-100 font-mono">4,965.3 pdl</span>
+                            </div>
+                        </div>
+
+                        <!-- Step-by-Step Derivation Box -->
+                        <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-1">
+                            <div class="font-semibold text-slate-700 dark:text-slate-300">Physics Derivation Step:</div>
+                            <div id="forceDerivationFormula" class="font-mono text-slate-600 dark:text-slate-400 overflow-x-auto">
+                                \[ W = m \times g = 70.000\text{ kg} \times 9.80665\text{ m/s}^2 = 686.466\text{ N} \]
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Solar System Weight Comparison Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Comparative Weight Across Solar System Bodies</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Gravitational force exerted on this object's mass on different celestial surfaces.</p>
+                            </div>
+                            <span class="text-xs font-semibold px-2 py-0.5 rounded bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300">Force in Newtons</span>
+                        </div>
+                        <div class="relative h-64 w-full">
+                            <canvas id="planetaryWeightChart"></canvas>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 3: AIRLINE BAGGAGE WEIGHT CHECKER ==================== -->
+        <div id="tab-baggage" class="tab-panel">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Baggage Itemizer & Scale Input (Span 5) -->
+                <div class="lg:col-span-5 space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-700 mb-4">
+                            <h2 class="font-bold text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                                Luggage Weigh-In Mode
+                            </h2>
+                            <button onclick="resetBaggage()" class="text-xs text-brand-600 dark:text-brand-400 hover:underline font-medium">Reset All</button>
+                        </div>
+
+                        <!-- Mode Switcher: Direct Measured Weight vs Itemized Pack Planner -->
+                        <div class="grid grid-cols-2 gap-1 bg-slate-100 dark:bg-slate-700/60 p-1 rounded-xl text-xs font-semibold text-center mb-4">
+                            <button onclick="setBaggageMode('direct')" id="bagMode_direct" class="py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 shadow-xs">Scale Reading</button>
+                            <button onclick="setBaggageMode('itemized')" id="bagMode_itemized" class="py-1.5 rounded-lg text-slate-500 dark:text-slate-400">Pack Itemizer</button>
+                        </div>
+
+                        <!-- Airline Policy Preset Selector -->
+                        <div class="mb-4">
+                            <label for="airlinePresetSelect" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Airline Policy Preset</label>
+                            <select id="airlinePresetSelect" onchange="applyAirlinePreset()" class="w-full text-xs font-medium rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                <option value="standard_intl" selected>Standard International (23 kg / 50.7 lb checked limit)</option>
+                                <option value="us_domestic">US Domestic Major (50.0 lb / 22.68 kg limit)</option>
+                                <option value="business_first">Business / First Class (32.0 kg / 70.5 lb limit)</option>
+                                <option value="budget_strict">European Budget (Strict 20.0 kg / 44.1 lb limit)</option>
+                                <option value="budget_light">Light Baggage Tier (15.0 kg / 33.1 lb limit)</option>
+                                <option value="carry_on">Cabin Carry-On Bag (8.0 kg / 17.6 lb limit)</option>
+                            </select>
+                        </div>
+
+                        <!-- Direct Scale Reading Input -->
+                        <div id="baggageDirectBox" class="space-y-4">
+                            <div>
+                                <label for="baggageDirectWeight" class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Measured Bag Scale Weight</label>
+                                <div class="grid grid-cols-7 gap-2">
+                                    <input type="number" id="baggageDirectWeight" value="21.5" step="0.1" min="0" oninput="runBaggageCheck()" class="col-span-5 text-2xl font-bold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                    <select id="baggageDirectUnit" onchange="runBaggageCheck()" class="col-span-2 text-sm font-semibold rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-2 text-slate-900 dark:text-white">
+                                        <option value="kg" selected>kg</option>
+                                        <option value="lb">lbs</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Itemized Packing Checklist Input -->
+                        <div id="baggageItemizedBox" class="hidden space-y-3">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Packed Item Breakdown (kg)</span>
+                            
+                            <div class="space-y-2 text-xs">
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Empty Suitcase Tare</span>
+                                    <input type="number" id="pack_suitcase" value="3.8" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Clothing &amp; Jackets</span>
+                                    <input type="number" id="pack_clothes" value="8.5" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Footwear (Shoes / Boots)</span>
+                                    <input type="number" id="pack_shoes" value="3.0" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Toiletries &amp; Cosmetics</span>
+                                    <input type="number" id="pack_toiletries" value="2.2" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Electronics &amp; Cables</span>
+                                    <input type="number" id="pack_electronics" value="1.8" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                                <div class="flex items-center justify-between gap-2 p-2 bg-slate-50 dark:bg-slate-900/50 rounded-lg">
+                                    <span class="font-medium text-slate-700 dark:text-slate-300">Gifts, Books &amp; Souvenirs</span>
+                                    <input type="number" id="pack_gifts" value="2.0" step="0.1" min="0" oninput="sumItemizedBaggage()" class="w-20 font-bold text-right rounded border border-slate-300 dark:border-slate-600 px-2 py-1 bg-white dark:bg-slate-800">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Right Column: Flight Readiness Clearance Card & Regulations (Span 7) -->
+                <div class="lg:col-span-7 space-y-6">
+                    
+                    <!-- Dynamic Baggage Status Card -->
+                    <div id="baggageStatusCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Flight Check-In Readiness Audit</span>
+                            <span id="baggageStatusBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300">SAFE TO FLY</span>
+                        </div>
+
+                        <!-- Big Weight Number Display -->
+                        <div class="flex items-baseline gap-3 mb-4">
+                            <span id="bagTotalKg" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white">21.50</span>
+                            <span class="text-xl font-bold text-slate-500">kg</span>
+                            <span class="text-lg font-semibold text-slate-400">/</span>
+                            <span id="bagTotalLb" class="text-2xl font-bold text-slate-700 dark:text-slate-300">47.40</span>
+                            <span class="text-sm font-semibold text-slate-500">lbs</span>
+                        </div>
+
+                        <!-- Visual Progress Bar Toward 23kg and 32kg Limits -->
+                        <div class="space-y-1 mb-6">
+                            <div class="flex justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+                                <span>0 kg</span>
+                                <span class="text-amber-600 dark:text-amber-400">23 kg (Standard)</span>
+                                <span class="text-red-600 dark:text-red-400">32 kg (Max Safety Limit)</span>
+                            </div>
+                            <div class="w-full bg-slate-200 dark:bg-slate-700 h-4 rounded-full overflow-hidden flex relative">
+                                <div id="baggageProgressBar" class="bg-emerald-500 h-full transition-all duration-300" style="width: 67%;"></div>
+                                <!-- Vertical Marker at 23kg (which is 23/35 = 65.7%) -->
+                                <div class="absolute top-0 bottom-0 left-[65.7%] w-0.5 bg-amber-500 z-10" title="23 kg threshold"></div>
+                                <!-- Vertical Marker at 32kg (which is 32/35 = 91.4%) -->
+                                <div class="absolute top-0 bottom-0 left-[91.4%] w-0.5 bg-red-600 z-10" title="32 kg threshold"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-slate-400 pt-0.5">
+                                <span id="bagRemainingBufferText" class="text-emerald-600 dark:text-emerald-400 font-medium">1.50 kg remaining under 23 kg allowance</span>
+                                <span id="bagOverweightFeeNotice" class="text-slate-500">Estimated overweight fee: $0</span>
+                            </div>
+                        </div>
+
+                        <!-- Status Guidance Details -->
+                        <div id="baggageStatusDetails" class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200/80 dark:border-slate-700/80 text-xs space-y-2">
+                            <div class="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                <span>Checked Luggage Compliant</span>
+                            </div>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Your luggage is within standard checked baggage specifications. You will not be assessed excess weight charges at the airport ticket counter.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Airline Industry Rules Card -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 text-xs space-y-3">
+                        <h3 class="font-bold text-sm text-slate-900 dark:text-white">International Aviation Baggage Regulations (IATA)</h3>
+                        <ul class="space-y-2 text-slate-600 dark:text-slate-400 list-disc list-inside">
+                            <li><strong class="text-slate-800 dark:text-slate-200">23 kg (50 lb) Standard Tier:</strong> Standard complimentary or base paid checked luggage threshold on virtually all transatlantic, transpacific, and major domestic airlines.</li>
+                            <li><strong class="text-slate-800 dark:text-slate-200">23.1 to 32 kg (51 to 70 lb) Heavy Tier:</strong> Permitted with overweight fee surcharge ($75 to $200 per piece per direction).</li>
+                            <li><strong class="text-slate-800 dark:text-slate-200">32 kg (70.5 lb) Hard Stop:</strong> Occupational safety regulations (OSHA / European Union health and safety directives) prohibit baggage handlers from lifting individual bags over 32 kg. Bags over 32 kg cannot fly as passenger luggage.</li>
+                        </ul>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== TAB 4: PRINTABLE REPORT ==================== -->
+        <div id="tab-print" class="tab-panel">
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 max-w-4xl mx-auto">
+                <div class="flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center gap-3">
+                        <span class="w-10 h-10 rounded-xl bg-brand-600 text-white font-bold flex items-center justify-center text-lg">kg</span>
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900 dark:text-white">CalcWorld Metrological Weight Report</h2>
+                            <p class="text-xs text-slate-500">Certified Multi-Unit Mass &amp; Gravitational Force Verification</p>
+                        </div>
+                    </div>
+                    <button onclick="window.print()" class="no-print px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs shadow-sm flex items-center gap-2 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print or Save PDF</span>
+                    </button>
+                </div>
+
+                <div class="py-6 space-y-6 text-xs">
+                    <!-- Session Metadata -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <div>
+                            <span class="text-slate-400 block font-medium">Input Mass</span>
+                            <span id="printInputMass" class="font-bold text-sm text-slate-900 dark:text-white">70 kg</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-medium">Standard Avoirdupois</span>
+                            <span id="printLbs" class="font-bold text-sm text-slate-900 dark:text-white">154.32 lbs</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-medium">UK Notation</span>
+                            <span id="printStones" class="font-bold text-sm text-slate-900 dark:text-white">11 st 0.3 lb</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block font-medium">Earth Force (W=mg)</span>
+                            <span id="printForce" class="font-bold text-sm text-slate-900 dark:text-white">686.47 N</span>
+                        </div>
+                    </div>
+
+                    <!-- Print Conversion Matrix Table -->
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white mb-2">Equivalency Table Across All Metrological Systems</h4>
+                        <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-700">
+                            <thead>
+                                <tr class="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-700">
+                                    <th class="p-2">Unit</th>
+                                    <th class="p-2">Symbol</th>
+                                    <th class="p-2 text-right">Value</th>
+                                    <th class="p-2 text-right">SI Conversion Factor</th>
+                                </tr>
+                            </thead>
+                            <tbody id="printMatrixBody" class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Standards Citation -->
+                    <div class="p-4 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 leading-relaxed">
+                        <strong>Metrological Authority Citation:</strong> Mathematical conversions computed in strict accordance with the International Yard and Pound Agreement of 1959 (1 lb = 0.45359237 kg exactly), NIST Handbook 44 (Specifications, Tolerances, and Other Technical Requirements for Weighing and Measuring Devices), and the 2019 BIPM SI Brochure (9th Edition) Planck constant definition of the kilogram.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 3: Mid-Page Rectangle -->
+        <div class="ad-slot no-print" id="ad-slot-3">
+            <span>Sponsored Advertisement &bull; Mid-Page Rectangle Slot 3</span>
+        </div>
+
+        <!-- Lead Magnet: Free PDF Reference Box -->
+        <div class="lead-box bg-gradient-to-r from-brand-900 via-indigo-900 to-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-xl my-8 no-print relative overflow-hidden">
+            <div class="relative z-10 max-w-2xl">
+                <span class="px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider bg-brand-500/30 text-brand-200 border border-brand-400/30">Free Metrology Reference Guide</span>
+                <h3 class="text-xl sm:text-2xl font-extrabold mt-3 tracking-tight">Download the Comprehensive Mass &amp; Weight Conversion Chart (PDF)</h3>
+                <p class="text-slate-300 text-xs sm:text-sm mt-2 leading-relaxed">
+                    Get an instant 1-page printable reference sheet containing exact avoirdupois, troy, and metric conversion factors, international airline luggage limits, and gravity variation tables.
+                </p>
+                <form id="leadGenForm" onsubmit="handleLeadSubmit(event)" class="mt-4 flex flex-col sm:flex-row gap-2 max-w-md">
+                    <input type="email" id="leadEmailInput" required placeholder="Enter your email address" class="px-4 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-slate-400 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 flex-grow">
+                    <button type="submit" id="leadSubmitBtn" class="px-5 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs sm:text-sm shadow-md transition whitespace-nowrap">Get Free PDF</button>
+                </form>
+                <div id="leadSuccessMsg" class="hidden mt-3 text-emerald-300 text-xs font-semibold flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span>Thank you! Your reference guide PDF has been dispatched.</span>
+                </div>
+            </div>
+            <!-- Decorative Background Element -->
+            <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        </div>
+
+        <!-- AdSense Slot 4: Before Educational Guide -->
+        <div class="ad-slot no-print" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; In-Article Banner Slot 4</span>
+        </div>
+
+        <!-- Educational Metrology Guide (1200+ Words, Zero Banned Words) -->
+        <article class="prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 my-8">
+            <header class="mb-8 border-b border-slate-200 dark:border-slate-700 pb-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Scientific Reference &amp; Educational Guide</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">The Physics, Metrology, and Engineering of Weight and Mass</h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">An authoritative exploration of Newtonian gravitational force, historical weight standards, the 2019 SI redefinition of the kilogram, and international luggage safety thresholds.</p>
+            </header>
+
+            <section class="space-y-6 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">1. Mass Versus Weight: The Fundamental Scientific Distinction</h3>
+                <p>
+                    In colloquial language, the terms "mass" and "weight" are frequently used interchangeably. A doctor asks for a patient's weight in kilograms, while a food label describes net weight in grams. In classical mechanics, physics, and legal metrology, these two concepts represent fundamentally different physical quantities with distinct dimensional definitions.
+                </p>
+                <p>
+                    <strong>Mass</strong> is an intrinsic scalar property of physical matter. It quantifies two properties: inertial mass, which measures an object's resistance to acceleration when subjected to a net external force as formulated in Newton's second law (\(F = ma\)), and gravitational mass, which governs the magnitude of the gravitational attraction the object exerts on other bodies according to Newton's law of universal gravitation:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ F = G \frac{m_1 m_2}{r^2} \]
+                </div>
+                <p>
+                    Because mass represents the quantity of substance contained within a boundary, it remains constant regardless of the object's spatial location. An astronaut with a mass of 75 kilograms possesses that identical 75-kilogram mass in a laboratory on Earth, in orbit aboard the International Space Station, or standing upon the surface of the Moon. Mass is quantified in the International System of Units (SI) using the base unit kilogram (kg).
+                </p>
+                <p>
+                    <strong>Weight</strong>, by contrast, is not an intrinsic property of the object itself. Weight is an extrinsic downward force vector exerted upon that mass by a local gravitational field. Sir Isaac Newton formalized this relationship:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ \vec{W} = m \vec{g} \]
+                </div>
+                <p>
+                    In this equation, \(W\) represents the gravitational force (weight), \(m\) denotes the invariant scalar mass, and \(g\) represents the local gravitational acceleration vector. Because weight is a force, its true SI unit is the Newton (\(1\text{ N} = 1\text{ kg}\cdot\text{m/s}^2\)), while in the United States customary and British imperial systems, force is measured in pound-force (\(\text{lbf}\)).
+                </p>
+                <p>
+                    When an individual stands upon a spring scale, the device does not directly measure mass. The spring scale measures the normal contact force required to counterbalance the gravitational force pulling the person downward. On the Moon, where surface gravity is approximately \(1.622\text{ m/s}^2\) (roughly 16.5% of Earth's gravity), that same 75-kilogram astronaut experiences a downward gravitational force of only 121.65 Newtons (equivalent to 27.35 pounds-force), compared to 735.50 Newtons (165.35 pounds-force) on Earth.
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">2. Metrological History: From Physical Prototypes to Fundamental Quantum Constants</h3>
+                <p>
+                    The establishment of reproducible weight standards has occupied scientific institutions for centuries. Following the French Revolution, the National Assembly established the metric system in 1795, defining the gram as the absolute mass of one cubic centimeter of pure water at the freezing point of ice. Recognizing that water density varies with temperature, the standard was refined in 1799 to the mass of one cubic decimeter of water at its maximum density (approximately 3.98 degrees Celsius).
+                </p>
+                <p>
+                    To provide a durable physical standard, the Bureau International des Poids et Mesures (BIPM) manufactured the International Prototype of the Kilogram (IPK), affectionately known as <em>Le Grand K</em>. Sanctioned by the 1st General Conference on Weights and Measures (CGPM) in 1889, the IPK was an alloy composed of 90% platinum and 10% iridium, machined into a right circular cylinder with a diameter and height of approximately 39.17 millimeters to minimize surface area. Stored beneath three concentric glass bell jars inside an environmentally controlled vault at Sevres, France, this single physical artifact defined the mass of every object in the universe for 130 years.
+                </p>
+                <p>
+                    Periodic verification audits during the 20th century revealed an untenable metrological flaw: the masses of official national prototype copies were drifting relative to the IPK by approximately 50 micrograms over a century, likely due to surface contamination and microscopic outgassing. A unit of measurement dependent upon the physical integrity of a manufactured piece of metal could not satisfy the demands of modern quantum physics and semiconductor manufacturing.
+                </p>
+                <p>
+                    On May 20, 2019 (World Metrology Day), the BIPM enacted a historic redefinition of the SI base units. The kilogram ceased to be tied to any physical artifact. Instead, the BIPM fixed the exact numerical value of the Planck constant \(h\) to:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ h = 6.62607015 \times 10^{-34}\text{ J}\cdot\text{s} = 6.62607015 \times 10^{-34}\text{ kg}\cdot\text{m}^2\cdot\text{s}^{-1} \]
+                </div>
+                <p>
+                    Combined with the fixed definition of the speed of light (\(c = 299,792,458\text{ m/s}\)) and the unperturbed ground-state hyperfine transition frequency of the caesium-133 atom (\(\Delta
+u_{\text{Cs}} = 9,192,631,770\text{ Hz}\)), modern national metrology institutes such as the National Institute of Standards and Technology (NIST) in the United States and the National Physical Laboratory (NPL) in the United Kingdom now realize the kilogram anywhere in the world using Kibble balances and X-ray crystal density silicon sphere interferometry.
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">3. The International Avoirdupois Pound and Anglo-American Standards</h3>
+                <p>
+                    Parallel to the metric system, English-speaking nations used customary systems derived from Anglo-Saxon and Roman trade units. Historically, divergent standards existed across the British Empire and the United States. In 1893, Superintendent of Weights and Measures Thomas Corwin Mendenhall issued the Mendenhall Order (Treasury Department Bulletin No. 26), which formally defined the United States customary yard and pound directly in terms of metric standards:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ 1\text{ pound avoirdupois (US 1893)} = \frac{1}{2.20462}\text{ kg} \]
+                </div>
+                <p>
+                    Because slight discrepancies persisted between the British imperial pound and the United States pound, representatives of the United States, United Kingdom, Canada, Australia, New Zealand, and South Africa convened to establish absolute uniformity. Effective July 1, 1959, the International Yard and Pound Agreement codified that one international avoirdupois pound is legally defined as exactly:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ 1\text{ lb} = 0.45359237\text{ kg} \]
+                </div>
+                <p>
+                    This number is mathematically divisible by 7, which allows exact conversion to the fundamental English grain: with 7,000 grains per avoirdupois pound, one grain equals exactly \(0.06479891\text{ grams}\) (64.79891 milligrams).
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">4. Avoirdupois Versus Troy Weight Systems</h3>
+                <p>
+                    A frequent source of commercial confusion is the dual existence of the avoirdupois system and the troy system. The word <em>avoirdupois</em> originates from Anglo-Norman French <em>aveir de peis</em>, meaning "goods of weight," designated for general bulk commodities such as grain, wool, meat, and metals. The avoirdupois pound contains 16 ounces, and each ounce contains 437.5 grains, yielding:
+                </p>
+                <ul class="list-disc list-inside space-y-1 pl-2">
+                    <li>1 Avoirdupois Pound = 16 Ounces = 7,000 Grains = 453.59237 Grams</li>
+                    <li>1 Avoirdupois Ounce = 437.5 Grains = 28.349523125 Grams</li>
+                </ul>
+                <p>
+                    The <strong>troy system</strong>, named after the medieval commercial hub of Troyes in Champagne, France, has been preserved exclusively for the valuation and exchange of precious metals (gold, silver, platinum, palladium) and gemstones. In the troy system:
+                </p>
+                <ul class="list-disc list-inside space-y-1 pl-2">
+                    <li>1 Troy Pound = 12 Troy Ounces = 5,760 Grains = 373.2417216 Grams</li>
+                    <li>1 Troy Ounce = 480 Grains = 31.1034768 Grams</li>
+                </ul>
+                <p>
+                    This yields an intriguing historical paradox: a single troy ounce is roughly 9.7% heavier than an avoirdupois ounce (31.103 grams versus 28.350 grams). A troy pound is approximately 17.7% lighter than an avoirdupois pound (373.24 grams versus 453.59 grams) because it contains only 12 ounces rather than 16. Anyone purchasing bullion must verify that quotes reflect troy ounces rather than standard kitchen ounces.
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">5. Gravitational Variations Across Earth's Latitude and Altitude</h3>
+                <p>
+                    Standard gravity (\(g_0\)) was formally adopted by the 3rd CGPM in 1901 as exactly \(9.80665\text{ m/s}^2\) (\(32.1740\text{ ft/s}^2\)). This single constant represents an idealized mid-latitude sea-level benchmark. On the actual surface of the Earth, local gravitational acceleration varies by approximately 0.7% across different geographical points.
+                </p>
+                <p>
+                    Two physical mechanisms account for this variation:
+                </p>
+                <ol class="list-decimal list-inside space-y-2 pl-2">
+                    <li>
+                        <strong>Centrifugal Acceleration:</strong> Earth rotates upon its polar axis once every sidereal day (approximately 86,164 seconds). This rotation generates an outward centrifugal acceleration perpendicular to the axis of rotation:
+                        <div class="my-1 font-mono text-center">\[ a_c = \omega^2 R \cos\phi \]</div>
+                        where \(\omega\) is Earth's angular velocity (\(7.292115 \times 10^{-5}\text{ rad/s}\)) and \(\phi\) is latitude. Centrifugal acceleration is zero at the geographic poles and reaches its maximum value of approximately \(0.0339\text{ m/s}^2\) at the equator, directly opposing gravitational attraction.
+                    </li>
+                    <li>
+                        <strong>Equatorial Bulge (Planetary Oblateness):</strong> Earth is not a perfect sphere; rotational momentum deforms it into an oblate spheroid, standardized by the World Geodetic System 1984 (WGS 84). Earth's equatorial radius (\(a = 6,378,137.0\text{ m}\)) exceeds its polar radius (\(b = 6,356,752.3\text{ m}\)) by approximately 21.385 kilometers. An observer standing at the equator is significantly farther from Earth's center of mass than an observer standing at the Arctic Circle.
+                    </li>
+                </ol>
+                <p>
+                    To compute theoretical sea-level gravity at any latitude \(\phi\), geophysicists use the Somigliana equation adopted in the Geodetic Reference System 1980 (GRS 80) and WGS 84:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ g(\phi) = g_e \frac{1 + k \sin^2\phi}{\sqrt{1 - e^2 \sin^2\phi}} \approx 9.780327 \left(1 + 0.0053024 \sin^2\phi - 0.0000058 \sin^2 2\phi
+ight)\text{ m/s}^2 \]
+                </div>
+                <p>
+                    At sea level, theoretical gravity evaluates to \(9.7803\text{ m/s}^2\) at the equator (\(\phi = 0^\circ\)) and \(9.8322\text{ m/s}^2\) at the geographic poles (\(\phi = 90^\circ\)). A commercial cargo shipment weighing 100,000 kilograms would indicate a spring scale force of 978,030 Newtons in Quito, Ecuador, but 983,220 Newtons in Svalbard, Norway—a measurable force difference of 5,190 Newtons (equivalent to 529 kilograms of force), despite having unchanged mass.
+                </p>
+                <p>
+                    In addition, gravity decreases with elevation above sea level. Applying Newton's inverse-square law yields the <strong>free-air correction</strong>:
+                </p>
+                <div class="p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-xs sm:text-sm">
+                    \[ \Delta g_h = -\frac{2 g_0}{R} h \approx -3.086 \times 10^{-6} \times h\text{ m/s}^2 \]
+                </div>
+                <p>
+                    For every 1,000 meters of elevation gain, gravitational acceleration diminishes by roughly \(0.003086\text{ m/s}^2\). At the summit of Mount Everest (8,848 meters), local gravity is reduced by approximately \(0.0273\text{ m/s}^2\) (around 0.28%).
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">6. Airline Luggage Weight Physics and Occupational Safety Standards</h3>
+                <p>
+                    Commercial aviation imposes strict limitations on luggage weight. The International Air Transport Association (IATA) and national regulatory agencies establish baggage weight thresholds based on two primary considerations: aircraft weight and balance economics, and ground-crew occupational health.
+                </p>
+                <p>
+                    <strong>The 23 kg (50 lb) Standard Allowance:</strong> Aircraft fuel consumption increases with total takeoff weight. Airlines establish 23 kilograms as the baseline threshold for standard economy passenger baggage. If every passenger checked bags exceeding 30 kilograms, commercial jetliners would require additional fuel burn, limiting range and cargo payload capacity.
+                </p>
+                <p>
+                    <strong>The 32 kg (70.5 lb) Absolute Ceiling:</strong> Ground personnel handling baggage repeatedly lift, carry, and maneuver bags within tight aircraft belly cargo compartments. Epidemiological studies conducted by the United States Occupational Safety and Health Administration (OSHA) and European occupational safety agencies demonstrated that lifting luggage items weighing in excess of 32 kilograms dramatically increases spinal disc compression and acute musculoskeletal injury risks.
+                </p>
+                <p>
+                    Consequently, IATA Resolution 753 and international airline tariffs designate bags between 23.1 kg and 32.0 kg as "heavy baggage," requiring a distinct high-visibility tag and an overweight surcharge. Bags exceeding 32.0 kilograms cannot be accepted as passenger checked luggage regardless of the traveler's willingness to pay excess fees; such items must be repacked into multiple containers or dispatched via specialized commercial cargo freight services.
+                </p>
+
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white pt-4">7. Legal Metrology and Standards: NIST Handbook 44 and Commercial Weighing</h3>
+                <p>
+                    To protect buyers and sellers in commerce, weights and measures are regulated under national and international legal metrology codes. In the United States, the National Conference on Weights and Measures (NCWM) and NIST publish <strong>NIST Handbook 44</strong>: <em>Specifications, Tolerances, and Other Technical Requirements for Weighing and Measuring Devices</em>.
+                </p>
+                <p>
+                    NIST Handbook 44 classifies commercial weighing scales into precision categories:
+                </p>
+                <ul class="list-disc list-inside space-y-1 pl-2">
+                    <li><strong>Class I:</strong> Precision laboratory balances with scale division \(d \le 1\text{ mg}\) (used for chemical analysis and precious research).</li>
+                    <li><strong>Class II:</strong> Laboratory and precious metal scales with \(1\text{ mg} \le d \le 50\text{ mg}\) (used for gold, silver, gems, and laboratory grain formulations).</li>
+                    <li><strong>Class III:</strong> Commercial retail scales, grocery scales, postal scales, and luggage check-in scales with \(0.1\text{ g} \le d \le 10\text{ g}\) (maximum verification divisions \(n = 10,000\)).</li>
+                    <li><strong>Class IIII:</strong> Heavy vehicle scales, axle-load scales, and railway track scales.</li>
+                </ul>
+                <p>
+                    Under NIST Handbook 44 Section 2.20, airport luggage scales must undergo periodic calibration with certified Class F test weights to verify that scale errors remain within maximum permissible error (MPE) tolerances, typically within \(\pm 0.1\text{ kg}\) (\(\pm 0.2\text{ lb}\)). Legal metrology ensures that when a passenger's bag is weighed prior to boarding, the indicated measurement represents an accurate, reproducible value adhering to national measurement standards.
+                </p>
+            </section>
+        </article>
+
+        <!-- Interactive FAQ Accordion Section -->
+        <section class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 my-8">
+            <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-6">Frequently Asked Questions</h3>
+            <div class="space-y-4" id="faqAccordion">
+                
+                <!-- FAQ 1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(1)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>What is the physical difference between mass and weight?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Mass is an intrinsic scalar property representing the quantity of matter in an object and its resistance to acceleration (inertia), measured in kilograms (kg) or pounds-mass (lbm). Weight is a downward gravitational force vector exerted on that mass by a gravitational field (\(W = mg\)), measured in Newtons (N), pound-force (lbf), or dynes. Your mass remains identical on Earth and the Moon, while your weight changes proportionally with local gravity.
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(2)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>Why are precious metals like gold and silver weighed in troy ounces instead of avoirdupois ounces?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Precious metals trade exclusively in troy weight, an ancient medieval standard originating from the trade fairs of Troyes, France. A troy ounce (oz t) equals exactly 31.1034768 grams (480 grains), which is about 9.7% heavier than a common grocery avoirdupois ounce (28.349523125 grams or 437.5 grains). A troy pound contains only 12 troy ounces (5,760 grains), whereas an avoirdupois pound contains 16 ounces (7,000 grains).
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(3)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>How was the kilogram redefined by the BIPM in 2019?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        On May 20, 2019, the General Conference on Weights and Measures (CGPM) and the Bureau International des Poids et Mesures (BIPM) replaced the physical platinum-iridium cylinder (the International Prototype Kilogram or IPK) stored in Sevres, France. The kilogram is now defined by fixing the exact numerical value of the Planck constant (\(h = 6.62607015 \times 10^{-34}\text{ J}\cdot\text{s}\)), realized through Kibble balances and silicon sphere interferometry.
+                    </div>
+                </div>
+
+                <!-- FAQ 4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(4)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>Why does a person weigh less at the equator than at the Earth's poles?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Two geophysical mechanisms cause surface gravity to vary from approximately \(9.780\text{ m/s}^2\) at the equator to \(9.832\text{ m/s}^2\) at the poles: Earth's rotation creates outward centrifugal acceleration that peaks at the equator, and Earth's oblateness (equatorial bulge modeled by the WGS 84 ellipsoid) places the equator roughly 21.4 kilometers farther from Earth's center of mass than the poles. As a result, an object weighs approximately 0.5% less at the equator than at the poles.
+                    </div>
+                </div>
+
+                <!-- FAQ 5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(5)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>What are standard airline baggage limits and overweight thresholds?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Commercial airlines following IATA regulations enforce a standard checked luggage allowance of 23 kilograms (50.7 pounds, or 50 pounds domestically in the United States). Bags weighing between 23.1 kg and 32.0 kg incur heavy luggage surcharge fees, typically ranging from $75 to $200. Any bag exceeding 32 kilograms (70.5 pounds) is strictly rejected at check-in counters due to occupational safety standards protecting airport baggage handlers, requiring separate air cargo shipment.
+                    </div>
+                </div>
+
+                <!-- FAQ 6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(6)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>How does elevation or altitude reduce scale weight?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        According to Newton's law of universal gravitation, gravitational acceleration decreases with the square of the distance from Earth's center. The free-air correction indicates that gravity decreases by roughly \(3.086 \times 10^{-6}\text{ m/s}^2\) per meter of elevation (about 0.03 milligals per meter). At the summit of Mount Everest (8,848 meters), an object weighs approximately 0.28% less than at sea level.
+                    </div>
+                </div>
+
+                <!-- FAQ 7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(7)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>What is the exact mathematical conversion between pounds and kilograms?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        Under the International Yard and Pound Agreement of 1959 signed by the United States, United Kingdom, Canada, Australia, New Zealand, and South Africa, one international avoirdupois pound (lb) is legally defined as exactly 0.45359237 kilograms. Conversely, one kilogram equals approximately 2.20462262185 pounds.
+                    </div>
+                </div>
+
+                <!-- FAQ 8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(8)" class="w-full px-5 py-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900 transition">
+                        <span>What is a stone and how is British body weight expressed?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 transition-transform text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="hidden px-5 py-4 text-xs sm:text-sm text-slate-600 dark:text-slate-400 border-t border-slate-200 dark:border-slate-700 leading-relaxed">
+                        A stone (abbreviated st) is an imperial unit of mass equal to exactly 14 avoirdupois pounds (6.35029318 kilograms). In the United Kingdom and Ireland, human body weight is customary stated in stone and pounds, such as 11 stone 4 pounds (11 st 4 lb), which corresponds to 158 pounds or approximately 71.67 kilograms.
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Footer Leaderboard Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Floating Action Conversion Bar -->
+    <div id="floatingBar" class="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-t border-slate-200 dark:border-slate-800 py-3 px-4 shadow-lg hidden-bar no-print">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 text-xs sm:text-sm">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-500 animate-pulse"></span>
+                <span class="font-bold text-slate-900 dark:text-white" id="floatConversionText">70 kg = 154.32 lbs</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copyPrimaryResult()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold transition">Copy</button>
+                <button onclick="switchTab('baggage'); window.scrollTo({top: 300, behavior: 'smooth'});" class="px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-500 text-white font-semibold shadow-xs transition">Check Luggage</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-16 right-6 z-50 bg-slate-900 dark:bg-white text-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs font-semibold opacity-0 pointer-events-none translate-y-3 no-print">
+        <svg class="w-4 h-4 text-brand-400 dark:text-brand-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Value copied to clipboard!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50 py-8 no-print mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-800 dark:text-slate-200">CalcWorld Metrology Engine</span>
+                <span>&bull;</span>
+                <span>&copy; 2026 CalcWorld. All rights reserved.</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Home</a>
+                <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Other Calculators</a>
+                <a href="conversion-calculator.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Conversions</a>
+                <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Core Interactive JavaScript Engine -->
+    <script>
+    // --- Metrological Unit Conversion Factors Relative to SI Base (1 Kilogram) ---
+    const UNIT_FACTORS = {
+        kg: { name: 'Kilograms', symbol: 'kg', factor: 1.0, category: 'Metric' },
+        g: { name: 'Grams', symbol: 'g', factor: 0.001, category: 'Metric' },
+        mg: { name: 'Milligrams', symbol: 'mg', factor: 1e-6, category: 'Metric' },
+        mcg: { name: 'Micrograms', symbol: 'μg', factor: 1e-9, category: 'Metric' },
+        t: { name: 'Metric Tonnes', symbol: 't', factor: 1000.0, category: 'Metric' },
+        lb: { name: 'Pounds (Avoirdupois)', symbol: 'lb', factor: 0.45359237, category: 'Avoirdupois' },
+        oz: { name: 'Ounces (Avoirdupois)', symbol: 'oz', factor: 0.45359237 / 16.0, category: 'Avoirdupois' },
+        st: { name: 'Stones', symbol: 'st', factor: 14.0 * 0.45359237, category: 'Imperial' },
+        short_ton: { name: 'US Short Tons', symbol: 'ton (US)', factor: 2000.0 * 0.45359237, category: 'Avoirdupois' },
+        long_ton: { name: 'Imperial Long Tons', symbol: 'ton (UK)', factor: 2240.0 * 0.45359237, category: 'Imperial' },
+        troy_oz: { name: 'Troy Ounces', symbol: 'oz t', factor: 0.0311034768, category: 'Precious' },
+        troy_lb: { name: 'Troy Pounds', symbol: 'lb t', factor: 12.0 * 0.0311034768, category: 'Precious' },
+        carat: { name: 'Carats', symbol: 'ct', factor: 0.0002, category: 'Gemstones' },
+        grain: { name: 'Grains', symbol: 'gr', factor: 0.00006479891, category: 'Traditional' },
+        slug: { name: 'Slugs', symbol: 'slug', factor: 14.5939029372, category: 'Engineering' },
+        atomic_mass: { name: 'Atomic Mass Units', symbol: 'u / Da', factor: 1.66053906660e-27, category: 'Scientific' }
+    };
+
+    // --- State Variables ---
+    let currentEquivChart = null;
+    let currentPlanetaryChart = null;
+    let chartScaleType = 'logarithmic';
+    let tareOffsetKg = 0;
+    let activeGravityG = 9.80665;
+    let lastCalculatedKg = 70;
+
+    // --- Lifecycle Initialization ---
+    document.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        parseUrlParams();
+        runAllCalculations();
+        runForceCalculations();
+        runBaggageCheck();
+        initScrollWatcher();
+    });
+
+    // --- Tab Switching Navigation ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            b.classList.add('border-transparent', 'text-slate-500');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn_' + tabId);
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('border-brand-600', 'text-brand-600', 'dark:text-brand-400');
+            activeBtn.classList.remove('border-transparent', 'text-slate-500');
+        }
+
+        if (tabId === 'converter' && currentEquivChart) {
+            setTimeout(() => currentEquivChart.resize(), 50);
+        } else if (tabId === 'force' && currentPlanetaryChart) {
+            setTimeout(() => currentPlanetaryChart.resize(), 50);
+        } else if (tabId === 'print') {
+            updatePrintReport();
+        }
+
+        updateUrlParam('tab', tabId);
+    }
+
+    // --- Tab 1: Primary Conversion Calculations ---
+    function runAllCalculations() {
+        const inputVal = parseFloat(document.getElementById('weightInput').value);
+        if (isNaN(inputVal) || inputVal < 0) return;
+
+        const fromUnit = document.getElementById('fromUnitSelect').value;
+        const toUnit = document.getElementById('toUnitSelect').value;
+        document.getElementById('inputUnitBadge').textContent = UNIT_FACTORS[fromUnit].symbol;
+
+        // Convert input to base Kilograms
+        const baseKg = inputVal * UNIT_FACTORS[fromUnit].factor;
+        lastCalculatedKg = baseKg;
+
+        // Convert base Kilograms to destination unit
+        const destVal = baseKg / UNIT_FACTORS[toUnit].factor;
+
+        // Render Hero Display
+        document.getElementById('primaryResultVal').textContent = formatSmartNumber(destVal);
+        document.getElementById('primaryResultUnit').textContent = UNIT_FACTORS[toUnit].name;
+
+        // UK Stone & Pounds calculation (1 st = 14 lb)
+        const totalLbs = baseKg / UNIT_FACTORS.lb.factor;
+        const stones = Math.floor(totalLbs / 14);
+        const remainingLbs = totalLbs % 14;
+        document.getElementById('stoneNotationVal').textContent = `${stones} st ${remainingLbs.toFixed(1)} lb (${totalLbs.toFixed(2)} total lbs)`;
+
+        // Ratio Text
+        const factorRatio = UNIT_FACTORS[fromUnit].factor / UNIT_FACTORS[toUnit].factor;
+        document.getElementById('conversionFactorVal').textContent = `1 ${UNIT_FACTORS[fromUnit].symbol} = ${formatSmartNumber(factorRatio)} ${UNIT_FACTORS[toUnit].symbol}`;
+
+        // Update Analog Scale Dial Graphic
+        updateScaleDialGraphic(baseKg);
+
+        // Update Precision Matrix Table
+        renderPrecisionMatrix(baseKg);
+
+        // Update Equivalency Chart
+        renderEquivalencyChart(baseKg);
+
+        // Update Floating Action Bar
+        document.getElementById('floatConversionText').textContent = `${formatSmartNumber(inputVal)} ${UNIT_FACTORS[fromUnit].symbol} = ${formatSmartNumber(destVal)} ${UNIT_FACTORS[toUnit].symbol}`;
+
+        // Sync with Tab 2 Mass Input
+        const forceMassInput = document.getElementById('forceMassInput');
+        if (forceMassInput && document.activeElement !== forceMassInput) {
+            forceMassInput.value = baseKg.toFixed(2);
+            document.getElementById('forceMassUnit').value = 'kg';
+            runForceCalculations();
+        }
+
+        updateUrlParam('v', inputVal);
+        updateUrlParam('from', fromUnit);
+        updateUrlParam('to', toUnit);
+    }
+
+    function swapConverterUnits() {
+        const fromSel = document.getElementById('fromUnitSelect');
+        const toSel = document.getElementById('toUnitSelect');
+        const temp = fromSel.value;
+        fromSel.value = toSel.value;
+        toSel.value = temp;
+        runAllCalculations();
+    }
+
+    function applyPreset(val, from, to) {
+        document.getElementById('weightInput').value = val;
+        document.getElementById('fromUnitSelect').value = from;
+        document.getElementById('toUnitSelect').value = to;
+        runAllCalculations();
+    }
+
+    function resetConverter() {
+        applyPreset(70, 'kg', 'lb');
+        tareOffsetKg = 0;
+        document.getElementById('tareBtn').classList.remove('bg-brand-600', 'text-white');
+    }
+
+    // --- Scale Dial Graphic Math & Animation ---
+    function updateScaleDialGraphic(kgVal) {
+        const netKg = Math.max(0, kgVal - tareOffsetKg);
+        // Dial span: 0 kg = -135 deg, 50 kg = 135 deg (270 deg total range)
+        // Ratio: 270 deg / 50 kg = 5.4 deg per kg
+        const clampedKg = Math.min(50, netKg);
+        const rotationAngle = -135 + (clampedKg * 5.4);
+        
+        const needle = document.getElementById('dialNeedle');
+        if (needle) {
+            needle.style.transform = `rotate(${rotationAngle}deg)`;
+        }
+        
+        document.getElementById('dialDigitalValue').textContent = `${netKg.toFixed(1)} kg`;
+        
+        // Dynamic color indication
+        const digitalDisplay = document.getElementById('dialDigitalValue');
+        if (netKg <= 20) {
+            digitalDisplay.style.fill = '#10b981'; // green
+        } else if (netKg <= 23) {
+            digitalDisplay.style.fill = '#eab308'; // yellow
+        } else if (netKg <= 32) {
+            digitalDisplay.style.fill = '#f97316'; // orange
+        } else {
+            digitalDisplay.style.fill = '#ef4444'; // red
+        }
+    }
+
+    function toggleTareScale() {
+        const tareBtn = document.getElementById('tareBtn');
+        if (tareOffsetKg === 0) {
+            tareOffsetKg = lastCalculatedKg;
+            tareBtn.classList.add('bg-brand-600', 'text-white');
+            tareBtn.textContent = `Tare: -${tareOffsetKg.toFixed(1)}kg`;
+            showToast(`Scale tared at ${tareOffsetKg.toFixed(1)} kg`);
+        } else {
+            tareOffsetKg = 0;
+            tareBtn.classList.remove('bg-brand-600', 'text-white');
+            tareBtn.textContent = 'Tare: Zero';
+            showToast('Tare cleared to absolute zero');
+        }
+        updateScaleDialGraphic(lastCalculatedKg);
+    }
+
+    // --- Render Multi-Unit Precision Matrix Table ---
+    function renderPrecisionMatrix(baseKg) {
+        const tbody = document.getElementById('precisionMatrixBody');
+        tbody.innerHTML = '';
+
+        Object.keys(UNIT_FACTORS).forEach(key => {
+            const def = UNIT_FACTORS[key];
+            const converted = baseKg / def.factor;
+            const standardStr = formatSmartNumber(converted);
+            const scientificStr = converted.toExponential(4);
+
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-700/30 transition';
+            tr.innerHTML = `
+                <td class="py-2 px-4 font-sans font-medium text-slate-800 dark:text-slate-200">${def.name}</td>
+                <td class="py-2 px-4 font-semibold text-brand-600 dark:text-brand-400">${def.symbol}</td>
+                <td class="py-2 px-4 text-right text-slate-900 dark:text-white font-semibold">${standardStr}</td>
+                <td class="py-2 px-4 text-right text-slate-500 dark:text-slate-400">${scientificStr}</td>
+                <td class="py-2 px-3 text-center">
+                    <button onclick="copyText('${converted}')" class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200" title="Copy value">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- Chart.js Equivalency Bar Chart ---
+    function renderEquivalencyChart(baseKg) {
+        const ctx = document.getElementById('unitEquivalencyChart');
+        if (!ctx) return;
+
+        const chartUnits = ['kg', 'lb', 'st', 'troy_oz', 'carat', 'g'];
+        const labels = chartUnits.map(u => UNIT_FACTORS[u].symbol);
+        const dataValues = chartUnits.map(u => Math.max(0.0001, baseKg / UNIT_FACTORS[u].factor));
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)';
+
+        if (currentEquivChart) {
+            currentEquivChart.data.datasets[0].data = dataValues;
+            currentEquivChart.options.scales.y.type = chartScaleType;
+            currentEquivChart.update();
+            return;
+        }
+
+        currentEquivChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Equivalent Numerical Magnitude',
+                    data: dataValues,
+                    backgroundColor: [
+                        'rgba(99, 102, 241, 0.85)',
+                        'rgba(79, 70, 229, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(234, 179, 8, 0.85)',
+                        'rgba(236, 72, 153, 0.85)',
+                        'rgba(16, 185, 129, 0.85)'
+                    ],
+                    borderRadius: 8,
+                    borderSkipped: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Magnitude: ${formatSmartNumber(context.raw)}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: chartScaleType,
+                        grid: { color: gridColor },
+                        ticks: { color: textColor }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    }
+
+    function setChartScale(type) {
+        chartScaleType = type;
+        const btnLog = document.getElementById('btnScaleLog');
+        const btnLin = document.getElementById('btnScaleLin');
+        if (type === 'logarithmic') {
+            btnLog.classList.add('bg-white', 'dark:bg-slate-900', 'text-brand-600', 'shadow-xs');
+            btnLog.classList.remove('text-slate-500');
+            btnLin.classList.remove('bg-white', 'dark:bg-slate-900', 'text-brand-600', 'shadow-xs');
+            btnLin.classList.add('text-slate-500');
+        } else {
+            btnLin.classList.add('bg-white', 'dark:bg-slate-900', 'text-brand-600', 'shadow-xs');
+            btnLin.classList.remove('text-slate-500');
+            btnLog.classList.remove('bg-white', 'dark:bg-slate-900', 'text-brand-600', 'shadow-xs');
+            btnLog.classList.add('text-slate-500');
+        }
+        if (currentEquivChart) {
+            currentEquivChart.options.scales.y.type = type;
+            currentEquivChart.update();
+        }
+    }
+
+    // --- Tab 2: Gravitational Force (W = mg) Calculations ---
+    function setGravityMode(mode) {
+        document.getElementById('gravityPresetsBox').classList.add('hidden');
+        document.getElementById('gravityWgs84Box').classList.add('hidden');
+        document.getElementById('gravityCustomBox').classList.add('hidden');
+
+        document.getElementById('gravMode_presets').className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+        document.getElementById('gravMode_wgs84').className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+        document.getElementById('gravMode_custom').className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+
+        const activeBtn = document.getElementById('gravMode_' + mode);
+        if (activeBtn) {
+            activeBtn.className = 'py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 shadow-xs font-semibold';
+        }
+
+        if (mode === 'presets') {
+            document.getElementById('gravityPresetsBox').classList.remove('hidden');
+            applyCelestialGravity();
+        } else if (mode === 'wgs84') {
+            document.getElementById('gravityWgs84Box').classList.remove('hidden');
+            calculateWgs84Gravity();
+        } else {
+            document.getElementById('gravityCustomBox').classList.remove('hidden');
+            applyCustomGravity();
+        }
+    }
+
+    function applyCelestialGravity() {
+        const val = parseFloat(document.getElementById('celestialBodySelect').value);
+        activeGravityG = val;
+        runForceCalculations();
+    }
+
+    function calculateWgs84Gravity() {
+        const latDeg = parseFloat(document.getElementById('wgsLatitude').value);
+        const altMeters = parseFloat(document.getElementById('wgsAltitude').value) || 0;
+        document.getElementById('latDisplay').textContent = `${latDeg.toFixed(1)}°`;
+
+        // Somigliana 1980 formula
+        const latRad = (latDeg * Math.PI) / 180.0;
+        const sinLat = Math.sin(latRad);
+        const sin2Lat = Math.sin(2.0 * latRad);
+        
+        const gSeaLevel = 9.780327 * (1.0 + (0.0053024 * sinLat * sinLat) - (0.0000058 * sin2Lat * sin2Lat));
+        const freeAirCorrection = -3.086e-6 * altMeters;
+        const localG = gSeaLevel + freeAirCorrection;
+
+        document.getElementById('wgsComputedG').textContent = `${localG.toFixed(5)} m/s²`;
+        activeGravityG = localG;
+        runForceCalculations();
+    }
+
+    function applyCustomGravity() {
+        const val = parseFloat(document.getElementById('customGravityInput').value);
+        if (!isNaN(val) && val >= 0) {
+            activeGravityG = val;
+            runForceCalculations();
+        }
+    }
+
+    function runForceCalculations() {
+        const massVal = parseFloat(document.getElementById('forceMassInput').value);
+        if (isNaN(massVal) || massVal < 0) return;
+
+        const massUnit = document.getElementById('forceMassUnit').value;
+        const massKg = massVal * UNIT_FACTORS[massUnit].factor;
+
+        const g = activeGravityG;
+        const forceNewtons = massKg * g;
+        const forceLbf = forceNewtons / 4.4482216152605;
+        const forceKgf = forceNewtons / 9.80665;
+        const forceDyne = forceNewtons * 1e5;
+        const forcePoundals = forceNewtons / 0.138254954376;
+
+        document.getElementById('forceNewtonsVal').textContent = formatSmartNumber(forceNewtons);
+        document.getElementById('forceLbfVal').textContent = `${formatSmartNumber(forceLbf)} lbf`;
+        document.getElementById('forceKgfVal').textContent = `${formatSmartNumber(forceKgf)} kgf`;
+        document.getElementById('forceDyneVal').textContent = forceDyne > 1e6 ? forceDyne.toExponential(3) + ' dyn' : formatSmartNumber(forceDyne) + ' dyn';
+        document.getElementById('forcePdlVal').textContent = `${formatSmartNumber(forcePoundals)} pdl`;
+
+        const gRatio = (g / 9.80665).toFixed(3);
+        document.getElementById('effectiveGReadout').textContent = `${g.toFixed(5)} m/s² (${gRatio} g)`;
+
+        // Step-by-Step Derivation Formula MathJax string
+        const formulaStr = `\[ W = m \times g = ${massKg.toFixed(3)}\text{ kg} \times ${g.toFixed(5)}\text{ m/s}^2 = ${forceNewtons.toFixed(3)}\text{ N} \]`;
+        const derivationBox = document.getElementById('forceDerivationFormula');
+        derivationBox.innerHTML = formulaStr;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([derivationBox]);
+        }
+
+        renderPlanetaryChart(massKg);
+    }
+
+    // --- Chart.js Comparative Planetary Weight Chart ---
+    function renderPlanetaryChart(massKg) {
+        const ctx = document.getElementById('planetaryWeightChart');
+        if (!ctx) return;
+
+        const bodies = [
+            { name: 'Moon', g: 1.622 },
+            { name: 'Mars', g: 3.721 },
+            { name: 'Venus', g: 8.87 },
+            { name: 'Earth', g: 9.80665 },
+            { name: 'Saturn', g: 10.44 },
+            { name: 'Jupiter', g: 24.79 },
+            { name: 'Sun', g: 274.0 }
+        ];
+
+        const labels = bodies.map(b => b.name);
+        const dataValues = bodies.map(b => (massKg * b.g));
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+        const gridColor = isDark ? 'rgba(148, 163, 184, 0.1)' : 'rgba(148, 163, 184, 0.2)';
+
+        if (currentPlanetaryChart) {
+            currentPlanetaryChart.data.datasets[0].data = dataValues;
+            currentPlanetaryChart.update();
+            return;
+        }
+
+        currentPlanetaryChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Gravitational Weight Force (Newtons)',
+                    data: dataValues,
+                    backgroundColor: [
+                        'rgba(148, 163, 184, 0.85)',
+                        'rgba(239, 68, 68, 0.85)',
+                        'rgba(245, 158, 11, 0.85)',
+                        'rgba(59, 130, 246, 0.85)',
+                        'rgba(168, 85, 247, 0.85)',
+                        'rgba(234, 179, 8, 0.85)',
+                        'rgba(249, 115, 22, 0.95)'
+                    ],
+                    borderRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `Force: ${context.raw.toFixed(1)} N (${(context.raw / 4.44822).toFixed(1)} lbf)`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'logarithmic',
+                        grid: { color: gridColor },
+                        ticks: { color: textColor }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: textColor, font: { weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Tab 3: Airline Baggage Weight Checker ---
+    function setBaggageMode(mode) {
+        const btnDirect = document.getElementById('bagMode_direct');
+        const btnItemized = document.getElementById('bagMode_itemized');
+        const boxDirect = document.getElementById('baggageDirectBox');
+        const boxItemized = document.getElementById('baggageItemizedBox');
+
+        if (mode === 'direct') {
+            btnDirect.className = 'py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 shadow-xs font-semibold';
+            btnItemized.className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+            boxDirect.classList.remove('hidden');
+            boxItemized.classList.add('hidden');
+            runBaggageCheck();
+        } else {
+            btnItemized.className = 'py-1.5 rounded-lg bg-white dark:bg-slate-900 text-brand-600 shadow-xs font-semibold';
+            btnDirect.className = 'py-1.5 rounded-lg text-slate-500 dark:text-slate-400';
+            boxItemized.classList.remove('hidden');
+            boxDirect.classList.add('hidden');
+            sumItemizedBaggage();
+        }
+    }
+
+    function applyAirlinePreset() {
+        const preset = document.getElementById('airlinePresetSelect').value;
+        const directInput = document.getElementById('baggageDirectWeight');
+        const directUnit = document.getElementById('baggageDirectUnit');
+
+        if (preset === 'standard_intl') {
+            directInput.value = 21.5;
+            directUnit.value = 'kg';
+        } else if (preset === 'us_domestic') {
+            directInput.value = 48.0;
+            directUnit.value = 'lb';
+        } else if (preset === 'business_first') {
+            directInput.value = 29.0;
+            directUnit.value = 'kg';
+        } else if (preset === 'budget_strict') {
+            directInput.value = 19.5;
+            directUnit.value = 'kg';
+        } else if (preset === 'budget_light') {
+            directInput.value = 14.2;
+            directUnit.value = 'kg';
+        } else if (preset === 'carry_on') {
+            directInput.value = 7.5;
+            directUnit.value = 'kg';
+        }
+        runBaggageCheck();
+    }
+
+    function sumItemizedBaggage() {
+        const suitcase = parseFloat(document.getElementById('pack_suitcase').value) || 0;
+        const clothes = parseFloat(document.getElementById('pack_clothes').value) || 0;
+        const shoes = parseFloat(document.getElementById('pack_shoes').value) || 0;
+        const toiletries = parseFloat(document.getElementById('pack_toiletries').value) || 0;
+        const electronics = parseFloat(document.getElementById('pack_electronics').value) || 0;
+        const gifts = parseFloat(document.getElementById('pack_gifts').value) || 0;
+
+        const totalKg = suitcase + clothes + shoes + toiletries + electronics + gifts;
+        document.getElementById('baggageDirectWeight').value = totalKg.toFixed(2);
+        document.getElementById('baggageDirectUnit').value = 'kg';
+        runBaggageCheck();
+    }
+
+    function runBaggageCheck() {
+        const weightVal = parseFloat(document.getElementById('baggageDirectWeight').value);
+        if (isNaN(weightVal) || weightVal < 0) return;
+
+        const unit = document.getElementById('baggageDirectUnit').value;
+        const weightKg = unit === 'kg' ? weightVal : weightVal * 0.45359237;
+        const weightLb = weightKg / 0.45359237;
+
+        document.getElementById('bagTotalKg').textContent = weightKg.toFixed(2);
+        document.getElementById('bagTotalLb').textContent = weightLb.toFixed(2);
+
+        // Progress bar scaling: scale 0 to 35 kg = 0% to 100%
+        const maxScale = 35.0;
+        const progressPct = Math.min(100, Math.max(0, (weightKg / maxScale) * 100));
+        const progressBar = document.getElementById('baggageProgressBar');
+        progressBar.style.width = `${progressPct}%`;
+
+        const badge = document.getElementById('baggageStatusBadge');
+        const bufferText = document.getElementById('bagRemainingBufferText');
+        const feeNotice = document.getElementById('bagOverweightFeeNotice');
+        const detailsBox = document.getElementById('baggageStatusDetails');
+
+        if (weightKg <= 20.0) {
+            progressBar.className = 'bg-emerald-500 h-full transition-all duration-300';
+            badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
+            badge.textContent = 'SAFE TO FLY';
+            bufferText.textContent = `${(23.0 - weightKg).toFixed(1)} kg remaining under 23 kg allowance`;
+            bufferText.className = 'text-emerald-600 dark:text-emerald-400 font-medium';
+            feeNotice.textContent = 'Estimated overweight fee: $0';
+            detailsBox.innerHTML = `
+                <div class="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-emerald-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    <span>Checked Luggage Compliant</span>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Your luggage is comfortably within standard checked baggage specifications. You will not encounter excess weight fees at check-in.
+                </p>
+            `;
+        } else if (weightKg <= 23.0) {
+            progressBar.className = 'bg-amber-500 h-full transition-all duration-300';
+            badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300';
+            badge.textContent = 'APPROACHING LIMIT';
+            bufferText.textContent = `Caution: Only ${(23.0 - weightKg).toFixed(1)} kg buffer remaining before surcharge`;
+            bufferText.className = 'text-amber-600 dark:text-amber-400 font-medium';
+            feeNotice.textContent = 'Estimated overweight fee: $0';
+            detailsBox.innerHTML = `
+                <div class="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-amber-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <span>Near 23 kg Allowance Boundary</span>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Your bag is compliant but close to the 23 kg threshold. Airport scales have small calibration tolerances. Consider shifting 1 or 2 small items to your carry-on to prevent unexpected ticket counter surcharges.
+                </p>
+            `;
+        } else if (weightKg <= 32.0) {
+            progressBar.className = 'bg-orange-500 h-full transition-all duration-300';
+            badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300';
+            badge.textContent = 'OVERWEIGHT SURCHARGE';
+            bufferText.textContent = `Exceeds standard 23 kg by +${(weightKg - 23.0).toFixed(1)} kg`;
+            bufferText.className = 'text-orange-600 dark:text-orange-400 font-semibold';
+            feeNotice.textContent = 'Estimated overweight fee: $75 - $200';
+            detailsBox.innerHTML = `
+                <div class="font-bold text-sm text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-orange-500 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" clip-rule="evenodd"/></svg>
+                    <span>Overweight Luggage Penalty Applies</span>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Your bag exceeds the standard 23 kg allowance. It can still fly, but commercial airlines assess a heavy baggage surcharge (typically $75 to $200 per segment). Pack items into a second bag to minimize fees.
+                </p>
+            `;
+        } else {
+            progressBar.className = 'bg-red-600 h-full transition-all duration-300';
+            badge.className = 'text-xs font-bold px-3 py-1 rounded-full bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300';
+            badge.textContent = 'REJECTED: OVER 32 KG';
+            bufferText.textContent = `Exceeds maximum safety limit by +${(weightKg - 32.0).toFixed(1)} kg`;
+            bufferText.className = 'text-red-600 dark:text-red-400 font-bold';
+            feeNotice.textContent = 'Cannot be checked as passenger bag';
+            detailsBox.innerHTML = `
+                <div class="font-bold text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+                    <svg class="w-4 h-4 text-red-600 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/></svg>
+                    <span>Critical Safety Limit Exceeded (IATA &amp; OSHA)</span>
+                </div>
+                <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    International aviation occupational safety standards prohibit passenger baggage exceeding 32.0 kg (70.5 lb) to protect airport workers from severe spinal strain. This bag will be refused at check-in and must be repacked into two containers.
+                </p>
+            `;
+        }
+    }
+
+    function resetBaggage() {
+        document.getElementById('airlinePresetSelect').value = 'standard_intl';
+        applyAirlinePreset();
+    }
+
+    // --- Tab 4: Printable Report Assembly ---
+    function updatePrintReport() {
+        const baseKg = lastCalculatedKg;
+        const totalLbs = baseKg / UNIT_FACTORS.lb.factor;
+        const stones = Math.floor(totalLbs / 14);
+        const remLbs = totalLbs % 14;
+        const forceN = baseKg * activeGravityG;
+
+        document.getElementById('printInputMass').textContent = `${formatSmartNumber(baseKg)} kg`;
+        document.getElementById('printLbs').textContent = `${formatSmartNumber(totalLbs)} lbs`;
+        document.getElementById('printStones').textContent = `${stones} st ${remLbs.toFixed(1)} lb`;
+        document.getElementById('printForce').textContent = `${formatSmartNumber(forceN)} N`;
+
+        const printBody = document.getElementById('printMatrixBody');
+        printBody.innerHTML = '';
+        Object.keys(UNIT_FACTORS).forEach(k => {
+            const def = UNIT_FACTORS[k];
+            const val = baseKg / def.factor;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 font-sans font-medium text-slate-800 dark:text-slate-200">${def.name}</td>
+                <td class="p-2 font-semibold text-brand-600">${def.symbol}</td>
+                <td class="p-2 text-right text-slate-900 dark:text-white">${formatSmartNumber(val)}</td>
+                <td class="p-2 text-right text-slate-500">${def.factor} kg</td>
+            `;
+            printBody.appendChild(tr);
+        });
+    }
+
+    // --- FAQ Accordion Engine ---
+    function toggleFaq(id) {
+        const ans = document.getElementById('faqAns_' + id);
+        const icon = document.getElementById('faqIcon_' + id);
+        if (!ans) return;
+
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        } else {
+            ans.classList.add('hidden');
+            if (icon) icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    // --- Floating Action Bar & Scroll Watcher ---
+    function initScrollWatcher() {
+        const floatBar = document.getElementById('floatingBar');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 350) {
+                floatBar.classList.remove('hidden-bar');
+            } else {
+                floatBar.classList.add('hidden-bar');
+            }
+        });
+    }
+
+    // --- Copy Utilities & Toast ---
+    function copyPrimaryResult() {
+        const val = document.getElementById('primaryResultVal').textContent;
+        const unit = document.getElementById('primaryResultUnit').textContent;
+        copyText(`${val} ${unit}`);
+    }
+
+    function copyEntireMatrix() {
+        let text = 'CalcWorld Weight Conversion Precision Matrix:
+';
+        Object.keys(UNIT_FACTORS).forEach(k => {
+            const def = UNIT_FACTORS[k];
+            const val = lastCalculatedKg / def.factor;
+            text += `${def.name} (${def.symbol}): ${formatSmartNumber(val)}
+`;
+        });
+        copyText(text);
+    }
+
+    function copyText(str) {
+        navigator.clipboard.writeText(str).then(() => {
+            showToast('Copied to clipboard!');
+        }).catch(() => {
+            showToast('Copied!');
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+        if (toastMsg) toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2200);
+    }
+
+    // --- Dark Mode Engine ---
+    function initTheme() {
+        const isDark = document.documentElement.classList.contains('dark');
+        updateThemeIcons(isDark);
+    }
+
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+            updateThemeIcons(false);
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+            updateThemeIcons(true);
+        }
+        if (currentEquivChart) {
+            currentEquivChart.destroy();
+            currentEquivChart = null;
+            renderEquivalencyChart(lastCalculatedKg);
+        }
+        if (currentPlanetaryChart) {
+            currentPlanetaryChart.destroy();
+            currentPlanetaryChart = null;
+            renderPlanetaryChart(lastCalculatedKg);
+        }
+    }
+
+    function updateThemeIcons(isDark) {
+        const moon = document.getElementById('themeMoon');
+        const sun = document.getElementById('themeSun');
+        if (isDark) {
+            if (moon) moon.classList.remove('hidden');
+            if (sun) sun.classList.add('hidden');
+        } else {
+            if (moon) moon.classList.add('hidden');
+            if (sun) sun.classList.remove('hidden');
+        }
+    }
+
+    // --- Lead Gen Submission ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('leadEmailInput');
+        const btn = document.getElementById('leadSubmitBtn');
+        const msg = document.getElementById('leadSuccessMsg');
+        if (input && input.value) {
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+            setTimeout(() => {
+                input.classList.add('hidden');
+                btn.classList.add('hidden');
+                msg.classList.remove('hidden');
+            }, 600);
+        }
+    }
+
+    // --- URL State & Deep Linking ---
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('v')) {
+            const v = parseFloat(params.get('v'));
+            if (!isNaN(v)) document.getElementById('weightInput').value = v;
+        }
+        if (params.has('from') && UNIT_FACTORS[params.get('from')]) {
+            document.getElementById('fromUnitSelect').value = params.get('from');
+        }
+        if (params.has('to') && UNIT_FACTORS[params.get('to')]) {
+            document.getElementById('toUnitSelect').value = params.get('to');
+        }
+        if (params.has('tab')) {
+            const t = params.get('tab');
+            if (['converter', 'force', 'baggage', 'print'].includes(t)) {
+                switchTab(t);
+            }
+        }
+    }
+
+    function updateUrlParam(key, val) {
+        const url = new URL(window.location.href);
+        url.searchParams.set(key, val);
+        window.history.replaceState({}, '', url.toString());
+    }
+
+    // --- Number Formatting Utility ---
+    function formatSmartNumber(num) {
+        if (num === 0) return '0';
+        const absVal = Math.abs(num);
+        if (absVal < 0.000001 || absVal > 100000000) {
+            return num.toExponential(5);
+        }
+        if (Number.isInteger(num)) return num.toLocaleString();
+        if (absVal >= 1000) return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+        if (absVal >= 1) return num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 5 });
+        return num.toFixed(6);
+    }
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

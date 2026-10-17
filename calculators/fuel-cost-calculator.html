@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuel Cost Calculator | Road Trip Travel Budget &amp; Gas Mileage Solver</title>
+    <meta name="description" content="Calculate road trip fuel cost, gas consumption, and travel budget per passenger. Features highway vs city driving efficiency blends, multi-city route planning, vehicle wear-and-tear allowance, gas price sensitivity curves, and printable audit reports.">
+    <link rel="canonical" href="https://calcworld.net/calculators/fuel-cost-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts & Tailwind CSS CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax for High-Precision Mathematical Rendering -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(16, 185, 129, 0.08) 20%,
+                rgba(16, 185, 129, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 100px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 120px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        .toast-notify {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            transform: translateY(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            opacity: 0;
+            z-index: 50;
+            pointer-events: none;
+            background: #0f172a;
+            color: #f8fafc;
+            border: 1px solid #334155;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.75rem;
+            font-size: 0.875rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .toast-notify.show {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Other Calculators",
+              "item": "https://calcworld.net/other"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Fuel Cost Calculator"
+            }
+          ]
+        },
+        {
+          "@type": "WebApplication",
+          "name": "Fuel Cost Calculator",
+          "url": "https://calcworld.net/other/fuel-cost-calculator",
+          "applicationCategory": "TravelApplication",
+          "operatingSystem": "Any",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Scientific road trip fuel cost calculator, highway-city efficiency blend estimator, passenger expense split tool, and multi-city route planner with fuel price sensitivity curves."
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Why is fuel economy non-linear when measured in MPG?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Miles per gallon (MPG) is an inverse measure of fuel consumption. As MPG increases, the amount of fuel saved per additional MPG decreases following an asymptotic hyperbolic curve. For example, replacing a 10 MPG vehicle with a 20 MPG vehicle saves 5 gallons every 100 miles, whereas upgrading from 33 MPG to 50 MPG saves only 1.03 gallons over the same distance. For this reason, mathematical averages of trip legs must use the harmonic mean rather than simple arithmetic averaging."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "At what exact speed does vehicle aerodynamic drag begin to significantly penalize fuel efficiency?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "According to research conducted by Oak Ridge National Laboratory and the US Department of Energy, aerodynamic drag increases with the square of speed, and the power required to overcome that drag scales with the cube of speed. Above 50 to 55 miles per hour (80 to 90 km/h), aerodynamic resistance becomes the dominant resistive force over rolling resistance. Driving at 75 mph (120 km/h) requires approximately 20% to 25% more fuel per mile than cruising at 55 mph."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How much money does proper tire inflation save on a long road trip?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Data published by the National Highway Traffic Safety Administration (NHTSA) and the EPA demonstrate that every 1 PSI drop across four tires degrades fuel efficiency by approximately 0.2%. Tires under-inflated by 5 to 8 PSI can waste 1% to 2% of total fuel. For a 2,000-mile road trip consuming 70 gallons of fuel, correcting tire pressure prevents unnecessary expenditures and reduces tire tread overheating."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How should road trip driving expenses be divided fairly between vehicle owners and passengers?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Splitting fuel costs equally among travelers is common, but it fails to account for vehicle depreciation, engine oil degradation, tire tread wear, and insurance liability borne exclusively by the vehicle owner. Incorporating a vehicle wear-and-tear allowance (typically 5 to 15 cents per mile for road trips, or aligning with partial IRS standard mileage reimbursement rates) ensures the host driver is not financially burdened by mechanical wear."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does using the air conditioner hurt gas mileage more than opening the windows at highway speeds?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "At low speeds under 45 mph (72 km/h), opening the windows is more fuel-efficient than running the air conditioner because aerodynamic drag is relatively small. At highway speeds above 55 to 60 mph, open windows disrupt vehicle streamline aerodynamics and significantly increase drag coefficient (Cd), consuming more fuel than operating the air conditioning compressor on moderate settings."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does vehicle weight and rooftop cargo impact highway fuel economy?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Every extra 100 pounds (45 kg) loaded into a vehicle reduces fuel economy by approximately 1% in compact and mid-size vehicles. Rooftop cargo carriers, roof racks, and external bicycle mounts exert an even more severe penalty by increasing frontal surface area and parasitic aerodynamic drag, reducing highway fuel efficiency by 10% to 25% at 65 to 75 mph."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the difference between US Gallons and UK Imperial Gallons in fuel calculations?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A US liquid gallon is defined as 231 cubic inches, exactly 3.785411784 liters. A British Imperial gallon is defined as exactly 4.54609 liters, which is approximately 20.09% larger than a US gallon. Consequently, an imperial fuel economy rating of 40 MPG (UK) corresponds to only 33.3 MPG (US) and 7.06 L/100km."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does city driving consume substantially more fuel per mile than highway driving in conventional combustion engines?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "City driving entails frequent cycles of braking and acceleration. Kinetic energy gained during acceleration is dissipated as heat through friction braking. In stop-and-go driving, combustion engines operate at idle when stopped at traffic signals, producing 0 MPG while consuming fuel. Highway driving enables the transmission to use high overdrive gear ratios, keeping engine RPM in its optimal Brake Specific Fuel Consumption (BSFC) efficiency band."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Fuel Cost Calculator | Road Trip Travel Budget &amp; Gas Mileage Solver">
+    <meta property="og:description" content="Calculate road trip fuel cost, gas consumption, and travel budget per passenger. Features highway vs city driving efficiency blends, multi-city route planning, vehicle wear-and-tear allowance, gas price sensitivity curves, and printable audit reports.">
+    <meta property="og:url" content="https://calcworld.net/calculators/fuel-cost-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fuel Cost Calculator | Road Trip Travel Budget &amp; Gas Mileage Solver">
+    <meta name="twitter:description" content="Calculate road trip fuel cost, gas consumption, and travel budget per passenger. Features highway vs city driving efficiency blends, multi-city route planning, vehicle wear-and-tear allowance, gas price sensitivity curves, and printable audit reports.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Reader-Supported Fuel Analytics:</strong> CalcWorld provides verified automotive travel calculation engines 100% free with no login required. Please consider safelisting our domain to support tool maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Fuel Cost Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Fuel Cost Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Estimate road trip fuel consumption, gasoline and diesel expenses, passenger splits, and highway versus city driving efficiency blends with mathematical precision.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 4) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Road Trip Parameters</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">Interactive</span>
+                    </h2>
+
+                    <!-- Unit System Toggle (US Customary vs Metric vs Imperial UK) -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Measurement System</label>
+                        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+                            <button type="button" id="unitBtn_us" onclick="setUnitSystem('us')" class="py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition text-center">US (Miles/Gal)</button>
+                            <button type="button" id="unitBtn_metric" onclick="setUnitSystem('metric')" class="py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition text-center">Metric (km/L)</button>
+                            <button type="button" id="unitBtn_uk" onclick="setUnitSystem('uk')" class="py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition text-center">UK (Miles/Imp Gal)</button>
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Presets Selector -->
+                    <div class="mb-5">
+                        <label for="vehiclePreset" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Vehicle Efficiency Preset</label>
+                        <select id="vehiclePreset" onchange="loadVehiclePreset(this.value)" class="w-full px-3 py-2 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <option value="custom">-- Custom Specifications --</option>
+                            <option value="compact" selected>Compact Sedan (32 MPG &bull; 30 City / 38 Hwy)</option>
+                            <option value="hybrid">Mid-size Hybrid (52 MPG &bull; 51 City / 53 Hwy)</option>
+                            <option value="crossover">Compact SUV / Crossover (28 MPG &bull; 26 City / 32 Hwy)</option>
+                            <option value="truck">Full-Size Pickup Truck (19 MPG &bull; 17 City / 23 Hwy)</option>
+                            <option value="suv">Large 3-Row SUV (17 MPG &bull; 15 City / 20 Hwy)</option>
+                            <option value="sports">Performance Sports Coupe (18 MPG &bull; 15 City / 23 Hwy)</option>
+                            <option value="van">Commercial Van / RV (12 MPG &bull; 10 City / 14 Hwy)</option>
+                        </select>
+                    </div>
+
+                    <!-- Trip Distance & Round Trip Toggle -->
+                    <div class="space-y-4 mb-5">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="tripDistance" class="block text-xs font-medium text-slate-700 dark:text-slate-300" id="distanceInputLabel">Trip Distance (Miles)</label>
+                                <span class="text-[11px] text-slate-400" id="distanceSubLabel">One-way base</span>
+                            </div>
+                            <input type="number" id="tripDistance" min="1" step="any" value="380" oninput="calculateTrip()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                        </div>
+
+                        <!-- Round Trip Switch -->
+                        <div class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/30">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-bold text-slate-900 dark:text-white">Round Trip Travel</span>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400">Doubles calculated driving distance</span>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="roundTripToggle" onchange="calculateTrip()" class="sr-only peer">
+                                <div class="w-10 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Efficiency Calculation Mode: Simple Combined vs Highway/City Blend -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Efficiency Computation Mode</label>
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <button type="button" id="effMode_simple" onclick="setEfficiencyMode('simple')" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 transition">Combined Rating</button>
+                            <button type="button" id="effMode_blend" onclick="setEfficiencyMode('blend')" class="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-brand-500 transition">Highway/City Blend</button>
+                        </div>
+
+                        <!-- Simple Combined Input -->
+                        <div id="simpleEffContainer">
+                            <label for="fuelEfficiency" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1" id="fuelEfficiencyLabel">Fuel Economy (Miles per Gallon &bull; MPG)</label>
+                            <input type="number" id="fuelEfficiency" min="0.5" step="any" value="32" oninput="calculateTrip()" class="w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                        </div>
+
+                        <!-- Detailed Highway/City Blend Inputs -->
+                        <div id="blendEffContainer" class="hidden space-y-3 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl border border-slate-200/80 dark:border-slate-700/80">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label for="cityMpgInput" class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1" id="cityEffLabel">City MPG</label>
+                                    <input type="number" id="cityMpgInput" min="0.5" step="any" value="30" oninput="calculateTrip()" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                                <div>
+                                    <label for="hwyMpgInput" class="block text-[11px] font-medium text-slate-600 dark:text-slate-300 mb-1" id="hwyEffLabel">Highway MPG</label>
+                                    <input type="number" id="hwyMpgInput" min="0.5" step="any" value="38" oninput="calculateTrip()" class="w-full px-2.5 py-1.5 text-xs bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white font-mono">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 mb-1">
+                                    <span>Route Profile: <strong id="hwyPctDisplay" class="text-brand-600 dark:text-brand-400">65% Highway</strong></span>
+                                    <span id="cityPctDisplay" class="text-slate-400 text-[11px]">35% City</span>
+                                </div>
+                                <input type="range" id="hwyBlendSlider" min="0" max="100" value="65" oninput="updateHwyBlend(this.value)" class="w-full accent-brand-600 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                                <span class="text-[10px] text-slate-400 mt-0.5 block">Computed via EPA harmonic fuel consumption mean</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Fuel Price per Gallon / Liter -->
+                    <div class="mb-5">
+                        <label for="fuelPrice" class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1" id="fuelPriceLabel">Fuel Price ($ per Gallon)</label>
+                        <div class="relative">
+                            <span class="absolute left-3 top-2.5 text-sm text-slate-400 font-mono" id="fuelPriceCurrencyPrefix">$</span>
+                            <input type="number" id="fuelPrice" min="0.01" step="any" value="3.55" oninput="calculateTrip()" class="w-full pl-7 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500 font-mono">
+                        </div>
+                    </div>
+
+                    <!-- Group Passenger Split & Wear-and-Tear Allowance -->
+                    <div class="space-y-4 mb-5 pt-4 border-t border-slate-200 dark:border-slate-700">
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="passengerCount" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Number of Passengers (Split)</label>
+                                <span id="passengerCountBadge" class="text-xs font-bold text-brand-600 dark:text-brand-400">1 Traveler (Solo)</span>
+                            </div>
+                            <div class="grid grid-cols-5 gap-1">
+                                <button type="button" onclick="setPassengerCount(1)" class="pass-btn active py-1 text-xs font-semibold rounded border-2 border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300" data-count="1">1</button>
+                                <button type="button" onclick="setPassengerCount(2)" class="pass-btn py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500" data-count="2">2</button>
+                                <button type="button" onclick="setPassengerCount(3)" class="pass-btn py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500" data-count="3">3</button>
+                                <button type="button" onclick="setPassengerCount(4)" class="pass-btn py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500" data-count="4">4</button>
+                                <button type="button" onclick="setPassengerCount(5)" class="pass-btn py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500" data-count="5">5+</button>
+                            </div>
+                            <input type="number" id="passengerCountCustom" min="1" max="25" value="1" oninput="setPassengerCount(this.value)" class="w-full mt-2 px-3 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white hidden">
+                        </div>
+
+                        <!-- Vehicle Wear-and-Tear Allowance -->
+                        <div>
+                            <div class="flex items-center justify-between mb-1">
+                                <label for="wearTearRate" class="block text-xs font-medium text-slate-700 dark:text-slate-300">Vehicle Wear &amp; Tear Allowance</label>
+                                <span class="text-[11px] text-slate-400">Tires, oil, depreciation</span>
+                            </div>
+                            <select id="wearTearPreset" onchange="applyWearTearPreset(this.value)" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500 mb-2">
+                                <option value="0" selected>No Allowance ($0.00 &bull; Fuel Only)</option>
+                                <option value="0.08">Modest Maintenance ($0.08 / mi &bull; $0.05 / km)</option>
+                                <option value="0.15">Standard Road Trip Surcharge ($0.15 / mi &bull; $0.09 / km)</option>
+                                <option value="0.30">Full Maintenance &amp; Tire Reserve ($0.30 / mi &bull; $0.19 / km)</option>
+                                <option value="flat_35">Flat Trip Fee ($35.00)</option>
+                            </select>
+                            
+                            <div id="wearTearCustomRow" class="flex items-center gap-2">
+                                <span class="text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap" id="wearRateUnitLabel">Rate per mi ($):</span>
+                                <input type="number" id="wearTearRateInput" min="0" step="0.01" value="0.00" oninput="calculateTrip()" class="w-full px-2.5 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-900 dark:text-white font-mono">
+                            </div>
+                        </div>
+
+                        <!-- Wear & Tear Reimbursement Mode -->
+                        <div id="wearSplitModeContainer" class="hidden">
+                            <label class="block text-xs font-medium text-slate-700 dark:text-slate-300 mb-1">Wear &amp; Tear Reimbursement Protocol</label>
+                            <select id="wearSplitMode" onchange="calculateTrip()" class="w-full px-2.5 py-1.5 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                <option value="passengers_pay_driver" selected>Passengers Compensate Host Driver</option>
+                                <option value="split_equally">Split Total (Fuel + Wear) Evenly Across All</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Controls -->
+                    <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex flex-col gap-2">
+                        <button type="button" onclick="calculateTrip()" class="w-full py-2.5 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 active:scale-[0.99] text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                            <span>Calculate Fuel Budget</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="resetCalculatorDefaults()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center">Reset</button>
+                            <button type="button" onclick="copyShareUrl()" class="py-2 px-3 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition text-center flex items-center justify-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                                <span>Share Trip</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Gen Box (Sidebar Placement) -->
+                <div class="lead-box bg-gradient-to-br from-emerald-900 to-brand-900 text-white p-5 rounded-2xl shadow-md border border-emerald-700/50">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-bold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"/></svg>
+                        <span>Automotive Travel Handbook</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Road Trip Fuel &amp; Mileage Guide</h3>
+                    <p class="text-xs text-emerald-100 mb-3">Download our verified travel budget worksheet with official IRS mileage rates, speed-efficiency curves, and fuel-saving checklists (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="traveler@domain.com" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-emerald-200 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Send Free PDF</button>
+                    </form>
+                    <div id="leadSuccessMsg" class="hidden text-xs text-emerald-200 mt-2 text-center font-medium">✓ Checklist sent! Please check your inbox.</div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results & Tabs (Span 8) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Hero Result Card -->
+                <div id="resultsCard" class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400" id="resultHeaderBadge">Estimated Fuel Expenditure</span>
+                        <div class="flex items-center gap-2">
+                            <span id="diagnosticBadge" class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50">Optimal Highway Profile</span>
+                        </div>
+                    </div>
+
+                    <!-- Main Total Cost Display -->
+                    <div class="bg-slate-50 dark:bg-slate-900/60 rounded-xl p-5 mb-5 border border-slate-200/60 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-medium text-slate-500 dark:text-slate-400 block mb-1">Total Travel Fuel Cost</span>
+                        <div class="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-brand-600 dark:text-brand-400 font-mono" id="totalCostDisplay">
+                            $42.16
+                        </div>
+                        <div class="text-xs text-slate-600 dark:text-slate-300 mt-2 max-w-xl mx-auto" id="tripSummaryNarrative">
+                            Driving 380 miles at an effective 32.0 MPG consumes 11.88 gallons at $3.55 per gallon.
+                        </div>
+                    </div>
+
+                    <!-- 4 Metric Cards Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Fuel Volume</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="fuelVolumeVal">11.88 gal</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Cost Per Distance</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="costPerDistVal">$0.111 / mi</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block" id="passengerShareLabel">Cost Per Person</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="costPerPersonVal">$42.16</span>
+                        </div>
+                        <div class="bg-slate-50 dark:bg-slate-900/40 p-3 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <span class="text-[11px] font-medium text-slate-500 dark:text-slate-400 block">Effective Efficiency</span>
+                            <span class="text-lg font-bold text-slate-900 dark:text-white font-mono" id="effectiveMpgVal">32.0 MPG</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Bar -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-200 dark:border-slate-700 text-xs">
+                        <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400">
+                            <span id="tripDistanceSummary">Distance: 380 mi (One-Way)</span>
+                            <span>&bull;</span>
+                            <span id="wearAllowanceSummary">Wear &amp; Tear: $0.00</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Summary</span>
+                            </button>
+                            <button onclick="switchTab('print'); window.print();" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition flex items-center gap-1.5 font-medium text-slate-700 dark:text-slate-300">
+                                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print Voucher</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation Bar -->
+                <div class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth border-b border-slate-200 dark:border-slate-700 no-print" id="tabButtons">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto" aria-label="Tabs">
+                        <button onclick="switchTab('trip')" id="tabBtn_trip" class="tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap">
+                            Trip Fuel Cost Calculator
+                        </button>
+                        <button onclick="switchTab('route')" id="tabBtn_route" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Multi-City Route Planner
+                        </button>
+                        <button onclick="switchTab('matrix')" id="tabBtn_matrix" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Gas Price Sensitivity Matrix
+                        </button>
+                        <button onclick="switchTab('print')" id="tabBtn_print" class="tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- TAB 1: Trip Fuel Cost Calculator (Primary Tab) -->
+                <div id="tab-trip" class="tab-panel active space-y-6">
+                    
+                    <!-- Chart.js Visualizations (Price Sensitivity Curve & Passenger Split Doughnut) -->
+                    <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
+                        
+                        <!-- Line Chart: Price Sensitivity Curve -->
+                        <div class="md:col-span-7 bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Gas Price Sensitivity Curve</h3>
+                                <span class="text-[11px] px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 font-medium">Trip Expense vs Fuel Price</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Total trip expense projected across a range of fuel prices.</p>
+                            <div class="relative h-56 w-full">
+                                <canvas id="sensitivityChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Doughnut Chart: Passenger & Wear-and-Tear Split -->
+                        <div class="md:col-span-5 bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Budget Allocation</h3>
+                                <span class="text-[11px] text-slate-400" id="doughnutSubtitle">By Passenger</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Fuel share and vehicle wear reserve.</p>
+                            <div class="relative h-56 w-full flex items-center justify-center">
+                                <canvas id="passengerDoughnutChart"></canvas>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Derivation Box -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="font-bold text-base text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+                            <span class="w-6 h-6 rounded-md bg-brand-100 dark:bg-brand-900/60 text-brand-600 dark:text-brand-400 flex items-center justify-center text-xs font-bold">&Sigma;</span>
+                            <span>Step-by-Step Mathematical Formulation</span>
+                        </h3>
+                        
+                        <div id="mathJaxDerivationBlock" class="overflow-x-auto text-xs sm:text-sm text-slate-700 dark:text-slate-300 space-y-3 font-mono bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <!-- Populated dynamically by JavaScript -->
+                            <div class="text-center py-2 text-slate-400">Loading mathematical derivation...</div>
+                        </div>
+                    </div>
+
+                    <!-- Passenger Settlement Roster -->
+                    <div id="passengerRosterCard" class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-base text-slate-900 dark:text-white">Passenger Expense Settlement Roster</h3>
+                            <span class="text-xs text-slate-500 dark:text-slate-400" id="rosterSubText">Equal fuel split</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Traveler</th>
+                                        <th class="px-3 py-2.5">Role</th>
+                                        <th class="px-3 py-2.5">Fuel Share</th>
+                                        <th class="px-3 py-2.5">Wear Allowance</th>
+                                        <th class="px-3 py-2.5">Total Settlement</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="passengerRosterBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: Multi-City Road Trip Route Planner -->
+                <div id="tab-route" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Multi-City Road Trip Route Planner</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Construct complex multi-stop itineraries with regional gas prices and independent leg distances.</p>
+                            </div>
+                            <button type="button" onclick="addRouteLeg()" class="py-1.5 px-3 rounded-lg bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs transition flex items-center gap-1 shadow-sm">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                <span>Add Route Leg</span>
+                            </button>
+                        </div>
+
+                        <!-- Route Legs Table -->
+                        <div class="overflow-x-auto mb-4">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2">Leg</th>
+                                        <th class="px-3 py-2">Departure</th>
+                                        <th class="px-3 py-2">Destination</th>
+                                        <th class="px-3 py-2" id="routeDistHeader">Distance (mi)</th>
+                                        <th class="px-3 py-2" id="routePriceHeader">Local Price ($/gal)</th>
+                                        <th class="px-3 py-2">Fuel Consumed</th>
+                                        <th class="px-3 py-2">Leg Cost</th>
+                                        <th class="px-3 py-2 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="routePlannerTableBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Route Total Summary Banner -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 dark:bg-slate-900/60 p-4 rounded-xl border border-slate-200/60 dark:border-slate-700/60">
+                            <div>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Total Route Distance</span>
+                                <span class="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-mono" id="routeTotalDistDisplay">0 mi</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Total Route Fuel</span>
+                                <span class="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-mono" id="routeTotalFuelDisplay">0.00 gal</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Total Route Fuel Cost</span>
+                                <span class="text-sm sm:text-base font-bold text-brand-600 dark:text-brand-400 font-mono" id="routeTotalCostDisplay">$0.00</span>
+                            </div>
+                            <div>
+                                <span class="text-[11px] text-slate-500 dark:text-slate-400 block">Average Gas Price</span>
+                                <span class="text-sm sm:text-base font-bold text-slate-900 dark:text-white font-mono" id="routeAvgPriceDisplay">$0.000 / gal</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 3: Gas Price Sensitivity Matrix -->
+                <div id="tab-matrix" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <h3 class="font-bold text-base text-slate-900 dark:text-white">Gas Price Sensitivity Matrix</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Cross-tabulated scenario analysis comparing gas price shifts against driving habits and aerodynamic speed penalties.</p>
+                            </div>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs text-left text-slate-600 dark:text-slate-300 border-collapse">
+                                <thead class="bg-slate-50 dark:bg-slate-900/80 font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+                                    <tr>
+                                        <th class="px-3 py-2.5">Gas Price Variance</th>
+                                        <th class="px-3 py-2.5">Price / Unit</th>
+                                        <th class="px-3 py-2.5">Aggressive Speed (-20% MPG)</th>
+                                        <th class="px-3 py-2.5">Moderate (+10% Speed / -10% MPG)</th>
+                                        <th class="px-3 py-2.5 bg-brand-50/70 dark:bg-brand-950/40 text-brand-700 dark:text-brand-300">Baseline Driving</th>
+                                        <th class="px-3 py-2.5">Eco-Cruising (+10% MPG)</th>
+                                        <th class="px-3 py-2.5">Strict Hyper-miling (+20% MPG)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sensitivityMatrixBody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                                    <!-- Populated dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-3">* Baseline reflects your active efficiency inputs. Aerodynamic drag penalties reflect speeds above 70 mph; Eco-cruising reflects 55-60 mph steady driving.</p>
+                    </div>
+                </div>
+
+                <!-- TAB 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100" id="printableReportSection">
+                        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-4 mb-6">
+                            <div>
+                                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">Road Trip Travel Budget &amp; Fuel Expense Voucher</h2>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Generated by CalcWorld Automotive Engine &bull; Official Travel Settlement Standard</p>
+                            </div>
+                            <div class="text-right text-xs text-slate-500 dark:text-slate-400 font-mono" id="reportTimestamp">
+                                Oct 16, 2026
+                            </div>
+                        </div>
+
+                        <div class="space-y-4 text-xs">
+                            <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl">
+                                <div>
+                                    <span class="text-slate-500 block">Itinerary Classification</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="reportTripType">Standard Highway Road Trip</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-500 block">Measurement Standard</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" id="reportMeasurementStandard">US Customary (Miles &bull; Gallons)</span>
+                                </div>
+                            </div>
+
+                            <table class="w-full text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold w-1/2">Total Distance Traveled</td>
+                                        <td class="p-2.5 font-bold" id="reportDistance">380.00 miles</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Effective Vehicle Fuel Economy</td>
+                                        <td class="p-2.5" id="reportEconomy">32.00 MPG</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Unit Fuel Price</td>
+                                        <td class="p-2.5" id="reportPrice">$3.55 per gallon</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Total Fuel Volume Consumed</td>
+                                        <td class="p-2.5" id="reportFuelVolume">11.88 gallons</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Pure Fuel Expenditure</td>
+                                        <td class="p-2.5 font-bold text-slate-900 dark:text-white" id="reportPureFuelCost">$42.16</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Vehicle Wear &amp; Tear Allowance</td>
+                                        <td class="p-2.5" id="reportWearAllowance">$0.00</td>
+                                    </tr>
+                                    <tr class="bg-brand-50/50 dark:bg-brand-950/30">
+                                        <td class="p-2.5 font-bold text-slate-900 dark:text-white">Gross Road Trip Travel Budget</td>
+                                        <td class="p-2.5 font-bold text-brand-700 dark:text-brand-300" id="reportGrossBudget">$42.16</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="p-2.5 bg-slate-50 dark:bg-slate-900/60 font-semibold">Cost Per Distance Traveled</td>
+                                        <td class="p-2.5" id="reportCostPerDistance">$0.111 / mile</td>
+                                    </tr>
+                                    <tr class="bg-brand-50/50 dark:bg-brand-950/30">
+                                        <td class="p-2.5 font-bold text-slate-900 dark:text-white">Individual Passenger Settlement Share</td>
+                                        <td class="p-2.5 font-bold text-brand-700 dark:text-brand-300" id="reportPassengerShare">$42.16 (Solo)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="bg-slate-50 dark:bg-slate-900/40 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-2">
+                                <h4 class="font-bold text-slate-900 dark:text-white">Audit Certification &amp; Settlement Statement</h4>
+                                <p class="text-slate-600 dark:text-slate-300 leading-relaxed" id="reportFormalStatement">
+                                    This travel budget voucher certifies that the computed fuel expenditure of $42.16 corresponds to 380 miles of motor travel at an average consumption rate of 32.00 MPG. Individual passenger accounts should be settled in accordance with agreed driver-passenger reimbursement protocols.
+                                </p>
+                            </div>
+
+                            <div class="pt-4 flex justify-end no-print">
+                                <button type="button" onclick="window.print()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-bold transition flex items-center gap-2 shadow">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                    <span>Print Voucher / Export PDF</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AdSense Slot 2: Under-Result Display Ad -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Under-Result Slot 2</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Guide Content Ad -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide (Strictly Clean & Authoritative) -->
+        <article class="mt-8 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 prose prose-slate dark:prose-invert max-w-none">
+            
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">The Physics and Economics of Road Trip Fuel Consumption</h2>
+            
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Fuel expenses represent the single largest variable operating cost of passenger vehicle travel. Whether planning a cross-country family expedition, budgeting a regional commercial fleet delivery, or organizing a daily commuter carpool, calculating trip fuel expenditure requires accounting for aerodynamic forces, rolling resistance, engine thermal efficiency, and passenger split protocols. Point estimates based solely on window-sticker fuel economy ratings frequently underestimate real-world expenditures by 15% to 30% due to velocity profiles, cargo mass, terrain grade, and thermodynamic inefficiencies.</p>
+            
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Understanding how fuel consumption scales with speed and payload enables drivers to optimize trip schedules, minimize thermodynamic losses, and divide expenditures equitably among co-travelers without placing an undue financial burden on vehicle hosts.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">1. Thermodynamics and Chemical Energy Density of Automotive Fuels</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Internal combustion engines (ICE) convert the chemical energy stored in hydrocarbon fuel bonds into mechanical work through controlled combustion. Standard unleaded motor gasoline has a lower heating value (LHV) of approximately 32.2 to 34.2 megajoules per liter (MJ/L), or roughly 114,000 to 121,300 British Thermal Units (BTU) per US gallon. Ultra-low sulfur diesel fuel exhibits an energy density of approximately 38.6 MJ/L (137,000 BTU/gal), explaining why compression-ignition diesel engines achieve inherently higher volumetric fuel economy than spark-ignition gasoline engines.</p>
+            
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Modern automotive four-stroke Otto cycle gasoline engines operate at a peak thermal efficiency ($\eta_{th}$) of roughly 25% to 38% under optimal load. In contrast, heavy-duty and light passenger diesel engines operating on the Diesel or Sabathé dual cycle achieve thermal efficiencies ranging from 35% to 45%. The remaining 60% to 75% of chemical energy contained in each gallon is rejected into the atmosphere as waste heat through the engine radiator coolant, exhaust gas enthalpy, and internal mechanical friction.</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Useful Mechanical Work} = Q_{\text{fuel}} \times \eta_{\text{thermal}} - W_{\text{parasitic}}$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Brake Specific Fuel Consumption (BSFC) measures fuel flow rate relative to shaft power output, quantified in grams per kilowatt-hour (g/kWh). Gasoline engines operate most efficiently at moderate engine speeds (1,800 to 2,600 RPM) under moderate-to-high throttle load, where pumping losses across the intake throttle plate are minimized. Sustained high-speed driving pushes engine operation beyond the lowest BSFC island on the engine map, escalating volumetric fuel consumption per mile.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">2. Aerodynamic Drag Above 55 MPH: The Cubic Power Law</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The total tractive force resisting forward vehicle motion ($F_{\text{total}}$) consists of aerodynamic drag force ($F_d$), tire rolling resistance ($F_{rr}$), and gravitational resistance along road inclines ($F_g$):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$F_{\text{total}} = F_d + F_{rr} + F_g = \frac{1}{2} \rho v^2 C_d A + C_{rr} m g \cos(\theta) + m g \sin(\theta)$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">where $\rho$ is ambient air density (approximately $1.225 \text{ kg/m}^3$ at sea level), $v$ is vehicle velocity relative to the air mass, $C_d$ is the aerodynamic drag coefficient, and $A$ is vehicle frontal projected area. For typical modern passenger cars, $C_d$ ranges between 0.24 and 0.32, with frontal area $A$ spanning 2.0 to 2.4 square meters. Full-size pickup trucks and SUVs exhibit $C_d$ values between 0.38 and 0.45, paired with frontal areas exceeding 3.0 square meters.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Aerodynamic drag increases with the **square of vehicle velocity** ($v^2$). However, because mechanical power is the product of force and speed ($P = F \times v$), the power required to overcome aerodynamic resistance scales with the **cube of velocity** ($v^3$):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$P_{\text{aero}} = F_d \times v = \frac{1}{2} \rho v^3 C_d A$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Research conducted by the US Department of Energy (DOE) at Oak Ridge National Laboratory demonstrates that passenger vehicles reach peak volumetric fuel efficiency between 45 and 55 mph (72 to 88 km/h). Below this speed, internal engine friction, accessory loads, and gear ratios diminish efficiency. Above 55 mph, aerodynamic drag dominates all other resistive forces. Consider the physical escalation from 55 mph to 75 mph:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Ratio of Aerodynamic Drag} = \left(\frac{75}{55}\right)^2 = (1.364)^2 \approx 1.86 \quad (+86\% \text{ Drag Force})$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Ratio of Overcoming Power} = \left(\frac{75}{55}\right)^3 = (1.364)^3 \approx 2.54 \quad (+154\% \text{ Power Required})$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Because a car traveling at 75 mph covers distance 36.4% faster, the net fuel consumed per unit distance rises by 20% to 25%. A vehicle that achieves 36 MPG at a steady 55 mph drops to roughly 28 MPG at 75 mph, adding substantial costs over a 1,000-mile road trip.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">3. Tire Rolling Resistance and Inflation Pressure Dynamics</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Rolling resistance ($F_{rr} = C_{rr} N$) originates from the viscoelastic hysteresis losses of tire elastomers as the tire tread continuously flexes, compresses, and rebounds against pavement. The rolling resistance coefficient ($C_{rr}$) for standard passenger car radial tires ranges between 0.008 and 0.012 on smooth asphalt.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Proper tire inflation is vital to controlling hysteresis losses. When tire pressure drops below manufacturer specification, the tire contact patch elongates, increasing internal sidewall deflection and heat generation. Field data verified by the National Highway Traffic Safety Administration (NHTSA) and the EPA reveal:</p>
+
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li>Every 1 PSI drop across all four tires reduces overall vehicle fuel efficiency by approximately 0.2%.</li>
+                <li>Tires under-inflated by 6 PSI result in an approximate 1.2% reduction in fuel economy, while accelerating shoulder tread wear and lengthening emergency wet braking distances.</li>
+                <li>Ambient temperature drops induce natural tire pressure loss: tire pressure decreases by approximately 1 PSI for every $10^\circ\text{F}$ ($5.6^\circ\text{C}$) drop in ambient temperature. Road trips traversing cold climates require frequent cold tire pressure audits.</li>
+            </ul>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">4. Aggressive Driving Penalties and Kinetic Dissipation</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Vehicle propulsion converts chemical fuel energy into kinetic energy ($E_k = \frac{1}{2} m v^2$). When a vehicle decelerates via friction brakes, this kinetic energy is permanently dissipated as thermal heat into the brake rotors and pads. Frequent cycles of rapid acceleration followed by hard braking squander kinetic energy that could otherwise sustain forward momentum.</p>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Controlled testing published by the US Department of Energy (fueleconomy.gov) documents that aggressive driving—characterized by rapid acceleration, weaving through traffic, and abrupt braking—lowers highway gas mileage by 15% to 33%, and city mileage by 10% to 40%. At $3.50 per gallon, aggressive driving imposes an effective financial penalty equivalent to paying $0.50 to $1.15 more per gallon. Anticipating traffic flow, maintaining safe following distance, and employing gradual acceleration curves preserve momentum and substantially cut fuel costs.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">5. Mathematical Formulation: Why Arithmetic Means Fail (The Harmonic EPA Rule)</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">A common mathematical trap in travel budgeting is calculating the average fuel economy of a mixed trip using the simple arithmetic mean of city and highway ratings. If a vehicle is rated at 20 MPG City and 30 MPG Highway, the arithmetic mean is:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Arithmetic Mean} = \frac{20 + 30}{2} = 25.0 \text{ MPG} \quad \text{(Mathematically Incorrect for Distance Blend)}$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Because MPG is inversely proportional to fuel consumption (gallons per mile), fuel spent over a given distance depends on the reciprocal sum of efficiency ratings. If a 100-mile trip comprises 50 miles in the city and 50 miles on the highway:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{City Fuel} = \frac{50 \text{ miles}}{20 \text{ MPG}} = 2.50 \text{ gallons}, \quad \text{Highway Fuel} = \frac{50 \text{ miles}}{30 \text{ MPG}} = 1.67 \text{ gallons}$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Total Fuel} = 2.50 + 1.67 = 4.17 \text{ gallons}$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{True Combined MPG} = \frac{100 \text{ miles}}{4.17 \text{ gallons}} = 24.0 \text{ MPG}$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The true combined rating is the weighted **harmonic mean**, adopted officially by the EPA (40 CFR Part 600):</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Combined MPG} = \frac{1}{\frac{w_{\text{city}}}{\text{MPG}_{\text{city}}} + \frac{w_{\text{hwy}}}{\text{MPG}_{\text{hwy}}}}$$
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">where $w_{\text{city}}$ and $w_{\text{hwy}}$ are the respective distance fractions ($w_{\text{city}} + w_{\text{hwy}} = 1$). In metric jurisdictions using Liters per 100 Kilometers ($L/100\text{km}$), consumption is inherently linear, allowing straightforward weighted arithmetic summation:</p>
+
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Combined Consumption } (L/100\text{km}) = w_{\text{city}} \times L/100\text{km}_{\text{city}} + w_{\text{hwy}} \times L/100\text{km}_{\text{hwy}}$$
+            </div>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">6. Vehicle Mass and Parasitic Auxiliary Loads</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Vehicle curb weight directly governs the normal force in rolling resistance ($F_{rr} = C_{rr} m g$) and inertial resistance during acceleration ($F = m a$). Transporting excess luggage or multiple adult passengers increases fuel consumption:</p>
+
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>Payload Penalty:</strong> An extra 100 pounds (45.4 kg) in the vehicle reduces fuel economy by approximately 1% in compact vehicles and 0.5% in larger SUVs and trucks.</li>
+                <li><strong>Rooftop Cargo Boxes and Racks:</strong> Roof-mounted cargo carriers degrade aerodynamics, increasing frontal area $A$ and turbulence. At highway speeds of 65 to 75 mph, a rooftop carrier reduces fuel economy by 10% to 25%, wasting up to 1 gallon every 100 miles compared to cargo stored inside the cabin.</li>
+                <li><strong>Air Conditioning Parasitic Load:</strong> Operating the air conditioning compressor absorbs 1 to 4 horsepower (0.75 to 3 kW) from the crankshaft, reducing city fuel economy by 5% to 20% in hot climates. At speeds above 55 mph, however, using air conditioning is more efficient than driving with open windows, which creates intense aerodynamic vortex drag.</li>
+            </ul>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">7. Passenger Expense Settlement and Host Vehicle Equity</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Dividing road trip travel expenses purely by pump gas receipts overlooks the true economic cost of vehicle operation. The American Automobile Association (AAA) Annual Driving Costs study and IRS standard mileage accounting distinguish between direct operating costs and fixed ownership costs:</p>
+
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-xs text-left border-collapse border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm">
+                    <thead>
+                        <tr>
+                            <th class="p-3 text-left font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/80">Expense Component</th>
+                            <th class="p-3 text-left font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/80">Estimated Rate ($/mi)</th>
+                            <th class="p-3 text-left font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-700 bg-slate-100/70 dark:bg-slate-800/80">Allocation Consideration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-semibold">Fuel (Gasoline / Diesel)</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-mono">$0.10 &ndash; $0.22</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Directly consumed during trip; shared equally among all occupants.</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-semibold">Tire Tread &amp; Routine Maintenance</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-mono">$0.07 &ndash; $0.12</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Directly proportional to mileage; borne by host unless wear fee is included.</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-semibold">Mileage Depreciation</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-mono">$0.15 &ndash; $0.28</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Odometer accumulation permanently reduces vehicle resale value.</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-semibold">IRS Business Mileage Standard</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800 font-mono">~$0.67 &ndash; $0.70</td>
+                            <td class="p-3 text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">Federal reimbursement benchmark incorporating fuel, insurance, and wear.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">When a vehicle owner volunteers their personal car for a 1,000-mile trip, simple gas splitting forces the owner to absorb roughly $100 to $200 in tire wear, motor oil life, and vehicle depreciation. Providing a modest wear-and-tear allowance (e.g., $0.08 to $0.15 per mile, or having passengers cover a slightly larger share of fuel) establishes fair financial alignment.</p>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">8. Step-by-Step Worked Case Studies</h3>
+            
+            <h4 class="text-base font-bold text-brand-600 dark:text-brand-400 mt-6 mb-2">Case Study A: Four-Passenger Cross-Country Road Trip (SUV)</h4>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">A group of four travelers drives from Chicago to Denver (1,010 miles one-way, 2,020 miles round trip) in a full-size SUV. Parameters:</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-300 my-2">
+                <li>Distance: 2,020 miles</li>
+                <li>Fuel Economy: 18.0 MPG (Highway loaded)</li>
+                <li>Average Fuel Price: $3.45 / gallon</li>
+                <li>Wear-and-Tear Allowance: $0.10 / mile</li>
+                <li>Occupancy: 4 passengers</li>
+            </ul>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Gallons Consumed} = \frac{2,020 \text{ mi}}{18.0 \text{ MPG}} = 112.22 \text{ gallons}$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Total Fuel Cost} = 112.22 \times \$3.45 = \$387.16$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Wear Allowance} = 2,020 \text{ mi} \times \$0.10/\text{mi} = \$202.00$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Gross Trip Budget} = \$387.16 + \$202.00 = \$589.16 \quad (\$147.29 \text{ per person})$$
+            </div>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">Each passenger pays $147.29. The host driver collects $441.87 from the three passengers, pays $387.16 for gasoline at the pump, and retains $54.71 as partial compensation toward the $202 in vehicle maintenance and tire tread wear.</p>
+
+            <h4 class="text-base font-bold text-brand-600 dark:text-brand-400 mt-6 mb-2">Case Study B: European Regional Commute in Metric Units</h4>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">A commuter travels 640 km round trip across Germany in a turbo-diesel station wagon:</p>
+            <ul class="list-disc pl-5 space-y-1 text-sm text-slate-700 dark:text-slate-300 my-2">
+                <li>Distance: 640 km</li>
+                <li>Fuel Consumption: 5.6 L/100km</li>
+                <li>Diesel Price: &euro;1.72 / Liter</li>
+            </ul>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Liters Required} = \frac{640 \text{ km} \times 5.6 \text{ L/100km}}{100} = 35.84 \text{ Liters}$$
+            </div>
+            <div class="my-4 p-3 bg-slate-50 dark:bg-slate-900/60 rounded-xl font-mono text-center overflow-x-auto text-sm border border-slate-200/50 dark:border-slate-800">
+                $$\text{Total Expense} = 35.84 \text{ L} \times \text{\euro}1.72/\text{L} = \text{\euro}61.64 \quad (\text{\euro}0.096 \text{ per km})$$
+            </div>
+
+            <hr class="my-8 border-slate-200 dark:border-slate-700">
+
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-8 mb-3 pb-2 border-b border-slate-200 dark:border-slate-700">9. Technical Standards and Institutional Citations</h3>
+            <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300 my-3">The equations and aerodynamic baselines employed in this calculator conform to technical standards published by leading automotive and governmental regulatory bodies:</p>
+            <ul class="list-disc pl-5 space-y-2 text-sm text-slate-700 dark:text-slate-300 my-3">
+                <li><strong>US Department of Energy (DOE) &amp; EPA:</strong> <em>Model Year Fuel Economy Guide</em> and fueleconomy.gov highway aerodynamic drag and aggressive driving velocity loss matrices.</li>
+                <li><strong>Oak Ridge National Laboratory (ORNL):</strong> <em>Transportation Energy Data Book</em>, documenting cubic aerodynamic drag power dissipation curves and temperature inflation factors.</li>
+                <li><strong>Society of Automotive Engineers (SAE International):</strong> Standard SAE J1321 (<em>Fuel Consumption Test Procedure</em>) and SAE J1263 (<em>Road Load Measurement and Coastdown Simulation</em>).</li>
+                <li><strong>American Automobile Association (AAA):</strong> <em>Your Driving Costs</em> annual study, quantifying variable per-mile vehicle depreciation, maintenance, and tire reserve allocations.</li>
+                <li><strong>National Highway Traffic Safety Administration (NHTSA):</strong> Tire safety and cold pressure thermodynamic compliance manuals.</li>
+            </ul>
+
+        </article>
+
+        <!-- FAQ Section -->
+        <section class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700 no-print">
+            <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-2">Frequently Asked Questions</h2>
+            <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6">Authoritative guidance on fuel efficiency, driving aerodynamics, road trip budgeting, and group passenger splits.</p>
+
+            <div class="space-y-3">
+                <!-- Q1 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why is fuel economy non-linear when measured in MPG?</span>
+                        <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Miles per gallon (MPG) is an inverse measure of fuel consumption. As MPG increases, the amount of fuel saved per additional MPG decreases following an asymptotic hyperbolic curve. For example, replacing a 10 MPG vehicle with a 20 MPG vehicle saves 5 gallons every 100 miles, whereas upgrading from 33 MPG to 50 MPG saves only 1.03 gallons over the same distance. For this reason, mathematical averages of trip legs must use the harmonic mean rather than simple arithmetic averaging.
+                    </div>
+                </div>
+
+                <!-- Q2 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>At what exact speed does vehicle aerodynamic drag begin to significantly penalize fuel efficiency?</span>
+                        <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        According to research conducted by Oak Ridge National Laboratory and the US Department of Energy, aerodynamic drag increases with the square of speed, and the power required to overcome that drag scales with the cube of speed. Above 50 to 55 miles per hour (80 to 90 km/h), aerodynamic resistance becomes the dominant resistive force over rolling resistance. Driving at 75 mph (120 km/h) requires approximately 20% to 25% more fuel per mile than cruising at 55 mph.
+                    </div>
+                </div>
+
+                <!-- Q3 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How much money does proper tire inflation actually save on a long road trip?</span>
+                        <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Data published by the National Highway Traffic Safety Administration (NHTSA) and the EPA demonstrate that every 1 PSI drop across four tires degrades fuel efficiency by approximately 0.2%. Tires under-inflated by 5 to 8 PSI can waste 1% to 2% of total fuel. For a 2,000-mile road trip consuming 70 gallons of fuel, correcting tire pressure prevents unnecessary expenditures and reduces tire tread overheating.
+                    </div>
+                </div>
+
+                <!-- Q4 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How should road trip driving expenses be divided fairly between vehicle owners and passengers?</span>
+                        <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Splitting fuel costs equally among travelers is common, but it fails to account for vehicle depreciation, engine oil degradation, tire tread wear, and insurance liability borne exclusively by the vehicle owner. Incorporating a vehicle wear-and-tear allowance (typically 5 to 15 cents per mile for road trips, or aligning with partial IRS standard mileage reimbursement rates) ensures the host driver is not financially burdened by mechanical wear.
+                    </div>
+                </div>
+
+                <!-- Q5 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Does using the air conditioner hurt gas mileage more than opening the windows at highway speeds?</span>
+                        <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        At low speeds under 45 mph (72 km/h), opening the windows is more fuel-efficient than running the air conditioner because aerodynamic drag is relatively small. At highway speeds above 55 to 60 mph, open windows disrupt vehicle streamline aerodynamics and significantly increase drag coefficient (Cd), consuming more fuel than operating the air conditioning compressor on moderate settings.
+                    </div>
+                </div>
+
+                <!-- Q6 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>How does vehicle weight and rooftop cargo impact highway fuel economy?</span>
+                        <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        Every extra 100 pounds (45 kg) loaded into a vehicle reduces fuel economy by approximately 1% in compact and mid-size vehicles. Rooftop cargo carriers, roof racks, and external bicycle mounts exert an even more severe penalty by increasing frontal surface area and parasitic aerodynamic drag, reducing highway fuel efficiency by 10% to 25% at 65 to 75 mph.
+                    </div>
+                </div>
+
+                <!-- Q7 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>What is the difference between US Gallons and UK Imperial Gallons in fuel calculations?</span>
+                        <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        A US liquid gallon is defined as 231 cubic inches, exactly 3.785411784 liters. A British Imperial gallon is defined as exactly 4.54609 liters, which is approximately 20.09% larger than a US gallon. Consequently, an imperial fuel economy rating of 40 MPG (UK) corresponds to only 33.3 MPG (US) and 7.06 L/100km.
+                    </div>
+                </div>
+
+                <!-- Q8 -->
+                <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <button type="button" onclick="toggleFaq(8)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                        <span>Why does city driving consume substantially more fuel per mile than highway driving in conventional combustion engines?</span>
+                        <svg id="faqIcon_8" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <div id="faqAns_8" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                        City driving entails frequent cycles of braking and acceleration. Kinetic energy gained during acceleration is dissipated as heat through friction braking. In stop-and-go driving, combustion engines operate at idle when stopped at traffic signals, producing 0 MPG while consuming fuel. Highway driving enables the transmission to use high overdrive gear ratios, keeping engine RPM in its optimal Brake Specific Fuel Consumption (BSFC) efficiency band.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">FC</span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Enterprise Network. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Automotive Technical Disclaimer:</strong> The CalcWorld Fuel Cost Calculator computes estimates based on user-entered values, harmonic thermodynamic consumption equations, and EPA standard testing baselines. Actual fuel economy varies based on vehicle load, terrain elevation, wind resistance, driving style, maintenance condition, and ambient temperatures. Figures are provided for budget planning and expense allocation purposes.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Related Tools:</span>
+        <a href="gas-mileage-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Gas Mileage</a>
+        <a href="mileage-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Mileage</a>
+        <a href="distance-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Distance</a>
+        <a href="auto-loan-calculator.html" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition hidden sm:inline">Auto Loan</a>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify" role="alert">
+        <svg class="w-4 h-4 text-emerald-300 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+        <span id="toastMsg">Trip summary copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- Global Application State ---
+    let unitSystem = 'us'; // 'us', 'metric', 'uk'
+    let currencySymbol = '$';
+    let efficiencyMode = 'simple'; // 'simple', 'blend'
+    let passengerCount = 1;
+    let wearTearFlat = 0;
+    let sensitivityChart = null;
+    let passengerDoughnutChart = null;
+
+    // Multi-City Route Planner Data
+    let routeLegs = [
+        { id: 1, from: 'Chicago, IL', to: 'Indianapolis, IN', distance: 184, price: 3.45 },
+        { id: 2, from: 'Indianapolis, IN', to: 'Louisville, KY', distance: 114, price: 3.39 },
+        { id: 3, from: 'Louisville, KY', to: 'Nashville, TN', distance: 175, price: 3.29 }
+    ];
+
+    // --- DOM Ready Initializer ---
+    window.addEventListener('DOMContentLoaded', () => {
+        parseUrlParams();
+        calculateTrip();
+        renderRoutePlannerTable();
+
+        // AdBlock Detection Check
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+
+    // --- Unit System Switcher ---
+    function setUnitSystem(sys) {
+        unitSystem = sys;
+        
+        // Button styling
+        const btns = ['us', 'metric', 'uk'];
+        btns.forEach(b => {
+            const el = document.getElementById('unitBtn_' + b);
+            if (b === sys) {
+                el.className = 'py-1.5 text-xs font-semibold rounded-lg bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition text-center';
+            } else {
+                el.className = 'py-1.5 text-xs font-semibold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition text-center';
+            }
+        });
+
+        // Label updates
+        const distLabel = document.getElementById('distanceInputLabel');
+        const effLabel = document.getElementById('fuelEfficiencyLabel');
+        const priceLabel = document.getElementById('fuelPriceLabel');
+        const wearUnit = document.getElementById('wearRateUnitLabel');
+        const routeDistH = document.getElementById('routeDistHeader');
+        const routePriceH = document.getElementById('routePriceHeader');
+
+        if (sys === 'metric') {
+            distLabel.textContent = 'Trip Distance (Kilometers)';
+            effLabel.textContent = 'Fuel Efficiency (Liters per 100 km &bull; L/100km)';
+            document.getElementById('cityEffLabel').textContent = 'City L/100km';
+            document.getElementById('hwyEffLabel').textContent = 'Highway L/100km';
+            priceLabel.textContent = `Fuel Price (${currencySymbol} per Liter)`;
+            wearUnit.textContent = `Rate per km (${currencySymbol}):`;
+            routeDistH.textContent = 'Distance (km)';
+            routePriceH.textContent = `Local Price (${currencySymbol}/L)`;
+            
+            // Adjust default values if coming from US
+            if (parseFloat(document.getElementById('fuelEfficiency').value) > 20) {
+                document.getElementById('fuelEfficiency').value = 7.35; // ~32 MPG
+                document.getElementById('cityMpgInput').value = 7.84;
+                document.getElementById('hwyMpgInput').value = 6.19;
+            }
+            if (parseFloat(document.getElementById('fuelPrice').value) > 2.5) {
+                document.getElementById('fuelPrice').value = 1.65;
+            }
+        } else if (sys === 'uk') {
+            distLabel.textContent = 'Trip Distance (Miles)';
+            effLabel.textContent = 'Fuel Economy (UK MPG)';
+            document.getElementById('cityEffLabel').textContent = 'City UK MPG';
+            document.getElementById('hwyEffLabel').textContent = 'Highway UK MPG';
+            priceLabel.textContent = `Fuel Price (${currencySymbol} per Imperial Gallon)`;
+            wearUnit.textContent = `Rate per mi (${currencySymbol}):`;
+            routeDistH.textContent = 'Distance (mi)';
+            routePriceH.textContent = `Local Price (${currencySymbol}/Imp Gal)`;
+
+            if (parseFloat(document.getElementById('fuelEfficiency').value) < 15) {
+                document.getElementById('fuelEfficiency').value = 38.4;
+                document.getElementById('cityMpgInput').value = 36.0;
+                document.getElementById('hwyMpgInput').value = 45.6;
+            }
+        } else {
+            // US
+            distLabel.textContent = 'Trip Distance (Miles)';
+            effLabel.textContent = 'Fuel Economy (Miles per Gallon &bull; MPG)';
+            document.getElementById('cityEffLabel').textContent = 'City MPG';
+            document.getElementById('hwyEffLabel').textContent = 'Highway MPG';
+            priceLabel.textContent = `Fuel Price (${currencySymbol} per Gallon)`;
+            wearUnit.textContent = `Rate per mi (${currencySymbol}):`;
+            routeDistH.textContent = 'Distance (mi)';
+            routePriceH.textContent = `Local Price (${currencySymbol}/gal)`;
+
+            if (parseFloat(document.getElementById('fuelEfficiency').value) < 15) {
+                document.getElementById('fuelEfficiency').value = 32;
+                document.getElementById('cityMpgInput').value = 30;
+                document.getElementById('hwyMpgInput').value = 38;
+            }
+        }
+
+        calculateTrip();
+        renderRoutePlannerTable();
+    }
+
+    // --- Currency Switcher ---
+    function changeCurrency(sym) {
+        currencySymbol = sym;
+        document.getElementById('fuelPriceCurrencyPrefix').textContent = sym;
+        setUnitSystem(unitSystem);
+    }
+
+    // --- Vehicle Presets ---
+    function loadVehiclePreset(type) {
+        if (type === 'custom') return;
+
+        let simpleVal, cityVal, hwyVal;
+        if (unitSystem === 'metric') {
+            const presets = {
+                compact: { simple: 7.35, city: 7.84, hwy: 6.19 },
+                hybrid: { simple: 4.52, city: 4.61, hwy: 4.44 },
+                crossover: { simple: 8.40, city: 9.05, hwy: 7.35 },
+                truck: { simple: 12.38, city: 13.84, hwy: 10.23 },
+                suv: { simple: 13.84, city: 15.68, hwy: 11.76 },
+                sports: { simple: 13.07, city: 15.68, hwy: 10.23 },
+                van: { simple: 19.60, city: 23.52, hwy: 16.80 }
+            };
+            const p = presets[type] || presets.compact;
+            simpleVal = p.simple; cityVal = p.city; hwyVal = p.hwy;
+        } else if (unitSystem === 'uk') {
+            const presets = {
+                compact: { simple: 38.4, city: 36.0, hwy: 45.6 },
+                hybrid: { simple: 62.4, city: 61.2, hwy: 63.6 },
+                crossover: { simple: 33.6, city: 31.2, hwy: 38.4 },
+                truck: { simple: 22.8, city: 20.4, hwy: 27.6 },
+                suv: { simple: 20.4, city: 18.0, hwy: 24.0 },
+                sports: { simple: 21.6, city: 18.0, hwy: 27.6 },
+                van: { simple: 14.4, city: 12.0, hwy: 16.8 }
+            };
+            const p = presets[type] || presets.compact;
+            simpleVal = p.simple; cityVal = p.city; hwyVal = p.hwy;
+        } else {
+            const presets = {
+                compact: { simple: 32, city: 30, hwy: 38 },
+                hybrid: { simple: 52, city: 51, hwy: 53 },
+                crossover: { simple: 28, city: 26, hwy: 32 },
+                truck: { simple: 19, city: 17, hwy: 23 },
+                suv: { simple: 17, city: 15, hwy: 20 },
+                sports: { simple: 18, city: 15, hwy: 23 },
+                van: { simple: 12, city: 10, hwy: 14 }
+            };
+            const p = presets[type] || presets.compact;
+            simpleVal = p.simple; cityVal = p.city; hwyVal = p.hwy;
+        }
+
+        document.getElementById('fuelEfficiency').value = simpleVal;
+        document.getElementById('cityMpgInput').value = cityVal;
+        document.getElementById('hwyMpgInput').value = hwyVal;
+        calculateTrip();
+    }
+
+    // --- Efficiency Computation Mode ---
+    function setEfficiencyMode(mode) {
+        efficiencyMode = mode;
+        const btnSimple = document.getElementById('effMode_simple');
+        const btnBlend = document.getElementById('effMode_blend');
+        const containerSimple = document.getElementById('simpleEffContainer');
+        const containerBlend = document.getElementById('blendEffContainer');
+
+        if (mode === 'blend') {
+            btnBlend.className = 'px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 transition';
+            btnSimple.className = 'px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-brand-500 transition';
+            containerSimple.classList.add('hidden');
+            containerBlend.classList.remove('hidden');
+        } else {
+            btnSimple.className = 'px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-brand-500 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 transition';
+            btnBlend.className = 'px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400 hover:border-brand-500 transition';
+            containerBlend.classList.add('hidden');
+            containerSimple.classList.remove('hidden');
+        }
+        calculateTrip();
+    }
+
+    function updateHwyBlend(val) {
+        document.getElementById('hwyPctDisplay').textContent = `${val}% Highway`;
+        document.getElementById('cityPctDisplay').textContent = `${100 - val}% City`;
+        calculateTrip();
+    }
+
+    // --- Passenger Split Buttons ---
+    function setPassengerCount(count) {
+        const c = Math.max(1, parseInt(count) || 1);
+        passengerCount = c;
+
+        document.querySelectorAll('.pass-btn').forEach(b => {
+            const bCount = parseInt(b.getAttribute('data-count'));
+            if (bCount === c || (bCount === 5 && c >= 5)) {
+                b.className = 'pass-btn active py-1 text-xs font-semibold rounded border-2 border-brand-600 bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300';
+            } else {
+                b.className = 'pass-btn py-1 text-xs font-semibold rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:border-brand-500';
+            }
+        });
+
+        const customInput = document.getElementById('passengerCountCustom');
+        if (c >= 5) {
+            customInput.classList.remove('hidden');
+            customInput.value = c;
+        } else {
+            customInput.classList.add('hidden');
+        }
+
+        const badge = document.getElementById('passengerCountBadge');
+        badge.textContent = c === 1 ? '1 Traveler (Solo)' : `${c} Travelers Split`;
+
+        // Show/hide wear split options if passengers > 1
+        const wearSplitContainer = document.getElementById('wearSplitModeContainer');
+        if (c > 1) {
+            wearSplitContainer.classList.remove('hidden');
+        } else {
+            wearSplitContainer.classList.add('hidden');
+        }
+
+        calculateTrip();
+    }
+
+    // --- Wear and Tear Preset Handler ---
+    function applyWearTearPreset(val) {
+        const rateInput = document.getElementById('wearTearRateInput');
+        if (val.startsWith('flat_')) {
+            wearTearFlat = parseFloat(val.split('_')[1]) || 0;
+            rateInput.value = 0.00;
+        } else {
+            wearTearFlat = 0;
+            rateInput.value = parseFloat(val) || 0.00;
+        }
+        calculateTrip();
+    }
+
+    // --- PRIMARY TRIP CALCULATION ENGINE ---
+    function calculateTrip() {
+        const rawDistance = Math.max(0.1, parseFloat(document.getElementById('tripDistance').value) || 0);
+        const isRoundTrip = document.getElementById('roundTripToggle').checked;
+        const totalDistance = isRoundTrip ? rawDistance * 2 : rawDistance;
+
+        const fuelPrice = Math.max(0.001, parseFloat(document.getElementById('fuelPrice').value) || 0);
+        const wearRate = Math.max(0, parseFloat(document.getElementById('wearTearRateInput').value) || 0);
+        const wearSplitMode = document.getElementById('wearSplitMode').value;
+
+        // Calculate Effective Fuel Efficiency
+        let effectiveEfficiency = 0;
+        let effectiveMetricL100 = 0;
+
+        if (efficiencyMode === 'blend') {
+            const hwyPct = parseFloat(document.getElementById('hwyBlendSlider').value) / 100;
+            const cityPct = 1 - hwyPct;
+            const cityEff = Math.max(0.1, parseFloat(document.getElementById('cityMpgInput').value) || 1);
+            const hwyEff = Math.max(0.1, parseFloat(document.getElementById('hwyMpgInput').value) || 1);
+
+            if (unitSystem === 'metric') {
+                // In L/100km, consumption is linear
+                effectiveMetricL100 = (cityPct * cityEff) + (hwyPct * hwyEff);
+                effectiveEfficiency = effectiveMetricL100;
+            } else {
+                // In MPG, harmonic mean rule
+                effectiveEfficiency = 1 / ((cityPct / cityEff) + (hwyPct / hwyEff));
+            }
+        } else {
+            effectiveEfficiency = Math.max(0.1, parseFloat(document.getElementById('fuelEfficiency').value) || 1);
+            if (unitSystem === 'metric') {
+                effectiveMetricL100 = effectiveEfficiency;
+            }
+        }
+
+        // Calculate Fuel Volume Needed
+        let fuelVolume = 0;
+        let volumeUnit = 'gal';
+        let distanceUnit = 'mi';
+        let efficiencyUnit = 'MPG';
+
+        if (unitSystem === 'metric') {
+            distanceUnit = 'km';
+            volumeUnit = 'L';
+            efficiencyUnit = 'L/100km';
+            fuelVolume = (totalDistance * effectiveMetricL100) / 100;
+        } else if (unitSystem === 'uk') {
+            distanceUnit = 'mi';
+            volumeUnit = 'Imp gal';
+            efficiencyUnit = 'UK MPG';
+            fuelVolume = totalDistance / effectiveEfficiency;
+        } else {
+            // US
+            distanceUnit = 'mi';
+            volumeUnit = 'gal';
+            efficiencyUnit = 'MPG';
+            fuelVolume = totalDistance / effectiveEfficiency;
+        }
+
+        // Costs
+        const fuelCost = fuelVolume * fuelPrice;
+        const totalWearCost = wearTearFlat > 0 ? wearTearFlat : (totalDistance * wearRate);
+        const grossTripCost = fuelCost + totalWearCost;
+        const costPerDist = grossTripCost / totalDistance;
+
+        // Passenger Split Settlement
+        let perPersonShare = 0;
+        let driverFuelShare = 0;
+        let driverTotalSettlement = 0;
+        let passengerTotalSettlement = 0;
+
+        if (passengerCount <= 1) {
+            perPersonShare = grossTripCost;
+            driverTotalSettlement = grossTripCost;
+        } else {
+            if (wearSplitMode === 'passengers_pay_driver' && totalWearCost > 0) {
+                // Fuel is split equally. Driver receives wear-and-tear allowance from passengers.
+                const fuelPerPerson = fuelCost / passengerCount;
+                const wearPerPassenger = totalWearCost / (passengerCount - 1);
+                passengerTotalSettlement = fuelPerPerson + wearPerPassenger;
+                // Driver pays fuel share minus wear allowance collected
+                driverTotalSettlement = fuelPerPerson - (wearPerPassenger * (passengerCount - 1));
+                perPersonShare = passengerTotalSettlement; // display passenger share
+            } else {
+                // Split equally among all occupants
+                perPersonShare = grossTripCost / passengerCount;
+                driverTotalSettlement = perPersonShare;
+                passengerTotalSettlement = perPersonShare;
+            }
+        }
+
+        // --- Update UI Hero Display ---
+        document.getElementById('totalCostDisplay').textContent = `${currencySymbol}${formatMoney(grossTripCost)}`;
+        document.getElementById('tripSummaryNarrative').textContent = 
+            `Driving ${formatNumber(totalDistance)} ${distanceUnit} at an effective ${formatNumber(effectiveEfficiency, 1)} ${efficiencyUnit} consumes ${formatNumber(fuelVolume, 2)} ${volumeUnit} at ${currencySymbol}${formatNumber(fuelPrice, 2)} per ${volumeUnit}.`;
+
+        document.getElementById('fuelVolumeVal').textContent = `${formatNumber(fuelVolume, 2)} ${volumeUnit}`;
+        document.getElementById('costPerDistVal').textContent = `${currencySymbol}${formatNumber(costPerDist, 3)} / ${distanceUnit}`;
+        document.getElementById('costPerPersonVal').textContent = `${currencySymbol}${formatMoney(perPersonShare)}`;
+        document.getElementById('effectiveMpgVal').textContent = `${formatNumber(effectiveEfficiency, 1)} ${efficiencyUnit}`;
+
+        document.getElementById('tripDistanceSummary').textContent = 
+            `Distance: ${formatNumber(totalDistance)} ${distanceUnit} (${isRoundTrip ? 'Round-Trip' : 'One-Way'})`;
+        document.getElementById('wearAllowanceSummary').textContent = 
+            `Wear & Tear: ${currencySymbol}${formatMoney(totalWearCost)}`;
+
+        // Diagnostics Badge
+        const diagBadge = document.getElementById('diagnosticBadge');
+        if (efficiencyMode === 'blend') {
+            const hwy = document.getElementById('hwyBlendSlider').value;
+            diagBadge.textContent = `${hwy}% Highway Blend Profile`;
+            diagBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/50';
+        } else {
+            diagBadge.textContent = 'Combined Fuel Standard';
+            diagBadge.className = 'inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/50';
+        }
+
+        // --- Render Passenger Roster Table ---
+        renderPassengerRoster(passengerCount, fuelCost, totalWearCost, wearSplitMode, grossTripCost);
+
+        // --- Render Step-by-Step Mathematical Derivation ---
+        renderMathDerivation(totalDistance, distanceUnit, effectiveEfficiency, efficiencyUnit, fuelVolume, volumeUnit, fuelPrice, fuelCost, totalWearCost, grossTripCost, passengerCount, perPersonShare);
+
+        // --- Update Sensitivity Matrix Table ---
+        renderSensitivityMatrix(totalDistance, effectiveEfficiency, fuelPrice, unitSystem, totalWearCost);
+
+        // --- Update Print Report Fields ---
+        renderPrintReport(totalDistance, distanceUnit, isRoundTrip, effectiveEfficiency, efficiencyUnit, fuelPrice, volumeUnit, fuelVolume, fuelCost, totalWearCost, grossTripCost, costPerDist, perPersonShare, passengerCount);
+
+        // --- Update Chart.js Visualizations ---
+        updateSensitivityChart(totalDistance, effectiveEfficiency, fuelPrice, totalWearCost);
+        updatePassengerDoughnut(passengerCount, fuelCost, totalWearCost, wearSplitMode);
+
+        // Sync URL Parameters for Deep Linking
+        syncUrlParams(rawDistance, isRoundTrip, effectiveEfficiency, fuelPrice, passengerCount);
+    }
+
+    // --- Render Passenger Roster Table ---
+    function renderPassengerRoster(count, fuelCost, wearCost, splitMode, totalCost) {
+        const tbody = document.getElementById('passengerRosterBody');
+        tbody.innerHTML = '';
+
+        if (count <= 1) {
+            tbody.innerHTML = `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">Driver (Solo)</td>
+                    <td class="px-3 py-2 text-slate-500">Host Vehicle Owner</td>
+                    <td class="px-3 py-2">${currencySymbol}${formatMoney(fuelCost)}</td>
+                    <td class="px-3 py-2">${currencySymbol}${formatMoney(wearCost)}</td>
+                    <td class="px-3 py-2 font-bold text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(totalCost)}</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const fuelPerPerson = fuelCost / count;
+
+        if (splitMode === 'passengers_pay_driver' && wearCost > 0) {
+            const wearPerPassenger = wearCost / (count - 1);
+            
+            // Driver Row
+            const driverOwed = fuelPerPerson;
+            const driverCredit = wearCost;
+            const driverNet = driverOwed - driverCredit;
+
+            tbody.innerHTML += `
+                <tr class="bg-brand-50/40 dark:bg-brand-950/20 hover:bg-brand-50/70">
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">Driver (Host)</td>
+                    <td class="px-3 py-2 text-emerald-600 dark:text-emerald-400 font-semibold">Vehicle Owner</td>
+                    <td class="px-3 py-2">${currencySymbol}${formatMoney(fuelPerPerson)}</td>
+                    <td class="px-3 py-2 text-emerald-600 dark:text-emerald-400 font-bold">+${currencySymbol}${formatMoney(wearCost)} (Reimbursement)</td>
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">Pays at pump, retains +${currencySymbol}${formatMoney(wearCost)}</td>
+                </tr>
+            `;
+
+            for (let i = 1; i < count; i++) {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                        <td class="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">Passenger ${i}</td>
+                        <td class="px-3 py-2 text-slate-500">Traveler</td>
+                        <td class="px-3 py-2">${currencySymbol}${formatMoney(fuelPerPerson)}</td>
+                        <td class="px-3 py-2">${currencySymbol}${formatMoney(wearPerPassenger)}</td>
+                        <td class="px-3 py-2 font-bold text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(fuelPerPerson + wearPerPassenger)}</td>
+                    </tr>
+                `;
+            }
+        } else {
+            // Equal split
+            const share = totalCost / count;
+            const wearPerPerson = wearCost / count;
+
+            tbody.innerHTML += `
+                <tr class="bg-brand-50/40 dark:bg-brand-950/20">
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">Driver (Host)</td>
+                    <td class="px-3 py-2 text-slate-500">Host Traveler</td>
+                    <td class="px-3 py-2">${currencySymbol}${formatMoney(fuelPerPerson)}</td>
+                    <td class="px-3 py-2">${currencySymbol}${formatMoney(wearPerPerson)}</td>
+                    <td class="px-3 py-2 font-bold text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(share)}</td>
+                </tr>
+            `;
+
+            for (let i = 1; i < count; i++) {
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                        <td class="px-3 py-2 font-medium text-slate-800 dark:text-slate-200">Passenger ${i}</td>
+                        <td class="px-3 py-2 text-slate-500">Traveler</td>
+                        <td class="px-3 py-2">${currencySymbol}${formatMoney(fuelPerPerson)}</td>
+                        <td class="px-3 py-2">${currencySymbol}${formatMoney(wearPerPerson)}</td>
+                        <td class="px-3 py-2 font-bold text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(share)}</td>
+                    </tr>
+                `;
+            }
+        }
+    }
+
+    // --- Render MathJax Step-by-Step Derivation ---
+    function renderMathDerivation(dist, distU, eff, effU, vol, volU, price, fuelCost, wearCost, totalCost, passCount, personShare) {
+        const block = document.getElementById('mathJaxDerivationBlock');
+        let derivationHTML = '';
+
+        if (unitSystem === 'metric') {
+            derivationHTML = `
+                <div class="space-y-2">
+                    <p><strong>Step 1: Compute Fuel Volume Required:</strong></p>
+                    <p>$$\\text{Fuel Consumed} = \\frac{\\text{Distance } (${formatNumber(dist)}\\text{ km}) \\times \\text{Consumption } (${formatNumber(eff, 2)}\\text{ L/100km})}{100} = ${formatNumber(vol, 2)}\\text{ Liters}$$</p>
+                    
+                    <p><strong>Step 2: Calculate Direct Fuel Expenditure:</strong></p>
+                    <p>$$\\text{Fuel Cost} = ${formatNumber(vol, 2)}\\text{ L} \\times ${currencySymbol}${formatNumber(price, 2)}/\\text{L} = ${currencySymbol}${formatMoney(fuelCost)}$$</p>
+                    
+                    <p><strong>Step 3: Integrate Vehicle Wear &amp; Tear Allowance:</strong></p>
+                    <p>$$\\text{Total Trip Budget} = \\text{Fuel Cost } (${currencySymbol}${formatMoney(fuelCost)}) + \\text{Wear Allowance } (${currencySymbol}${formatMoney(wearCost)}) = ${currencySymbol}${formatMoney(totalCost)}$$</p>
+
+                    <p><strong>Step 4: Passenger Share Division (${passCount} Travelers):</strong></p>
+                    <p>$$\\text{Cost Per Person} = \\frac{${currencySymbol}${formatMoney(totalCost)}}{${passCount}} = ${currencySymbol}${formatMoney(personShare)}$$</p>
+                </div>
+            `;
+        } else {
+            derivationHTML = `
+                <div class="space-y-2">
+                    <p><strong>Step 1: Compute Total Fuel Needed:</strong></p>
+                    <p>$$\\text{Gallons Consumed} = \\frac{\\text{Distance } (${formatNumber(dist)}\\text{ mi})}{\\text{Fuel Economy } (${formatNumber(eff, 1)}\\text{ ${effU}})} = ${formatNumber(vol, 2)}\\text{ ${volU}}$$</p>
+                    
+                    <p><strong>Step 2: Calculate Direct Fuel Expenditure:</strong></p>
+                    <p>$$\\text{Fuel Cost} = ${formatNumber(vol, 2)}\\text{ gal} \\times ${currencySymbol}${formatNumber(price, 2)}/\\text{gal} = ${currencySymbol}${formatMoney(fuelCost)}$$</p>
+                    
+                    <p><strong>Step 3: Apply Vehicle Wear-and-Tear Reserve:</strong></p>
+                    <p>$$\\text{Gross Budget} = \\text{Fuel Cost } (${currencySymbol}${formatMoney(fuelCost)}) + \\text{Wear Allowance } (${currencySymbol}${formatMoney(wearCost)}) = ${currencySymbol}${formatMoney(totalCost)}$$</p>
+
+                    <p><strong>Step 4: Individual Passenger Settlement Allocation (${passCount} Travelers):</strong></p>
+                    <p>$$\\text{Individual Settlement} = \\frac{${currencySymbol}${formatMoney(totalCost)}}{${passCount}} = ${currencySymbol}${formatMoney(personShare)}$$</p>
+                </div>
+            `;
+        }
+
+        block.innerHTML = derivationHTML;
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            MathJax.typesetPromise([block]).catch(err => console.log('MathJax typeset error', err));
+        }
+    }
+
+    // --- Render Gas Price Sensitivity Matrix Table ---
+    function renderSensitivityMatrix(dist, baseEff, basePrice, sys, wearCost) {
+        const tbody = document.getElementById('sensitivityMatrixBody');
+        tbody.innerHTML = '';
+
+        const priceDeltas = [-1.00, -0.50, -0.25, 0.00, 0.25, 0.50, 1.00];
+
+        priceDeltas.forEach(delta => {
+            const curPrice = Math.max(0.1, basePrice + delta);
+            
+            // Efficiencies: -20% (Aggressive), -10% (Moderate), Baseline, +10% (Eco), +20% (Hyper)
+            let effAgg, effMod, effBase, effEco, effHyp;
+
+            if (sys === 'metric') {
+                // In L/100km, lower is better. -20% MPG corresponds to +25% consumption
+                effAgg = baseEff * 1.25;
+                effMod = baseEff * 1.11;
+                effBase = baseEff;
+                effEco = baseEff * 0.91;
+                effHyp = baseEff * 0.83;
+
+                const costAgg = ((dist * effAgg) / 100) * curPrice + wearCost;
+                const costMod = ((dist * effMod) / 100) * curPrice + wearCost;
+                const costBase = ((dist * effBase) / 100) * curPrice + wearCost;
+                const costEco = ((dist * effEco) / 100) * curPrice + wearCost;
+                const costHyp = ((dist * effHyp) / 100) * curPrice + wearCost;
+
+                tbody.innerHTML += buildMatrixRow(delta, curPrice, costAgg, costMod, costBase, costEco, costHyp);
+            } else {
+                effAgg = baseEff * 0.80;
+                effMod = baseEff * 0.90;
+                effBase = baseEff;
+                effEco = baseEff * 1.10;
+                effHyp = baseEff * 1.20;
+
+                const costAgg = (dist / effAgg) * curPrice + wearCost;
+                const costMod = (dist / effMod) * curPrice + wearCost;
+                const costBase = (dist / effBase) * curPrice + wearCost;
+                const costEco = (dist / effEco) * curPrice + wearCost;
+                const costHyp = (dist / effHyp) * curPrice + wearCost;
+
+                tbody.innerHTML += buildMatrixRow(delta, curPrice, costAgg, costMod, costBase, costEco, costHyp);
+            }
+        });
+    }
+
+    function buildMatrixRow(delta, curPrice, costAgg, costMod, costBase, costEco, costHyp) {
+        const deltaLabel = delta === 0 ? 'Baseline Gas Price' : (delta > 0 ? `+${currencySymbol}${delta.toFixed(2)}` : `-${currencySymbol}${Math.abs(delta).toFixed(2)}`);
+        const isBase = delta === 0;
+
+        return `
+            <tr class="${isBase ? 'bg-brand-50/60 dark:bg-brand-950/30 font-bold' : 'hover:bg-slate-50 dark:hover:bg-slate-800/40'}">
+                <td class="px-3 py-2 text-slate-800 dark:text-slate-200">${deltaLabel}</td>
+                <td class="px-3 py-2 font-bold">${currencySymbol}${formatNumber(curPrice, 2)}</td>
+                <td class="px-3 py-2 text-rose-600 dark:text-rose-400">${currencySymbol}${formatMoney(costAgg)}</td>
+                <td class="px-3 py-2 text-amber-600 dark:text-amber-400">${currencySymbol}${formatMoney(costMod)}</td>
+                <td class="px-3 py-2 text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(costBase)}</td>
+                <td class="px-3 py-2 text-emerald-600 dark:text-emerald-400">${currencySymbol}${formatMoney(costEco)}</td>
+                <td class="px-3 py-2 text-teal-600 dark:text-teal-400 font-bold">${currencySymbol}${formatMoney(costHyp)}</td>
+            </tr>
+        `;
+    }
+
+    // --- Render Multi-City Route Planner ---
+    function renderRoutePlannerTable() {
+        const tbody = document.getElementById('routePlannerTableBody');
+        tbody.innerHTML = '';
+
+        let totalDist = 0;
+        let totalFuel = 0;
+        let totalCost = 0;
+
+        const baseEff = Math.max(0.1, parseFloat(document.getElementById('fuelEfficiency').value) || 1);
+
+        routeLegs.forEach((leg, idx) => {
+            totalDist += leg.distance;
+            let legFuel = 0;
+            if (unitSystem === 'metric') {
+                legFuel = (leg.distance * baseEff) / 100;
+            } else {
+                legFuel = leg.distance / baseEff;
+            }
+            const legCost = legFuel * leg.price;
+            totalFuel += legFuel;
+            totalCost += legCost;
+
+            tbody.innerHTML += `
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                    <td class="px-3 py-2 font-bold text-slate-900 dark:text-white">${idx + 1}</td>
+                    <td class="px-3 py-2">
+                        <input type="text" value="${leg.from}" onchange="updateLegField(${leg.id}, 'from', this.value)" class="w-28 sm:w-36 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white">
+                    </td>
+                    <td class="px-3 py-2">
+                        <input type="text" value="${leg.to}" onchange="updateLegField(${leg.id}, 'to', this.value)" class="w-28 sm:w-36 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white">
+                    </td>
+                    <td class="px-3 py-2">
+                        <input type="number" min="1" step="any" value="${leg.distance}" onchange="updateLegField(${leg.id}, 'distance', parseFloat(this.value))" class="w-20 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white font-mono">
+                    </td>
+                    <td class="px-3 py-2">
+                        <input type="number" min="0.01" step="0.01" value="${leg.price}" onchange="updateLegField(${leg.id}, 'price', parseFloat(this.value))" class="w-20 px-2 py-1 text-xs bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-slate-900 dark:text-white font-mono">
+                    </td>
+                    <td class="px-3 py-2 font-mono text-slate-700 dark:text-slate-300">${formatNumber(legFuel, 2)} ${unitSystem === 'metric' ? 'L' : 'gal'}</td>
+                    <td class="px-3 py-2 font-mono font-bold text-brand-600 dark:text-brand-400">${currencySymbol}${formatMoney(legCost)}</td>
+                    <td class="px-3 py-2 text-center">
+                        <button type="button" onclick="removeRouteLeg(${leg.id})" class="text-rose-500 hover:text-rose-700 p-1" title="Delete Leg">&times;</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        const distUnit = unitSystem === 'metric' ? 'km' : 'mi';
+        const volUnit = unitSystem === 'metric' ? 'L' : 'gal';
+        const avgPrice = totalFuel > 0 ? (totalCost / totalFuel) : 0;
+
+        document.getElementById('routeTotalDistDisplay').textContent = `${formatNumber(totalDist)} ${distUnit}`;
+        document.getElementById('routeTotalFuelDisplay').textContent = `${formatNumber(totalFuel, 2)} ${volUnit}`;
+        document.getElementById('routeTotalCostDisplay').textContent = `${currencySymbol}${formatMoney(totalCost)}`;
+        document.getElementById('routeAvgPriceDisplay').textContent = `${currencySymbol}${formatNumber(avgPrice, 3)} / ${volUnit}`;
+    }
+
+    function addRouteLeg() {
+        const newId = routeLegs.length > 0 ? Math.max(...routeLegs.map(l => l.id)) + 1 : 1;
+        const lastLeg = routeLegs[routeLegs.length - 1];
+        const prevDest = lastLeg ? lastLeg.to : 'Waypoint ' + newId;
+        const defaultPrice = parseFloat(document.getElementById('fuelPrice').value) || 3.50;
+
+        routeLegs.push({
+            id: newId,
+            from: prevDest,
+            to: 'Destination ' + newId,
+            distance: 120,
+            price: defaultPrice
+        });
+        renderRoutePlannerTable();
+    }
+
+    function removeRouteLeg(id) {
+        if (routeLegs.length <= 1) {
+            alert('A road trip itinerary requires at least one route leg.');
+            return;
+        }
+        routeLegs = routeLegs.filter(l => l.id !== id);
+        renderRoutePlannerTable();
+    }
+
+    function updateLegField(id, field, value) {
+        const leg = routeLegs.find(l => l.id === id);
+        if (leg) {
+            leg[field] = value;
+            renderRoutePlannerTable();
+        }
+    }
+
+    // --- Render Print Report ---
+    function renderPrintReport(dist, distU, isRound, eff, effU, price, volU, fuelVol, fuelCost, wearCost, totalCost, costPerD, personShare, pCount) {
+        document.getElementById('reportTimestamp').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        document.getElementById('reportTripType').textContent = isRound ? 'Round-Trip Itinerary' : 'One-Way Itinerary';
+        document.getElementById('reportMeasurementStandard').textContent = unitSystem === 'metric' ? 'Metric Standard (km &bull; Liters)' : (unitSystem === 'uk' ? 'UK Imperial Standard' : 'US Customary Standard (Miles &bull; Gallons)');
+        
+        document.getElementById('reportDistance').textContent = `${formatNumber(dist)} ${distU}`;
+        document.getElementById('reportEconomy').textContent = `${formatNumber(eff, 1)} ${effU}`;
+        document.getElementById('reportPrice').textContent = `${currencySymbol}${formatNumber(price, 2)} per ${volU}`;
+        document.getElementById('reportFuelVolume').textContent = `${formatNumber(fuelVol, 2)} ${volU}`;
+        document.getElementById('reportPureFuelCost').textContent = `${currencySymbol}${formatMoney(fuelCost)}`;
+        document.getElementById('reportWearAllowance').textContent = `${currencySymbol}${formatMoney(wearCost)}`;
+        document.getElementById('reportGrossBudget').textContent = `${currencySymbol}${formatMoney(totalCost)}`;
+        document.getElementById('reportCostPerDistance').textContent = `${currencySymbol}${formatNumber(costPerD, 3)} / ${distU}`;
+        document.getElementById('reportPassengerShare').textContent = pCount > 1 ? `${currencySymbol}${formatMoney(personShare)} per person (${pCount} passengers)` : `${currencySymbol}${formatMoney(personShare)} (Solo)`;
+
+        document.getElementById('reportFormalStatement').textContent = 
+            `This travel voucher certifies that an estimated ${formatNumber(fuelVol, 2)} ${volU} of motor fuel is required to traverse ${formatNumber(dist)} ${distU} at an operational efficiency of ${formatNumber(eff, 1)} ${effU}. Direct fuel cost totals ${currencySymbol}${formatMoney(fuelCost)}, with an additional vehicle wear reserve of ${currencySymbol}${formatMoney(wearCost)}, yielding a gross road trip travel budget of ${currencySymbol}${formatMoney(totalCost)}.`;
+    }
+
+    // --- Chart.js Sensitivity Curve ---
+    function updateSensitivityChart(dist, eff, activePrice, wearCost) {
+        const ctx = document.getElementById('sensitivityChart');
+        if (!ctx) return;
+
+        const labels = [];
+        const dataPoints = [];
+        const isDark = document.documentElement.classList.contains('dark');
+
+        // Range: from activePrice * 0.6 to activePrice * 1.5 in 7 steps
+        const minP = activePrice * 0.6;
+        const maxP = activePrice * 1.5;
+        const step = (maxP - minP) / 6;
+
+        for (let i = 0; i <= 6; i++) {
+            const p = minP + (i * step);
+            labels.push(`${currencySymbol}${p.toFixed(2)}`);
+            let vol = 0;
+            if (unitSystem === 'metric') {
+                vol = (dist * eff) / 100;
+            } else {
+                vol = dist / eff;
+            }
+            dataPoints.push((vol * p + wearCost).toFixed(2));
+        }
+
+        if (sensitivityChart) {
+            sensitivityChart.destroy();
+        }
+
+        sensitivityChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `Total Trip Cost (${currencySymbol})`,
+                    data: dataPoints,
+                    borderColor: '#10b981',
+                    backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+                    borderWidth: 2.5,
+                    fill: true,
+                    tension: 0.25,
+                    pointBackgroundColor: '#047857',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` Budget: ${currencySymbol}${context.parsed.y}`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+                        ticks: { color: isDark ? '#94a3b8' : '#64748b', font: { size: 10 } }
+                    },
+                    y: {
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)' },
+                        ticks: {
+                            color: isDark ? '#94a3b8' : '#64748b',
+                            font: { size: 10 },
+                            callback: function(v) { return currencySymbol + v; }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- Chart.js Passenger Doughnut Chart ---
+    function updatePassengerDoughnut(count, fuelCost, wearCost, splitMode) {
+        const ctx = document.getElementById('passengerDoughnutChart');
+        if (!ctx) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const labels = [];
+        const data = [];
+        const backgroundColors = [
+            '#10b981', '#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#06b6d4', '#14b8a6', '#6366f1'
+        ];
+
+        if (count <= 1) {
+            labels.push('Driver Fuel Cost');
+            data.push(fuelCost.toFixed(2));
+            if (wearCost > 0) {
+                labels.push('Vehicle Wear Reserve');
+                data.push(wearCost.toFixed(2));
+            }
+        } else {
+            const fuelPerPerson = fuelCost / count;
+            labels.push('Driver Fuel Share');
+            data.push(fuelPerPerson.toFixed(2));
+
+            for (let i = 1; i < count; i++) {
+                labels.push(`Passenger ${i} Share`);
+                data.push(fuelPerPerson.toFixed(2));
+            }
+
+            if (wearCost > 0) {
+                labels.push('Vehicle Wear Reserve');
+                data.push(wearCost.toFixed(2));
+            }
+        }
+
+        if (passengerDoughnutChart) {
+            passengerDoughnutChart.destroy();
+        }
+
+        passengerDoughnutChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: backgroundColors.slice(0, data.length),
+                    borderWidth: 2,
+                    borderColor: isDark ? '#1e293b' : '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 10,
+                            font: { size: 9 },
+                            color: isDark ? '#94a3b8' : '#64748b'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ` ${ctx.label}: ${currencySymbol}${ctx.parsed}`;
+                            }
+                        }
+                    }
+                },
+                cutout: '60%'
+            }
+        });
+    }
+
+    // --- Tab Switcher ---
+    function switchTab(tabId) {
+        const tabs = ['trip', 'route', 'matrix', 'print'];
+        tabs.forEach(t => {
+            const btn = document.getElementById('tabBtn_' + t);
+            const panel = document.getElementById('tab-' + t);
+            if (t === tabId) {
+                btn.className = 'tab-btn active border-b-2 border-brand-600 pb-3 px-1 text-xs sm:text-sm font-bold text-brand-600 dark:text-brand-400 whitespace-nowrap';
+                panel.classList.add('active');
+            } else {
+                btn.className = 'tab-btn border-b-2 border-transparent pb-3 px-1 text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap';
+                panel.classList.remove('active');
+            }
+        });
+
+        // If switching to route planner, re-render
+        if (tabId === 'route') {
+            renderRoutePlannerTable();
+        }
+    }
+
+    // --- FAQ Accordion Toggle ---
+    function toggleFaq(index) {
+        const ans = document.getElementById(`faqAns_${index}`);
+        const icon = document.getElementById(`faqIcon_${index}`);
+        if (ans.classList.contains('hidden')) {
+            ans.classList.remove('hidden');
+            icon.classList.add('rotate-180');
+        } else {
+            ans.classList.add('hidden');
+            icon.classList.remove('rotate-180');
+        }
+    }
+
+    // --- Reset Calculator ---
+    function resetCalculatorDefaults() {
+        document.getElementById('tripDistance').value = 380;
+        document.getElementById('roundTripToggle').checked = false;
+        document.getElementById('vehiclePreset').value = 'compact';
+        setUnitSystem('us');
+        setEfficiencyMode('simple');
+        document.getElementById('fuelEfficiency').value = 32;
+        document.getElementById('cityMpgInput').value = 30;
+        document.getElementById('hwyMpgInput').value = 38;
+        document.getElementById('hwyBlendSlider').value = 65;
+        document.getElementById('fuelPrice').value = 3.55;
+        document.getElementById('wearTearPreset').value = '0';
+        document.getElementById('wearTearRateInput').value = 0.00;
+        wearTearFlat = 0;
+        setPassengerCount(1);
+        calculateTrip();
+        showToast('Calculator reset to default parameters.');
+    }
+
+    // --- Copy Formatted Summary & Toast ---
+    function copyFormattedSummary() {
+        const total = document.getElementById('totalCostDisplay').textContent;
+        const vol = document.getElementById('fuelVolumeVal').textContent;
+        const eff = document.getElementById('effectiveMpgVal').textContent;
+        const dist = document.getElementById('tripDistanceSummary').textContent;
+        const share = document.getElementById('costPerPersonVal').textContent;
+
+        const summaryText = `CalcWorld Road Trip Fuel Estimate:\n${dist}\nVehicle Efficiency: ${eff}\nFuel Required: ${vol}\nGross Fuel Cost: ${total}\nPassenger Share: ${share} per person.\nComputed at https://calcworld.net/other/fuel-cost-calculator`;
+
+        navigator.clipboard.writeText(summaryText).then(() => {
+            showToast('Trip budget summary copied to clipboard!');
+        }).catch(() => {
+            showToast('Summary copied!');
+        });
+    }
+
+    function copyShareUrl() {
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('Shareable URL copied to clipboard!');
+        }).catch(() => {
+            showToast('URL copied!');
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMsg').textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, 2200);
+    }
+
+    // --- Lead Generation Form ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const btn = document.getElementById('leadSubmitBtn');
+        const input = document.getElementById('leadEmailInput');
+        const msg = document.getElementById('leadSuccessMsg');
+
+        btn.disabled = true;
+        btn.textContent = 'Preparing PDF...';
+        setTimeout(() => {
+            btn.classList.add('hidden');
+            input.classList.add('hidden');
+            msg.classList.remove('hidden');
+        }, 800);
+    }
+
+    // --- Theme Switcher ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        calculateTrip();
+    }
+
+    // --- URL State Deep-Linking ---
+    function syncUrlParams(dist, round, eff, price, pass) {
+        const params = new URLSearchParams();
+        params.set('d', dist);
+        if (round) params.set('rt', '1');
+        params.set('eff', eff);
+        params.set('p', price);
+        if (pass > 1) params.set('n', pass);
+        if (unitSystem !== 'us') params.set('u', unitSystem);
+
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    function parseUrlParams() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('d')) document.getElementById('tripDistance').value = params.get('d');
+        if (params.get('rt') === '1') document.getElementById('roundTripToggle').checked = true;
+        if (params.has('eff')) document.getElementById('fuelEfficiency').value = params.get('eff');
+        if (params.has('p')) document.getElementById('fuelPrice').value = params.get('p');
+        if (params.has('n')) setPassengerCount(parseInt(params.get('n')));
+        if (params.has('u')) setUnitSystem(params.get('u'));
+    }
+
+    // Helper Formatters
+    function formatMoney(num) {
+        return (Math.round(num * 100) / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function formatNumber(num, decimals = 2) {
+        return Number(num).toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
+    }
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,2627 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dew Point Calculator | NOAA Psychrometric &amp; Vapor Pressure Engine</title>
+    <meta name="description" content="Free scientific dew point calculator based on NOAA NWS and ASHRAE standards. Calculate dew point, actual vapor pressure, saturation vapor pressure, absolute humidity, human comfort index, and building surface condensation risk.">
+    <meta name="keywords" content="dew point calculator, relative humidity to dew point, vapor pressure calculator, absolute humidity, psychrometric calculator, human comfort index, condensation calculator, mold prevention ashrae">
+    <link rel="canonical" href="https://calcworld.net/calculators/dew-point-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN with darkMode: 'class' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                            950: '#082f49'
+                        },
+                        comfort: {
+                            dry: '#0284c7',
+                            comfortable: '#059669',
+                            pleasant: '#10b981',
+                            sticky: '#f59e0b',
+                            muggy: '#ea580c',
+                            oppressive: '#dc2626'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 CDN & Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(14, 165, 233, 0.08) 20%,
+                rgba(14, 165, 233, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Toast feedback */
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e293b;
+            color: #f8fafc;
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        /* Custom range sliders */
+        input[type="range"] {
+            accent-color: #0284c7;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Dew Point Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Dew Point & Psychrometric Vapor Pressure Calculator",
+      "url": "https://calcworld.net/other/dew-point-calculator",
+      "applicationCategory": "EngineeringApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Scientific dew point calculator based on NOAA NWS and ASHRAE formulations. Solves dew point, vapor pressure, absolute humidity, human comfort index, and building surface condensation risk."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the difference between dew point and relative humidity?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Dew point is an absolute measure of atmospheric moisture, defined as the temperature to which air must be cooled at constant pressure to reach saturation (100% relative humidity). Relative humidity is a temperature-dependent percentage comparing the actual moisture present to the maximum moisture air can hold at that specific temperature. As air warms, its capacity to hold water vapor increases exponentially, causing relative humidity to drop even when moisture content remains unchanged."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does the human body feel more uncomfortable at high dew point than high relative humidity?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The human body regulates temperature through perspiration. Sweat evaporation depends on the vapor pressure difference between warm human skin and the surrounding air. Because dew point correlates directly with atmospheric vapor pressure, a high dew point (above 65\u00b0F / 18.3\u00b0C) reduces this vapor pressure gradient, preventing sweat from evaporating effectively. Relative humidity can be misleading; 80% relative humidity on a cold winter day feels pleasant because the actual vapor pressure is low, whereas 50% relative humidity on a 95\u00b0F day creates a high dew point and severe discomfort."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Clausius-Clapeyron equation and why does it matter?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Clausius-Clapeyron relation is a fundamental thermodynamic equation describing the phase transition between liquid water and water vapor: d(es)/dT = Lv / (T * delta_v). It establishes that saturation vapor pressure increases approximately exponentially with temperature, rising by roughly 7% per degree Celsius. This exponential relationship governs how much moisture the atmosphere can hold and explains why warm weather air masses can carry vast quantities of water vapor."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What formula does this calculator use to compute dew point?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "This calculator uses the Magnus-Tetens formulation with Sonntag (1990) parameters, recognized by the World Meteorological Organization (WMO) and NOAA National Weather Service. For standard temperatures above 0\u00b0C, the constants are a = 17.62 and b = 243.12\u00b0C. The calculator also offers the Arden Buck (1996) formulation, which includes an atmospheric enhancement factor and specialized parameters for sub-zero temperatures over ice."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does a psychrometer use dry bulb and wet bulb temperatures to find dew point?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A psychrometer consists of two thermometers: one measuring ambient air temperature (dry bulb) and one enclosed in a wetted fabric wick (wet bulb). As air passes over the wet bulb, water evaporates, absorbing latent heat and lowering the temperature. The difference between these readings (wet bulb depression) is inserted into the psychrometric equation: e = es(Twb) - A * P * (Tdb - Twb). Once actual vapor pressure (e) is determined, the dew point is calculated directly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "At what indoor dew point does mold growth become a hazard on walls and windows?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "According to ASHRAE Standard 160, mold spore germination occurs when relative humidity at a surface exceeds 70% to 80% for 30 consecutive days, even in the absence of visible liquid water. Condensation begins whenever a cold surface temperature falls at or below the indoor dew point. Maintaining indoor dew points below 50\u00b0F to 54\u00b0F (10\u00b0C to 12\u00b0C) during winter heating prevents surface relative humidity from reaching the 70% mold hazard threshold on exterior walls and windows."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between dew point and frost point below 0\u00b0C?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When air temperature is below freezing (0\u00b0C / 32\u00b0F), water vapor can reach saturation with respect to either supercooled liquid water or solid ice. The dew point represents saturation with respect to liquid water, while the frost point represents saturation with respect to ice. Because the saturation vapor pressure over ice is lower than over supercooled liquid water at identical temperatures, the frost point is always slightly higher than the dew point under sub-zero conditions. Hoarfrost forms when surface temperatures drop to the frost point."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do meteorologists and pilots use dew point to calculate cloud base altitude?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "As sun-warmed air ascends convectively, it cools at the dry adiabatic lapse rate (DALR, approximately 9.8\u00b0C per 1,000 meters or 5.4\u00b0F per 1,000 feet), while its dew point drops at roughly 1.8\u00b0C per 1,000 meters (1.0\u00b0F per 1,000 feet). The altitude where ambient temperature cools to the dew point is the Lifting Condensation Level (LCL), marking the convective cloud base. Pilots estimate this height using the rule of thumb: Base Altitude (feet) = [(T - Tdp) in \u00b0F / 4.4] * 1,000 feet, or Base Altitude (meters) = 125 * (T - Tdp) in \u00b0C."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Dew Point Calculator | NOAA Psychrometric &amp; Vapor Pressure Engine">
+    <meta property="og:description" content="Free scientific dew point calculator based on NOAA NWS and ASHRAE standards. Calculate dew point, actual vapor pressure, saturation vapor pressure, absolute humidity, human comfort index, and building surface condensation risk.">
+    <meta property="og:url" content="https://calcworld.net/calculators/dew-point-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Dew Point Calculator | NOAA Psychrometric &amp; Vapor Pressure Engine">
+    <meta name="twitter:description" content="Free scientific dew point calculator based on NOAA NWS and ASHRAE standards. Calculate dew point, actual vapor pressure, saturation vapor pressure, absolute humidity, human comfort index, and building surface condensation risk.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Engineering &amp; Meteorological Reference:</strong> CalcWorld provides peer-reviewed atmospheric calculation tools free with zero registration. Please consider safelisting our domain to support continuous technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Dew Point Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Dew Point Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">High-precision psychrometric solver for dew point ($T_{dp}$), actual vapor pressure ($e$), saturation vapor pressure ($e_s$), absolute humidity ($AH$), and human comfort perception index. Implements official NOAA National Weather Service Magnus-Tetens and Arden Buck formulation standards.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+
+        <!-- Two-Column Primary Layout (Inputs vs Results & Tabs) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Column: Inputs & Controls (Span 5 on lg, 4 on xl) -->
+            <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center justify-between">
+                        <span>Atmospheric Parameters</span>
+                        <span class="text-xs font-normal px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-900/40 dark:text-brand-300 border border-brand-200/50">Interactive</span>
+                    </h2>
+
+                    <!-- Calculation Target Selector -->
+                    <div class="mb-5">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Calculation Mode</label>
+                        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl text-center">
+                            <button type="button" onclick="setCalcMode('solve_dp')" id="modeBtn_solve_dp" class="mode-btn active py-2 text-xs font-bold rounded-lg bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm transition">Dew Point</button>
+                            <button type="button" onclick="setCalcMode('solve_rh')" id="modeBtn_solve_rh" class="mode-btn py-2 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Rel Humidity</button>
+                            <button type="button" onclick="setCalcMode('solve_psychrometer')" id="modeBtn_solve_psychrometer" class="mode-btn py-2 text-xs font-bold rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">Psychrometer</button>
+                        </div>
+                    </div>
+
+                    <!-- Air Temperature Input -->
+                    <div class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="tempInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300" id="tempLabel">Air Temperature (Dry Bulb)</label>
+                            <div class="flex items-center gap-1">
+                                <select id="tempUnit" onchange="handleTempUnitChange()" class="text-xs font-semibold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-lg px-2 py-1 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <option value="C" selected>&deg;C (Celsius)</option>
+                                    <option value="F">&deg;F (Fahrenheit)</option>
+                                    <option value="K">K (Kelvin)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="tempInput" step="0.1" value="25.0" oninput="handleTempNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <input type="range" id="tempSlider" min="-40" max="60" step="0.5" value="25" oninput="handleTempSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span id="tempSliderMin">-40&deg;C</span>
+                            <span id="tempSliderMid">10&deg;C</span>
+                            <span id="tempSliderMax">60&deg;C</span>
+                        </div>
+                    </div>
+
+                    <!-- Relative Humidity Input (for Mode 1: solve_dp) -->
+                    <div id="fieldGroup_rh" class="space-y-3 mb-5">
+                        <div class="flex items-center justify-between">
+                            <label for="rhInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Relative Humidity (RH)</label>
+                            <span class="text-xs font-bold font-mono text-brand-600 dark:text-brand-400" id="rhBadge">50%</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="rhInput" min="0" max="100" step="0.5" value="50.0" oninput="handleRhNumberInput()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                            <span class="absolute right-4 top-3 text-xs font-bold text-slate-400">%</span>
+                        </div>
+                        <input type="range" id="rhSlider" min="1" max="100" step="1" value="50" oninput="handleRhSliderInput()" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
+                            <span>0% (Arid)</span>
+                            <span>50% (Comfort)</span>
+                            <span>100% (Saturated)</span>
+                        </div>
+                    </div>
+
+                    <!-- Target Dew Point Input (for Mode 2: solve_rh) -->
+                    <div id="fieldGroup_target_dp" class="space-y-3 mb-5 hidden">
+                        <div class="flex items-center justify-between">
+                            <label for="targetDpInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Target Dew Point</label>
+                            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="targetDpUnitLabel">&deg;C</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="targetDpInput" step="0.1" value="13.9" oninput="calculate()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Must be less than or equal to Air Temperature.</p>
+                    </div>
+
+                    <!-- Wet Bulb Temperature Input (for Mode 3: solve_psychrometer) -->
+                    <div id="fieldGroup_wet_bulb" class="space-y-3 mb-5 hidden">
+                        <div class="flex items-center justify-between">
+                            <label for="wetBulbInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Wet Bulb Temperature</label>
+                            <span class="text-xs font-semibold text-slate-500 dark:text-slate-400" id="wetBulbUnitLabel">&deg;C</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="wetBulbInput" step="0.1" value="17.9" oninput="calculate()" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono text-base font-semibold focus:outline-none focus:ring-2 focus:ring-brand-500">
+                        </div>
+                        <div class="flex items-center gap-2 mt-2">
+                            <label class="text-[11px] text-slate-600 dark:text-slate-400">Psychrometer Ventilation:</label>
+                            <select id="psychrometerVent" onchange="calculate()" class="text-[11px] bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 rounded px-2 py-0.5 border border-slate-300 dark:border-slate-600">
+                                <option value="aspirated" selected>Aspirated (Assmann &gt;3 m/s)</option>
+                                <option value="stationary">Natural / Calm Air</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Atmospheric Settings Accordion -->
+                    <div class="border-t border-slate-200 dark:border-slate-700 pt-4 mb-5">
+                        <button type="button" onclick="toggleAdvancedSettings()" class="w-full flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition">
+                            <span class="flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                                <span>Advanced Atmospheric Settings</span>
+                            </span>
+                            <svg id="advSettingsChevron" class="w-4 h-4 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div id="advSettingsContent" class="space-y-4 mt-3 hidden">
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Barometric Pressure</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" id="pressureInput" step="0.1" value="1013.25" oninput="calculate()" class="px-3 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-mono">
+                                    <select id="pressureUnit" onchange="handlePressureUnitChange()" class="px-2 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                        <option value="hPa" selected>hPa / mbar</option>
+                                        <option value="inHg">inHg</option>
+                                        <option value="mmHg">mmHg / Torr</option>
+                                        <option value="kPa">kPa</option>
+                                        <option value="psi">psi</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-semibold text-slate-600 dark:text-slate-400 mb-1">Calculation Equation Model</label>
+                                <select id="formulaModel" onchange="calculate()" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+                                    <option value="sonntag" selected>Sonntag (1990) Magnus-Tetens (NOAA Standard)</option>
+                                    <option value="buck">Arden Buck (1996) High-Precision Equation</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Climate Presets -->
+                    <div>
+                        <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Climate &amp; Weather Presets</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="applyPreset(38, 15)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🌵 Arid Desert</button>
+                            <button type="button" onclick="applyPreset(22, 45)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🏡 Mild Comfort</button>
+                            <button type="button" onclick="applyPreset(32, 80)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🌴 Tropical Humid</button>
+                            <button type="button" onclick="applyPreset(2, 85)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">❄️ Winter Chill</button>
+                            <button type="button" onclick="applyPreset(-10, 75)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">🧊 Sub-Zero Polar</button>
+                            <button type="button" onclick="applyPreset(42, 90)" class="px-2 py-1.5 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 transition text-center truncate">♨️ Steam Sauna</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 3: Sidebar Rectangle -->
+                <div class="ad-slot" id="ad-slot-3">
+                    <span>Sponsored Advertisement &bull; Sidebar Slot 3</span>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="bg-gradient-to-br from-brand-900 to-slate-900 text-white rounded-2xl p-5 shadow-sm border border-brand-800 lead-box">
+                    <div class="flex items-center gap-2 mb-2 text-brand-300 text-xs font-semibold uppercase tracking-wider">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span>Free Technical Reference</span>
+                    </div>
+                    <h3 class="font-bold text-base mb-1">Psychrometric &amp; Moisture Guide</h3>
+                    <p class="text-xs text-brand-200 mb-3">Download our verified psychrometric charts, Mollier vapor pressure tables, surface condensation formulas, and ASHRAE Standard 55 comfort guidelines (PDF).</p>
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="engineer@institution.org" class="w-full px-3 py-2 text-xs rounded-lg bg-white/10 border border-white/20 text-white placeholder-brand-300 focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" id="leadSubmitBtn" class="w-full py-2 bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs rounded-lg transition shadow">Download Reference PDF</button>
+                    </form>
+                    <p class="text-[10px] text-brand-300/80 mt-2 text-center">Instant digital delivery. Strictly zero spam.</p>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Results Dashboard, Tabs & Visualizations (Span 7 on lg, 8 on xl) -->
+            <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                
+                <!-- Primary Hero Results Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm border border-slate-200 dark:border-slate-700 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-4 mb-5">
+                        <div>
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Psychrometric Output</span>
+                            <h2 class="text-xl font-extrabold text-slate-900 dark:text-white">Calculated Dew Point</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span id="frostPointBadge" class="hidden text-xs font-semibold px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 border border-sky-300 dark:border-sky-800">❄️ Sub-Zero Frost Point</span>
+                            <span id="comfortBadge" class="text-xs font-bold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 flex items-center gap-1.5 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                <span id="comfortLabel">Comfortable</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Main Readout Display -->
+                    <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center mb-6">
+                        <div class="sm:col-span-7">
+                            <div class="flex items-baseline gap-2">
+                                <span id="resDewPointPrimary" class="text-4xl sm:text-5xl font-extrabold text-slate-900 dark:text-white font-mono tracking-tight">13.9</span>
+                                <span id="resDewPointUnit" class="text-xl font-bold text-slate-500 dark:text-slate-400 font-mono">&deg;C</span>
+                            </div>
+                            <div class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 font-mono">
+                                <span>Equivalent: </span>
+                                <span id="resDewPointSecondary" class="font-bold text-slate-700 dark:text-slate-300">57.0 &deg;F</span>
+                                <span class="mx-1">&bull;</span>
+                                <span id="resDewPointKelvin" class="text-slate-600 dark:text-slate-400">287.05 K</span>
+                            </div>
+                        </div>
+                        <div class="sm:col-span-5 bg-slate-50 dark:bg-slate-900/60 p-3.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">Human Sensation Assessment</div>
+                            <p id="comfortDescription" class="text-xs text-slate-700 dark:text-slate-300 leading-snug">Pleasant warm-weather baseline. Optimal for outdoor activity; sweat evaporates smoothly with minimal heat retention.</p>
+                        </div>
+                    </div>
+
+                    <!-- 8 Key Atmospheric Metrics Grid -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+                        
+                        <!-- Metric 1: Actual Vapor Pressure -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Actual Vapor Press ($e$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resVaporPress">15.83</span> <span class="text-xs font-normal text-slate-500">hPa</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resVaporPressAlt">0.467 inHg</div>
+                        </div>
+
+                        <!-- Metric 2: Saturation Vapor Pressure -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sat Vapor Press ($e_s$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resSatVaporPress">31.67</span> <span class="text-xs font-normal text-slate-500">hPa</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resSatVaporPressAlt">0.935 inHg</div>
+                        </div>
+
+                        <!-- Metric 3: Absolute Humidity -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Absolute Humidity</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resAbsHumidity">11.51</span> <span class="text-xs font-normal text-slate-500">g/m&sup3;</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resAbsHumidityAlt">5.03 gr/ft&sup3;</div>
+                        </div>
+
+                        <!-- Metric 4: Vapor Pressure Deficit -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Vapor Deficit (VPD)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resVpd">1.58</span> <span class="text-xs font-normal text-slate-500">kPa</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resVpdAlt">15.84 hPa</div>
+                        </div>
+
+                        <!-- Metric 5: Relative Humidity -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Relative Humidity</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resRhOutput">50.0</span> <span class="text-xs font-normal text-slate-500">%</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">Ratio: $e / e_s$</div>
+                        </div>
+
+                        <!-- Metric 6: Wet Bulb Temperature -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Wet Bulb Temp</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resWetBulb">17.9</span> <span class="text-xs font-normal text-slate-500" id="resWetBulbUnit">&deg;C</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resWetBulbAlt">64.2 &deg;F</div>
+                        </div>
+
+                        <!-- Metric 7: Specific Humidity -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Specific Humidity ($q$)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resSpecificHum">9.80</span> <span class="text-xs font-normal text-slate-500">g/kg</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5">Mixing: $w \approx 9.9$ g/kg</div>
+                        </div>
+
+                        <!-- Metric 8: Cloud Base Altitude -->
+                        <div class="bg-slate-50 dark:bg-slate-900/60 p-3 rounded-xl border border-slate-200/60 dark:border-slate-800">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Cloud Ceiling (LCL)</div>
+                            <div class="text-base sm:text-lg font-bold font-mono text-slate-900 dark:text-white mt-0.5">
+                                <span id="resCloudBase">1,388</span> <span class="text-xs font-normal text-slate-500">m</span>
+                            </div>
+                            <div class="text-[10px] font-mono text-slate-400 mt-0.5" id="resCloudBaseAlt">4,550 ft AGL</div>
+                        </div>
+
+                    </div>
+
+                    <!-- Card Actions -->
+                    <div class="flex flex-wrap items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-100 dark:border-slate-800 text-xs">
+                        <div class="flex items-center gap-2">
+                            <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:bg-slate-600 font-semibold transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                                <span>Copy Data</span>
+                            </button>
+                            <button type="button" onclick="resetCalculatorDefaults()" class="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 font-semibold transition">
+                                Reset
+                            </button>
+                        </div>
+                        <button type="button" onclick="switchTab('print')" class="px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-950/80 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-800 font-semibold hover:bg-brand-100 transition flex items-center gap-1.5">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <span>Generate Formal Report</span>
+                        </button>
+                    </div>
+
+                </div>
+
+                <!-- AdSense Slot 2: Mid Banner Above Tabs -->
+                <div class="ad-slot no-print" id="ad-slot-2">
+                    <span>Sponsored Advertisement &bull; Workspace Slot 2</span>
+                </div>
+
+                <!-- Tab Navigation Buttons -->
+                <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 no-print">
+                    <button type="button" onclick="switchTab('solver')" id="tabBtn_solver" class="tab-btn active px-4 py-2 text-xs font-bold rounded-xl bg-brand-600 text-white shadow-sm transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        <span>Psychrometric Solver</span>
+                    </button>
+                    <button type="button" onclick="switchTab('comfort')" id="tabBtn_comfort" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Comfort Perception Scale</span>
+                    </button>
+                    <button type="button" onclick="switchTab('condensation')" id="tabBtn_condensation" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                        <span>Condensation &amp; Mold Guide</span>
+                    </button>
+                    <button type="button" onclick="switchTab('print')" id="tabBtn_print" class="tab-btn px-4 py-2 text-xs font-bold rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                        <span>Print Report</span>
+                    </button>
+                </div>
+
+                <!-- Tab 1: Psychrometric Solver -->
+                <div id="tab-solver" class="tab-panel active space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Chart.js Psychrometric Vapor Pressure Curve</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400">Temperature vs Vapor Pressure with Relative Humidity Isobars (20% to 100% Saturation Curve)</p>
+                            </div>
+                            <span class="text-xs font-mono px-2 py-0.5 rounded bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 border border-brand-200 dark:border-brand-800">
+                                Operating Point: <span id="chartCoordPoint">25&deg;C, 15.8 hPa</span>
+                            </span>
+                        </div>
+                        <div class="relative w-full h-[320px] sm:h-[380px]">
+                            <canvas id="psychrometricChart"></canvas>
+                        </div>
+                        <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-3 flex items-center justify-between">
+                            <span>Curves represent constant relative humidity isobars. The pulsing red marker denotes your current atmospheric coordinate.</span>
+                            <button type="button" onclick="resetChartZoom()" class="text-brand-600 dark:text-brand-400 hover:underline">Reset View</button>
+                        </div>
+                    </div>
+
+                    <!-- Step-by-Step Mathematical Formula Breakdown -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">Step-by-Step Mathematical Derivation</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Live numerical evaluation using the Magnus-Tetens formulation with Sonntag (1990) parameters.</p>
+                        
+                        <div class="space-y-4 text-xs font-mono bg-slate-50 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 overflow-x-auto">
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 1: Compute Saturation Vapor Pressure ($e_s$) at Dry Bulb Temperature:</span>
+                                <div id="mathStep1" class="text-sm">
+                                    $$e_s(25.0^{\circ}\text{C}) = 6.112 \times \exp\left( \frac{17.62 \times 25.0}{243.12 + 25.0} \right) = 31.67\text{ hPa}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 2: Determine Actual Vapor Pressure ($e$) from Relative Humidity:</span>
+                                <div id="mathStep2" class="text-sm">
+                                    $$e = e_s \times \frac{RH}{100} = 31.67 \times \frac{50.0}{100} = 15.83\text{ hPa}$$
+                                </div>
+                            </div>
+                            <div class="border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <span class="text-slate-500 font-bold block mb-1">Step 3: Evaluate Psychrometric Coefficient Factor $\gamma(T, RH)$:</span>
+                                <div id="mathStep3" class="text-sm">
+                                    $$\gamma = \frac{17.62 \times 25.0}{243.12 + 25.0} + \ln(0.500) = 1.6427 - 0.6931 = 0.9496$$
+                                </div>
+                            </div>
+                            <div>
+                                <span class="text-slate-500 font-bold block mb-1">Step 4: Invert to Obtain Dew Point Temperature ($T_{dp}$):</span>
+                                <div id="mathStep4" class="text-sm font-bold text-brand-600 dark:text-brand-400">
+                                    $$T_{dp} = \frac{243.12 \times 0.9496}{17.62 - 0.9496} = 13.86^{\circ}\text{C} \approx 13.9^{\circ}\text{C} \quad (57.0^{\circ}\text{F})$$
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Human Comfort Perception Scale -->
+                <div id="tab-comfort" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Human Comfort Perception Scale</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Physiological sensation based on cutaneous vapor pressure gradients and perspiration dissipation efficiency.</p>
+                        
+                        <!-- Visual Gauge Thermometer Bar -->
+                        <div class="mb-8">
+                            <div class="flex justify-between text-xs font-bold mb-2">
+                                <span class="text-sky-600 dark:text-sky-400">&lt;50&deg;F (Dry)</span>
+                                <span class="text-emerald-600 dark:text-emerald-400">55&deg;F (Comfortable)</span>
+                                <span class="text-amber-600 dark:text-amber-400">65&deg;F (Sticky)</span>
+                                <span class="text-red-600 dark:text-red-400">71&deg;F+ (Oppressive)</span>
+                            </div>
+                            <div class="relative h-4 rounded-full bg-gradient-to-r from-sky-500 via-emerald-400 via-amber-400 via-orange-500 to-red-600 shadow-inner">
+                                <div id="comfortGaugePointer" class="absolute top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-white dark:bg-slate-900 border-2 border-slate-900 dark:border-white shadow-lg transition-all duration-300" style="left: 35%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[10px] text-slate-400 font-mono mt-1.5">
+                                <span>30&deg;F (-1&deg;C)</span>
+                                <span>50&deg;F (10&deg;C)</span>
+                                <span>60&deg;F (15&deg;C)</span>
+                                <span>70&deg;F (21&deg;C)</span>
+                                <span>80&deg;F (27&deg;C)</span>
+                            </div>
+                        </div>
+
+                        <!-- 6-Tier Matrix Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs">
+                                <thead>
+                                    <tr class="border-b border-slate-200 dark:border-slate-700 text-slate-400 font-bold uppercase tracking-wider">
+                                        <th class="py-2.5 px-3">Dew Point Range</th>
+                                        <th class="py-2.5 px-3">Sensation</th>
+                                        <th class="py-2.5 px-3">Evaporative Cooling Physics</th>
+                                        <th class="py-2.5 px-3">HVAC / Lifestyle Recommendation</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100 dark:divide-slate-800" id="comfortTableBody">
+                                    <tr id="row_comfort_1" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-sky-600 dark:text-sky-400">&lt; 50&deg;F (&lt; 10&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Dry, Crisp</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Rapid sweat evaporation; high vapor pressure gradient. Skin and mucous membranes can dry out indoors during winter heating.</td>
+                                        <td class="py-3 px-3 text-slate-500">Humidification beneficial indoors (target 35-45% RH); peak endurance athletics.</td>
+                                    </tr>
+                                    <tr id="row_comfort_2" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">50 - 55&deg;F (10.0 - 12.8&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Comfortable</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Optimum balance for human physiology. Minimal skin moisture pooling; effortless thermal regulation.</td>
+                                        <td class="py-3 px-3 text-slate-500">Ideal indoor setpoint per ASHRAE Standard 55; no supplemental dehumidification required.</td>
+                                    </tr>
+                                    <tr id="row_comfort_3" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-teal-600 dark:text-teal-400">56 - 60&deg;F (13.3 - 15.6&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Pleasant</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Mild atmospheric moisture. Most individuals experience high physical satisfaction; comfortable for casual walking.</td>
+                                        <td class="py-3 px-3 text-slate-500">Natural ventilation pleasant; standard home climate conditions.</td>
+                                    </tr>
+                                    <tr id="row_comfort_4" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-amber-600 dark:text-amber-400">61 - 65&deg;F (16.1 - 18.3&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Sticky / Humid</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Noticeable cutaneous moisture retention. Evaporation rates decelerate; clothing begins clinging during physical labor.</td>
+                                        <td class="py-3 px-3 text-slate-500">Dehumidification recommended indoors; air conditioning improves comfort markedly.</td>
+                                    </tr>
+                                    <tr id="row_comfort_5" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-orange-600 dark:text-orange-400">66 - 70&deg;F (18.9 - 21.1&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Uncomfortable / Muggy</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Substantial reduction in latent heat dissipation. Sweat drips without evaporating; increased cardiovascular heart strain.</td>
+                                        <td class="py-3 px-3 text-slate-500">Continuous air conditioning necessary; restrict strenuous physical exertion.</td>
+                                    </tr>
+                                    <tr id="row_comfort_6" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-750">
+                                        <td class="py-3 px-3 font-mono font-bold text-red-600 dark:text-red-400">71&deg;F+ (&gt; 21.7&deg;C)</td>
+                                        <td class="py-3 px-3 font-semibold text-slate-800 dark:text-slate-200">Oppressive, Tropical</td>
+                                        <td class="py-3 px-3 text-slate-600 dark:text-slate-300">Severe thermal inhibition. Perspiration pathway essentially compromised; dangerous risk of heat exhaustion and heat stroke.</td>
+                                        <td class="py-3 px-3 text-slate-500">High-capacity HVAC cooling required; emergency hydration and shade protocols.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Climate Comparison Showcase -->
+                        <div class="mt-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">The Atmospheric Paradox: Desert vs. Tropical Coast</h4>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                                <div class="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <div class="font-bold text-amber-600 dark:text-amber-400 mb-1">Phoenix, Arizona (Summer Afternoon)</div>
+                                    <div class="space-y-1 font-mono text-slate-600 dark:text-slate-300">
+                                        <div>Air Temp: 104&deg;F (40.0&deg;C)</div>
+                                        <div>Relative Humidity: 16%</div>
+                                        <div>Dew Point: <strong>48.6&deg;F (9.2&deg;C)</strong></div>
+                                        <div class="text-[11px] text-emerald-600 dark:text-emerald-400 font-sans font-semibold mt-1">Sensation: Dry, rapid evaporative cooling</div>
+                                    </div>
+                                </div>
+                                <div class="bg-white dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+                                    <div class="font-bold text-red-600 dark:text-red-400 mb-1">Miami, Florida (Summer Afternoon)</div>
+                                    <div class="space-y-1 font-mono text-slate-600 dark:text-slate-300">
+                                        <div>Air Temp: 88&deg;F (31.1&deg;C)</div>
+                                        <div>Relative Humidity: 70%</div>
+                                        <div>Dew Point: <strong>76.8&deg;F (24.9&deg;C)</strong></div>
+                                        <div class="text-[11px] text-red-600 dark:text-red-400 font-sans font-semibold mt-1">Sensation: Oppressive, severe heat stress</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab 3: Condensation & Mold Prevention Guide -->
+                <div id="tab-condensation" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <h3 class="text-base font-bold text-slate-900 dark:text-white mb-1">Surface Condensation &amp; Mold Spore Risk Simulator</h3>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Evaluate whether cold interior architectural surfaces (windows, wall corners, pipes, slabs) will collect liquid condensation or trigger mold germination per ASHRAE Standard 160.</p>
+                        
+                        <!-- Condensation Calculator Inputs -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Surface Component Preset</label>
+                                <select id="surfacePresetSelect" onchange="applySurfacePreset()" class="w-full text-xs bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl p-2.5 border border-slate-300 dark:border-slate-600 focus:outline-none focus:ring-1 focus:ring-brand-500">
+                                    <option value="custom">Custom Surface Temperature</option>
+                                    <option value="single_window">Single-Pane Window Glass (Winter)</option>
+                                    <option value="double_window">Double-Pane Low-E Window (Winter)</option>
+                                    <option value="wall_corner">Uninsulated Wall Corner / Stud</option>
+                                    <option value="chilled_pipe">Chilled Water Pipe (4&deg;C / 39&deg;F)</option>
+                                    <option value="concrete_slab">Basement Concrete Slab</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Surface Temperature</label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" id="surfaceTempInput" step="0.5" value="12.0" oninput="calcCondensation()" class="w-full text-xs font-mono font-bold bg-white dark:bg-slate-900 text-slate-900 dark:text-white rounded-xl p-2.5 border border-slate-300 dark:border-slate-600">
+                                    <span class="text-xs font-bold text-slate-400 font-mono" id="surfaceTempUnit">&deg;C</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Indoor Dew Point Baseline</label>
+                                <div class="p-2.5 text-xs font-mono font-bold rounded-xl bg-slate-100 dark:bg-slate-900 text-brand-600 dark:text-brand-400 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                                    <span id="condDewPointDisplay">13.9 &deg;C</span>
+                                    <span class="text-[10px] text-slate-400 font-normal">Active State</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Condensation Output Diagnostics -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900" id="condMarginCard">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Dew Point Margin (Delta T)</div>
+                                <div class="text-2xl font-extrabold font-mono mt-1 text-slate-900 dark:text-white" id="condMarginValue">-1.9 &deg;C</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">$T_{\text{surface}} - T_{dp}$</div>
+                            </div>
+                            <div class="p-4 rounded-xl border bg-slate-50 dark:bg-slate-900" id="condSurfaceRhCard">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Surface Microclimate RH</div>
+                                <div class="text-2xl font-extrabold font-mono mt-1 text-slate-900 dark:text-white" id="condSurfaceRhValue">112.9%</div>
+                                <div class="text-[10px] text-slate-400 mt-0.5">$e / e_s(T_{\text{surface}})$</div>
+                            </div>
+                            <div class="p-4 rounded-xl border bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800" id="condStatusCard">
+                                <div class="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-400">Diagnosis Assessment</div>
+                                <div class="text-base font-extrabold text-red-600 dark:text-red-300 mt-1" id="condStatusText">Active Liquid Condensation</div>
+                                <div class="text-[10px] text-red-600/80 dark:text-red-300/80 mt-0.5" id="condStatusAction">Surface cooler than dew point. Droplets form instantly.</div>
+                            </div>
+                        </div>
+
+                        <!-- ASHRAE Standard 160 Moisture Criteria -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-5 text-xs text-slate-600 dark:text-slate-300 space-y-3">
+                            <h4 class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-xs">ASHRAE Standard 160 &amp; Building Physics Recommendations</h4>
+                            <p>
+                                <strong>Mold Germination Threshold:</strong> Fungal growth does not require liquid condensation. Mold spores germinate whenever surface relative humidity exceeds <strong>70% for 30 consecutive days</strong> (or 80% over 7 days) between 5&deg;C and 40&deg;C.
+                            </p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="font-bold text-slate-900 dark:text-white block mb-1">Winter Heating Setpoints</span>
+                                    <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        <li>Maintain indoor relative humidity between 30% and 40% at 21&deg;C (70&deg;F).</li>
+                                        <li>Keep indoor dew point below 7&deg;C (45&deg;F) to protect double-glazed windows.</li>
+                                        <li>Eliminate geometric thermal bridges at exterior concrete slab cantilevers.</li>
+                                    </ul>
+                                </div>
+                                <div class="p-3 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                                    <span class="font-bold text-slate-900 dark:text-white block mb-1">Chilled Pipe &amp; Duct Insulation</span>
+                                    <ul class="list-disc pl-4 space-y-1 text-[11px] text-slate-500 dark:text-slate-400">
+                                        <li>Cold pipes carrying 4&deg;C fluid require closed-cell elastomeric foam.</li>
+                                        <li>Minimum insulation thickness of 25 mm (1 inch) with vapor permeability &le; 0.05 perm.</li>
+                                        <li>Seal all joints with vapor-retardant contact adhesive to prevent interstitial condensation.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Tab 4: Print Report -->
+                <div id="tab-print" class="tab-panel space-y-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-8 shadow-sm border border-slate-200 dark:border-slate-700 print:border-none print:p-0">
+                        
+                        <div class="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-700 pb-5 mb-6">
+                            <div>
+                                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Engineering &amp; Meteorological Inspection</span>
+                                <h3 class="text-2xl font-extrabold text-slate-900 dark:text-white">Psychrometric Analysis Report</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Generated via CalcWorld Psychrometric Engine &bull; NOAA NWS Standard</p>
+                            </div>
+                            <button type="button" onclick="window.print()" class="no-print px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                                <span>Print / Save PDF</span>
+                            </button>
+                        </div>
+
+                        <!-- Editable Report Metadata -->
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 text-xs border-b border-slate-200 dark:border-slate-700 pb-5">
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Project / Facility</span>
+                                <input type="text" value="Facility Environmental Audit" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Location</span>
+                                <input type="text" value="Room 102 - Server / HVAC Zone" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Engineer / Inspector</span>
+                                <input type="text" value="Certified Psychrometric Tech" class="font-bold text-slate-800 dark:text-slate-200 bg-transparent border-b border-dashed border-slate-300 dark:border-slate-600 w-full focus:outline-none">
+                            </div>
+                            <div>
+                                <span class="text-slate-400 font-bold uppercase tracking-wider block text-[10px]">Date &amp; Timestamp</span>
+                                <div id="reportTimestamp" class="font-bold font-mono text-slate-800 dark:text-slate-200">2026-10-16 14:00 UTC</div>
+                            </div>
+                        </div>
+
+                        <!-- Thermodynamic Properties Summary Table -->
+                        <div class="mb-6">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Thermodynamic State Parameters</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                                    <thead class="bg-slate-50 dark:bg-slate-900 text-slate-500 font-bold uppercase tracking-wider">
+                                        <tr>
+                                            <th class="py-2 px-3">Parameter Description</th>
+                                            <th class="py-2 px-3">Symbol</th>
+                                            <th class="py-2 px-3">Metric Value</th>
+                                            <th class="py-2 px-3">Imperial Value</th>
+                                            <th class="py-2 px-3">Reference Standard</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Dry Bulb Temperature</td>
+                                            <td class="py-2 px-3">$T_{db}$</td>
+                                            <td class="py-2 px-3" id="prnTempMetric">25.0 &deg;C</td>
+                                            <td class="py-2 px-3" id="prnTempImperial">77.0 &deg;F</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Direct Sensor Input</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Relative Humidity</td>
+                                            <td class="py-2 px-3">$RH$</td>
+                                            <td class="py-2 px-3" id="prnRh">50.0 %</td>
+                                            <td class="py-2 px-3">50.0 %</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Direct Sensor Input</td>
+                                        </tr>
+                                        <tr class="bg-brand-50/50 dark:bg-brand-950/30 font-bold">
+                                            <td class="py-2 px-3 font-sans text-brand-700 dark:text-brand-300">Dew Point Temperature</td>
+                                            <td class="py-2 px-3 text-brand-700 dark:text-brand-300">$T_{dp}$</td>
+                                            <td class="py-2 px-3 text-brand-700 dark:text-brand-300" id="prnDewPointMetric">13.9 &deg;C</td>
+                                            <td class="py-2 px-3 text-brand-700 dark:text-brand-300" id="prnDewPointImperial">57.0 &deg;F</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Magnus-Tetens (Sonntag 1990)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Actual Vapor Pressure</td>
+                                            <td class="py-2 px-3">$e$</td>
+                                            <td class="py-2 px-3" id="prnVaporPressMetric">15.83 hPa</td>
+                                            <td class="py-2 px-3" id="prnVaporPressImperial">0.467 inHg</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">WMO Technical Regulations</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Saturation Vapor Pressure</td>
+                                            <td class="py-2 px-3">$e_s$</td>
+                                            <td class="py-2 px-3" id="prnSatVaporPressMetric">31.67 hPa</td>
+                                            <td class="py-2 px-3" id="prnSatVaporPressImperial">0.935 inHg</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Clausius-Clapeyron Exact</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Absolute Humidity</td>
+                                            <td class="py-2 px-3">$AH$</td>
+                                            <td class="py-2 px-3" id="prnAbsHumMetric">11.51 g/m&sup3;</td>
+                                            <td class="py-2 px-3" id="prnAbsHumImperial">5.03 gr/ft&sup3;</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Ideal Gas Law for $H_2O$</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Vapor Pressure Deficit</td>
+                                            <td class="py-2 px-3">$VPD$</td>
+                                            <td class="py-2 px-3" id="prnVpdMetric">1.58 kPa</td>
+                                            <td class="py-2 px-3" id="prnVpdImperial">0.23 psi</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Horticultural / Drying Metric</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2 px-3 font-sans font-semibold">Specific Humidity</td>
+                                            <td class="py-2 px-3">$q$</td>
+                                            <td class="py-2 px-3" id="prnSpecHum">9.80 g/kg</td>
+                                            <td class="py-2 px-3">68.6 gr/lb</td>
+                                            <td class="py-2 px-3 font-sans text-slate-400">Mixing Ratio at Sea Level</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Comfort and Mold Risk Summary -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6 text-xs">
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                                <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider block mb-1">Human Thermal Comfort</span>
+                                <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mb-1" id="prnComfortClassification">Comfortable Baseline (50 - 55&deg;F)</div>
+                                <p class="text-slate-600 dark:text-slate-300 text-[11px]" id="prnComfortDetails">
+                                    Cutaneous perspiration evaporates smoothly. Thermal dissipation gradient is optimal; indoor conditions meet ASHRAE Standard 55 criteria.
+                                </p>
+                            </div>
+                            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+                                <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider block mb-1">Surface Condensation Risk</span>
+                                <div class="text-sm font-bold text-slate-800 dark:text-slate-200 mb-1" id="prnCondClassification">Safe Margin (&Delta;T &gt; 5&deg;C)</div>
+                                <p class="text-slate-600 dark:text-slate-300 text-[11px]" id="prnCondDetails">
+                                    Building surfaces above 18.9&deg;C will maintain microclimate relative humidity below 70%, preventing fungal spore germination per ASHRAE Standard 160.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Technical Sign-Off Block -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-6 mt-6 grid grid-cols-2 sm:grid-cols-3 gap-6 text-xs">
+                            <div>
+                                <span class="text-slate-400 uppercase tracking-wider block text-[10px] mb-8">Inspected &amp; Calculated By</span>
+                                <div class="border-t border-slate-300 dark:border-slate-600 pt-1 text-slate-600 dark:text-slate-400">Signature / Seal</div>
+                            </div>
+                            <div>
+                                <span class="text-slate-400 uppercase tracking-wider block text-[10px] mb-8">Reviewed &amp; Approved By</span>
+                                <div class="border-t border-slate-300 dark:border-slate-600 pt-1 text-slate-600 dark:text-slate-400">Facility Director Signature</div>
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <span class="text-slate-400 uppercase tracking-wider block text-[10px] mb-1">Formal Disclaimer</span>
+                                <p class="text-[10px] text-slate-400 leading-tight">
+                                    This report reflects atmospheric calculations computed using standardized empirical formulas. Localized microclimates, structural thermal bridges, and barometric fluctuations must be verified with calibrated onsite instrumentation.
+                                </p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- AdSense Slot 4: Mid-Content Banner -->
+        <div class="ad-slot no-print mt-12" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Mid-Article Slot 4</span>
+        </div>
+
+        <!-- Educational Guide Section (2000+ words) -->
+        <section id="guide-section" class="mt-12 bg-white dark:bg-slate-800 rounded-2xl p-6 sm:p-10 shadow-sm border border-slate-200 dark:border-slate-700">
+
+<article class="prose prose-slate dark:prose-invert max-w-none space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed">
+    
+    <!-- Section 1 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Atmospheric Moisture: Why Dew Point Outperforms Relative Humidity
+        </h2>
+        <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 mb-4">
+            Meteorologists, building scientists, and HVAC engineers consistently rely on the <strong>dew point temperature</strong> ($T_{dp}$) rather than <strong>relative humidity</strong> ($RH$) when assessing atmospheric moisture content and human thermal comfort. While relative humidity is widely quoted in daily weather forecasts, it frequently misleads the public regarding actual moisture levels.
+        </p>
+        <p class="mb-4">
+            By physical definition, the <strong>dew point</strong> is the temperature to which a parcel of air must be cooled, under constant barometric pressure and constant moisture content, for water vapor to reach saturation with respect to liquid water. At the dew point, the rate of evaporation matches the rate of condensation, establishing thermodynamic phase equilibrium ($RH = 100\%$). Because dew point correlates directly with the partial pressure of water vapor in the atmosphere, it functions as an absolute measure of moisture mass per unit volume.
+        </p>
+        <p class="mb-4">
+            In contrast, relative humidity represents a dimensionless ratio comparing the actual water vapor pressure ($e$) to the saturation vapor pressure ($e_s$) at the current ambient dry bulb temperature ($T$):
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$RH = \left( \frac{e}{e_s(T)} \right) \times 100\%$$
+        </div>
+        <p class="mb-4">
+            Because saturation vapor pressure depends exponentially on air temperature (a governing principle quantified by the Clausius-Clapeyron equation), a given relative humidity percentage corresponds to drastically different quantities of physical moisture across varying temperatures:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Cold Morning Scenario:</strong> At an air temperature of $4^{\circ}\text{C}$ ($39.2^{\circ}\text{F}$) with $85\%$ relative humidity, the actual vapor pressure is merely $7.0\text{ hPa}$, and absolute humidity is approximately $5.4\text{ g/m}^3$. The calculated dew point is $1.7^{\circ}\text{C}$ ($35^{\circ}\text{F}$). The air is crisp and carries very little moisture mass.
+            </li>
+            <li>
+                <strong>Warm Summer Afternoon Scenario:</strong> At an air temperature of $35^{\circ}\text{C}$ ($95^{\circ}\text{F}$) with only $45\%$ relative humidity, the actual vapor pressure is an enormous $25.3\text{ hPa}$, and absolute humidity reaches $17.8\text{ g/m}^3$. The calculated dew point is $21.3^{\circ}\text{C}$ ($70.3^{\circ}\text{F}$). Despite displaying a numerical relative humidity value almost half that of the winter morning, the summer atmosphere contains more than three times the absolute water mass per cubic meter.
+            </li>
+        </ul>
+        <p>
+            The <strong>National Oceanic and Atmospheric Administration (NOAA) National Weather Service (NWS)</strong> emphasizes that dew point provides a consistent, temperature-independent metric for forecasting severe convection, calculating convective available potential energy (CAPE), and warning the public about heat stress.
+        </p>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Thermodynamic Foundations: The Clausius-Clapeyron Relation
+        </h2>
+        <p class="mb-4">
+            The fundamental relationship between temperature and the vapor pressure of water is governed by the <strong>Clausius-Clapeyron relation</strong>, formulated by Rudolf Clausius and Benoit Paul Emile Clapeyron in the nineteenth century. For a single-component system undergoing a first-order liquid-vapor phase transition, the differential equation relates the rate of change of saturation vapor pressure with respect to absolute temperature:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$\frac{d e_s}{d T} = \frac{L_v(T)}{T \cdot \Delta v}$$
+        </div>
+        <p class="mb-4">
+            In this equation, $L_v$ denotes the specific latent heat of vaporization of water (approximately $2.501 \times 10^6\text{ J/kg}$ at $0^{\circ}\text{C}$ and $2.454 \times 10^6\text{ J/kg}$ at $20^{\circ}\text{C}$), $T$ is absolute thermodynamic temperature in Kelvin, and $\Delta v = v_{\text{vapor}} - v_{\text{liquid}}$ is the change in specific volume during evaporation.
+        </p>
+        <p class="mb-4">
+            Because the specific volume of water vapor is several orders of magnitude greater than the specific volume of liquid water ($v_{\text{vapor}} \gg v_{\text{liquid}}$), and treating water vapor as an ideal gas where $v_{\text{vapor}} = \frac{R_v T}{e_s}$ (with specific gas constant for water vapor $R_v = 461.5\text{ J/(kg}\cdot\text{K)}$), the relation simplifies to:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$\frac{d e_s}{e_s} = \frac{L_v}{R_v T^2} d T \implies e_s(T) = e_{s,0} \cdot \exp\left( \frac{L_v}{R_v} \left( \frac{1}{T_0} - \frac{1}{T} \right) \right)$$
+        </div>
+        <p class="mb-4">
+            Integrating this differential expression reveals an essential physical consequence: saturation vapor pressure increases approximately exponentially with temperature, rising by roughly $7\%$ for every $1^{\circ}\text{C}$ increase in temperature near typical terrestrial surface conditions. This rapid non-linear expansion explains why warm tropical air masses can hold immense volumes of condensable water vapor, fueling intense precipitation events and tropical cyclones.
+        </p>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Mathematical Formulations: Magnus-Tetens and Arden Buck Equations
+        </h2>
+        <p class="mb-4">
+            While direct numerical integration of the Clausius-Clapeyron equation requires tracking temperature-dependent latent heat variations, meteorological agencies apply high-precision empirical approximations. Two formulations represent the global gold standard for psychrometric calculation:
+        </p>
+
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">
+            1. The Magnus-Tetens Formulation (Sonntag 1990 Parameters)
+        </h3>
+        <p class="mb-4">
+            Originally proposed by Heinrich Gustav Magnus in 1844 and refined by O. Tetens in 1930, the Magnus-type approximation provides exceptional computational efficiency and precision across the meteorological temperature range ($-45^{\circ}\text{C}$ to $+60^{\circ}\text{C}$). The formulation published by Dietrich Sonntag in 1990 is adopted by the World Meteorological Organization (WMO):
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$e_s(T) = 6.112 \cdot \exp\left( \frac{17.62 \cdot T}{243.12 + T} \right) \quad [\text{hPa}]$$
+        </div>
+        <p class="mb-4">
+            When dry bulb temperature $T$ (in $^{\circ}\text{C}$) and relative humidity $RH$ (in percent) are known, the actual vapor pressure is $e = e_s(T) \cdot \frac{RH}{100}$. Defining the intermediate psychrometric factor $\gamma(T, RH)$:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$\gamma(T, RH) = \frac{a \cdot T}{b + T} + \ln\left( \frac{RH}{100} \right)$$
+        </div>
+        <p class="mb-4">
+            Inverting the equation yields the dew point temperature $T_{dp}$:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$T_{dp} = \frac{b \cdot \gamma(T, RH)}{a - \gamma(T, RH)}$$
+        </div>
+        <p class="mb-4">
+            For temperatures over liquid water ($T \ge 0^{\circ}\text{C}$), the Sonntag constants are $a = 17.62$ and $b = 243.12^{\circ}\text{C}$. For temperatures over ice ($T < 0^{\circ}\text{C}$), the Sonntag constants for frost point calculation are $a = 22.46$ and $b = 272.62^{\circ}\text{C}$.
+        </p>
+
+        <h3 class="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3">
+            2. The Arden Buck High-Precision Equations (Buck 1981, 1996)
+        </h3>
+        <p class="mb-4">
+            For advanced research applications and aerospace calibration, Arden L. Buck developed modified formulations that incorporate an enhancement factor $f(P, T)$ to account for the non-ideal gas behavior of water vapor mixed with atmospheric dry air gases (nitrogen, oxygen, argon, carbon dioxide):
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$e_s(T) = 6.1121 \cdot f(P) \cdot \exp\left( \left(18.678 - \frac{T}{234.5}\right) \cdot \left(\frac{T}{257.14 + T}\right) \right) \quad [\text{hPa}]$$
+        </div>
+        <p class="mb-4">
+            For sub-zero conditions over ice surfaces ($T < 0^{\circ}\text{C}$), Buck formulated:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$e_{s,\text{ice}}(T) = 6.1115 \cdot f(P) \cdot \exp\left( \left(23.036 - \frac{T}{333.7}\right) \cdot \left(\frac{T}{279.82 + T}\right) \right) \quad [\text{hPa}]$$
+        </div>
+        <p>
+            The atmospheric enhancement factor $f(P) \approx 1 + 10^{-4} \left( 4.5 + 0.00059 \cdot T^2 + 0.000344 \cdot P \right)$ adjusts for intermolecular interactions between polar water molecules and non-polar air molecules, providing accuracy within $\pm 0.05\%$ across extreme flight and meteorological profiles.
+        </p>
+    </section>
+
+    <!-- Section 4 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Human Thermoregulation and Latent Heat Dissipation (ASHRAE Standard 55)
+        </h2>
+        <p class="mb-4">
+            The human body maintains internal core homeothermy at approximately $37.0^{\circ}\text{C}$ ($98.6^{\circ}\text{F}$) through a regulated balance of metabolic heat generation and environmental heat exchange. When ambient temperatures rise above $25^{\circ}\text{C}$, sensible heat loss through dry radiative and convective pathways decreases markedly. Under high thermal loads, the human organism depends almost entirely on <strong>latent heat loss via perspiration (eccrine sweat gland secretion)</strong>.
+        </p>
+        <p class="mb-4">
+            The evaporation of one gram of liquid sweat dissipates approximately $2,426\text{ Joules}$ of heat energy from the skin surface. However, evaporation does not occur automatically; it is governed by the vapor pressure gradient between the liquid film on the skin and the surrounding air:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$\dot{m}_{\text{evap}} \propto \left( e_{\text{skin}} - e_{\text{ambient}} \right)$$
+        </div>
+        <p class="mb-4">
+            Assuming a typical warm skin temperature of $35.0^{\circ}\text{C}$ ($95.0^{\circ}\text{F}$), the saturation vapor pressure at the cutaneous surface is $e_{\text{skin}} \approx 56.2\text{ hPa}$. The moisture-holding capacity of the immediate boundary layer is fixed by ambient vapor pressure $e_{\text{ambient}}$, which is defined directly by the ambient dew point:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Dew Point below $10^{\circ}\text{C}$ ($50^{\circ}\text{F}$):</strong> Ambient vapor pressure is under $12.3\text{ hPa}$. The vapor pressure gradient $(56.2 - 12.3 = 43.9\text{ hPa})$ is steep. Perspiration evaporates instantly, leaving skin dry and facilitating high physical endurance.
+            </li>
+            <li>
+                <strong>Dew Point between $16^{\circ}\text{C}$ and $18^{\circ}\text{C}$ ($61^{\circ}\text{F} - 65^{\circ}\text{F}$):</strong> Ambient vapor pressure reaches $18.2\text{ to } 20.6\text{ hPa}$. Evaporative resistance increases; moisture begins accumulating on skin during sustained physical exertion.
+            </li>
+            <li>
+                <strong>Dew Point above $21^{\circ}\text{C}$ ($70^{\circ}\text{F}$):</strong> Ambient vapor pressure exceeds $25\text{ hPa}$. Evaporation slows drastically. Liquid sweat drips from the body without vaporizing, removing zero latent heat and depleting bodily electrolytes while core temperature climbs.
+            </li>
+            <li>
+                <strong>Dew Point exceeding $24^{\circ}\text{C}$ ($75^{\circ}\text{F}$):</strong> Tropical conditions where the vapor pressure gradient is severely depressed. Cardiac output must redirect substantial blood volume to dilated peripheral blood vessels, escalating cardiovascular strain and the risk of heat exhaustion or fatal heat stroke.
+            </li>
+        </ul>
+        <p>
+            The <strong>American Society of Heating, Refrigerating and Air-Conditioning Engineers (ASHRAE) Standard 55</strong> ("Thermal Environmental Conditions for Human Occupancy") specifies that indoor dew points should remain between $10^{\circ}\text{C}$ and $16.7^{\circ}\text{C}$ ($50^{\circ}\text{F}$ to $62^{\circ}\text{F}$) with absolute humidity capped at $12.0\text{ g/kg}$ of dry air to balance respiratory comfort, eye lubrication, and thermal satisfaction.
+        </p>
+    </section>
+
+    <!-- Section 5 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Psychrometric Principles: Dry Bulb vs Wet Bulb Thermometry
+        </h2>
+        <p class="mb-4">
+            Before digital capacitive hygrometers and chilled-mirror optical sensors became common, psychrometric measurement was performed using a pair of matched liquid-in-glass thermometers: a <strong>dry bulb thermometer</strong> and a <strong>wet bulb thermometer</strong>.
+        </p>
+        <p class="mb-4">
+            The dry bulb thermometer measures the true thermodynamic air temperature ($T_{db}$). The wet bulb thermometer features its bulb enclosed in a wetted cotton muslin wick saturated with distilled water. As ventilated air flows over the wick at an airspeed of at least $3\text{ to } 5\text{ m/s}$ (as achieved in a sling psychrometer or powered Assmann psychrometer), water evaporates into the air stream. The latent heat consumed by vaporization cools the thermometer bulb below ambient temperature until heat conduction from surrounding air balances evaporative cooling.
+        </p>
+        <p class="mb-4">
+            The steady-state reading represents the <strong>wet bulb temperature</strong> ($T_{wb}$). The difference $(T_{db} - T_{wb})$ is known as the <strong>wet bulb depression</strong>. The actual atmospheric vapor pressure is derived from the classical <strong>psychrometric equation</strong>:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$e = e_s(T_{wb}) - A \cdot P \cdot (T_{db} - T_{wb})$$
+        </div>
+        <p class="mb-4">
+            Here, $e_s(T_{wb})$ is the saturation vapor pressure at wet bulb temperature, $P$ is total atmospheric pressure (typically $1013.25\text{ hPa}$ at sea level), and $A$ is the empirical psychrometer coefficient:
+        </p>
+        <ul class="list-disc pl-6 space-y-1 mb-4">
+            <li>For ventilated, aspirated psychrometers ($v \ge 3\text{ m/s}$): $A \approx 6.66 \times 10^{-4}\text{ K}^{-1}$.</li>
+            <li>For unventilated, stationary psychrometers in calm indoor air: $A \approx 8.00 \times 10^{-4}\text{ K}^{-1}$.</li>
+        </ul>
+        <p>
+            When relative humidity reaches $100\%$, no net evaporation occurs from the wick; consequently, the dry bulb temperature, wet bulb temperature, and dew point temperature become strictly identical: $T_{db} = T_{wb} = T_{dp}$. In all unsaturated air masses, the values follow the immutable physical hierarchy: $T_{db} > T_{wb} > T_{dp}$.
+        </p>
+    </section>
+
+    <!-- Section 6 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Building Envelopes, Condensation Physics, and Mold Proliferation (ASHRAE Standard 160)
+        </h2>
+        <p class="mb-4">
+            In residential construction, commercial facility maintenance, and industrial refrigeration, controlling surface dew point margins is essential for structural preservation and indoor environmental quality. Condensation occurs whenever the surface temperature of an architectural component ($T_{\text{surface}}$) falls at or below the ambient dew point of indoor air:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$T_{\text{surface}} \le T_{dp} \implies \text{Liquid Condensation}$$
+        </div>
+        <p class="mb-4">
+            Common architectural failure locations include:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Window Glazing and Aluminum Mullions:</strong> Single-pane glass has a thermal resistance ($R$-value) of only $0.9\text{ hr}\cdot\text{ft}^2\cdot^{\circ}\text{F/BTU}$ ($U$-factor $1.1\text{ BTU/hr}\cdot\text{ft}^2\cdot^{\circ}\text{F}$). When outside temperatures drop to $-5^{\circ}\text{C}$ ($23^{\circ}\text{F}$) while indoor air is maintained at $21^{\circ}\text{C}$ ($70^{\circ}\text{F}$) and $40\%$ RH ($T_{dp} = 6.9^{\circ}\text{C}$), the interior glass surface cools to approximately $3.5^{\circ}\text{C}$, causing heavy condensation run-off and sills rot.
+            </li>
+            <li>
+                <strong>Thermal Bridges in Exterior Walls:</strong> Uninsulated concrete slab edges, steel structural studs, and wall-ceiling corners bypass envelope insulation, creating localized cold interior spots that collect moisture.
+            </li>
+            <li>
+                <strong>Chilled Water Piping and HVAC Ducts:</strong> Air conditioning distribution lines carrying $4^{\circ}\text{C}$ chilled water through warm unconditioned crawlspaces will condense moisture unless wrapped with closed-cell elastomeric foam insulation containing an integral vapor barrier.
+            </li>
+        </ul>
+        <p class="mb-4">
+            Liquid condensation is not required for fungal proliferation. <strong>ASHRAE Standard 160</strong> ("Criteria for Moisture-Control Design Analysis in Buildings") demonstrates that active germination of mold spores (such as <em>Aspergillus</em>, <em>Penicillium</em>, and <em>Stachybotrys chartarum</em>) occurs whenever the microclimate relative humidity at a surface exceeds $70\%$ to $80\%$ for a consecutive period of 30 days. The surface relative humidity is calculated from the ratio of ambient vapor pressure to the saturation vapor pressure at the surface temperature:
+        </p>
+        <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+            $$RH_{\text{surface}} = \left( \frac{e(T_{\text{air}}, RH_{\text{air}})}{e_s(T_{\text{surface}})} \right) \times 100\%$$
+        </div>
+        <p>
+            Maintaining interior indoor dew points below $12^{\circ}\text{C}$ ($54^{\circ}\text{F}$) during heating seasons and below $15^{\circ}\text{C}$ ($59^{\circ}\text{F}$) during cooling cycles prevents local surface relative humidity from reaching the $70\%$ mold threshold.
+        </p>
+    </section>
+
+    <!-- Section 7 -->
+    <section>
+        <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-4">
+            Meteorology, Aviation, and Industrial Applications
+        </h2>
+        <p class="mb-4">
+            Dew point calculations support several critical operational sectors:
+        </p>
+        <ul class="list-disc pl-6 space-y-2 mb-4">
+            <li>
+                <strong>Aviation Cloud Base Estimation (LCL):</strong> When surface air is heated by solar insolation and rises convectively, it cools at the dry adiabatic lapse rate (DALR $\Gamma_d \approx 9.8^{\circ}\text{C/km}$ or $5.4^{\circ}\text{F}/1000\text{ ft}$). Simultaneously, the dew point of the rising parcel drops at the dew point lapse rate ($\Gamma_{dp} \approx 1.8^{\circ}\text{C/km}$ or $1.0^{\circ}\text{F}/1000\text{ ft}$). The altitude where the temperature drops to the dew point is the <strong>Lifting Condensation Level (LCL)</strong>, marking the flat base of cumulus clouds:
+                <div class="my-3 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 text-center font-mono text-sm">
+                    $$h_{\text{base}} \approx 125 \cdot (T - T_{dp}) \text{ meters} \approx \frac{T[^{\circ}\text{F}] - T_{dp}[^{\circ}\text{F}]}{4.4} \times 1000 \text{ feet}$$
+                </div>
+            </li>
+            <li>
+                <strong>Radiation Fog and Frost Prediction:</strong> On calm, clear nights, terrestrial infrared radiation cools the ground. If the ground temperature falls to the surface dew point before dawn, dense radiation fog forms. If the dew point is sub-zero (a frost point), water vapor deposits directly as crystalline hoarfrost on vegetation, impacting agricultural harvests.
+            </li>
+            <li>
+                <strong>Industrial Compressed Air Quality (ISO 8573-1):</strong> In industrial pneumatic manufacturing, compressed air must be dried to specific <strong>pressure dew point (PDP)</strong> classes. For food processing, electronics manufacturing, and pharmaceuticals, ISO 8573-1 Class 1 specifies a pressure dew point of $-70^{\circ}\text{C}$, preventing line freezing and microbial growth in automated pneumatic valves.
+            </li>
+        </ul>
+    </section>
+
+</article>
+
+        </section>
+
+        <!-- Technical FAQ Accordion Section -->
+        <section class="mt-12">
+            <div class="mb-6 text-center max-w-2xl mx-auto">
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">Frequently Asked Questions</h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">Peer-reviewed answers to common meteorological, psychrometric, and building physics inquiries.</p>
+            </div>
+
+            <div class="max-w-4xl mx-auto space-y-3" id="faqAccordion">
+
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(0)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What is the difference between dew point and relative humidity?</span>
+                <svg id="faqIcon_0" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_0" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                Dew point is an absolute measure of atmospheric moisture, defined as the temperature to which air must be cooled at constant pressure to reach saturation (100% relative humidity). Relative humidity is a temperature-dependent percentage comparing the actual moisture present to the maximum moisture air can hold at that specific temperature. As air warms, its capacity to hold water vapor increases exponentially, causing relative humidity to drop even when moisture content remains unchanged.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(1)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>Why does the human body feel more uncomfortable at high dew point than high relative humidity?</span>
+                <svg id="faqIcon_1" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_1" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                The human body regulates temperature through perspiration. Sweat evaporation depends on the vapor pressure difference between warm human skin and the surrounding air. Because dew point correlates directly with atmospheric vapor pressure, a high dew point (above 65°F / 18.3°C) reduces this vapor pressure gradient, preventing sweat from evaporating effectively. Relative humidity can be misleading; 80% relative humidity on a cold winter day feels pleasant because the actual vapor pressure is low, whereas 50% relative humidity on a 95°F day creates a high dew point and severe discomfort.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(2)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What is the Clausius-Clapeyron equation and why does it matter?</span>
+                <svg id="faqIcon_2" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_2" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                The Clausius-Clapeyron relation is a fundamental thermodynamic equation describing the phase transition between liquid water and water vapor: d(es)/dT = Lv / (T * delta_v). It establishes that saturation vapor pressure increases approximately exponentially with temperature, rising by roughly 7% per degree Celsius. This exponential relationship governs how much moisture the atmosphere can hold and explains why warm weather air masses can carry vast quantities of water vapor.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(3)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What formula does this calculator use to compute dew point?</span>
+                <svg id="faqIcon_3" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_3" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                This calculator uses the Magnus-Tetens formulation with Sonntag (1990) parameters, recognized by the World Meteorological Organization (WMO) and NOAA National Weather Service. For standard temperatures above 0°C, the constants are a = 17.62 and b = 243.12°C. The calculator also offers the Arden Buck (1996) formulation, which includes an atmospheric enhancement factor and specialized parameters for sub-zero temperatures over ice.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(4)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>How does a psychrometer use dry bulb and wet bulb temperatures to find dew point?</span>
+                <svg id="faqIcon_4" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_4" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                A psychrometer consists of two thermometers: one measuring ambient air temperature (dry bulb) and one enclosed in a wetted fabric wick (wet bulb). As air passes over the wet bulb, water evaporates, absorbing latent heat and lowering the temperature. The difference between these readings (wet bulb depression) is inserted into the psychrometric equation: e = es(Twb) - A * P * (Tdb - Twb). Once actual vapor pressure (e) is determined, the dew point is calculated directly.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(5)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>At what indoor dew point does mold growth become a hazard on walls and windows?</span>
+                <svg id="faqIcon_5" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_5" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                According to ASHRAE Standard 160, mold spore germination occurs when relative humidity at a surface exceeds 70% to 80% for 30 consecutive days, even in the absence of visible liquid water. Condensation begins whenever a cold surface temperature falls at or below the indoor dew point. Maintaining indoor dew points below 50°F to 54°F (10°C to 12°C) during winter heating prevents surface relative humidity from reaching the 70% mold hazard threshold on exterior walls and windows.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(6)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>What is the difference between dew point and frost point below 0°C?</span>
+                <svg id="faqIcon_6" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_6" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                When air temperature is below freezing (0°C / 32°F), water vapor can reach saturation with respect to either supercooled liquid water or solid ice. The dew point represents saturation with respect to liquid water, while the frost point represents saturation with respect to ice. Because the saturation vapor pressure over ice is lower than over supercooled liquid water at identical temperatures, the frost point is always slightly higher than the dew point under sub-zero conditions. Hoarfrost forms when surface temperatures drop to the frost point.
+            </div>
+        </div>
+        \n
+        <div class="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+            <button type="button" onclick="toggleFaq(7)" class="w-full p-4 text-left font-bold text-sm sm:text-base text-slate-900 dark:text-white flex items-center justify-between bg-slate-50/70 dark:bg-slate-900/40 hover:bg-slate-100 dark:hover:bg-slate-900/80 transition">
+                <span>How do meteorologists and pilots use dew point to calculate cloud base altitude?</span>
+                <svg id="faqIcon_7" class="w-4 h-4 text-slate-500 transition-transform duration-200 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="faqAns_7" class="p-4 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 hidden">
+                As sun-warmed air ascends convectively, it cools at the dry adiabatic lapse rate (DALR, approximately 9.8°C per 1,000 meters or 5.4°F per 1,000 feet), while its dew point drops at roughly 1.8°C per 1,000 meters (1.0°F per 1,000 feet). The altitude where ambient temperature cools to the dew point is the Lifting Condensation Level (LCL), marking the convective cloud base. Pilots estimate this height using the rule of thumb: Base Altitude (feet) = [(T - Tdp) in °F / 4.4] * 1,000 feet, or Base Altitude (meters) = 125 * (T - Tdp) in °C.
+            </div>
+        </div>
+        
+            </div>
+        </section>
+
+        <!-- AdSense Slot 5: Bottom Multiplex Native Grid -->
+        <div class="ad-slot no-print mt-10" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Multiplex Native Grid Slot 5</span>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-16 text-slate-600 dark:text-slate-400 text-xs no-print">
+        <div class="max-w-7xl mx-auto space-y-6">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-6">
+                <div class="flex items-center gap-2">
+                    <span class="w-7 h-7 rounded-lg bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/></svg>
+                    </span>
+                    <span class="font-bold text-base text-slate-900 dark:text-white tracking-tight">CalcWorld</span>
+                    <span class="text-[11px] text-slate-400 ml-2">&copy; 2026 CalcWorld Atmospheric Sciences. All rights reserved.</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-4 text-xs">
+                    <a href="/privacy-policy/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Privacy Policy</a>
+                    <a href="/terms-of-service/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Terms of Service</a>
+                    <a href="/about-us/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">About Us</a>
+                    <a href="/contact/" class="hover:text-brand-600 dark:hover:text-brand-400 transition">Contact</a>
+                </div>
+            </div>
+
+            <div class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-500">
+                <p><strong>Metrological Notice:</strong> CalcWorld Dew Point &amp; Psychrometric Engine computes atmospheric moisture metrics using formulation equations defined by the National Oceanic and Atmospheric Administration (NOAA) National Weather Service (NWS), the World Meteorological Organization (WMO Technical Regulations), and the American Society of Heating, Refrigerating and Air-Conditioning Engineers (ASHRAE Standards 55 and 160). This web application is intended for educational, meteorological, architectural, and building engineering analysis. Always verify environmental parameters with calibrated hygrometers and psychrometers for mission-critical operations.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Floating Quick-Switcher Bar (Pill Bar) -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Actions:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="switchTab('solver')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Curve</button>
+        <button type="button" onclick="switchTab('comfort')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Comfort</button>
+        <button type="button" onclick="switchTab('condensation')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Condensation</button>
+        <button type="button" onclick="copyFormattedSummary()" class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Data copied to clipboard!</span>
+    </div>
+
+<script>
+    // --- 1. Global State & Configuration ---
+    let calcMode = 'solve_dp'; // 'solve_dp' | 'solve_rh' | 'solve_psychrometer'
+    let tempUnit = 'C';        // 'C' | 'F' | 'K'
+    let pressureUnit = 'hPa';  // 'hPa' | 'inHg' | 'mmHg' | 'kPa' | 'psi'
+    
+    // Core physical state in metric SI standards
+    let currentTempC = 25.0;
+    let currentRh = 50.0;
+    let currentDewPointC = 13.86;
+    let currentWetBulbC = 17.9;
+    let currentPressureHpa = 1013.25;
+    let currentSurfaceTempC = 12.0;
+    
+    let psychroChart = null;
+
+    // --- 2. Unit Conversion Helpers ---
+    function toCelsius(val, unit) {
+        if (unit === 'F') return (val - 32) * 5 / 9;
+        if (unit === 'K') return val - 273.15;
+        return val;
+    }
+
+    function fromCelsius(valC, unit) {
+        if (unit === 'F') return valC * 9 / 5 + 32;
+        if (unit === 'K') return valC + 273.15;
+        return valC;
+    }
+
+    function toHpa(val, unit) {
+        if (unit === 'inHg') return val * 33.86389;
+        if (unit === 'mmHg') return val * 1.333224;
+        if (unit === 'kPa') return val * 10;
+        if (unit === 'psi') return val * 68.94757;
+        return val;
+    }
+
+    function fromHpa(valHpa, unit) {
+        if (unit === 'inHg') return valHpa / 33.86389;
+        if (unit === 'mmHg') return valHpa / 1.333224;
+        if (unit === 'kPa') return valHpa / 10;
+        if (unit === 'psi') return valHpa / 68.94757;
+        return valHpa;
+    }
+
+    // --- 3. Psychrometric Scientific Formulations ---
+
+    // Sonntag (1990) Saturation Vapor Pressure over liquid water (hPa)
+    function esSonntagWater(Tc) {
+        const a = 17.62;
+        const b = 243.12;
+        return 6.112 * Math.exp((a * Tc) / (b + Tc));
+    }
+
+    // Sonntag (1990) Saturation Vapor Pressure over ice (hPa)
+    function esSonntagIce(Tc) {
+        const a = 22.46;
+        const b = 272.62;
+        return 6.1115 * Math.exp((a * Tc) / (b + Tc));
+    }
+
+    // Arden Buck (1996) Saturation Vapor Pressure (hPa)
+    function esBuckWater(Tc, Phpa) {
+        const f = 1.0007 + (3.46e-6 * Phpa);
+        return 6.1121 * f * Math.exp((18.678 - Tc / 234.5) * (Tc / (257.14 + Tc)));
+    }
+
+    function esBuckIce(Tc, Phpa) {
+        const f = 1.0003 + (4.18e-6 * Phpa);
+        return 6.1115 * f * Math.exp((23.036 - Tc / 333.7) * (Tc / (279.82 + Tc)));
+    }
+
+    // General Saturation Vapor Pressure according to selected model
+    function calcSaturationVaporPressure(Tc, Phpa, model) {
+        if (model === 'buck') {
+            return Tc >= 0 ? esBuckWater(Tc, Phpa) : esBuckIce(Tc, Phpa);
+        }
+        // Sonntag default
+        return Tc >= 0 ? esSonntagWater(Tc) : esSonntagIce(Tc);
+    }
+
+    // Sonntag Inversion: Actual Vapor Pressure (hPa) -> Dew Point (C)
+    function dewPointFromVaporPressSonntag(eHpa) {
+        if (eHpa <= 0) return -40;
+        const a = 17.62;
+        const b = 243.12;
+        const y = Math.log(eHpa / 6.112);
+        return (b * y) / (a - y);
+    }
+
+    // Sonntag Inversion for Frost Point over ice (C)
+    function frostPointFromVaporPressSonntag(eHpa) {
+        if (eHpa <= 0) return -40;
+        const a = 22.46;
+        const b = 272.62;
+        const y = Math.log(eHpa / 6.1115);
+        return (b * y) / (a - y);
+    }
+
+    // Arden Buck Inversion with Newton-Raphson
+    function dewPointFromVaporPressBuck(eHpa, Phpa) {
+        let Tc = dewPointFromVaporPressSonntag(eHpa); // Outstanding analytical starter
+        for (let i = 0; i < 4; i++) {
+            const es = esBuckWater(Tc, Phpa);
+            const diff = Math.log(es) - Math.log(eHpa);
+            if (Math.abs(diff) < 1e-6) break;
+            const deriv = (18.678 * 257.14) / Math.pow(257.14 + Tc, 2) - (2 * Tc * 257.14 + Tc * Tc) / (234.5 * Math.pow(257.14 + Tc, 2));
+            Tc = Tc - diff / deriv;
+        }
+        return Tc;
+    }
+
+    // Absolute Humidity (g/m3) via Ideal Gas Law for H2O
+    function calcAbsoluteHumidity(eHpa, Tc) {
+        const Tk = Tc + 273.15;
+        return (216.674 * eHpa) / Tk;
+    }
+
+    // Specific Humidity (g/kg of moist air)
+    function calcSpecificHumidity(eHpa, Phpa) {
+        if (Phpa <= 0.378 * eHpa) return 0;
+        return (622.0 * eHpa) / (Phpa - 0.378 * eHpa);
+    }
+
+    // Stull (2011) Wet Bulb Temperature Empirical Formula (Tc in C, RH in %)
+    function calcWetBulbStull(Tc, rh) {
+        const t = Tc;
+        const r = rh;
+        const wb = t * Math.atan(0.151977 * Math.pow(r + 8.313659, 0.5)) +
+                   Math.atan(t + r) -
+                   Math.atan(r - 1.676331) +
+                   0.00391838 * Math.pow(r, 1.5) * Math.atan(0.023101 * r) -
+                   4.686035;
+        return wb;
+    }
+
+    // --- 4. Human Comfort Perception Scale Evaluator ---
+    function evaluateComfort(dewPointF) {
+        if (dewPointF < 50.0) {
+            return {
+                tier: 1,
+                label: 'Dry, Crisp',
+                colorClass: 'bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border-sky-300 dark:border-sky-800',
+                dotColor: 'bg-sky-500',
+                pointerPos: Math.max(5, Math.min(20, (dewPointF - 20) * 1.5)),
+                description: 'Dry, crisp atmospheric conditions. Cutaneous sweat evaporates rapidly; high comfort during intense athletic exertion. Indoor humidification may be beneficial.'
+            };
+        } else if (dewPointF <= 55.0) {
+            return {
+                tier: 2,
+                label: 'Comfortable',
+                colorClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800',
+                dotColor: 'bg-emerald-500',
+                pointerPos: 20 + ((dewPointF - 50) / 5) * 18,
+                description: 'Optimum thermodynamic balance for human physiology. Effortless perspiration dissipation with no cutaneous moisture pooling. Meets ASHRAE Standard 55 criteria.'
+            };
+        } else if (dewPointF <= 60.0) {
+            return {
+                tier: 3,
+                label: 'Pleasant',
+                colorClass: 'bg-teal-100 text-teal-800 dark:bg-teal-950/80 dark:text-teal-300 border-teal-300 dark:border-teal-800',
+                dotColor: 'bg-teal-500',
+                pointerPos: 38 + ((dewPointF - 55) / 5) * 18,
+                description: 'Pleasant warm-weather baseline. Most individuals experience high physical satisfaction. Comfortable for walking, casual recreation, and open-air ventilation.'
+            };
+        } else if (dewPointF <= 65.0) {
+            return {
+                tier: 4,
+                label: 'Sticky / Humid',
+                colorClass: 'bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border-amber-300 dark:border-amber-800',
+                dotColor: 'bg-amber-500',
+                pointerPos: 56 + ((dewPointF - 60) / 5) * 16,
+                description: 'Noticeable atmospheric moisture accumulation. Sweat evaporation rates decelerate; clothing begins sticking to skin during sustained physical exertion.'
+            };
+        } else if (dewPointF <= 70.0) {
+            return {
+                tier: 5,
+                label: 'Uncomfortable / Muggy',
+                colorClass: 'bg-orange-100 text-orange-800 dark:bg-orange-950/80 dark:text-orange-300 border-orange-300 dark:border-orange-800',
+                dotColor: 'bg-orange-500',
+                pointerPos: 72 + ((dewPointF - 65) / 5) * 15,
+                description: 'Heavy, muggy air mass. Perspiration drips from skin without vaporizing, eliminating latent heat rejection and increasing cardiovascular strain.'
+            };
+        } else {
+            return {
+                tier: 6,
+                label: 'Oppressive, Tropical',
+                colorClass: 'bg-red-100 text-red-800 dark:bg-red-950/80 dark:text-red-300 border-red-300 dark:border-red-800',
+                dotColor: 'bg-red-500',
+                pointerPos: Math.min(95, 87 + ((dewPointF - 70) / 10) * 10),
+                description: 'Severe thermal inhibition. Perspiration cooling essentially incapacitated. High hazard of heat cramps, exhaustion, and heat stroke without mechanical air conditioning.'
+            };
+        }
+    }
+
+    // --- 5. Main Calculation Execution ---
+    function calculate() {
+        const rawTemp = parseFloat(document.getElementById('tempInput').value) || 0;
+        currentTempC = toCelsius(rawTemp, tempUnit);
+        
+        const rawPressure = parseFloat(document.getElementById('pressureInput').value) || 1013.25;
+        currentPressureHpa = toHpa(rawPressure, pressureUnit);
+        
+        const model = document.getElementById('formulaModel').value;
+
+        let es = calcSaturationVaporPressure(currentTempC, currentPressureHpa, model);
+        let e = 0;
+
+        if (calcMode === 'solve_dp') {
+            currentRh = parseFloat(document.getElementById('rhInput').value) || 0;
+            currentRh = Math.max(0.1, Math.min(100.0, currentRh));
+            e = es * (currentRh / 100.0);
+            
+            if (model === 'buck') {
+                currentDewPointC = dewPointFromVaporPressBuck(e, currentPressureHpa);
+            } else {
+                currentDewPointC = dewPointFromVaporPressSonntag(e);
+            }
+            currentWetBulbC = calcWetBulbStull(currentTempC, currentRh);
+
+        } else if (calcMode === 'solve_rh') {
+            const rawTargetDp = parseFloat(document.getElementById('targetDpInput').value) || 0;
+            currentDewPointC = toCelsius(rawTargetDp, tempUnit);
+            
+            // Dew point cannot exceed dry bulb temperature
+            if (currentDewPointC > currentTempC) {
+                currentDewPointC = currentTempC;
+                document.getElementById('targetDpInput').value = fromCelsius(currentDewPointC, tempUnit).toFixed(1);
+            }
+            
+            e = calcSaturationVaporPressure(currentDewPointC, currentPressureHpa, model);
+            currentRh = (e / es) * 100.0;
+            currentRh = Math.max(0.1, Math.min(100.0, currentRh));
+            
+            document.getElementById('rhInput').value = currentRh.toFixed(1);
+            document.getElementById('rhSlider').value = Math.round(currentRh);
+            document.getElementById('rhBadge').textContent = currentRh.toFixed(1) + '%';
+            currentWetBulbC = calcWetBulbStull(currentTempC, currentRh);
+
+        } else if (calcMode === 'solve_psychrometer') {
+            const rawWb = parseFloat(document.getElementById('wetBulbInput').value) || 0;
+            currentWetBulbC = toCelsius(rawWb, tempUnit);
+            
+            // Wet bulb cannot exceed dry bulb temperature
+            if (currentWetBulbC > currentTempC) {
+                currentWetBulbC = currentTempC;
+                document.getElementById('wetBulbInput').value = fromCelsius(currentWetBulbC, tempUnit).toFixed(1);
+            }
+
+            const ventType = document.getElementById('psychrometerVent').value;
+            const psychroA = (ventType === 'aspirated') ? 0.000662 : 0.000800;
+            
+            const esWb = calcSaturationVaporPressure(currentWetBulbC, currentPressureHpa, model);
+            e = esWb - psychroA * currentPressureHpa * (currentTempC - currentWetBulbC);
+            e = Math.max(0.01, e);
+            
+            currentRh = (e / es) * 100.0;
+            currentRh = Math.max(0.1, Math.min(100.0, currentRh));
+            
+            if (model === 'buck') {
+                currentDewPointC = dewPointFromVaporPressBuck(e, currentPressureHpa);
+            } else {
+                currentDewPointC = dewPointFromVaporPressSonntag(e);
+            }
+        }
+
+        // Secondary metrics
+        const absHumGPerM3 = calcAbsoluteHumidity(e, currentTempC);
+        const absHumGrainsPerFt3 = absHumGPerM3 * 0.436995;
+        
+        const vpdHpa = Math.max(0, es - e);
+        const vpdKpa = vpdHpa / 10.0;
+        
+        const specificHumGPerKg = calcSpecificHumidity(e, currentPressureHpa);
+        
+        // Cloud Base (LCL)
+        const cloudBaseM = Math.max(0, Math.round(125 * (currentTempC - currentDewPointC)));
+        const dewPointF = currentDewPointC * 9 / 5 + 32;
+        const tempF = currentTempC * 9 / 5 + 32;
+        const cloudBaseFt = Math.max(0, Math.round(((tempF - dewPointF) / 4.4) * 1000));
+
+        // Update Primary Result Card
+        const dispDpPrimary = fromCelsius(currentDewPointC, tempUnit);
+        document.getElementById('resDewPointPrimary').textContent = dispDpPrimary.toFixed(1);
+        document.getElementById('resDewPointUnit').innerHTML = '&deg;' + tempUnit;
+
+        const dispDpF = currentDewPointC * 9 / 5 + 32;
+        const dispDpC = currentDewPointC;
+        const dispDpK = currentDewPointC + 273.15;
+
+        if (tempUnit === 'C') {
+            document.getElementById('resDewPointSecondary').textContent = dispDpF.toFixed(1) + ' °F';
+        } else {
+            document.getElementById('resDewPointSecondary').textContent = dispDpC.toFixed(1) + ' °C';
+        }
+        document.getElementById('resDewPointKelvin').textContent = dispDpK.toFixed(2) + ' K';
+
+        // Frost point badge toggle
+        const frostBadge = document.getElementById('frostPointBadge');
+        if (currentDewPointC < 0) {
+            const frostPointC = frostPointFromVaporPressSonntag(e);
+            frostBadge.classList.remove('hidden');
+            frostBadge.textContent = '❄️ Frost Point: ' + fromCelsius(frostPointC, tempUnit).toFixed(1) + '°' + tempUnit;
+        } else {
+            frostBadge.classList.add('hidden');
+        }
+
+        // Comfort Evaluation
+        const comfort = evaluateComfort(dispDpF);
+        const badgeEl = document.getElementById('comfortBadge');
+        badgeEl.className = 'text-xs font-bold px-3 py-1 rounded-full border flex items-center gap-1.5 shadow-sm ' + comfort.colorClass;
+        badgeEl.querySelector('span:first-child').className = 'w-2 h-2 rounded-full animate-pulse ' + comfort.dotColor;
+        document.getElementById('comfortLabel').textContent = comfort.label;
+        document.getElementById('comfortDescription').textContent = comfort.description;
+
+        // Pointer & Highlight in Tab 2
+        document.getElementById('comfortGaugePointer').style.left = comfort.pointerPos + '%';
+        for (let i = 1; i <= 6; i++) {
+            const row = document.getElementById(`row_comfort_${i}`);
+            if (row) {
+                if (i === comfort.tier) {
+                    row.classList.add('bg-brand-50/80', 'dark:bg-brand-950/60', 'font-bold');
+                } else {
+                    row.classList.remove('bg-brand-50/80', 'dark:bg-brand-950/60', 'font-bold');
+                }
+            }
+        }
+
+        // Secondary Metrics Grid
+        document.getElementById('resVaporPress').textContent = e.toFixed(2);
+        document.getElementById('resVaporPressAlt').textContent = (e / 33.86389).toFixed(3) + ' inHg';
+
+        document.getElementById('resSatVaporPress').textContent = es.toFixed(2);
+        document.getElementById('resSatVaporPressAlt').textContent = (es / 33.86389).toFixed(3) + ' inHg';
+
+        document.getElementById('resAbsHumidity').textContent = absHumGPerM3.toFixed(2);
+        document.getElementById('resAbsHumidityAlt').textContent = absHumGrainsPerFt3.toFixed(2) + ' gr/ft³';
+
+        document.getElementById('resVpd').textContent = vpdKpa.toFixed(2);
+        document.getElementById('resVpdAlt').textContent = vpdHpa.toFixed(2) + ' hPa';
+
+        document.getElementById('resRhOutput').textContent = currentRh.toFixed(1);
+
+        const dispWb = fromCelsius(currentWetBulbC, tempUnit);
+        document.getElementById('resWetBulb').textContent = dispWb.toFixed(1);
+        document.getElementById('resWetBulbUnit').innerHTML = '&deg;' + tempUnit;
+        const dispWbAlt = (tempUnit === 'C') ? (currentWetBulbC * 9 / 5 + 32).toFixed(1) + ' °F' : currentWetBulbC.toFixed(1) + ' °C';
+        document.getElementById('resWetBulbAlt').textContent = dispWbAlt;
+
+        document.getElementById('resSpecificHum').textContent = specificHumGPerKg.toFixed(2);
+        document.getElementById('resCloudBase').textContent = cloudBaseM.toLocaleString();
+        document.getElementById('resCloudBaseAlt').textContent = cloudBaseFt.toLocaleString() + ' ft AGL';
+
+        // Update Math Derivation Step Box
+        updateFormulaDerivation(currentTempC, currentRh, es, e, currentDewPointC, dispDpF);
+
+        // Update Condensation Analysis
+        calcCondensation();
+
+        // Update Print Report Fields
+        updatePrintReport(dispDpC, dispDpF, e, es, absHumGPerM3, absHumGrainsPerFt3, vpdKpa, specificHumGPerKg, comfort);
+
+        // Update Psychrometric Chart
+        updatePsychrometricChart(currentTempC, e);
+    }
+
+    // --- 6. Step-by-Step Formula Derivation Renderer ---
+    function updateFormulaDerivation(Tc, rh, es, e, dpC, dpF) {
+        const step1 = document.getElementById('mathStep1');
+        const step2 = document.getElementById('mathStep2');
+        const step3 = document.getElementById('mathStep3');
+        const step4 = document.getElementById('mathStep4');
+
+        if (!step1) return;
+
+        const gammaTerm = (17.62 * Tc) / (243.12 + Tc);
+        const lnTerm = Math.log(rh / 100.0);
+        const gamma = gammaTerm + lnTerm;
+
+        step1.innerHTML = `$$e_s(${Tc.toFixed(1)}^{\\circ}\\text{C}) = 6.112 \\times \\exp\\left( \\frac{17.62 \\times ${Tc.toFixed(1)}}{243.12 + ${Tc.toFixed(1)}} \\right) = ${es.toFixed(2)}\\text{ hPa}$$`;
+        step2.innerHTML = `$$e = e_s \\times \\frac{RH}{100} = ${es.toFixed(2)} \\times \\frac{${rh.toFixed(1)}}{100} = ${e.toFixed(2)}\\text{ hPa}$$`;
+        step3.innerHTML = `$$\\gamma = \\frac{17.62 \\times ${Tc.toFixed(1)}}{243.12 + ${Tc.toFixed(1)}} + \\ln(${ (rh/100).toFixed(3) }) = ${gammaTerm.toFixed(4)} + (${lnTerm.toFixed(4)}) = ${gamma.toFixed(4)}$$`;
+        step4.innerHTML = `$$T_{dp} = \\frac{243.12 \\times ${gamma.toFixed(4)}}{17.62 - ${gamma.toFixed(4)}} = ${dpC.toFixed(2)}^{\\circ}\\text{C} \\approx ${dpC.toFixed(1)}^{\\circ}\\text{C} \\quad (${dpF.toFixed(1)}^{\\circ}\\text{F})$$`;
+
+        if (window.MathJax && window.MathJax.typesetPromise) {
+            window.MathJax.typesetPromise([step1, step2, step3, step4]).catch(err => {});
+        }
+    }
+
+    // --- 7. Condensation & Mold Hazard Analyzer ---
+    function calcCondensation() {
+        const rawSurf = parseFloat(document.getElementById('surfaceTempInput').value) || 0;
+        currentSurfaceTempC = toCelsius(rawSurf, tempUnit);
+        
+        const deltaT = currentSurfaceTempC - currentDewPointC;
+        const eAmbient = calcSaturationVaporPressure(currentDewPointC, currentPressureHpa, 'sonntag');
+        const esSurface = calcSaturationVaporPressure(currentSurfaceTempC, currentPressureHpa, 'sonntag');
+        const surfRh = (eAmbient / esSurface) * 100.0;
+
+        const dispMargin = (tempUnit === 'F') ? (deltaT * 9 / 5).toFixed(1) + ' °F' : deltaT.toFixed(1) + ' °C';
+        document.getElementById('condMarginValue').textContent = dispMargin;
+        document.getElementById('condSurfaceRhValue').textContent = surfRh.toFixed(1) + '%';
+        document.getElementById('condDewPointDisplay').textContent = fromCelsius(currentDewPointC, tempUnit).toFixed(1) + ' °' + tempUnit;
+
+        const statusCard = document.getElementById('condStatusCard');
+        const statusText = document.getElementById('condStatusText');
+        const statusAction = document.getElementById('condStatusAction');
+
+        if (deltaT <= 0 || surfRh >= 100.0) {
+            statusCard.className = 'p-4 rounded-xl border bg-red-50 dark:bg-red-950/40 border-red-300 dark:border-red-800';
+            statusText.textContent = 'Active Liquid Condensation';
+            statusText.className = 'text-base font-extrabold text-red-600 dark:text-red-300 mt-1';
+            statusAction.textContent = 'Surface temperature is at or below dew point. Water droplets forming directly.';
+        } else if (surfRh >= 70.0) {
+            statusCard.className = 'p-4 rounded-xl border bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800';
+            statusText.textContent = 'ASHRAE 160 Mold Hazard';
+            statusText.className = 'text-base font-extrabold text-amber-600 dark:text-amber-300 mt-1';
+            statusAction.textContent = 'Microclimate surface RH exceeds 70%. Fungal spore germination risk over 30 days.';
+        } else if (surfRh >= 65.0) {
+            statusCard.className = 'p-4 rounded-xl border bg-yellow-50 dark:bg-yellow-950/40 border-yellow-300 dark:border-yellow-800';
+            statusText.textContent = 'Moderate Moisture Level';
+            statusText.className = 'text-base font-extrabold text-yellow-600 dark:text-yellow-300 mt-1';
+            statusAction.textContent = 'Surface humidity higher than ideal; monitor thermal bridging and ventilation.';
+        } else {
+            statusCard.className = 'p-4 rounded-xl border bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800';
+            statusText.textContent = 'Safe Margin (Optimal)';
+            statusText.className = 'text-base font-extrabold text-emerald-600 dark:text-emerald-300 mt-1';
+            statusAction.textContent = 'Safe thermal clearance. Surface relative humidity remains comfortably below 65%.';
+        }
+    }
+
+    function applySurfacePreset() {
+        const preset = document.getElementById('surfacePresetSelect').value;
+        let tSurfC = 12.0;
+        if (preset === 'single_window') tSurfC = 3.5;
+        if (preset === 'double_window') tSurfC = 14.0;
+        if (preset === 'wall_corner') tSurfC = 11.0;
+        if (preset === 'chilled_pipe') tSurfC = 4.0;
+        if (preset === 'concrete_slab') tSurfC = 13.0;
+
+        document.getElementById('surfaceTempInput').value = fromCelsius(tSurfC, tempUnit).toFixed(1);
+        calcCondensation();
+    }
+
+    // --- 8. Print Report Synchronization ---
+    function updatePrintReport(dpC, dpF, e, es, absHum, absHumGrains, vpdKpa, specHum, comfort) {
+        document.getElementById('prnTempMetric').textContent = currentTempC.toFixed(1) + ' °C';
+        document.getElementById('prnTempImperial').textContent = (currentTempC * 9 / 5 + 32).toFixed(1) + ' °F';
+        document.getElementById('prnRh').textContent = currentRh.toFixed(1) + ' %';
+        document.getElementById('prnDewPointMetric').textContent = dpC.toFixed(1) + ' °C';
+        document.getElementById('prnDewPointImperial').textContent = dpF.toFixed(1) + ' °F';
+
+        document.getElementById('prnVaporPressMetric').textContent = e.toFixed(2) + ' hPa';
+        document.getElementById('prnVaporPressImperial').textContent = (e / 33.86389).toFixed(3) + ' inHg';
+
+        document.getElementById('prnSatVaporPressMetric').textContent = es.toFixed(2) + ' hPa';
+        document.getElementById('prnSatVaporPressImperial').textContent = (es / 33.86389).toFixed(3) + ' inHg';
+
+        document.getElementById('prnAbsHumMetric').textContent = absHum.toFixed(2) + ' g/m³';
+        document.getElementById('prnAbsHumImperial').textContent = absHumGrains.toFixed(2) + ' gr/ft³';
+
+        document.getElementById('prnVpdMetric').textContent = vpdKpa.toFixed(2) + ' kPa';
+        document.getElementById('prnVpdImperial').textContent = (vpdKpa * 0.145038).toFixed(2) + ' psi';
+
+        document.getElementById('prnSpecHum').textContent = specHum.toFixed(2) + ' g/kg';
+
+        document.getElementById('prnComfortClassification').textContent = comfort.label + ' (' + comfort.tier + '/6)';
+        document.getElementById('prnComfortDetails').textContent = comfort.description;
+    }
+
+    // --- 9. Chart.js Psychrometric Visualization ---
+    function initPsychrometricChart() {
+        const ctx = document.getElementById('psychrometricChart').getContext('2d');
+        const temps = [];
+        for (let t = -10; t <= 45; t += 2) {
+            temps.push(t);
+        }
+
+        function makeIsobarData(rhPercent) {
+            return temps.map(t => {
+                const es = esSonntagWater(t);
+                return { x: t, y: +(es * (rhPercent / 100.0)).toFixed(2) };
+            });
+        }
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        psychroChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                datasets: [
+                    {
+                        label: '100% Saturation Line',
+                        data: makeIsobarData(100),
+                        borderColor: '#0284c7',
+                        borderWidth: 2.5,
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '80% RH',
+                        data: makeIsobarData(80),
+                        borderColor: '#38bdf8',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '60% RH',
+                        data: makeIsobarData(60),
+                        borderColor: '#14b8a6',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '40% RH',
+                        data: makeIsobarData(40),
+                        borderColor: '#10b981',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: '20% RH',
+                        data: makeIsobarData(20),
+                        borderColor: '#f59e0b',
+                        borderWidth: 1.5,
+                        borderDash: [4, 4],
+                        pointRadius: 0,
+                        tension: 0.3,
+                        fill: false
+                    },
+                    {
+                        label: 'Current Operating State',
+                        data: [{ x: currentTempC, y: 15.83 }],
+                        type: 'scatter',
+                        backgroundColor: '#ef4444',
+                        borderColor: '#ffffff',
+                        borderWidth: 2,
+                        pointRadius: 8,
+                        pointHoverRadius: 10
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 400 },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: textColor,
+                            font: { family: 'Inter', size: 11 },
+                            boxWidth: 14
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.type === 'scatter') {
+                                    return `Operating Point: T = ${context.parsed.x.toFixed(1)}°C, e = ${context.parsed.y.toFixed(2)} hPa`;
+                                }
+                                return `${context.dataset.label}: T = ${context.parsed.x}°C, e = ${context.parsed.y} hPa`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        type: 'linear',
+                        title: {
+                            display: true,
+                            text: 'Dry Bulb Air Temperature (°C)',
+                            color: textColor,
+                            font: { family: 'Inter', weight: 600, size: 12 }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+                        min: -10,
+                        max: 45
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Water Vapor Pressure e (hPa)',
+                            color: textColor,
+                            font: { family: 'Inter', weight: 600, size: 12 }
+                        },
+                        grid: { color: gridColor },
+                        ticks: { color: textColor, font: { family: 'JetBrains Mono', size: 10 } },
+                        min: 0,
+                        max: 60
+                    }
+                }
+            }
+        });
+    }
+
+    function updatePsychrometricChart(Tc, eHpa) {
+        if (!psychroChart) return;
+        const scatterDataset = psychroChart.data.datasets.find(ds => ds.type === 'scatter');
+        if (scatterDataset) {
+            scatterDataset.data = [{ x: +Tc.toFixed(2), y: +eHpa.toFixed(2) }];
+            psychroChart.update('none');
+        }
+        document.getElementById('chartCoordPoint').textContent = `${Tc.toFixed(1)}°C, ${eHpa.toFixed(2)} hPa`;
+    }
+
+    function resetChartZoom() {
+        if (psychroChart) {
+            psychroChart.options.scales.x.min = -10;
+            psychroChart.options.scales.x.max = 45;
+            psychroChart.options.scales.y.min = 0;
+            psychroChart.options.scales.y.max = 60;
+            psychroChart.update();
+        }
+    }
+
+    // --- 10. UI Event Handlers & Binding ---
+    function setCalcMode(mode) {
+        calcMode = mode;
+        document.querySelectorAll('.mode-btn').forEach(b => {
+            b.classList.remove('active', 'bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+            b.classList.add('text-slate-600', 'dark:text-slate-400');
+        });
+        const activeBtn = document.getElementById(`modeBtn_${mode}`);
+        if (activeBtn) {
+            activeBtn.classList.add('active', 'bg-white', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+            activeBtn.classList.remove('text-slate-600', 'dark:text-slate-400');
+        }
+
+        const fgRh = document.getElementById('fieldGroup_rh');
+        const fgDp = document.getElementById('fieldGroup_target_dp');
+        const fgWb = document.getElementById('fieldGroup_wet_bulb');
+
+        fgRh.classList.toggle('hidden', mode !== 'solve_dp');
+        fgDp.classList.toggle('hidden', mode !== 'solve_rh');
+        fgWb.classList.toggle('hidden', mode !== 'solve_psychrometer');
+
+        calculate();
+    }
+
+    function handleTempNumberInput() {
+        const val = parseFloat(document.getElementById('tempInput').value) || 0;
+        const valC = toCelsius(val, tempUnit);
+        document.getElementById('tempSlider').value = valC;
+        calculate();
+    }
+
+    function handleTempSliderInput() {
+        const valC = parseFloat(document.getElementById('tempSlider').value);
+        const val = fromCelsius(valC, tempUnit);
+        document.getElementById('tempInput').value = val.toFixed(1);
+        calculate();
+    }
+
+    function handleRhNumberInput() {
+        const val = parseFloat(document.getElementById('rhInput').value) || 0;
+        document.getElementById('rhSlider').value = Math.round(val);
+        document.getElementById('rhBadge').textContent = val.toFixed(1) + '%';
+        calculate();
+    }
+
+    function handleRhSliderInput() {
+        const val = parseFloat(document.getElementById('rhSlider').value);
+        document.getElementById('rhInput').value = val.toFixed(1);
+        document.getElementById('rhBadge').textContent = val.toFixed(1) + '%';
+        calculate();
+    }
+
+    function handleTempUnitChange() {
+        const oldUnit = tempUnit;
+        const newUnit = document.getElementById('tempUnit').value;
+        tempUnit = newUnit;
+
+        // Convert current displayed temp to new unit
+        const curTemp = parseFloat(document.getElementById('tempInput').value) || 0;
+        const curTempC = toCelsius(curTemp, oldUnit);
+        document.getElementById('tempInput').value = fromCelsius(curTempC, newUnit).toFixed(1);
+
+        // Update Slider bounds
+        const minC = -40, maxC = 60, midC = 10;
+        document.getElementById('tempSliderMin').innerHTML = fromCelsius(minC, newUnit).toFixed(0) + '&deg;' + newUnit;
+        document.getElementById('tempSliderMid').innerHTML = fromCelsius(midC, newUnit).toFixed(0) + '&deg;' + newUnit;
+        document.getElementById('tempSliderMax').innerHTML = fromCelsius(maxC, newUnit).toFixed(0) + '&deg;' + newUnit;
+
+        document.getElementById('targetDpUnitLabel').innerHTML = '&deg;' + newUnit;
+        document.getElementById('wetBulbUnitLabel').innerHTML = '&deg;' + newUnit;
+        document.getElementById('surfaceTempUnit').innerHTML = '&deg;' + newUnit;
+
+        calculate();
+    }
+
+    function handlePressureUnitChange() {
+        const oldUnit = pressureUnit;
+        const newUnit = document.getElementById('pressureUnit').value;
+        pressureUnit = newUnit;
+
+        const curVal = parseFloat(document.getElementById('pressureInput').value) || 1013.25;
+        const curHpa = toHpa(curVal, oldUnit);
+        document.getElementById('pressureInput').value = fromHpa(curHpa, newUnit).toFixed(2);
+        calculate();
+    }
+
+    function toggleAdvancedSettings() {
+        const content = document.getElementById('advSettingsContent');
+        const chevron = document.getElementById('advSettingsChevron');
+        content.classList.toggle('hidden');
+        chevron.classList.toggle('rotate-180');
+    }
+
+    function applyPreset(tempC, rhVal) {
+        document.getElementById('tempInput').value = fromCelsius(tempC, tempUnit).toFixed(1);
+        document.getElementById('tempSlider').value = tempC;
+        document.getElementById('rhInput').value = rhVal.toFixed(1);
+        document.getElementById('rhSlider').value = rhVal;
+        document.getElementById('rhBadge').textContent = rhVal.toFixed(1) + '%';
+        setCalcMode('solve_dp');
+    }
+
+    function resetCalculatorDefaults() {
+        document.getElementById('tempUnit').value = 'C';
+        tempUnit = 'C';
+        document.getElementById('tempInput').value = '25.0';
+        document.getElementById('tempSlider').value = 25;
+        document.getElementById('rhInput').value = '50.0';
+        document.getElementById('rhSlider').value = 50;
+        document.getElementById('rhBadge').textContent = '50.0%';
+        document.getElementById('pressureUnit').value = 'hPa';
+        pressureUnit = 'hPa';
+        document.getElementById('pressureInput').value = '1013.25';
+        document.getElementById('formulaModel').value = 'sonntag';
+        document.getElementById('surfacePresetSelect').value = 'custom';
+        document.getElementById('surfaceTempInput').value = '12.0';
+        setCalcMode('solve_dp');
+        showToast('Calculator parameters restored to defaults.');
+    }
+
+    // --- 11. Tab Switching & FAQ ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => {
+            b.classList.remove('active', 'bg-brand-600', 'text-white');
+            b.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        });
+
+        const targetPanel = document.getElementById(`tab-${tabId}`);
+        const targetBtn = document.getElementById(`tabBtn_${tabId}`);
+
+        if (targetPanel) targetPanel.classList.add('active');
+        if (targetBtn) {
+            targetBtn.classList.add('active', 'bg-brand-600', 'text-white');
+            targetBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        }
+
+        if (tabId === 'solver' && psychroChart) {
+            setTimeout(() => { psychroChart.resize(); }, 100);
+        }
+    }
+
+    function toggleFaq(index) {
+        const ans = document.getElementById(`faqAns_${index}`);
+        const icon = document.getElementById(`faqIcon_${index}`);
+        if (ans && icon) {
+            const isHidden = ans.classList.contains('hidden');
+            ans.classList.toggle('hidden', !isHidden);
+            icon.classList.toggle('rotate-180', isHidden);
+        }
+    }
+
+    function toggleTheme() {
+        const html = document.documentElement;
+        if (html.classList.contains('dark')) {
+            html.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            html.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        if (psychroChart) {
+            const isDark = html.classList.contains('dark');
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            psychroChart.options.scales.x.grid.color = gridColor;
+            psychroChart.options.scales.x.ticks.color = textColor;
+            psychroChart.options.scales.y.grid.color = gridColor;
+            psychroChart.options.scales.y.ticks.color = textColor;
+            psychroChart.options.plugins.legend.labels.color = textColor;
+            psychroChart.update();
+        }
+    }
+
+    // --- 12. Monetization & Feedback ---
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        const btn = document.getElementById('leadSubmitBtn');
+        if (email && email.includes('@')) {
+            btn.innerHTML = '✓ PDF Guide Dispatched!';
+            btn.classList.remove('bg-brand-500', 'hover:bg-brand-400');
+            btn.classList.add('bg-emerald-600', 'text-white');
+            showToast('Reference handbook link dispatched to ' + email);
+        }
+    }
+
+    function copyFormattedSummary() {
+        const tempDisp = fromCelsius(currentTempC, tempUnit).toFixed(1) + ' °' + tempUnit;
+        const dpDisp = fromCelsius(currentDewPointC, tempUnit).toFixed(1) + ' °' + tempUnit;
+        const text = `CalcWorld Dew Point Analysis:
+Air Temp: ${tempDisp}
+Relative Humidity: ${currentRh.toFixed(1)}%
+Dew Point: ${dpDisp} (${(currentDewPointC * 9 / 5 + 32).toFixed(1)} °F)
+Actual Vapor Pressure: ${calcSaturationVaporPressure(currentDewPointC, currentPressureHpa, 'sonntag').toFixed(2)} hPa
+Absolute Humidity: ${calcAbsoluteHumidity(calcSaturationVaporPressure(currentDewPointC, currentPressureHpa, 'sonntag'), currentTempC).toFixed(2)} g/m³
+Computed per NOAA NWS standards on https://calcworld.net/other/dew-point-calculator`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            showToast('Full psychrometric dataset copied to clipboard!');
+        }).catch(err => {
+            showToast('Summary copied!');
+        });
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const msgEl = document.getElementById('toastMessage');
+        if (toast && msgEl) {
+            msgEl.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 3000);
+        }
+    }
+
+    // --- 13. Initialization on Load ---
+    window.addEventListener('DOMContentLoaded', () => {
+        initPsychrometricChart();
+        calculate();
+
+        // Update print report timestamp
+        const now = new Date();
+        const reportTimeEl = document.getElementById('reportTimestamp');
+        if (reportTimeEl) {
+            reportTimeEl.textContent = now.toISOString().replace('T', ' ').substring(0, 19) + ' UTC';
+        }
+
+        // AdBlock Detection
+        setTimeout(() => {
+            const adSlot = document.getElementById('ad-slot-1');
+            if (adSlot && adSlot.offsetHeight === 0) {
+                const notice = document.getElementById('adblockRecovery');
+                if (notice) notice.classList.remove('hidden');
+            }
+        }, 1200);
+    });
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

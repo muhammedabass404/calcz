@@ -1,0 +1,2521 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sleep Calculator | Sleep Cycle, Circadian &amp; Wake Time Engine</title>
+    <meta name="description" content="Scientific sleep cycle and circadian rhythm calculator. Calculate optimal bedtimes and wake times based on 90-minute ultradian cycles, sleep latency, power naps, and weekly sleep debt.">
+    <meta name="keywords" content="sleep calculator, sleep cycle calculator, wake up time calculator, bedtime calculator, 90 minute sleep cycle, power nap calculator, sleep debt calculator, circadian rhythm, polysomnography, sleep latency">
+    <link rel="canonical" href="https://calcworld.net/calculators/sleep-calculator.html">
+
+    <!-- Anti-FOUC & Dark Mode Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN with darkMode: 'class' -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b'
+                        },
+                        stage: {
+                            awake: '#f59e0b',
+                            rem: '#ec4899',
+                            n1: '#38bdf8',
+                            n2: '#3b82f6',
+                            n3: '#4338ca'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- MathJax 3 CDN & Configuration -->
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            svg: {
+                fontCache: 'global'
+            },
+            options: {
+                skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        .shimmer-active {
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-active::after {
+            position: absolute;
+            top: 0; right: 0; bottom: 0; left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.12) 20%,
+                rgba(255, 255, 255, 0.25) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: shimmer 1.8s infinite;
+            content: '';
+        }
+        .dark .shimmer-active::after {
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(99, 102, 241, 0.08) 20%,
+                rgba(99, 102, 241, 0.18) 60%,
+                rgba(255, 255, 255, 0)
+            );
+        }
+        @keyframes shimmer {
+            100% { transform: translateX(100%); }
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; animation: tabFade 0.25s ease-out; }
+        @keyframes tabFade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .ad-slot {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(148, 163, 184, 0.08);
+            border: 1px dashed rgba(148, 163, 184, 0.3);
+            border-radius: 0.75rem;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+        #ad-slot-1 { min-height: 90px; width: 100%; }
+        #ad-slot-2 { min-height: 90px; width: 100%; }
+        #ad-slot-3 { min-height: 250px; width: 100%; }
+        #ad-slot-4 { min-height: 100px; width: 100%; }
+        #ad-slot-5 { min-height: 140px; width: 100%; }
+
+        /* Toast notification */
+        .toast-notify {
+            position: fixed;
+            bottom: 5.5rem;
+            left: 50%;
+            transform: translateX(-50%) translateY(1rem);
+            background: #0f172a;
+            color: #f8fafc;
+            padding: 0.625rem 1.25rem;
+            border-radius: 9999px;
+            font-size: 0.8125rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 50;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .toast-notify.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+        .dark .toast-notify {
+            background: #1e1b4b;
+            color: #f8fafc;
+            border-color: rgba(129, 140, 248, 0.3);
+        }
+
+        /* Range Sliders */
+        input[type="range"] {
+            accent-color: #4f46e5;
+        }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- JSON-LD SEO Structured Data -->
+    <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://calcworld.net"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Other Calculators",
+          "item": "https://calcworld.net/other"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Sleep Calculator"
+        }
+      ]
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Clinical Sleep Cycle & Circadian Wake Time Calculator",
+      "url": "https://calcworld.net/other/sleep-calculator",
+      "applicationCategory": "HealthApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript. Requires HTML5.",
+      "description": "Scientific sleep calculator based on 90-minute ultradian cycles, sleep onset latency, Borbely two-process circadian regulation, power naps, and weekly sleep debt analysis."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a 90-minute ultradian sleep cycle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Human sleep is organized into recurring ultradian periods lasting approximately 90 to 110 minutes in healthy adults. Each cycle progresses through distinct physiological stages: Stage N1 (light transition), Stage N2 (spindle and K-complex sleep), Stage N3 (slow-wave deep delta sleep), and REM (rapid eye movement sleep). Waking at the boundary between cycles, rather than during Stage N3, prevents severe sleep inertia and daytime grogginess."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does waking up in the middle of deep sleep cause grogginess?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Waking abruptly during Stage N3 slow-wave sleep triggers sleep inertia, a state marked by impaired sensorimotor speed and cognitive fog. Polysomnographic research shows this occurs because high-amplitude delta EEG waves persist, cerebral blood flow to the prefrontal cortex remains reduced, and extracellular adenosine concentration in the basal forebrain remains high before complete metabolic clearance."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is sleep latency and why is 14 minutes standard?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sleep latency is the duration between settling into bed with the intention to sleep and the physiological onset of sleep (typically defined as the first three consecutive 30-second epochs of Stage N1 or the first epoch of Stage N2 on polysomnography). Clinical studies by the American Academy of Sleep Medicine identify 10 to 20 minutes (average 14 minutes) as the normal physiological range. Falling asleep in under 5 minutes often reflects severe sleep deprivation, whereas taking longer than 30 minutes indicates sleep-onset insomnia."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does a 20-minute power nap avoid grogginess?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A 20-minute power nap confines sleep to Stage N1 and light Stage N2, terminating before the brain descends into Stage N3 slow-wave sleep (which typically initiates after 25 to 30 minutes of continuous slumber). This provides psychomotor restoration and adenosine relief while bypassing sleep inertia."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a Nappuccino (caffeine nap) and how does it work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Nappuccino involves consuming approximately 100 to 150 milligrams of caffeine (such as a shot of espresso) immediately before a 20-minute nap. Caffeine requires 20 to 25 minutes to pass through the stomach, absorb in the small intestine, cross the blood-brain barrier, and bind to adenosine A1 and A2A receptors. During the 20-minute nap, natural sleep clears accumulated adenosine. Upon waking, caffeine binds directly to newly vacated receptors without competition, maximizing mental clarity."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does blue light affect melatonin and the circadian master clock?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Blue light with wavelengths between 460 and 480 nanometers activates intrinsically photosensitive retinal ganglion cells (ipRGCs) containing melanopsin. These cells project through the retinohypothalamic tract to the suprachiasmatic nucleus (SCN) in the hypothalamus. In response, the SCN transmits inhibitory signals to the pineal gland, suppressing the enzymatic conversion of serotonin into melatonin, delaying sleep onset and shifting circadian phase."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you make up for lost sleep by sleeping in on weekends?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sleeping in for extended hours on Saturday or Sunday provides partial recovery of slow-wave sleep but creates social jetlag by shifting the circadian phase of the suprachiasmatic nucleus. This makes falling asleep on Sunday night difficult and amplifies Monday morning fatigue. Sleep debt is resolved more effectively by extending nightly sleep by 30 to 60 minutes and taking strategic 20-minute naps."
+          }
+        }
+      ]
+    }
+  ]
+}
+    </script>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Sleep Calculator | Sleep Cycle, Circadian &amp; Wake Time Engine">
+    <meta property="og:description" content="Scientific sleep cycle and circadian rhythm calculator. Calculate optimal bedtimes and wake times based on 90-minute ultradian cycles, sleep latency, power naps, and weekly sleep debt.">
+    <meta property="og:url" content="https://calcworld.net/calculators/sleep-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Sleep Calculator | Sleep Cycle, Circadian &amp; Wake Time Engine">
+    <meta name="twitter:description" content="Scientific sleep cycle and circadian rhythm calculator. Calculate optimal bedtimes and wake times based on 90-minute ultradian cycles, sleep latency, power naps, and weekly sleep debt.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+\n
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Clinical Chronobiology Resource:</strong> CalcWorld provides peer-reviewed sleep architecture and circadian calculators free without registration. Consider safelisting our domain to support technical maintenance.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4" aria-label="Dismiss banner">&times;</button>
+    </div>
+
+    <!-- Header Navigation -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                LIFESTYLE & TOOLS SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full pb-24 sm:pb-16">
+        
+        <!-- Breadcrumb Navigation -->
+        <nav class="text-xs text-slate-500 dark:text-slate-400 mb-4 no-print" aria-label="Breadcrumb">
+            <ol class="list-none p-0 inline-flex items-center gap-1.5">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400">Home</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li>
+                    <a href="https://calcworld.net/other" class="hover:text-brand-600 dark:hover:text-brand-400">Other Calculators</a>
+                </li>
+                <li>
+                    <svg class="w-3 h-3 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+                </li>
+                <li class="text-slate-800 dark:text-slate-200 font-semibold" aria-current="page">Sleep Calculator</li>
+            </ol>
+        </nav>
+
+        <!-- Page Hero Title -->
+        <div class="mb-6">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">Sleep Calculator</h1>
+            <p class="text-base text-slate-600 dark:text-slate-300 mt-1 max-w-3xl">Clinical sleep architecture and circadian solver based on 90-minute ultradian cycles and physiological sleep onset latency. Optimize wake times and bedtimes, prevent grogginess from sleep inertia, plan restorative power naps, and evaluate weekly sleep debt.</p>
+        </div>
+
+        <!-- AdSense Slot 1: Top Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-1">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 1</span>
+        </div>
+\n
+        <!-- Tab Navigation Bar -->
+        <div id="tabButtons" class="whitespace-nowrap overflow-x-auto no-scrollbar scroll-smooth flex flex-wrap gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 pb-3 no-print">
+            <button type="button" onclick="switchTab('cycle')" id="tabBtn-cycle" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-brand-600 text-white shadow-sm flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span>Sleep Cycle Planner</span>
+            </button>
+            <button type="button" onclick="switchTab('nap-debt')" id="tabBtn-nap-debt" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <span>Power Nap &amp; Sleep Debt</span>
+            </button>
+            <button type="button" onclick="switchTab('circadian')" id="tabBtn-circadian" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+                <span>Circadian &amp; Chronobiology</span>
+            </button>
+            <button type="button" onclick="switchTab('print')" id="tabBtn-print" class="tab-btn px-4 py-2 rounded-xl text-sm font-semibold transition bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                <span>Print Report</span>
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 1: SLEEP CYCLE WAKE / BEDTIME PLANNER -->
+        <!-- ========================================== -->
+        <div id="tab-cycle" class="tab-panel active">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left Column: Inputs & Controls -->
+                <div id="calculatorInputs" class="lg:col-span-5 xl:col-span-4 space-y-6 no-print">
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        
+                        <!-- Planner Mode Selector Pills -->
+                        <div class="mb-5">
+                            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Calculation Target</label>
+                            <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+                                <button type="button" id="btnModeWake" onclick="setPlannerMode('wake')" class="py-2 px-3 text-xs font-bold rounded-lg transition bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm flex items-center justify-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                                    <span>Wake-Up Time</span>
+                                </button>
+                                <button type="button" id="btnModeBed" onclick="setPlannerMode('bed')" class="py-2 px-3 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                                    <span>Bedtime</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mode 1: Wake-Up Time Selector Container -->
+                        <div id="boxWakeMode" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1.5">
+                                    I need to wake up at:
+                                </label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label for="wakeHour" class="sr-only">Hour</label>
+                                        <select id="wakeHour" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                            <option value="7" selected>7</option>
+                                            <option value="8">8</option>
+                                            <option value="9">9</option>
+                                            <option value="10">10</option>
+                                            <option value="11">11</option>
+                                            <option value="12">12</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="wakeMinute" class="sr-only">Minute</label>
+                                        <select id="wakeMinute" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="0" selected>:00</option>
+                                            <option value="5">:05</option>
+                                            <option value="10">:10</option>
+                                            <option value="15">:15</option>
+                                            <option value="20">:20</option>
+                                            <option value="25">:25</option>
+                                            <option value="30">:30</option>
+                                            <option value="35">:35</option>
+                                            <option value="40">:40</option>
+                                            <option value="45">:45</option>
+                                            <option value="50">:50</option>
+                                            <option value="55">:55</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="wakeAmPm" class="sr-only">AM/PM</label>
+                                        <select id="wakeAmPm" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="AM" selected>AM</option>
+                                            <option value="PM">PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Common Wake Presets -->
+                            <div>
+                                <span class="text-[11px] font-medium text-slate-400 block mb-1.5">Common Wake Times:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="setWakePreset(6,0,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">6:00 AM</button>
+                                    <button type="button" onclick="setWakePreset(6,30,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">6:30 AM</button>
+                                    <button type="button" onclick="setWakePreset(7,0,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">7:00 AM</button>
+                                    <button type="button" onclick="setWakePreset(7,30,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">7:30 AM</button>
+                                    <button type="button" onclick="setWakePreset(8,0,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">8:00 AM</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mode 2: Bedtime Selector Container -->
+                        <div id="boxBedMode" class="space-y-4 hidden">
+                            <!-- Instant Sleep Now Action -->
+                            <div class="p-3.5 rounded-xl bg-gradient-to-r from-brand-500/10 to-indigo-500/10 border border-brand-500/20">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs font-bold text-brand-700 dark:text-brand-300 flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                        Real-Time Engine
+                                    </span>
+                                    <span id="liveClockDisplay" class="text-xs font-mono font-bold text-slate-600 dark:text-slate-400">--:-- --</span>
+                                </div>
+                                <button type="button" onclick="setBedtimeNow()" class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold text-sm shadow-md transition flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                                    <span>If I Go To Bed Right Now</span>
+                                </button>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-900 dark:text-white mb-1.5">
+                                    Or I plan to get into bed at:
+                                </label>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label for="bedHour" class="sr-only">Hour</label>
+                                        <select id="bedHour" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="1">1</option>
+                                            <option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+                                            <option value="5">5</option>
+                                            <option value="6">6</option>
+                                            <option value="7">7</option>
+                                            <option value="8">8</option>
+                                            <option value="9">9</option>
+                                            <option value="10">10</option>
+                                            <option value="11" selected>11</option>
+                                            <option value="12">12</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="bedMinute" class="sr-only">Minute</label>
+                                        <select id="bedMinute" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="0" selected>:00</option>
+                                            <option value="5">:05</option>
+                                            <option value="10">:10</option>
+                                            <option value="15">:15</option>
+                                            <option value="20">:20</option>
+                                            <option value="25">:25</option>
+                                            <option value="30">:30</option>
+                                            <option value="35">:35</option>
+                                            <option value="40">:40</option>
+                                            <option value="45">:45</option>
+                                            <option value="50">:50</option>
+                                            <option value="55">:55</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label for="bedAmPm" class="sr-only">AM/PM</label>
+                                        <select id="bedAmPm" onchange="runCalculations()" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-900 dark:text-white focus:ring-2 focus:ring-brand-500">
+                                            <option value="AM">AM</option>
+                                            <option value="PM" selected>PM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Common Bedtime Presets -->
+                            <div>
+                                <span class="text-[11px] font-medium text-slate-400 block mb-1.5">Common Bedtimes:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <button type="button" onclick="setBedPreset(10,0,'PM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">10:00 PM</button>
+                                    <button type="button" onclick="setBedPreset(10,30,'PM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">10:30 PM</button>
+                                    <button type="button" onclick="setBedPreset(11,0,'PM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">11:00 PM</button>
+                                    <button type="button" onclick="setBedPreset(11,30,'PM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">11:30 PM</button>
+                                    <button type="button" onclick="setBedPreset(12,0,'AM')" class="px-2 py-1 text-xs rounded-lg bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 dark:hover:bg-brand-950 text-slate-700 dark:text-slate-300 transition">12:00 AM</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Sleep Onset Latency Factor (Default 14 minutes) -->
+                        <div class="pt-4 border-t border-slate-100 dark:border-slate-700/80">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <label for="latencyInput" class="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                                    <span>Time to Fall Asleep (Latency):</span>
+                                </label>
+                                <span id="latencyDisplay" class="text-xs font-mono font-bold text-brand-600 dark:text-brand-400">14 min</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-2.5">
+                                Clinical average for healthy adults is 10&ndash;20 minutes (standardized to 14 minutes by the American Academy of Sleep Medicine).
+                            </p>
+                            <div class="flex flex-wrap gap-1.5 mb-2.5">
+                                <button type="button" onclick="setLatency(5)" class="latency-btn px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-500 transition">5 min</button>
+                                <button type="button" onclick="setLatency(10)" class="latency-btn px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-500 transition">10 min</button>
+                                <button type="button" onclick="setLatency(14)" class="latency-btn active px-2.5 py-1 text-xs rounded-lg bg-brand-50 dark:bg-brand-950/80 border border-brand-500 text-brand-600 dark:text-brand-400 font-bold transition">14 min (Avg)</button>
+                                <button type="button" onclick="setLatency(20)" class="latency-btn px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-500 transition">20 min</button>
+                                <button type="button" onclick="setLatency(30)" class="latency-btn px-2.5 py-1 text-xs rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-brand-500 transition">30 min</button>
+                            </div>
+                            <input type="range" id="latencyInput" min="0" max="60" step="1" value="14" oninput="onLatencySliderChange(this.value)" class="w-full cursor-pointer h-2 bg-slate-200 dark:bg-slate-700 rounded-lg">
+                        </div>
+
+                        <!-- Cycle Duration Configuration -->
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80">
+                            <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                                <span>Cycle Length Constant:</span>
+                                <span class="font-mono font-semibold text-slate-900 dark:text-white">90 Minutes</span>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400 mt-1">
+                                <span>Stages Per Cycle:</span>
+                                <span class="font-mono text-slate-700 dark:text-slate-300">N1 &bull; N2 &bull; N3 (SWS) &bull; REM</span>
+                            </div>
+                        </div>
+
+                        <!-- Reset Button -->
+                        <div class="pt-4">
+                            <button type="button" onclick="resetCalculatorDefaults()" class="w-full py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                <span>Reset Defaults</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Results, Cards, and Hypnogram -->
+                <div class="lg:col-span-7 xl:col-span-8 space-y-6">
+                    
+                    <!-- Primary Recommended Target Hero Card -->
+                    <div class="bg-gradient-to-br from-brand-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-6 shadow-xl border border-brand-500/30 relative overflow-hidden">
+                        <div class="absolute -right-6 -bottom-6 w-32 h-32 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                        
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                            <span id="heroCardBadge" class="px-2.5 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                <span id="heroBadgeText">Optimal Recommendation (5 Cycles)</span>
+                            </span>
+                            <span id="heroTargetNote" class="text-xs text-slate-300">Wakes at end of complete REM cycle</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center">
+                            <div class="sm:col-span-7">
+                                <span id="heroTargetLabel" class="text-xs uppercase font-semibold text-indigo-200 tracking-wider block mb-1">
+                                    Suggested Bedtime:
+                                </span>
+                                <div class="flex items-baseline gap-2">
+                                    <span id="heroPrimaryTime" class="text-4xl sm:text-5xl font-extrabold tracking-tight font-mono text-white">11:16 PM</span>
+                                    <span id="heroSecondaryLabel" class="text-xs text-indigo-300 font-mono">(Onset: 11:30 PM)</span>
+                                </div>
+                                <p id="heroTargetDescription" class="text-xs text-indigo-200/90 mt-2 leading-relaxed">
+                                    Provides 7.5 hours of core sleep across 5 complete 90-minute ultradian cycles. Waking occurs in light Stage N1/N2 sleep, avoiding prefrontal grogginess from sleep inertia.
+                                </p>
+                            </div>
+
+                            <div class="sm:col-span-5 bg-white/5 rounded-xl p-3.5 border border-white/10 backdrop-blur-sm space-y-2">
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-300">Total Sleep Time:</span>
+                                    <span id="heroSleepDuration" class="font-bold font-mono text-white">7h 30m</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-300">Ultradian Cycles:</span>
+                                    <span id="heroCycleCount" class="font-bold text-emerald-400">5 Full Cycles</span>
+                                </div>
+                                <div class="flex justify-between text-xs">
+                                    <span class="text-slate-300">Sleep Onset Latency:</span>
+                                    <span id="heroLatencyTime" class="font-mono text-slate-200">14 minutes</span>
+                                </div>
+                                <div class="flex justify-between text-xs pt-1 border-t border-white/10">
+                                    <span class="text-slate-300">Target Wake Time:</span>
+                                    <span id="heroWakeReference" class="font-bold font-mono text-amber-300">7:00 AM</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <span class="text-slate-300 flex items-center gap-1.5">
+                                <svg class="w-4 h-4 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Sets you up for deep slow-wave physical cellular repair and REM emotional triage.</span>
+                            </span>
+                            <button type="button" onclick="copyFormattedSummary()" class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white font-medium transition flex items-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                                <span>Copy Plan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- All Ultradian Cycles Breakdown Cards Grid -->
+                    <div>
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <span>All Projected Ultradian Windows</span>
+                                <span class="text-xs font-normal text-slate-500">(Color-coded by physiological recovery profile)</span>
+                            </h2>
+                            <span class="text-xs text-slate-400">90-minute increments</span>
+                        </div>
+
+                        <div id="cycleCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                            <!-- Populated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Interactive Hypnogram Sleep Architecture Chart -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+                                    <span>Hypnogram: Clinical Sleep Architecture Wave</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    Visualizing Stage N1, N2, N3 (Slow Wave Deep Sleep), and REM across 5 consecutive 90-minute cycles.
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Awake</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span> REM</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-sky-400"></span> N1/N2</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-indigo-700"></span> N3 (SWS)</span>
+                            </div>
+                        </div>
+
+                        <!-- Chart Canvas Container -->
+                        <div class="relative w-full h-64 sm:h-72">
+                            <canvas id="hypnogramChart"></canvas>
+                        </div>
+
+                        <!-- Scientific Note below Hypnogram -->
+                        <div class="mt-3 pt-3 border-t border-slate-100 dark:border-slate-700/80 text-[11px] text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                            <svg class="w-4 h-4 text-brand-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            <span><strong>Polysomnographic Cycle Anatomy:</strong> Cycles 1 and 2 feature protracted Stage N3 Slow Wave Sleep for systemic hormone release and glymphatic clearance. Cycles 4 and 5 shift toward extended REM epochs for synaptic memory consolidation and emotional stabilization.</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+\n
+        <!-- ============================================== -->
+        <!-- TAB 2: POWER NAP & SLEEP DEBT ANALYZER         -->
+        <!-- ============================================== -->
+        <div id="tab-nap-debt" class="tab-panel">
+            
+            <!-- Section A: Scientific Power Nap Engine -->
+            <div class="mb-8">
+                <div class="mb-4">
+                    <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        <span>Evidence-Based Power Nap Architectures</span>
+                    </h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">
+                        Select a clinically verified nap profile designed to bypass sleep inertia or complete a full ultradian restorative cycle.
+                    </p>
+                </div>
+
+                <!-- 3 Power Nap Cards Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                    
+                    <!-- Nap 1: 20-Min NASA Power Nap -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-brand-400 transition group">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950/80 dark:text-sky-300 border border-sky-200 dark:border-sky-800">STAGE 2 NREM</span>
+                                <span class="text-xs font-mono font-bold text-slate-400">20 MIN</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                                20-Min Alertness Nap
+                            </h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                                Confines sleep to light Stage N1 and Stage N2 sleep spindles. Terminates prior to Stage N3 slow-wave sleep descent, eliminating post-nap grogginess while restoring psychomotor vigilance and motor reaction time.
+                            </p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80">
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                If you close your eyes now (+5m latency):
+                                <div class="text-base font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="napWake20">--:-- --</div>
+                            </div>
+                            <button type="button" onclick="startNapTimer(20, '20-Min NASA Power Nap')" class="w-full py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-semibold text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Start 20m Nap Timer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nap 2: 90-Min Full Restorative Cycle -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-brand-400 transition group">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800">FULL ULTRADIAN CYCLE</span>
+                                <span class="text-xs font-mono font-bold text-slate-400">90 MIN</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                                90-Min Restorative Cycle
+                            </h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                                Encompasses a complete ultradian cycle traversing N1, N2, slow-wave N3, and concluding in REM sleep. Promotes muscle tissue recovery, procedural memory encoding, and creative problem solving with natural cycle-boundary waking.
+                            </p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80">
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                If you close your eyes now (+10m latency):
+                                <div class="text-base font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="napWake90">--:-- --</div>
+                            </div>
+                            <button type="button" onclick="startNapTimer(90, '90-Min Full Cycle Nap')" class="w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Start 90m Cycle Timer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Nap 3: Nappuccino Caffeine Nap -->
+                    <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col justify-between hover:border-brand-400 transition group">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300 border border-amber-200 dark:border-amber-800">BIOCHEMICAL SYNERGY</span>
+                                <span class="text-xs font-mono font-bold text-slate-400">20 MIN + ESPRESSO</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition">
+                                The "Nappuccino" Protocol
+                            </h3>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                                Drink 100&ndash;150 mg caffeine rapidly, then sleep for 20 minutes. As light sleep naturally hydrolyzes and clears homeostatic adenosine from neural receptors, circulating caffeine crosses the blood-brain barrier at the 20-minute mark to occupy vacant receptors.
+                            </p>
+                        </div>
+                        <div class="pt-3 border-t border-slate-100 dark:border-slate-700/80">
+                            <div class="text-[11px] text-slate-500 dark:text-slate-400 mb-2">
+                                Finish espresso and wake at:
+                                <div class="text-base font-bold font-mono text-slate-900 dark:text-white mt-0.5" id="napWakeCaff">--:-- --</div>
+                            </div>
+                            <button type="button" onclick="startNapTimer(20, 'Nappuccino Caffeine Nap')" class="w-full py-2 px-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs shadow-sm transition flex items-center justify-center gap-1.5">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                <span>Start Nappuccino Timer</span>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Active Nap Countdown Timer Box (Hidden until triggered) -->
+                <div id="napTimerActiveBox" class="hidden mt-4 p-4 rounded-2xl bg-slate-900 text-white border border-brand-500/40 shadow-lg flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-brand-600/30 border border-brand-500/50 flex items-center justify-center text-brand-400">
+                            <svg class="w-6 h-6 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <div>
+                            <div class="text-xs text-slate-400 uppercase tracking-wider" id="activeNapLabel">Active Nap Session</div>
+                            <div class="text-2xl font-extrabold font-mono text-brand-400" id="napTimeRemainingDisplay">20:00</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="stopNapTimer()" class="px-4 py-2 rounded-xl bg-rose-600/20 text-rose-300 border border-rose-500/30 hover:bg-rose-600/30 text-xs font-semibold transition">
+                            Cancel Timer
+                        </button>
+                        <button type="button" onclick="playChimeSound()" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+                            <span>Test Chime</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section B: Sleep Debt & Weekly Deficit Calculator -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                    <div>
+                        <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                            <span>Sleep Debt &amp; Weekly Deficit Matrix</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Audit cumulative sleep deficits against physiological baseline requirements to estimate neurobehavioral impairment.
+                        </p>
+                    </div>
+                    
+                    <!-- Sleep Baseline Target -->
+                    <div class="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <label for="baselineSleepNeed" class="text-xs font-semibold text-slate-600 dark:text-slate-400">Baseline Sleep Need:</label>
+                        <select id="baselineSleepNeed" onchange="calcSleepDebt()" class="bg-transparent text-xs font-bold text-brand-600 dark:text-brand-400 font-mono focus:outline-none">
+                            <option value="7.0">7.0 hrs / day</option>
+                            <option value="7.5" selected>7.5 hrs / day (5 cycles)</option>
+                            <option value="8.0">8.0 hrs / day</option>
+                            <option value="8.5">8.5 hrs / day</option>
+                            <option value="9.0">9.0 hrs / day (6 cycles)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- 7-Day Sliders Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+                    <!-- Day 1: Mon -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Monday</span>
+                        <span id="disp-day-0" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">7.5h</span>
+                        <input type="range" id="input-day-0" min="3" max="12" step="0.5" value="7.5" oninput="updateDaySleep(0, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 2: Tue -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Tuesday</span>
+                        <span id="disp-day-1" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">7.0h</span>
+                        <input type="range" id="input-day-1" min="3" max="12" step="0.5" value="7.0" oninput="updateDaySleep(1, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 3: Wed -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Wednesday</span>
+                        <span id="disp-day-2" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">6.5h</span>
+                        <input type="range" id="input-day-2" min="3" max="12" step="0.5" value="6.5" oninput="updateDaySleep(2, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 4: Thu -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Thursday</span>
+                        <span id="disp-day-3" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">6.0h</span>
+                        <input type="range" id="input-day-3" min="3" max="12" step="0.5" value="6.0" oninput="updateDaySleep(3, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 5: Fri -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Friday</span>
+                        <span id="disp-day-4" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">6.5h</span>
+                        <input type="range" id="input-day-4" min="3" max="12" step="0.5" value="6.5" oninput="updateDaySleep(4, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 6: Sat -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Saturday</span>
+                        <span id="disp-day-5" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">8.0h</span>
+                        <input type="range" id="input-day-5" min="3" max="12" step="0.5" value="8.0" oninput="updateDaySleep(5, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                    <!-- Day 7: Sun -->
+                    <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60 text-center">
+                        <span class="text-xs font-bold text-slate-700 dark:text-slate-300 block mb-1">Sunday</span>
+                        <span id="disp-day-6" class="text-sm font-mono font-bold text-brand-600 dark:text-brand-400 block mb-1.5">8.0h</span>
+                        <input type="range" id="input-day-6" min="3" max="12" step="0.5" value="8.0" oninput="updateDaySleep(6, this.value)" class="w-full h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Debt Analysis Output Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700">
+                    <div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Weekly Target vs Actual:</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="weeklyActualSleepDisp" class="text-2xl font-bold font-mono text-slate-900 dark:text-white">49.5 hrs</span>
+                            <span class="text-xs text-slate-400 font-mono">/ <span id="weeklyTargetSleepDisp">52.5 hrs</span></span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 block mt-1">Sum of 7-day logged duration</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Net Sleep Debt / Deficit:</span>
+                        <div class="flex items-baseline gap-2">
+                            <span id="netSleepDebtDisp" class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">-3.0 hrs</span>
+                            <span id="debtSeverityBadge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">MODERATE</span>
+                        </div>
+                        <span id="debtEquivalentText" class="text-[11px] text-slate-500 dark:text-slate-400 block mt-1">Attentional latency equivalent to mild fatigue</span>
+                    </div>
+
+                    <div>
+                        <span class="text-xs text-slate-500 dark:text-slate-400 block mb-1">Paced Recovery Protocol:</span>
+                        <div class="text-sm font-semibold text-slate-900 dark:text-white" id="recoveryPlanSummary">
+                            Add +45 min sleep over 4 days
+                        </div>
+                        <span class="text-[11px] text-slate-400 block mt-1">Prevents circadian social jetlag disruption</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+\n
+        <!-- ============================================== -->
+        <!-- TAB 3: CIRCADIAN ARCHITECTURE & CHRONOBIOLOGY -->
+        <!-- ============================================== -->
+        <div id="tab-circadian" class="tab-panel">
+            <div class="space-y-6">
+                
+                <!-- Two-Process Model Banner -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h2 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                        <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <span>Borb&eacute;ly's Two-Process Model of Sleep Regulation</span>
+                    </h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-4">
+                        Sleep timing is governed by the continuous interaction of two biological forces described by Alexander Borb&eacute;ly:
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block mb-1">Process S: Homeostatic Sleep Pressure</span>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Driven by the continuous consumption of adenosine triphosphate (ATP) during wakefulness. Extracellular adenosine binds to $A_1$ and $A_{2A}$ receptors in the basal forebrain and ventrolateral preoptic nucleus (VLPO), progressively creating sleep pressure until cleared during slow-wave sleep.
+                            </p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <span class="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 block mb-1">Process C: Circadian Pacemaker Oscillation</span>
+                            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                Generated by the suprachiasmatic nucleus (SCN) based on an intrinsic ~24.2-hour transcription-translation feedback loop of CLOCK, BMAL1, PER, and CRY genes. Transmits alerting signals during the biological day and permits pineal melatonin secretion at night.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chronotype Profiler -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                        Circadian Chronotypes &amp; Ideal Biological Windows
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+                        Based on the Morningness-Eveningness Questionnaire (MEQ) and Dr. Michael Breus chronobiology classifications:
+                    </p>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <div class="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">Lion (Early Type)</div>
+                            <div class="text-sm font-semibold text-slate-900 dark:text-white mt-1">Bed: 9:30 &ndash; 10:00 PM</div>
+                            <div class="text-xs text-slate-500 font-mono">Wake: 5:30 &ndash; 6:00 AM</div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-2">Peak analytical alertness early morning; fatigue accumulates quickly after 8 PM.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <div class="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide">Bear (Solar Type &bull; ~50%)</div>
+                            <div class="text-sm font-semibold text-slate-900 dark:text-white mt-1">Bed: 10:45 &ndash; 11:15 PM</div>
+                            <div class="text-xs text-slate-500 font-mono">Wake: 7:00 &ndash; 7:30 AM</div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-2">Tracks direct solar patterns. Peak cognitive capacity between 10 AM and 2 PM.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <div class="text-xs font-bold text-purple-700 dark:text-purple-400 uppercase tracking-wide">Wolf (Late Type)</div>
+                            <div class="text-sm font-semibold text-slate-900 dark:text-white mt-1">Bed: 12:30 &ndash; 1:30 AM</div>
+                            <div class="text-xs text-slate-500 font-mono">Wake: 8:30 &ndash; 9:00 AM</div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-2">Delayed dim-light melatonin onset (DLMO). Peak creative throughput 5 PM to 10 PM.</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                            <div class="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">Dolphin (Light Sleeper)</div>
+                            <div class="text-sm font-semibold text-slate-900 dark:text-white mt-1">Bed: 11:30 PM &ndash; 12:00 AM</div>
+                            <div class="text-xs text-slate-500 font-mono">Wake: 6:30 &ndash; 7:00 AM</div>
+                            <p class="text-[11px] text-slate-600 dark:text-slate-400 mt-2">High nocturnal arousal; prone to middle-of-night arousals. Benefits from strict wake times.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sleep Hygiene Diagnostic Checklist -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 shadow-sm border border-slate-200 dark:border-slate-700">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+                            Clinical Sleep Hygiene Diagnostic
+                        </h3>
+                        <span id="hygieneScoreBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">Score: 100%</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg1" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Bedroom cooled to 65&ndash;68&deg;F (18&ndash;20&deg;C) for thermoregulation drop</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg2" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Near-zero ambient light (blackout curtains or eye mask &lt; 1 lux)</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg3" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Caffeine discontinued 8 to 10 hours prior to bedtime</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg4" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Alcohol ceased 3 to 4 hours before bedtime (prevents REM fragmentation)</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg5" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Morning natural sunlight exposure within 45 minutes of waking</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 p-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 cursor-pointer">
+                            <input type="checkbox" id="hyg6" checked onchange="calcHygieneScore()" class="rounded text-brand-600 focus:ring-brand-500">
+                            <span>Screens and blue-enriched devices dimmed 60 min before sleep</span>
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ============================================== -->
+        <!-- TAB 4: CLINICAL PRINT REPORT                   -->
+        <!-- ============================================== -->
+        <div id="tab-print" class="tab-panel bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
+            
+            <div class="flex items-center justify-between border-b pb-4 mb-6">
+                <div>
+                    <h2 class="text-2xl font-extrabold tracking-tight">CalcWorld Sleep Prescription &amp; Circadian Audit</h2>
+                    <p class="text-xs text-slate-500 mt-1">Based on AASM Polysomnography &amp; Ultradian Cycle Standards</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-slate-400 block font-mono" id="printReportDate">Report Date: --/--/----</span>
+                    <button type="button" onclick="window.print()" class="no-print mt-2 px-3 py-1.5 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow transition">
+                        Print / Save PDF
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Schedule Summary -->
+            <div class="space-y-6 text-sm">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-base mb-2">Prescribed Sleep Architecture</h3>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
+                        <div>
+                            <span class="text-slate-400 block">Target Wake Time</span>
+                            <span class="font-bold text-sm" id="printWakeTime">07:00 AM</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Optimal Bedtime (5 Cycles)</span>
+                            <span class="font-bold text-sm text-brand-600 dark:text-brand-400" id="printBedTime">11:16 PM</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Sleep Onset Latency</span>
+                            <span class="font-bold text-sm" id="printLatency">14 Minutes</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 block">Total Core Sleep</span>
+                            <span class="font-bold text-sm" id="printDuration">7h 30m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cycle Options Table -->
+                <div>
+                    <h3 class="font-bold text-base mb-2">Ultradian Window Options (90-Minute Intervals)</h3>
+                    <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                            <tr>
+                                <th class="p-2 border-b">Cycles</th>
+                                <th class="p-2 border-b">Bedtime</th>
+                                <th class="p-2 border-b">Sleep Duration</th>
+                                <th class="p-2 border-b">Physiological Assessment</th>
+                            </tr>
+                        </thead>
+                        <tbody id="printCyclesTableBody" class="divide-y divide-slate-200 dark:divide-slate-800">
+                            <!-- Populated dynamically via JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Debt & Recovery Directives -->
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
+                    <h3 class="font-bold text-base mb-2">Weekly Sleep Debt &amp; Recovery Directives</h3>
+                    <div class="text-xs space-y-1.5 leading-relaxed text-slate-700 dark:text-slate-300">
+                        <p><strong>Weekly Debt Status:</strong> <span id="printDebtSummary">3.0 hours deficit detected across past 7 days.</span></p>
+                        <p><strong>Repayment Directive:</strong> Extend nightly sleep by 30 to 45 minutes rather than oversleeping on weekend mornings to avoid shifting circadian phase timing.</p>
+                        <p><strong>Strategic Nap Recommendation:</strong> use a 20-minute Stage 2 NREM nap between 1:00 PM and 3:00 PM to clear homeostatic adenosine without impairing nighttime sleep onset.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+\n
+        <!-- AdSense Slot 2: Mid-Calculator Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-2">
+            <span>Sponsored Advertisement &bull; Leaderboard Slot 2</span>
+        </div>
+
+        <!-- AdSense Slot 3: Large In-Feed Display -->
+        <div class="ad-slot no-print" id="ad-slot-3">
+            <span>Sponsored Advertisement &bull; In-Feed Rectangle Slot 3</span>
+        </div>
+
+        <!-- AdSense Slot 4: Content Break Leaderboard -->
+        <div class="ad-slot no-print" id="ad-slot-4">
+            <span>Sponsored Advertisement &bull; Content Break Slot 4</span>
+        </div>
+
+        <!-- PDF Lead Magnet Box -->
+        <div class="lead-box bg-gradient-to-r from-brand-900 to-indigo-900 text-white rounded-2xl p-6 sm:p-8 my-8 shadow-xl border border-brand-500/30 no-print">
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+                <div class="md:col-span-8">
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider bg-brand-500/30 text-brand-200 border border-brand-400/30 mb-2 inline-block">
+                        Free Clinical Reference PDF
+                    </span>
+                    <h3 class="text-xl sm:text-2xl font-bold tracking-tight text-white mb-2">
+                        Download The Clinical Sleep &amp; Circadian Optimization Protocol
+                    </h3>
+                    <p class="text-xs sm:text-sm text-indigo-200/90 leading-relaxed">
+                        Complete 24-page evidence-based guide including polysomnographic phase charts, caffeine pharmacokinetics, chronotype scheduling templates, and the jetlag reset protocol.
+                    </p>
+                </div>
+                <div class="md:col-span-4">
+                    <form onsubmit="handleLeadSubmit(event)" class="space-y-2">
+                        <input type="email" id="leadEmailInput" required placeholder="Enter your email address" class="w-full px-3.5 py-2.5 rounded-xl bg-white/10 border border-white/20 text-white placeholder-indigo-200/60 text-xs focus:outline-none focus:ring-2 focus:ring-brand-400">
+                        <button type="submit" class="w-full py-2.5 px-4 rounded-xl bg-brand-500 hover:bg-brand-400 text-white font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Download Free Protocol (PDF)</span>
+                        </button>
+                    </form>
+                    <span class="text-[10px] text-indigo-300/80 block mt-1.5 text-center">Zero spam. Peer-reviewed research summary only.</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- AdSense Slot 5: Pre-Guide Display -->
+        <div class="ad-slot no-print" id="ad-slot-5">
+            <span>Sponsored Advertisement &bull; Display Slot 5</span>
+        </div>
+\n
+    <!-- ============================================== -->
+    <!-- COMPREHENSIVE POLYSOMNOGRAPHY & SLEEP GUIDE    -->
+    <!-- ============================================== -->
+    <article id="guide-section" class="mt-12 space-y-12 text-slate-700 dark:text-slate-300 leading-relaxed max-w-4xl mx-auto">
+        
+        <!-- Guide Header -->
+        <div class="border-b border-slate-200 dark:border-slate-800 pb-6 text-center sm:text-left">
+            <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Clinical Reference Manual</span>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-1">
+                Polysomnography, Ultradian Sleep Cycles, and Circadian Chronobiology
+            </h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
+                A technical examination of human sleep architecture, electrophysiological staging, homeostatic sleep pressure, photic entrainment, and the prevention of sleep inertia.
+            </p>
+        </div>
+
+        <!-- Section 1 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                1. Polysomnography (PSG) and Electrophysiological Monitoring
+            </h3>
+            <p class="mb-4">
+                Polysomnography represents the gold-standard diagnostic modality in clinical sleep medicine for characterizing sleep architecture and diagnosing sleep-related breathing disorders, movement disorders, and parasomnias. Standard polysomnographic recording uses multi-channel physiological telemetry encompassing three primary electrophysiological biosignals:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 mb-4">
+                <li>
+                    <strong>Electroencephalography (EEG):</strong> Electrodes placed according to the International 10&ndash;20 system (primarily frontal F3/F4, central C3/C4, and occipital O1/O2 leads referenced to contralateral mastoids M1/M2) record cerebral cortical electrical activity. Signal analysis evaluates distinct neural oscillation frequencies:
+                    <ul class="list-circle pl-6 space-y-1 mt-1 text-xs">
+                        <li><strong>Beta Waves (13&ndash;30 Hz):</strong> Low voltage, desynchronized oscillations characteristic of alert, attentive wakefulness.</li>
+                        <li><strong>Alpha Waves (8&ndash;12 Hz):</strong> Synchronous sinusoidal oscillations generated in the occipital cortex during relaxed wakefulness with closed eyes.</li>
+                        <li><strong>Theta Waves (4&ndash;7 Hz):</strong> Lower frequency oscillations marking the transition into Stage N1 light sleep and prominent during REM sleep.</li>
+                        <li><strong>Delta Waves (0.5&ndash;3.5 Hz):</strong> High-voltage (&gt;75 &mu;V peak-to-peak) slow waves reflecting widespread cortical synchronization during Stage N3 deep sleep.</li>
+                    </ul>
+                </li>
+                <li>
+                    <strong>Electrooculography (EOG):</strong> Corneo-retinal potential recording electrodes placed at the outer canthi of each eye detect ocular movements. Slow rolling eye movements define sleep onset, while conjugate, rapid saccadic deflections characterize rapid eye movement (REM) sleep.
+                </li>
+                <li>
+                    <strong>Electromyography (EMG):</strong> Submental (chin) surface electrodes evaluate skeletal muscle tone. Muscle tonus progressively attenuates from wakefulness through non-REM stages, reaching somatic atonia during REM sleep.
+                </li>
+            </ul>
+            <p>
+                In accordance with American Academy of Sleep Medicine (AASM) scoring guidelines, polysomnographic recordings are divided into consecutive 30-second epochs. Each epoch is categorized into one of five distinct physiological states: Wakefulness (W), Non-REM Stage 1 (N1), Non-REM Stage 2 (N2), Non-REM Stage 3 (N3), or Rapid Eye Movement (REM).
+            </p>
+        </section>
+
+        <!-- Section 2 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                2. The 90-Minute Ultradian Cycle and Structural Stage Progression
+            </h3>
+            <p class="mb-4">
+                Normal nocturnal sleep in healthy adult humans does not remain static; rather, it oscillates in repeating <strong>ultradian cycles</strong> lasting between 80 and 110 minutes (averaging approximately 90 minutes). Within each 90-minute cycle, the central nervous system transitions through sequential microstructural environments:
+            </p>
+            
+            <div class="overflow-x-auto my-6">
+                <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
+                        <tr>
+                            <th class="p-3 border-b">Sleep Stage</th>
+                            <th class="p-3 border-b">% of Adult Sleep</th>
+                            <th class="p-3 border-b">Defining EEG / Physiological Markers</th>
+                            <th class="p-3 border-b">Primary Restorative Function</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
+                        <tr>
+                            <td class="p-3 font-semibold text-sky-600 dark:text-sky-400">Stage N1 (Light)</td>
+                            <td class="p-3 font-mono">2% &ndash; 5%</td>
+                            <td class="p-3">Alpha attenuation, low-amplitude mixed-frequency theta activity, vertex sharp waves, slow rolling eye movements.</td>
+                            <td class="p-3">Initial somnolence transition, reduced sensory vigilance, muscle relaxation.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-blue-600 dark:text-blue-400">Stage N2 (Core)</td>
+                            <td class="p-3 font-mono">45% &ndash; 55%</td>
+                            <td class="p-3">Sleep spindles (12&ndash;14 Hz bursts lasting &ge;0.5 s) and K-complexes (negative sharp peaks followed by slower positive components &ge;0.5 s).</td>
+                            <td class="p-3">Synaptic gating of sensory input, motor skill consolidation, core temperature drop.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-indigo-700 dark:text-indigo-400">Stage N3 (Slow Wave)</td>
+                            <td class="p-3 font-mono">15% &ndash; 25%</td>
+                            <td class="p-3">High-voltage (&gt;75 &mu;V), slow delta oscillations (0.5&ndash;2 Hz) occupying &ge;20% of the epoch. Low heart rate and blood pressure.</td>
+                            <td class="p-3">Cellular protein synthesis, somatotropin (growth hormone) pulse, glymphatic fluid clearance.</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold text-pink-600 dark:text-pink-400">Stage REM (Paradoxical)</td>
+                            <td class="p-3 font-mono">20% &ndash; 25%</td>
+                            <td class="p-3">Low-voltage saw-tooth waves, rapid conjugate eye movements, somatic muscle atonia, autonomic respiratory variability.</td>
+                            <td class="p-3">Emotional memory processing, associative semantic learning, dream synthesis.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <p class="mb-4">
+                A critical feature of sleep architecture is the <strong>asymmetric distribution</strong> of stages across successive cycles. During the initial two cycles of the night, Stage N3 Slow Wave Sleep dominates, with episodes lasting up to 40 minutes per cycle. As the night advances, Stage N3 diminishes markedly and often disappears completely in cycles 4 and 5.
+            </p>
+            <p>
+                Conversely, REM sleep episodes are brief during Cycle 1 (lasting only 5 to 10 minutes) but lengthen substantially in subsequent cycles, reaching durations of 30 to 45 minutes by Cycle 5. Consequently, terminating sleep after only 4.5 or 6 hours disproportionately deprives the individual of REM sleep, whereas terminating sleep prematurely during early hours deprives the body of deep anabolic slow-wave recovery.
+            </p>
+        </section>
+
+        <!-- Section 3 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                3. Borb&eacute;ly's Two-Process Model: Homeostatic Sleep Pressure and Circadian Regulation
+            </h3>
+            <p class="mb-4">
+                In 1982, Swiss sleep researcher Alexander Borb&eacute;ly formulated the <strong>Two-Process Model of Sleep Regulation</strong>, which remains the foundational framework for understanding sleep propensity, sleep latency, and waking consciousness:
+            </p>
+            
+            <div class="my-6 p-4 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 overflow-x-auto text-center">
+                $$\text{Sleep Propensity}(t) = \text{Process S}(t) - \text{Process C}(t)$$
+            </div>
+
+            <h4 class="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Process S: The Homeostatic Sleep Drive</h4>
+            <p class="mb-3">
+                Process S represents an hourglass-like biological accumulator of sleep need. During continuous wakefulness, cellular metabolic activity hydrolyzes adenosine triphosphate (ATP) to adenosine diphosphate (ADP), adenosine monophosphate (AMP), and finally free <strong>adenosine</strong>.
+            </p>
+            <p class="mb-3">
+                Accumulated extracellular adenosine diffuses across neural tissue and binds to inhibitory $A_1$ receptors on wake-promoting cholinergic and monoaminergic neurons in the basal forebrain and hypothalamus. Concurrently, adenosine binds to excitatory $A_{2A}$ receptors on GABAergic neurons in the <strong>ventrolateral preoptic nucleus (VLPO)</strong>, triggering somnolence. The mathematical accumulation during continuous wakefulness ($t$) and its clearance during sleep follow exponential trajectories:
+            </p>
+            <div class="my-4 p-3 rounded-lg bg-slate-100 dark:bg-slate-800 font-mono text-xs text-center">
+                $$\text{Wake Buildup: } S(t) = 1 - (1 - S_0)e^{-t/\tau_r} \quad \Big| \quad \text{Sleep Clearance: } S(t) = S_0 e^{-t/\tau_d}$$
+            </div>
+            <p class="mb-4">
+                Here, $\tau_r$ represents the accumulation time constant (approximately 18 to 20 hours), while $\tau_d$ represents the dissipation time constant (approximately 4 to 4.5 hours of slow-wave sleep).
+            </p>
+
+            <h4 class="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Process C: The Circadian Pacemaker Oscillation</h4>
+            <p class="mb-3">
+                Process C operates independently of prior sleep or wake duration. Generated by the <strong>suprachiasmatic nucleus (SCN)</strong> within the anterior hypothalamus, Process C produces an autonomous oscillation of alertness and core body temperature across approximately 24.2 hours.
+            </p>
+            <p>
+                During the biological day, Process C ramps up wake-promoting signals to counterbalance the escalating sleep pressure of Process S. In late evening, Process C alerting signals subside, opening the <strong>"sleep gate"</strong>&mdash;the optimal temporal alignment where high homeostatic pressure coincides with low circadian alertness, enabling rapid sleep onset within 10 to 20 minutes.
+            </p>
+        </section>
+
+        <!-- Section 4 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                4. The Suprachiasmatic Nucleus (SCN), ipRGCs, and Photic Melatonin Signaling
+            </h3>
+            <p class="mb-4">
+                Circadian synchronization to the 24-hour terrestrial solar cycle depends on photic entrainment. In the mammalian retina, a specialized subset of photoreceptors known as <strong>intrinsically photosensitive retinal ganglion cells (ipRGCs)</strong> express the photopigment <em>melanopsin</em> ($OPN4$). Unlike rod and cone photoreceptors dedicated to image-forming vision, ipRGCs exhibit peak spectral sensitivity in the narrow blue bandwidth of <strong>460 to 480 nanometers</strong>.
+            </p>
+            <p class="mb-4">
+                The neurological signaling cascade governing circadian phase and hormonal synthesis follows this pathway:
+            </p>
+            <ol class="list-decimal pl-6 space-y-2 mb-4">
+                <li>
+                    <strong>Retinohypothalamic Tract (RHT):</strong> Axons from ipRGCs bypass the lateral geniculate visual cortex and project directly to the suprachiasmatic nucleus (SCN) via the monosynaptic retinohypothalamic tract, releasing glutamate and pituitary adenylate cyclase-activating polypeptide (PACAP).
+                </li>
+                <li>
+                    <strong>Molecular Clock Gene Resetting:</strong> Glutamatergic stimulation induces intracellular calcium influx, activating cAMP response element-binding protein (CREB) and triggering immediate transcription of <em>Period</em> genes ($PER1$ and $PER2$). This molecular cascade synchronizes the transcription-translation feedback loop involving CLOCK, BMAL1, PER, and CRY proteins.
+                </li>
+                <li>
+                    <strong>Inhibition of Pineal Melatonin:</strong> Projections from the SCN synapse onto the paraventricular nucleus (PVN), descend down the intermediolateral cell column of the upper spinal cord, and synapse at the superior cervical ganglion (SCG). Postganglionic sympathetic fibers innervate the pineal gland. Light exposure suppresses norepinephrine release at pineal $\beta_1$-adrenergic receptors, downregulating the rate-limiting enzyme <strong>arylalkylamine N-acetyltransferase (AANAT)</strong> and halting melatonin synthesis from serotonin.
+                </li>
+                <li>
+                    <strong>Dim-Light Melatonin Onset (DLMO):</strong> In the absence of 460&ndash;480 nm light, SCN inhibition ceases. Sympathetic tone increases AANAT activity, initiating the secretion of melatonin into circulation roughly two hours prior to habitual bedtime, inducing peripheral vasodilation and reducing core body temperature.
+                </li>
+            </ol>
+            <p>
+                Exposure to artificial blue-enriched screen illumination or compact fluorescent lighting in the late evening delivers photic stimuli exceeding 100 lux, acutely suppressing circulating melatonin by up to 85% and shifting the circadian phase, resulting in prolonged sleep latency and delayed sleep onset.
+            </p>
+        </section>
+
+        <!-- Section 5 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                5. The Neurochemistry and Mechanisms of Sleep Inertia
+            </h3>
+            <p class="mb-4">
+                <strong>Sleep inertia</strong> denotes the transient state of grogginess, hypovigilance, and subnormal cognitive and motor performance experienced immediately following awakening. While healthy awakenings out of light non-REM (N1/N2) or REM sleep demonstrate symptom resolution within 1 to 5 minutes, awakenings that interrupt Stage N3 slow-wave sleep produce prolonged sleep inertia lasting from 30 minutes to over two hours.
+            </p>
+            <p class="mb-4">
+                Neuroimaging and neurochemical research have identified three primary drivers of severe sleep inertia:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 mb-4">
+                <li>
+                    <strong>Regional Cerebral Blood Flow (rCBF) Lag:</strong> Positron emission tomography (PET) investigations demonstrate that following abrupt awakening from slow-wave sleep, blood flow to the brainstem and thalamus re-establishes rapidly, but rCBF in the <strong>dorsolateral prefrontal cortex</strong> and anterior cingulate remains depressed for up to 25 to 30 minutes. This regional hypoperfusion creates executive dysfunction, slow reaction times, and subjective mental clouding.
+                </li>
+                <li>
+                    <strong>Delta Electroencephalographic Carryover:</strong> EEG spectral power analysis reveals that high-amplitude, low-frequency delta activity (0.5&ndash;2 Hz) continues to intrude across fronto-central derivations during the first 15 minutes post-arousal, disrupting synaptic firing rates required for complex cognitive throughput.
+                </li>
+                <li>
+                    <strong>Incomplete Adenosine Hydrolysis:</strong> When an individual awakens mid-N3, local extracellular concentrations of adenosine in the basal forebrain and thalamic reticular nucleus remain elevated, maintaining inhibitory post-synaptic potentials across cortical projection pathways.
+                </li>
+            </ul>
+            <p>
+                By calculating wake times that coincide with 90-minute ultradian boundaries, the sleep cycle calculator targets moments when the brain is naturally in Stage N1, N2, or late REM, bypassing Stage N3 slow-wave sleep interruptions and mitigating sleep inertia.
+            </p>
+        </section>
+
+        <!-- Section 6 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                6. Evidence-Based Power Naps, Caffeine Pharmacokinetics, and Sleep Debt Dynamics
+            </h3>
+            <p class="mb-4">
+                When nighttime sleep is truncated, targeted daytime naps serve as an effective tool for sustaining psychomotor vigilance. However, their efficacy depends on duration and physiological timing:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 mb-4">
+                <li>
+                    <strong>The 20-Minute Alertness Nap:</strong> Pioneered in aerospace operational protocols by Rosekind et al. at NASA, limiting daytime sleep to 20 minutes ensures the sleeper remains within Stage N1 and light Stage N2. Sleep spindles occurring in Stage N2 restore vigilance and short-term working memory without allowing the descent into delta-wave Stage N3, completely preventing sleep inertia.
+                </li>
+                <li>
+                    <strong>The 90-Minute Restorative Nap:</strong> Allowing 90 minutes provides sufficient duration to complete a full ultradian cycle, encompassing slow-wave sleep for physical restoration followed by REM sleep for procedural learning, waking naturally at the cycle boundary.
+                </li>
+                <li>
+                    <strong>The Nappuccino (Caffeine Nap):</strong> This protocol couples pharmacology with neurobiology. Oral caffeine exhibits rapid absorption across the stomach and small intestine, reaching significant plasma concentrations at 20 to 30 minutes with a half-life of 4 to 6 hours. By consuming an espresso immediately before a 20-minute nap, the individual sleeps while natural non-REM processes clear adenosine from neural tissue. At the moment of waking, circulating caffeine molecules bind to the newly cleared $A_1$ and $A_{2A}$ receptors, providing superior alertness compared to caffeine alone or napping alone.
+                </li>
+            </ul>
+            
+            <h4 class="text-base font-bold text-slate-900 dark:text-white mt-4 mb-2">Sleep Debt and The Myth of Weekend Compensation</h4>
+            <p class="mb-3">
+                Sleep debt represents the cumulative difference between biological sleep requirements and actual sleep obtained over successive days. Sleep debt does not dissipate linearly; losing two hours of sleep each night for five consecutive days generates ten hours of debt, producing attentional degradations equivalent to 24 hours of total acute sleep deprivation (comparable to a blood alcohol concentration of 0.08%).
+            </p>
+            <p>
+                Attempting to erase ten hours of sleep debt by sleeping in late on Saturday and Sunday mornings generates <strong>social jetlag</strong>. Sleeping four hours past habitual wake time delays the phase of the suprachiasmatic nucleus. Consequently, melatonin secretion is delayed Sunday evening, making sleep onset before midnight difficult and worsening sleep debt for the subsequent week. The clinically proven approach to debt recovery involves extending regular nightly sleep by 30 to 60 minutes over multiple days combined with brief midday 20-minute naps.
+            </p>
+        </section>
+
+        <!-- Section 7 -->
+        <section>
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-3">
+                7. Clinical Consensus Guidelines and Sleep Duration Standards
+            </h3>
+            <p class="mb-4">
+                Both the <strong>American Academy of Sleep Medicine (AASM)</strong> and the <strong>Sleep Research Society (SRS)</strong> have issued evidence-based consensus statements regarding adult sleep requirements:
+            </p>
+            <ul class="list-disc pl-6 space-y-2 mb-4">
+                <li>
+                    <strong>Adults (18&ndash;60 years):</strong> Sleeping 7 or more hours per night on a regular basis is necessary to promote optimal health, cardiovascular function, immune response, and metabolic regulation. Regularly sleeping fewer than 7 hours per night is associated with increased risk of obesity, diabetes, hypertension, cardiovascular disease, stroke, depression, and elevated mortality.
+                </li>
+                <li>
+                    <strong>Teenagers (13&ndash;18 years):</strong> Require 8 to 10 hours per 24 hours. Adolescence coincides with a biological delay in circadian phase (delayed sleep phase tendency), driven by altered homeostatic sleep accumulation rates and later dim-light melatonin onset.
+                </li>
+                <li>
+                    <strong>Older Adults (&ge;65 years):</strong> Recommended 7 to 8 hours. While total sleep duration needs remain stable, age-related structural changes in the prefrontal cortex frequently lead to reduced Stage N3 amplitude, increased sleep fragmentation, and an advanced circadian phase (earlier sleepiness and early morning awakening).
+                </li>
+            </ul>
+        </section>
+
+        <!-- Section 8: FAQ Section -->
+        <section class="pt-6 border-t border-slate-200 dark:border-slate-800">
+            <h3 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-4">
+                Frequently Asked Clinical Questions
+            </h3>
+
+            <div class="space-y-4 text-xs sm:text-sm">
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-1">
+                        How exact is the 90-minute sleep cycle duration?
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        The 90-minute figure represents the clinical population mean. In individual adults, ultradian cycle length typically ranges between 80 and 110 minutes and can vary slightly across the course of the night. Using 90 minutes provides a reliable, practical heuristic that aligns closely with non-REM and REM transitions for the majority of the population.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-1">
+                        What does it indicate if someone falls asleep the instant their head touches the pillow?
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        A sleep latency of under 5 minutes is a primary diagnostic indicator of pathological somnolence or severe sleep deprivation, as assessed in clinical Multiple Sleep Latency Tests (MSLT). Healthy sleep latency requires 10 to 20 minutes for normal physiological downregulation, parasympathetic activation, and the sequential transition from alpha to theta rhythm.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-1">
+                        Why does waking after 7.5 hours feel more refreshing than waking after 8 hours?
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        At 7.5 hours (450 minutes), an individual completing 90-minute cycles finishes Cycle 5 and transitions out of REM sleep into light Stage N1/N2 or natural arousal. Waking at 8 hours (480 minutes) often coincides with the initiation of a 6th sleep cycle, potentially interrupting newly emerging slow-wave sleep, causing abrupt sleep inertia and morning lethargy.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-1">
+                        How does ambient room temperature influence sleep architecture?
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        To initiate and sustain sleep, human core body temperature must decrease by approximately 1&deg;C (1.8&deg;F) through peripheral vasodilation (heat dissipation through the hands and feet). Ambient room temperatures between 65&deg;F and 68&deg;F (18&deg;C to 20&deg;C) facilitate this natural thermal dump. Ambient temperatures above 75&deg;F (24&deg;C) induce thermal stress, reducing Stage N3 Slow Wave Sleep and causing frequent nocturnal micro-arousals.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700">
+                    <h4 class="font-bold text-slate-900 dark:text-white mb-1">
+                        Can afternoon exercise replace lost sleep or disrupt nighttime rest?
+                    </h4>
+                    <p class="text-slate-600 dark:text-slate-300">
+                        Exercise stimulates growth hormone release and deepens nocturnal Stage N3 Slow Wave Sleep. However, vigorous aerobic or resistance training within 90 minutes of bedtime elevates core body temperature and sympathetic catecholamines, delaying sleep onset latency. Completing intense physical activity at least two to three hours before sleep allows core temperature to drop and promotes restorative sleep.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </article>
+\n
+    <!-- Floating Quick-Switcher Bar -->
+    <aside id="floatingBar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-white/95 dark:bg-slate-800/95 backdrop-blur-md px-4 py-2 rounded-full shadow-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300 no-print transition-all">
+        <span class="text-slate-400 font-semibold uppercase tracking-wider text-[10px] hidden sm:inline">Actions:</span>
+        <button type="button" onclick="resetCalculatorDefaults()" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Reset</button>
+        <button type="button" onclick="switchTab('cycle')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Cycles</button>
+        <button type="button" onclick="switchTab('nap-debt')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Power Naps</button>
+        <button type="button" onclick="switchTab('circadian')" class="px-2.5 py-1 rounded-full bg-slate-100 dark:bg-slate-700/60 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 transition">Circadian</button>
+        <button type="button" onclick="copyFormattedSummary()" class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 dark:bg-brand-950 dark:text-brand-300 hover:bg-brand-100 transition flex items-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+            <span>Copy</span>
+        </button>
+    </aside>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast-notify">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toastMessage">Data copied to clipboard!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="mt-16 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 text-xs text-slate-500 dark:text-slate-400 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-bold text-slate-700 dark:text-slate-300">CalcWorld</span>
+                <span>&bull; Clinical Sleep &amp; Circadian Calculation Engine</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="hover:underline">Home</a>
+                <a href="https://calcworld.net/other" class="hover:underline">All Calculators</a>
+                <a href="#guide-section" class="hover:underline">Sleep Manual</a>
+                <a href="#tab-print" onclick="switchTab('print')" class="hover:underline">Print Report</a>
+            </div>
+            <div>
+                &copy; 2026 CalcWorld. For educational reference based on AASM standards.
+            </div>
+        </div>
+    </footer>
+
+</main>
+
+<script>
+    // --- 1. Global Application State ---
+    let plannerMode = 'wake'; // 'wake' = "I need to wake up at X", 'bed' = "I go to bed at Y"
+    let sleepLatency = 14;    // Minutes to fall asleep (clinical default)
+    let currentBedtimeResults = [];
+    let currentWakeResults = [];
+    
+    // 7-day sleep debt tracking state (hours)
+    let daysSleep = [7.5, 7.0, 6.5, 6.0, 6.5, 8.0, 8.0];
+    let baselineNeed = 7.5;
+    
+    // Nap Timer state
+    let napTimerInterval = null;
+    let napSecondsLeft = 0;
+    
+    // Chart.js instance
+    let hypnogramChartInstance = null;
+
+    // --- 2. Time Conversion Utilities ---
+    function parse12HourToMinutes(hour, minute, ampm) {
+        let h = parseInt(hour, 10);
+        let m = parseInt(minute, 10);
+        if (ampm === 'PM' && h < 12) h += 12;
+        if (ampm === 'AM' && h === 12) h = 0;
+        return h * 60 + m;
+    }
+
+    function formatMinutesTo12Hour(totalMinutes) {
+        let m = ((totalMinutes % 1440) + 1440) % 1440;
+        let h24 = Math.floor(m / 60);
+        let mins = m % 60;
+        let ampm = h24 >= 12 ? 'PM' : 'AM';
+        let h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+        let minsStr = mins < 10 ? '0' + mins : '' + mins;
+        return h12 + ':' + minsStr + ' ' + ampm;
+    }
+
+    // --- 3. Mode Selection & Input Handlers ---
+    function setPlannerMode(mode) {
+        plannerMode = mode;
+        const btnWake = document.getElementById('btnModeWake');
+        const btnBed = document.getElementById('btnModeBed');
+        const boxWake = document.getElementById('boxWakeMode');
+        const boxBed = document.getElementById('boxBedMode');
+
+        if (mode === 'wake') {
+            btnWake.className = 'py-2 px-3 text-xs font-bold rounded-lg transition bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm flex items-center justify-center gap-1.5';
+            btnBed.className = 'py-2 px-3 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5';
+            boxWake.classList.remove('hidden');
+            boxBed.classList.add('hidden');
+        } else {
+            btnBed.className = 'py-2 px-3 text-xs font-bold rounded-lg transition bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400 shadow-sm flex items-center justify-center gap-1.5';
+            btnWake.className = 'py-2 px-3 text-xs font-semibold rounded-lg transition text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white flex items-center justify-center gap-1.5';
+            boxBed.classList.remove('hidden');
+            boxWake.classList.add('hidden');
+        }
+        runCalculations();
+    }
+
+    function setWakePreset(h, m, ampm) {
+        document.getElementById('wakeHour').value = h;
+        document.getElementById('wakeMinute').value = m;
+        document.getElementById('wakeAmPm').value = ampm;
+        runCalculations();
+    }
+
+    function setBedPreset(h, m, ampm) {
+        document.getElementById('bedHour').value = h;
+        document.getElementById('bedMinute').value = m;
+        document.getElementById('bedAmPm').value = ampm;
+        runCalculations();
+    }
+
+    function setBedtimeNow() {
+        const now = new Date();
+        let h24 = now.getHours();
+        let m = now.getMinutes();
+        // Round to nearest 5 minutes
+        m = Math.round(m / 5) * 5;
+        if (m === 60) {
+            m = 0;
+            h24 = (h24 + 1) % 24;
+        }
+        let ampm = h24 >= 12 ? 'PM' : 'AM';
+        let h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+
+        document.getElementById('bedHour').value = h12;
+        document.getElementById('bedMinute').value = m;
+        document.getElementById('bedAmPm').value = ampm;
+        setPlannerMode('bed');
+        showToast('Bedtime updated to current time: ' + h12 + ':' + (m < 10 ? '0' + m : m) + ' ' + ampm);
+    }
+
+    function setLatency(val) {
+        sleepLatency = parseInt(val, 10);
+        document.getElementById('latencyInput').value = sleepLatency;
+        document.getElementById('latencyDisplay').textContent = sleepLatency + ' min';
+        document.querySelectorAll('.latency-btn').forEach(btn => {
+            btn.classList.remove('active', 'bg-brand-50', 'dark:bg-brand-950/80', 'border-brand-500', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+            btn.classList.add('border-slate-200', 'dark:border-slate-700', 'text-slate-600', 'dark:text-slate-300');
+        });
+        runCalculations();
+    }
+
+    function onLatencySliderChange(val) {
+        sleepLatency = parseInt(val, 10);
+        document.getElementById('latencyDisplay').textContent = sleepLatency + ' min';
+        runCalculations();
+    }
+
+    function resetCalculatorDefaults() {
+        plannerMode = 'wake';
+        sleepLatency = 14;
+        document.getElementById('wakeHour').value = '7';
+        document.getElementById('wakeMinute').value = '0';
+        document.getElementById('wakeAmPm').value = 'AM';
+        document.getElementById('bedHour').value = '11';
+        document.getElementById('bedMinute').value = '0';
+        document.getElementById('bedAmPm').value = 'PM';
+        document.getElementById('latencyInput').value = 14;
+        document.getElementById('latencyDisplay').textContent = '14 min';
+        setPlannerMode('wake');
+        showToast('Settings restored to clinical standards.');
+    }
+
+    // --- 4. Core Sleep Cycle Calculation Engine ---
+    function runCalculations() {
+        if (plannerMode === 'wake') {
+            calculateWakeMode();
+        } else {
+            calculateBedMode();
+        }
+        updateNapTargets();
+        updateHypnogramChart();
+    }
+
+    function calculateWakeMode() {
+        const wh = document.getElementById('wakeHour').value;
+        const wm = document.getElementById('wakeMinute').value;
+        const wAmPm = document.getElementById('wakeAmPm').value;
+        const wakeTotalMins = parse12HourToMinutes(wh, wm, wAmPm);
+        const wakeFormatted = formatMinutesTo12Hour(wakeTotalMins);
+
+        // Compute bedtimes for 6, 5, 4, and 3 cycles (each cycle = 90 min)
+        const cycles = [
+            { count: 6, hours: 9.0, label: '6 Cycles (9h 00m)', tag: 'Athletic & Long Rest', border: 'border-purple-500/40', badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300', desc: 'Maximum physiological recovery, tissue repair, and full REM duration.' },
+            { count: 5, hours: 7.5, label: '5 Cycles (7h 30m)', tag: 'RECOMMENDED OPTIMAL', border: 'border-emerald-500', badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300', desc: 'Gold standard for adult cognitive function, alertness, and mood stability.' },
+            { count: 4, hours: 6.0, label: '4 Cycles (6h 00m)', tag: 'Functional Minimum', border: 'border-sky-500/40', badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300', desc: 'Sufficient slow-wave sleep, but truncates late-morning REM consolidation.' },
+            { count: 3, hours: 4.5, label: '3 Cycles (4h 30m)', tag: 'Short Sleep (Caution)', border: 'border-amber-500/40', badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300', desc: 'Emergency threshold; prevents sleep inertia but creates daily sleep debt.' }
+        ];
+
+        currentBedtimeResults = cycles.map(c => {
+            const sleepDurationMins = c.count * 90;
+            const onsetMins = (wakeTotalMins - sleepDurationMins + 1440 * 2) % 1440;
+            const bedMins = (onsetMins - sleepLatency + 1440 * 2) % 1440;
+            return {
+                ...c,
+                wakeMins: wakeTotalMins,
+                wakeFormatted: wakeFormatted,
+                sleepMins: sleepDurationMins,
+                onsetMins: onsetMins,
+                onsetFormatted: formatMinutesTo12Hour(onsetMins),
+                bedMins: bedMins,
+                bedFormatted: formatMinutesTo12Hour(bedMins)
+            };
+        });
+
+        // Update Hero Card with Recommended 5-Cycle target
+        const rec = currentBedtimeResults.find(c => c.count === 5);
+        document.getElementById('heroBadgeText').textContent = 'Optimal Recommendation (5 Cycles)';
+        document.getElementById('heroTargetLabel').textContent = 'Suggested Bedtime:';
+        document.getElementById('heroPrimaryTime').textContent = rec.bedFormatted;
+        document.getElementById('heroSecondaryLabel').textContent = '(Sleep Onset: ' + rec.onsetFormatted + ')';
+        document.getElementById('heroTargetDescription').textContent = 'Provides 7.5 hours of core sleep across 5 complete 90-minute ultradian cycles. Waking occurs in light Stage N1/N2 sleep, avoiding prefrontal grogginess from sleep inertia.';
+        document.getElementById('heroSleepDuration').textContent = '7h 30m';
+        document.getElementById('heroCycleCount').textContent = '5 Full Cycles';
+        document.getElementById('heroLatencyTime').textContent = sleepLatency + ' minutes';
+        document.getElementById('heroWakeReference').textContent = wakeFormatted;
+
+        // Render Cycle Cards
+        renderCycleCards(currentBedtimeResults, 'bed');
+    }
+
+    function calculateBedMode() {
+        const bh = document.getElementById('bedHour').value;
+        const bm = document.getElementById('bedMinute').value;
+        const bAmPm = document.getElementById('bedAmPm').value;
+        const bedTotalMins = parse12HourToMinutes(bh, bm, bAmPm);
+        const bedFormatted = formatMinutesTo12Hour(bedTotalMins);
+        const onsetMins = (bedTotalMins + sleepLatency) % 1440;
+        const onsetFormatted = formatMinutesTo12Hour(onsetMins);
+
+        const cycles = [
+            { count: 6, hours: 9.0, label: '6 Cycles (9h 00m)', tag: 'Athletic & Long Rest', border: 'border-purple-500/40', badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300', desc: 'Full physical restoration and extended REM sleep for emotional calibration.' },
+            { count: 5, hours: 7.5, label: '5 Cycles (7h 30m)', tag: 'RECOMMENDED OPTIMAL', border: 'border-emerald-500', badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300', desc: 'Ideal balance of Slow Wave Sleep and REM. Wakes at natural cycle boundary.' },
+            { count: 4, hours: 6.0, label: '4 Cycles (6h 00m)', tag: 'Functional Minimum', border: 'border-sky-500/40', badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300', desc: 'Acceptable short schedule; preserves early slow-wave cellular regeneration.' },
+            { count: 3, hours: 4.5, label: '3 Cycles (4h 30m)', tag: 'Short Sleep (Caution)', border: 'border-amber-500/40', badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300', desc: 'Wakes out of light sleep to prevent grogginess, but creates a sleep deficit.' }
+        ];
+
+        currentWakeResults = cycles.map(c => {
+            const sleepDurationMins = c.count * 90;
+            const wakeMins = (onsetMins + sleepDurationMins) % 1440;
+            return {
+                ...c,
+                bedMins: bedTotalMins,
+                bedFormatted: bedFormatted,
+                sleepMins: sleepDurationMins,
+                onsetMins: onsetMins,
+                onsetFormatted: onsetFormatted,
+                wakeMins: wakeMins,
+                wakeFormatted: formatMinutesTo12Hour(wakeMins)
+            };
+        });
+
+        // Update Hero Card with Recommended 5-Cycle target
+        const rec = currentWakeResults.find(c => c.count === 5);
+        document.getElementById('heroBadgeText').textContent = 'Optimal Recommendation (5 Cycles)';
+        document.getElementById('heroTargetLabel').textContent = 'Suggested Wake-Up Time:';
+        document.getElementById('heroPrimaryTime').textContent = rec.wakeFormatted;
+        document.getElementById('heroSecondaryLabel').textContent = '(Sleep Onset: ' + onsetFormatted + ')';
+        document.getElementById('heroTargetDescription').textContent = 'Completes 5 full ultradian cycles. Waking at ' + rec.wakeFormatted + ' terminates sleep at a natural cycle boundary, bypassing slow-wave grogginess.';
+        document.getElementById('heroSleepDuration').textContent = '7h 30m';
+        document.getElementById('heroCycleCount').textContent = '5 Full Cycles';
+        document.getElementById('heroLatencyTime').textContent = sleepLatency + ' minutes';
+        document.getElementById('heroWakeReference').textContent = rec.wakeFormatted;
+
+        // Render Cycle Cards
+        renderCycleCards(currentWakeResults, 'wake');
+    }
+
+    function renderCycleCards(results, targetType) {
+        const container = document.getElementById('cycleCardsContainer');
+        container.innerHTML = '';
+
+        results.forEach(item => {
+            const isRec = item.count === 5;
+            const card = document.createElement('div');
+            card.className = 'p-4 rounded-xl border bg-white dark:bg-slate-800 shadow-sm transition hover:shadow-md ' + item.border + (isRec ? ' ring-2 ring-emerald-500/50' : '');
+
+            const mainTime = targetType === 'bed' ? item.bedFormatted : item.wakeFormatted;
+            const mainLabel = targetType === 'bed' ? 'Bedtime' : 'Wake Time';
+            const subDetail = targetType === 'bed' ? 'Fall asleep ~ ' + item.onsetFormatted : 'Based on ' + item.onsetFormatted + ' onset';
+
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold ${item.badgeBg}">
+                        ${item.tag}
+                    </span>
+                    <span class="text-xs font-mono font-bold text-slate-500">${item.count} Cycles (${item.hours}h)</span>
+                </div>
+                <div class="flex items-baseline justify-between">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-slate-400 block">${mainLabel}</span>
+                        <span class="text-2xl font-extrabold font-mono text-slate-900 dark:text-white">${mainTime}</span>
+                    </div>
+                    <button type="button" onclick="copyScheduleItem('${mainLabel}', '${mainTime}', '${item.count} Cycles', '${item.hours}h')" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 hover:bg-brand-50 hover:text-brand-600 dark:hover:text-brand-300 text-slate-500 transition" title="Copy to clipboard">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    </button>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${subDetail}</div>
+                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">${item.desc}</p>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // --- 5. Interactive Hypnogram Sleep Architecture Chart (Chart.js) ---
+    function updateHypnogramChart() {
+        const ctx = document.getElementById('hypnogramChart');
+        if (!ctx) return;
+
+        // Stages: 4 = Awake, 3 = REM, 2 = N1, 1 = N2, 0 = N3 (SWS)
+        // 5 cycles modeled over 7.5 hours (points sampled every 15 mins = 31 points)
+        // Profile reflects standard polysomnography: SWS heavy in Cycles 1-2, REM heavy in Cycles 4-5
+        const stageData = [
+            4, 2, 1, 0, 0, 0, 1, 3,       // Cycle 1: Awake -> N1 -> N2 -> deep N3 -> N2 -> brief REM (0 to 1.5h)
+            1, 0, 0, 1, 1, 3, 3,          // Cycle 2: N2 -> N3 -> N2 -> moderate REM (1.5h to 3.0h)
+            1, 1, 0, 1, 3, 3,             // Cycle 3: N2 -> brief N3 -> N2 -> REM (3.0h to 4.5h)
+            1, 1, 1, 3, 3, 3,             // Cycle 4: N2 -> extended REM (4.5h to 6.0h)
+            1, 1, 3, 3, 3, 4              // Cycle 5: N2 -> maximal REM -> Awake (6.0h to 7.5h)
+        ];
+
+        // Generate dynamic time labels based on user bedtime
+        let startMins = 0;
+        if (plannerMode === 'wake' && currentBedtimeResults.length > 0) {
+            const rec = currentBedtimeResults.find(c => c.count === 5);
+            startMins = rec.bedMins;
+        } else if (currentWakeResults.length > 0) {
+            startMins = currentWakeResults[0].bedMins;
+        }
+
+        const labels = stageData.map((_, idx) => {
+            const pointMins = (startMins + idx * 15) % 1440;
+            return formatMinutesTo12Hour(pointMins);
+        });
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+        const textColor = isDark ? '#94a3b8' : '#64748b';
+
+        if (hypnogramChartInstance) {
+            hypnogramChartInstance.data.labels = labels;
+            hypnogramChartInstance.data.datasets[0].data = stageData;
+            hypnogramChartInstance.options.scales.x.ticks.color = textColor;
+            hypnogramChartInstance.options.scales.x.grid.color = gridColor;
+            hypnogramChartInstance.options.scales.y.ticks.color = textColor;
+            hypnogramChartInstance.options.scales.y.grid.color = gridColor;
+            hypnogramChartInstance.update();
+            return;
+        }
+
+        hypnogramChartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Sleep Stage',
+                    data: stageData,
+                    stepped: 'before',
+                    borderColor: '#6366f1',
+                    borderWidth: 2.5,
+                    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                    fill: true,
+                    tension: 0,
+                    pointRadius: 2,
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#818cf8'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const val = context.raw;
+                                const map = {
+                                    4: 'Awake (High vigilance / Beta & Alpha)',
+                                    3: 'Stage REM (Paradoxical sleep & dreaming)',
+                                    2: 'Stage N1 (Light transitional sleep & Theta)',
+                                    1: 'Stage N2 (Core sleep, spindles & K-complexes)',
+                                    0: 'Stage N3 (Slow Wave Deep Sleep & Delta waves)'
+                                };
+                                return map[val] || 'Stage: ' + val;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 4,
+                        ticks: {
+                            stepSize: 1,
+                            color: textColor,
+                            callback: function(val) {
+                                const labelsY = {
+                                    0: 'N3 (Deep)',
+                                    1: 'N2 (Core)',
+                                    2: 'N1 (Light)',
+                                    3: 'REM',
+                                    4: 'Awake'
+                                };
+                                return labelsY[val] || '';
+                            }
+                        },
+                        grid: { color: gridColor }
+                    },
+                    x: {
+                        ticks: {
+                            color: textColor,
+                            maxTicksLimit: 7
+                        },
+                        grid: { color: gridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    // --- 6. Power Nap Calculations & Audio Chime Timer ---
+    function updateNapTargets() {
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+
+        // 20 min nap + 5 min latency
+        const wake20 = formatMinutesTo12Hour(nowMins + 20 + 5);
+        // 90 min nap + 10 min latency
+        const wake90 = formatMinutesTo12Hour(nowMins + 90 + 10);
+        // Nappuccino: 20 min nap right after drinking coffee
+        const wakeCaff = formatMinutesTo12Hour(nowMins + 20);
+
+        const el20 = document.getElementById('napWake20');
+        const el90 = document.getElementById('napWake90');
+        const elCaff = document.getElementById('napWakeCaff');
+
+        if (el20) el20.textContent = wake20;
+        if (el90) el90.textContent = wake90;
+        if (elCaff) elCaff.textContent = wakeCaff;
+    }
+
+    function startNapTimer(durationMinutes, label) {
+        clearInterval(napTimerInterval);
+        napSecondsLeft = durationMinutes * 60;
+        
+        const box = document.getElementById('napTimerActiveBox');
+        const labelEl = document.getElementById('activeNapLabel');
+        const display = document.getElementById('napTimeRemainingDisplay');
+        
+        box.classList.remove('hidden');
+        labelEl.textContent = label + ' in Progress';
+        updateTimerDisplay();
+
+        napTimerInterval = setInterval(() => {
+            napSecondsLeft--;
+            if (napSecondsLeft <= 0) {
+                clearInterval(napTimerInterval);
+                playChimeSound();
+                showToast('Nap completed! Time to awaken feeling refreshed.');
+                labelEl.textContent = 'Session Finished!';
+                display.textContent = '00:00';
+            } else {
+                updateTimerDisplay();
+            }
+        }, 1000);
+
+        showToast('Timer started: ' + durationMinutes + ' minutes');
+    }
+
+    function stopNapTimer() {
+        clearInterval(napTimerInterval);
+        document.getElementById('napTimerActiveBox').classList.add('hidden');
+        showToast('Nap timer canceled.');
+    }
+
+    function updateTimerDisplay() {
+        const mins = Math.floor(napSecondsLeft / 60);
+        const secs = napSecondsLeft % 60;
+        const formatted = (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+        document.getElementById('napTimeRemainingDisplay').textContent = formatted;
+    }
+
+    // Pure Web Audio API Synthesized Multi-Harmonic Chime
+    function playChimeSound() {
+        try {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            // Frequencies: C5 (523.25), E5 (659.25), G5 (783.99), C6 (1046.50)
+            const notes = [523.25, 659.25, 783.99, 1046.50];
+            
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.15);
+                
+                gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.15);
+                gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + idx * 0.15 + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.15 + 1.8);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start(ctx.currentTime + idx * 0.15);
+                osc.stop(ctx.currentTime + idx * 0.15 + 2.0);
+            });
+        } catch (e) {
+            console.log('Audio playback unavailable:', e);
+        }
+    }
+
+    // --- 7. Sleep Debt & Weekly Deficit Calculator ---
+    function updateDaySleep(dayIndex, hours) {
+        daysSleep[dayIndex] = parseFloat(hours);
+        document.getElementById('disp-day-' + dayIndex).textContent = parseFloat(hours).toFixed(1) + 'h';
+        calcSleepDebt();
+    }
+
+    function calcSleepDebt() {
+        baselineNeed = parseFloat(document.getElementById('baselineSleepNeed').value);
+        const weeklyTarget = baselineNeed * 7;
+        const actualTotal = daysSleep.reduce((a, b) => a + b, 0);
+        const netDebt = actualTotal - weeklyTarget; // Negative = deficit
+
+        document.getElementById('weeklyActualSleepDisp').textContent = actualTotal.toFixed(1) + ' hrs';
+        document.getElementById('weeklyTargetSleepDisp').textContent = weeklyTarget.toFixed(1) + ' hrs';
+
+        const debtDisp = document.getElementById('netSleepDebtDisp');
+        const badge = document.getElementById('debtSeverityBadge');
+        const equiv = document.getElementById('debtEquivalentText');
+        const plan = document.getElementById('recoveryPlanSummary');
+
+        if (netDebt >= 0) {
+            debtDisp.textContent = '+' + netDebt.toFixed(1) + ' hrs';
+            debtDisp.className = 'text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400';
+            badge.textContent = 'RESTED / OPTIMAL';
+            badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+            equiv.textContent = 'Zero sleep debt; normal psychomotor vigilance maintained.';
+            plan.textContent = 'Maintain consistent circadian schedule';
+        } else {
+            const deficit = Math.abs(netDebt);
+            debtDisp.textContent = '-' + deficit.toFixed(1) + ' hrs';
+            
+            if (deficit <= 2.0) {
+                debtDisp.className = 'text-2xl font-bold font-mono text-sky-600 dark:text-sky-400';
+                badge.textContent = 'MILD DEFICIT';
+                badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300';
+                equiv.textContent = 'Minor attentional latency; easily repaid.';
+                plan.textContent = 'Add +30 min sleep for 2 to 3 nights';
+            } else if (deficit <= 5.0) {
+                debtDisp.className = 'text-2xl font-bold font-mono text-amber-600 dark:text-amber-400';
+                badge.textContent = 'MODERATE DEBT';
+                badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+                equiv.textContent = 'Vigilance impairment equivalent to mild alcohol intoxication.';
+                plan.textContent = 'Add +45 min sleep over 4 to 5 nights';
+            } else {
+                debtDisp.className = 'text-2xl font-bold font-mono text-rose-600 dark:text-rose-400';
+                badge.textContent = 'SEVERE ACCUMULATION';
+                badge.className = 'px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+                equiv.textContent = 'High microsleep risk, blunted working memory, elevated cortisol.';
+                plan.textContent = 'Add +60 min nightly + daily 20m naps';
+            }
+        }
+    }
+
+    // --- 8. Sleep Hygiene Score Evaluator ---
+    function calcHygieneScore() {
+        let total = 6;
+        let checked = 0;
+        for (let i = 1; i <= 6; i++) {
+            if (document.getElementById('hyg' + i).checked) checked++;
+        }
+        const pct = Math.round((checked / total) * 100);
+        const badge = document.getElementById('hygieneScoreBadge');
+        badge.textContent = 'Score: ' + pct + '%';
+        if (pct >= 80) {
+            badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        } else if (pct >= 50) {
+            badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+        } else {
+            badge.className = 'text-xs font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300';
+        }
+    }
+
+    // --- 9. Tab Switching & Print Report Population ---
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('bg-brand-600', 'text-white', 'shadow-sm');
+            btn.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        });
+
+        const activePanel = document.getElementById('tab-' + tabId);
+        const activeBtn = document.getElementById('tabBtn-' + tabId);
+
+        if (activePanel) activePanel.classList.add('active');
+        if (activeBtn) {
+            activeBtn.classList.add('bg-brand-600', 'text-white', 'shadow-sm');
+            activeBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300');
+        }
+
+        if (tabId === 'cycle' && hypnogramChartInstance) {
+            hypnogramChartInstance.resize();
+        }
+
+        if (tabId === 'print') {
+            generatePrintReport();
+        }
+    }
+
+    function generatePrintReport() {
+        const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        document.getElementById('printReportDate').textContent = 'Report Date: ' + today;
+
+        let rec = null;
+        let wakeStr = '';
+        let bedStr = '';
+
+        if (plannerMode === 'wake' && currentBedtimeResults.length > 0) {
+            rec = currentBedtimeResults.find(c => c.count === 5);
+            wakeStr = rec.wakeFormatted;
+            bedStr = rec.bedFormatted;
+        } else if (currentWakeResults.length > 0) {
+            rec = currentWakeResults.find(c => c.count === 5);
+            wakeStr = rec.wakeFormatted;
+            bedStr = rec.bedFormatted;
+        }
+
+        if (rec) {
+            document.getElementById('printWakeTime').textContent = wakeStr;
+            document.getElementById('printBedTime').textContent = bedStr;
+            document.getElementById('printLatency').textContent = sleepLatency + ' Minutes';
+            document.getElementById('printDuration').textContent = '7h 30m (5 Cycles)';
+        }
+
+        // Populate printable table
+        const tbody = document.getElementById('printCyclesTableBody');
+        tbody.innerHTML = '';
+        const dataList = plannerMode === 'wake' ? currentBedtimeResults : currentWakeResults;
+
+        dataList.forEach(item => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2 font-mono font-bold">${item.count} Cycles</td>
+                <td class="p-2 font-mono">${item.bedFormatted}</td>
+                <td class="p-2 font-mono">${item.hours} Hours</td>
+                <td class="p-2">${item.desc}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Debt status
+        const actualTotal = daysSleep.reduce((a, b) => a + b, 0);
+        const netDebt = actualTotal - (baselineNeed * 7);
+        const debtText = netDebt >= 0 
+            ? 'Fully rested. 0 hours of debt detected.' 
+            : Math.abs(netDebt).toFixed(1) + ' hours deficit detected across past 7 days.';
+        document.getElementById('printDebtSummary').textContent = debtText;
+    }
+
+    // --- 10. Clipboard & Interaction Actions ---
+    function copyFormattedSummary() {
+        let text = '';
+        if (plannerMode === 'wake' && currentBedtimeResults.length > 0) {
+            const rec = currentBedtimeResults.find(c => c.count === 5);
+            text = `=== CALCWORLD SLEEP ARCHITECTURE PLAN ===\n` +
+                   `Target Wake-Up Time: ${rec.wakeFormatted}\n` +
+                   `Optimal Bedtime (5 Cycles): ${rec.bedFormatted}\n` +
+                   `Core Sleep Duration: 7 Hours 30 Minutes\n` +
+                   `Sleep Onset Latency: ${sleepLatency} Minutes\n` +
+                   `\nAlternative Cycles:\n` +
+                   currentBedtimeResults.map(c => `- ${c.count} Cycles (${c.hours}h): Bed at ${c.bedFormatted} [${c.tag}]`).join('\n') +
+                   `\n\nCalculated via CalcWorld Sleep & Circadian Engine`;
+        } else if (currentWakeResults.length > 0) {
+            const rec = currentWakeResults.find(c => c.count === 5);
+            text = `=== CALCWORLD SLEEP ARCHITECTURE PLAN ===\n` +
+                   `Planned Bedtime: ${rec.bedFormatted}\n` +
+                   `Optimal Wake-Up Time (5 Cycles): ${rec.wakeFormatted}\n` +
+                   `Core Sleep Duration: 7 Hours 30 Minutes\n` +
+                   `Sleep Onset Latency: ${sleepLatency} Minutes\n` +
+                   `\nAlternative Cycles:\n` +
+                   currentWakeResults.map(c => `- ${c.count} Cycles (${c.hours}h): Wake at ${c.wakeFormatted} [${c.tag}]`).join('\n') +
+                   `\n\nCalculated via CalcWorld Sleep & Circadian Engine`;
+        }
+
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Sleep plan copied to clipboard!');
+            }).catch(() => {
+                fallbackCopy(text);
+            });
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function copyScheduleItem(label, time, cycles, duration) {
+        const text = `${label}: ${time} (${cycles}, ${duration})`;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => showToast('Copied: ' + text));
+        } else {
+            fallbackCopy(text);
+        }
+    }
+
+    function fallbackCopy(text) {
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            showToast('Copied to clipboard!');
+        } catch (e) {
+            showToast('Failed to copy.');
+        }
+        document.body.removeChild(ta);
+    }
+
+    function showToast(msg) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMessage');
+        toastMsg.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3200);
+    }
+
+    function handleLeadSubmit(e) {
+        e.preventDefault();
+        const email = document.getElementById('leadEmailInput').value;
+        if (!email) return;
+        showToast('Success! The Clinical Sleep Protocol PDF has been dispatched to ' + email);
+        document.getElementById('leadEmailInput').value = '';
+    }
+
+    // --- 11. Theme Switcher ---
+    function toggleTheme() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.theme = 'light';
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.theme = 'dark';
+        }
+        if (hypnogramChartInstance) {
+            updateHypnogramChart();
+        }
+    }
+
+    // --- 12. Real-Time Clock & Initial Initialization ---
+    function updateLiveClock() {
+        const now = new Date();
+        let h24 = now.getHours();
+        let m = now.getMinutes();
+        let ampm = h24 >= 12 ? 'PM' : 'AM';
+        let h12 = h24 % 12;
+        if (h12 === 0) h12 = 12;
+        let mStr = m < 10 ? '0' + m : '' + m;
+        const disp = document.getElementById('liveClockDisplay');
+        if (disp) disp.textContent = h12 + ':' + mStr + ' ' + ampm;
+        updateNapTargets();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        runCalculations();
+        calcSleepDebt();
+        calcHygieneScore();
+        updateLiveClock();
+        setInterval(updateLiveClock, 30000);
+
+        // AdBlock Detection Check
+        setTimeout(() => {
+            const ad1 = document.getElementById('ad-slot-1');
+            if (ad1 && (ad1.offsetHeight === 0 || window.getComputedStyle(ad1).display === 'none')) {
+                document.getElementById('adblockRecovery').classList.remove('hidden');
+            }
+        }, 1500);
+    });
+</script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

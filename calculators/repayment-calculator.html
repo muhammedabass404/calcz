@@ -1,0 +1,2236 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Repayment Calculator | Loan Repayment & Payoff Calculator | CalcWorld</title>
+    <meta name="description" content="Calculate loan repayment schedules, monthly payments, payoff duration, and interest saved with extra payments. Dual-solver engine supporting monthly, biweekly, and weekly repayments with interactive amortization charts and CSV export.">
+    <link rel="canonical" href="https://calcworld.net/calculators/repayment-calculator.html">
+
+    <!-- FOUC Prevention Script -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b'
+                        },
+                        navy: {
+                            800: '#1e293b',
+                            900: '#0f172a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- MathJax for KaTeX/LaTeX Formula Rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Loan Repayment Calculator",
+          "url": "https://calcworld.net/financial/repayment-calculator",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "All",
+          "browserRequirements": "Requires JavaScript. Requires HTML5.",
+          "description": "Calculate loan periodic payments, loan payoff schedules, interest saved from extra principal payments, biweekly repayment acceleration, and time to debt freedom."
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Financial Calculators",
+              "item": "https://calcworld.net/financial"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Repayment Calculator",
+              "item": "https://calcworld.net/financial/repayment-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "How is a fixed periodic loan payment mathematically calculated?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Fixed loan payments are derived using the standard annuity formula: M = P * [r(1+r)^n] / [(1+r)^n - 1], where P is principal balance, r is periodic interest rate (annual rate divided by payment frequency), and n is total payment periods."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do you calculate the exact time to pay off a loan with a fixed payment amount?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "By solving the loan amortization equation for n using natural logarithms: n = -ln(1 - (r*P)/M) / ln(1+r). This logarithmic formula computes the exact number of payment cycles needed to retire the debt."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why does a biweekly payment schedule accelerate loan repayment faster than monthly payments?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A standard calendar year contains 52 weeks, which equals 26 biweekly pay periods. Paying half of the monthly payment every two weeks results in 26 half-payments, or the equivalent of 13 full monthly payments each year. That single extra monthly payment reduces the loan principal balance directly without compounding interest."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What happens if my periodic payment is less than the periodic interest charge?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "When a payment fails to cover the accrued interest for that period, the unpaid interest is added to the principal balance. This condition is known as negative amortization, causing the total debt balance to grow rather than decline."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Are lenders legally permitted to charge prepayment penalties when paying ahead?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under CFPB regulations implementing the Dodd-Frank Wall Street Reform Act, prepayment penalties are prohibited on residential qualified mortgages and federal student loans. When permitted on commercial or specialized loans, penalties are strictly limited to the initial loan years."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How should borrowers ensure extra payments are credited toward principal?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under CFPB payment crediting rules (12 CFR § 1026.36), loan servicers must credit full payments promptly. Borrowers should explicitly designate supplemental remittances as 'Principal-Only' to prevent servicers from placing funds in an unapplied suspense account or advancing future payment due dates."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { height: 7px; width: 7px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(16, 185, 129, 0.4); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(16, 185, 129, 0.7); }
+
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Repayment Calculator | Loan Repayment & Payoff Calculator | CalcWorld">
+    <meta property="og:description" content="Calculate loan repayment schedules, monthly payments, payoff duration, and interest saved with extra payments. Dual-solver engine supporting monthly, biweekly, and weekly repayments with interactive amortization charts and CSV export.">
+    <meta property="og:url" content="https://calcworld.net/calculators/repayment-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Repayment Calculator | Loan Repayment & Payoff Calculator | CalcWorld">
+    <meta name="twitter:description" content="Calculate loan repayment schedules, monthly payments, payoff duration, and interest saved with extra payments. Dual-solver engine supporting monthly, biweekly, and weekly repayments with interactive amortization charts and CSV export.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- AdBlock Detection Recovery Banner -->
+    <div id="adblockRecovery" class="hidden no-print bg-amber-500/10 border-b border-amber-500/20 text-amber-800 dark:text-amber-300 px-4 py-2.5 text-xs text-center flex justify-between items-center max-w-7xl mx-auto rounded-b-lg">
+        <div class="flex items-center gap-2 mx-auto">
+            <svg class="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span><strong>Ad-supported resource:</strong> CalcWorld delivers free, rigorous financial engineering tools. Please safelist our domain to support continuous development.</span>
+        </div>
+        <button onclick="document.getElementById('adblockRecovery').classList.add('hidden')" class="text-amber-900 dark:text-amber-200 hover:opacity-80 text-sm font-bold ml-4">✕</button>
+    </div>
+
+    <!-- Floating Quick-Switcher Bar -->
+    <div id="floatingBar" class="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-slate-800/95 backdrop-blur shadow-[0_-4px_15px_rgba(0,0,0,0.08)] border-t border-slate-200 dark:border-slate-700 py-2.5 px-4 z-40 flex justify-between items-center text-xs">
+        <div class="max-w-7xl mx-auto w-full flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-brand-100 text-brand-800 dark:bg-brand-900/40 dark:text-brand-300">CALCWORLD</span>
+                <span class="font-semibold text-slate-700 dark:text-slate-300 hidden sm:inline">Repayment Suite:</span>
+            </div>
+            <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar py-0.5">
+                <a href="repayment-calculator.html" class="px-2.5 py-1 bg-brand-500 text-white font-medium rounded-md whitespace-nowrap shadow-xs">Repayment Solver</a>
+                <a href="amortization-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Amortization Schedule</a>
+                <a href="debt-payoff-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Debt Snowball/Avalanche</a>
+                <a href="mortgage-payoff-calculator.html" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-md whitespace-nowrap transition-colors">Mortgage Acceleration</a>
+                <a href="#guide-section" class="px-2.5 py-1 text-slate-600 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 whitespace-nowrap transition-colors hidden md:inline">Formulas & Guide ↓</a>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="copySummary()" class="px-2.5 py-1 bg-slate-100 dark:bg-slate-700 hover:bg-brand-500 hover:text-white dark:hover:bg-brand-600 rounded-md font-medium transition-colors flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    <span>Copy Summary</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification (2 seconds) -->
+    <div id="toast" class="fixed top-5 right-5 bg-slate-900 text-white dark:bg-brand-600 dark:text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 transform transition-all duration-300 translate-y-[-160%] opacity-0 z-50 pointer-events-none">
+        <svg class="w-5 h-5 text-brand-400 dark:text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span id="toast-message" class="text-sm font-medium">Summary copied to clipboard!</span>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 mb-24">
+        
+        <!-- Header Bar -->
+                <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+        <!-- Breadcrumb Navigation -->
+        <nav class="my-4 text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 sm:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="../index.html" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <a href="https://calcworld.net/financial" class="hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <span class="text-slate-800 dark:text-slate-200 font-semibold">Repayment Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Title Section -->
+        <div class="mb-6">
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 mb-2 border border-emerald-200 dark:border-emerald-800">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                Dual-Solver Debt Engine
+            </div>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                Loan Repayment Calculator
+            </h1>
+            <p class="mt-2 text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-3xl leading-relaxed">
+                Determine your exact periodic loan payment from a specified term, or solve for the precise payoff duration based on a fixed budget. Evaluate biweekly acceleration, extra principal contributions, and lifetime interest savings.
+            </p>
+        </div>
+
+        <!-- AD SLOT 1: Header Responsive Leaderboard -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-6 ad-slot" data-ad-slot="header-leaderboard">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Responsive Leaderboard (728x90 / 320x50)</span>
+            </div>
+        </div>
+
+        <!-- Calculator Interactive Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Left Inputs Panel (5 Columns) -->
+            <section class="lg:col-span-5 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-5" aria-labelledby="solver-heading">
+                
+                <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-700">
+                    <h2 id="solver-heading" class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Loan & Repayment Inputs
+                    </h2>
+                    <button onclick="resetDefaults()" class="text-xs text-slate-500 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Reset</button>
+                </div>
+
+                <!-- Dual Solver Mode Switcher -->
+                <div id="mode-selector">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Calculation Mode
+                    </label>
+                    <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-900/80 rounded-xl border border-slate-200 dark:border-slate-700">
+                        <button type="button" id="btn-mode-term" onclick="setMode('term')" class="py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400">
+                            Calculate Payment<br><span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">From Loan Term</span>
+                        </button>
+                        <button type="button" id="btn-mode-payment" onclick="setMode('payment')" class="py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white">
+                            Calculate Payoff Time<br><span class="text-[10px] font-normal text-slate-500 dark:text-slate-400">From Fixed Payment</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Presets Bar -->
+                <div id="presets-bar">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                        Quick Strategy Presets
+                    </label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="applyPreset('standard5yr')" class="px-2 py-2 text-xs font-medium bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/60 text-emerald-700 dark:text-emerald-300 rounded-lg border border-emerald-200 dark:border-emerald-800 transition-colors text-center leading-tight">
+                            Standard 5-Yr
+                        </button>
+                        <button type="button" onclick="applyPreset('aggressive')" class="px-2 py-2 text-xs font-medium bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/40 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 dark:border-blue-800 transition-colors text-center leading-tight">
+                            Aggressive Plan
+                        </button>
+                        <button type="button" onclick="applyPreset('biweeklyHack')" class="px-2 py-2 text-xs font-medium bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/40 dark:hover:bg-purple-900/60 text-purple-700 dark:text-purple-300 rounded-lg border border-purple-200 dark:border-purple-800 transition-colors text-center leading-tight">
+                            Biweekly Hack
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Input Fields Group -->
+                <div class="space-y-4 pt-1">
+                    
+                    <!-- Loan Balance -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-balance" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Loan Balance</label>
+                            <span class="text-[11px] text-slate-400">Principal remaining</span>
+                        </div>
+                        <div class="relative rounded-lg shadow-2xs">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-semibold currency-symbol">$</span>
+                            <input type="number" id="input-balance" value="25000" min="500" step="500" class="block w-full pl-8 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                        </div>
+                    </div>
+
+                    <!-- Annual Interest Rate -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-rate" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Annual Interest Rate (% APR)</label>
+                            <span class="text-[11px] text-slate-400">Nominal rate</span>
+                        </div>
+                        <div class="relative rounded-lg shadow-2xs">
+                            <input type="number" id="input-rate" value="6.50" min="0" max="40" step="0.05" class="block w-full pl-3 pr-8 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                            <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 font-semibold">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Frequency -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-frequency" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Payment Frequency</label>
+                            <span class="text-[11px] text-slate-400" id="freq-cycles-desc">12 payments / year</span>
+                        </div>
+                        <select id="input-frequency" class="block w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors cursor-pointer" onchange="handleFrequencyChange()">
+                            <option value="12" selected>Monthly (12 per year)</option>
+                            <option value="26">Biweekly (26 per year)</option>
+                            <option value="52">Weekly (52 per year)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mode 1 Fields: Loan Term (Years & Months) -->
+                    <div id="field-term-container" class="space-y-1">
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Loan Term</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="relative rounded-lg shadow-2xs">
+                                <input type="number" id="input-term-years" value="5" min="0" max="40" step="1" class="block w-full pl-3 pr-12 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">Years</span>
+                            </div>
+                            <div class="relative rounded-lg shadow-2xs">
+                                <input type="number" id="input-term-months" value="0" min="0" max="11" step="1" class="block w-full pl-3 pr-14 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                                <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400 text-xs">Months</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mode 2 Fields: Desired Fixed Payment -->
+                    <div id="field-payment-container" class="hidden space-y-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-desired-pmt" class="text-xs font-semibold text-slate-700 dark:text-slate-300" id="label-desired-pmt">Desired Periodic Payment</label>
+                            <span class="text-[11px] text-slate-400">Regular base payment</span>
+                        </div>
+                        <div class="relative rounded-lg shadow-2xs">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-semibold currency-symbol">$</span>
+                            <input type="number" id="input-desired-pmt" value="500" min="10" step="25" class="block w-full pl-8 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                        </div>
+                    </div>
+
+                    <!-- Extra Principal Payment per period -->
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-700">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="input-extra-payment" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                                Extra Payment (<span id="extra-freq-unit">per month</span>)
+                            </label>
+                            <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 font-semibold">100% Principal</span>
+                        </div>
+                        <div class="relative rounded-lg shadow-2xs">
+                            <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 font-semibold currency-symbol">$</span>
+                            <input type="number" id="input-extra-payment" value="50" min="0" step="10" class="block w-full pl-8 pr-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors" oninput="calculate()">
+                        </div>
+                    </div>
+
+                    <!-- Start Date -->
+                    <div>
+                        <label for="input-start-date" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">First Payment Date</label>
+                        <input type="month" id="input-start-date" class="block w-full px-3 py-2 text-sm bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 text-slate-900 dark:text-white transition-colors cursor-pointer" onchange="calculate()">
+                    </div>
+
+                </div>
+
+                <!-- Negative Amortization Alert Box -->
+                <div id="negative-amort-alert" class="hidden p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-800 dark:text-rose-300 text-xs flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-rose-600 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                    <div>
+                        <strong class="font-bold">Payment Insufficient:</strong> Your periodic payment is smaller than or equal to the periodic interest (<span id="alert-min-interest">--</span>). Increase payment to avoid perpetual debt or negative amortization.
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row gap-2">
+                    <button type="button" onclick="copySummary()" class="flex-1 py-2.5 px-4 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        <span>Copy Summary</span>
+                    </button>
+                    <button type="button" onclick="shareState()" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-xl transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        <span>Share</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Right Results & Display Area (7 Columns) -->
+            <section class="lg:col-span-7 space-y-6" aria-labelledby="results-heading">
+                
+                <!-- Main KPI Summary Deck -->
+                <div id="resultsDeck" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                    
+                    <!-- Periodic Payment Card (Hero) -->
+                    <div class="col-span-2 sm:col-span-1 bg-gradient-to-br from-brand-600 to-emerald-700 text-white p-4 rounded-2xl shadow-sm relative overflow-hidden">
+                        <div class="absolute -right-3 -bottom-3 text-emerald-500/20">
+                            <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-3.74-1.47-3.74-3.19 0-1.72 1.34-2.89 3.01-3.27V4h2.67v1.94c1.47.28 2.7 1.25 2.87 2.94h-1.96c-.17-.91-.79-1.49-2.25-1.49-1.4 0-2.25.66-2.25 1.48 0 .74.45 1.37 2.43 1.82 2.63.6 3.98 1.49 3.98 3.39 0 1.63-1.14 2.81-3.14 3.2z"/></svg>
+                        </div>
+                        <span class="text-[11px] font-semibold tracking-wider uppercase text-emerald-100 block mb-1" id="kpi-payment-label">Periodic Payment</span>
+                        <div class="text-2xl sm:text-3xl font-extrabold tracking-tight" id="out-periodic-payment">--</div>
+                        <span class="text-[11px] text-emerald-100 font-medium mt-1 block" id="out-payment-subtext">Base + Extra</span>
+                    </div>
+
+                    <!-- Interest Saved Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Interest Saved</span>
+                        <div class="text-xl sm:text-2xl font-black text-brand-600 dark:text-brand-400 truncate" id="out-interest-saved">--</div>
+                        <span class="text-[11px] text-slate-400 block mt-1" id="out-interest-saved-sub">With extra payments</span>
+                    </div>
+
+                    <!-- Time Saved Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Time Saved</span>
+                        <div class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate" id="out-time-saved">--</div>
+                        <span class="text-[11px] text-slate-400 block mt-1" id="out-time-saved-sub">Payoff accelerated</span>
+                    </div>
+
+                    <!-- Payoff Date Card -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Payoff Date</span>
+                        <div class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate" id="out-payoff-date">--</div>
+                        <span class="text-[11px] text-slate-400 block mt-1">vs <span id="out-orig-payoff-date" class="line-through text-slate-500">--</span></span>
+                    </div>
+
+                    <!-- Total Interest Paid -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Total Interest Paid</span>
+                        <div class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate" id="out-total-interest">--</div>
+                        <span class="text-[11px] text-slate-400 block mt-1">Finance charge</span>
+                    </div>
+
+                    <!-- Total Repaid (Principal + Interest) -->
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-2xs">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 block mb-1">Total Amount Repaid</span>
+                        <div class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white truncate" id="out-total-repaid">--</div>
+                        <span class="text-[11px] text-slate-400 block mt-1">Principal + Total Interest</span>
+                    </div>
+
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="border-b border-slate-200 dark:border-slate-700">
+                    <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto custom-scrollbar" aria-label="Calculator Views">
+                        <button type="button" onclick="switchTab('tab-summary')" class="tab-link active py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-brand-600 text-brand-600 dark:text-brand-400 dark:border-brand-400 whitespace-nowrap" data-tab="tab-summary">
+                            Summary & Comparison
+                        </button>
+                        <button type="button" onclick="switchTab('tab-charts')" class="tab-link py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap" data-tab="tab-charts">
+                            Visual Charts
+                        </button>
+                        <button type="button" onclick="switchTab('tab-table')" class="tab-link py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap" data-tab="tab-table">
+                            Amortization Schedule
+                        </button>
+                        <button type="button" onclick="switchTab('tab-biweekly')" class="tab-link py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap" data-tab="tab-biweekly">
+                            Biweekly vs Monthly
+                        </button>
+                        <button type="button" onclick="switchTab('tab-report')" class="tab-link py-3 px-3 text-xs sm:text-sm font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 whitespace-nowrap" data-tab="tab-report">
+                            Print Report
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Tab Panels Container -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-xs">
+                    
+                    <!-- TAB 1: Summary -->
+                    <div id="tab-summary" class="tab-pane block space-y-5">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider">Standard vs Accelerated Repayment</h3>
+                            <span class="text-xs text-brand-600 dark:text-brand-400 font-medium" id="summary-badge">--</span>
+                        </div>
+
+                        <!-- Side-by-Side Comparison Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Standard Loan Column -->
+                            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-700/60 space-y-3">
+                                <div class="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                                    <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Baseline Schedule</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium">Without Extra</span>
+                                </div>
+                                <div class="space-y-2 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Regular Payment:</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200" id="sum-std-pmt">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Total Interest:</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200" id="sum-std-interest">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Total Payments:</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200" id="sum-std-total">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Payoff Date:</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200" id="sum-std-date">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Payment Cycles:</span>
+                                        <span class="font-bold text-slate-800 dark:text-slate-200" id="sum-std-periods">--</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accelerated Loan Column -->
+                            <div class="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/60 space-y-3">
+                                <div class="flex items-center justify-between pb-2 border-b border-emerald-200 dark:border-emerald-800/60">
+                                    <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Accelerated Schedule</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-semibold">With Extras</span>
+                                </div>
+                                <div class="space-y-2 text-xs">
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Total Periodic Outlay:</span>
+                                        <span class="font-bold text-emerald-700 dark:text-emerald-300" id="sum-acc-pmt">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Accelerated Interest:</span>
+                                        <span class="font-bold text-emerald-700 dark:text-emerald-300" id="sum-acc-interest">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Total Payments:</span>
+                                        <span class="font-bold text-emerald-700 dark:text-emerald-300" id="sum-acc-total">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">New Payoff Date:</span>
+                                        <span class="font-bold text-emerald-700 dark:text-emerald-300" id="sum-acc-date">--</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-slate-500 dark:text-slate-400">Payment Cycles:</span>
+                                        <span class="font-bold text-emerald-700 dark:text-emerald-300" id="sum-acc-periods">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payoff Efficiency Insight Callout -->
+                        <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-900/90 border-l-4 border-brand-500 text-xs space-y-1">
+                            <span class="font-bold text-slate-800 dark:text-slate-200 block">Financial Engineering Insight</span>
+                            <p class="text-slate-600 dark:text-slate-300 leading-relaxed" id="sum-insight-text">
+                                Analyzing your debt amortization efficiency...
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: Visual Charts -->
+                    <div id="tab-charts" class="tab-pane hidden space-y-6">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Remaining Balance Over Time (Baseline vs Accelerated)</h4>
+                                <span class="text-[11px] text-slate-400">Amortization curve</span>
+                            </div>
+                            <div class="h-[280px] sm:h-[320px] w-full relative">
+                                <canvas id="amortizationLineChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Interest Paid & Savings Distribution</h4>
+                                <span class="text-[11px] text-brand-600 dark:text-brand-400 font-semibold" id="chart-interest-saved-badge">Saved: --</span>
+                            </div>
+                            <div class="h-[200px] sm:h-[220px] w-full relative">
+                                <canvas id="interestBarChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: Full Amortization Schedule Table -->
+                    <div id="tab-table" class="tab-pane hidden space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Schedule View:</span>
+                                <select id="table-view-mode" onchange="renderScheduleTable()" class="bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 text-xs text-slate-800 dark:text-slate-200">
+                                    <option value="annual" selected>Annual Summary</option>
+                                    <option value="all">Every Payment Period</option>
+                                </select>
+                            </div>
+                            <button onclick="exportCSV()" class="text-xs font-semibold text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1 cursor-pointer">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                <span>Export CSV Schedule</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar max-h-[420px] border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-wider sticky top-0 z-10 shadow-2xs">
+                                    <tr>
+                                        <th scope="col" class="py-2.5 px-3">Period / Date</th>
+                                        <th scope="col" class="py-2.5 px-3">Payment</th>
+                                        <th scope="col" class="py-2.5 px-3">Principal</th>
+                                        <th scope="col" class="py-2.5 px-3">Interest</th>
+                                        <th scope="col" class="py-2.5 px-3">Extra Principal</th>
+                                        <th scope="col" class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">Ending Balance</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-table-body" class="divide-y divide-slate-200 dark:divide-slate-700 font-mono">
+                                    <!-- Dynamic Amortization Rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: Biweekly vs Monthly Repayment Comparison -->
+                    <div id="tab-biweekly" class="tab-pane hidden space-y-5">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Biweekly vs Monthly Acceleration Dynamics
+                            </h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400">
+                                Compare how splitting regular monthly installments across alternative calendar frequencies compresses amortization.
+                            </p>
+                        </div>
+
+                        <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl">
+                            <table class="w-full text-left text-xs whitespace-nowrap">
+                                <thead class="bg-slate-100 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 uppercase font-semibold tracking-wider">
+                                    <tr>
+                                        <th class="py-2.5 px-3">Repayment Strategy</th>
+                                        <th class="py-2.5 px-3">Payment Amount</th>
+                                        <th class="py-2.5 px-3">Cycles / Year</th>
+                                        <th class="py-2.5 px-3">Annual Cash Outlay</th>
+                                        <th class="py-2.5 px-3">Total Payoff Time</th>
+                                        <th class="py-2.5 px-3">Total Interest Paid</th>
+                                        <th class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-bold">Total Interest Saved</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="biweekly-comparison-body" class="divide-y divide-slate-200 dark:divide-slate-700">
+                                    <!-- Populated dynamically via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700 text-xs space-y-2">
+                            <span class="font-bold text-slate-800 dark:text-slate-200 block">The Biweekly Acceleration Principle:</span>
+                            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                                A true biweekly schedule divides your baseline monthly payment in half and remits it every two weeks (26 cycles per calendar year). Because 26 half-payments equal exactly 13 full monthly payments, you systematically inject one full extra monthly payment into principal each year without large budget alterations.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: Print Report -->
+                    <div id="tab-report" class="tab-pane hidden space-y-5">
+                        <div class="text-center py-6 px-4 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl">
+                            <svg class="w-12 h-12 mx-auto text-brand-600 dark:text-brand-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                            <h4 class="text-base font-bold text-slate-900 dark:text-white">Official Loan Repayment Audit Sheet</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto mt-1 mb-4 leading-relaxed">
+                                Generate an institutional print-ready document detailing loan parameters, periodic obligations, payoff timelines, and lifetime interest savings.
+                            </p>
+                            <div class="flex justify-center gap-3">
+                                <button type="button" onclick="window.print()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-semibold text-xs rounded-xl shadow-xs transition-colors cursor-pointer">
+                                    Print / Save as PDF
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Print Preview Sheet -->
+                        <div class="p-5 rounded-xl bg-slate-50 dark:bg-slate-900 text-xs border border-slate-200 dark:border-slate-700 space-y-3 font-mono">
+                            <div class="text-center font-bold text-sm border-b pb-2 border-slate-300 dark:border-slate-700">CALCWORLD LOAN REPAYMENT SPECIFICATION</div>
+                            <div class="grid grid-cols-2 gap-2 text-[11px]" id="print-sheet-content">
+                                <!-- Dynamic details for printing -->
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- AD SLOT 2: Mid-Calculator Slot -->
+                <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs ad-slot" data-ad-slot="mid-calculator">
+                    <div class="text-center p-3">
+                        <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                        <span class="text-[11px] text-slate-400 dark:text-slate-500">In-Engine Contextual (Responsive)</span>
+                    </div>
+                </div>
+
+                <!-- Lead Capture Box -->
+                <div class="lead-box p-5 rounded-2xl bg-gradient-to-r from-emerald-500/10 via-brand-500/10 to-teal-500/10 dark:from-emerald-950/40 dark:via-brand-950/40 dark:to-teal-950/40 border border-emerald-500/20 dark:border-emerald-500/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="space-y-1 text-center md:text-left">
+                        <h4 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5 justify-center md:justify-start">
+                            <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            Receive Your Complete Loan Payoff Dossier
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                            Download an instant, comprehensive PDF report with complete period-by-period amortization tables and compound interest breakdowns.
+                        </p>
+                    </div>
+                    <form class="flex w-full md:w-auto shrink-0" onsubmit="event.preventDefault(); showLeadToast();">
+                        <label for="lead-email" class="sr-only">Email Address</label>
+                        <input type="email" id="lead-email" required placeholder="name@domain.com" class="px-3 py-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-l-lg focus:ring-2 focus:ring-brand-500 focus:outline-none text-slate-900 dark:text-white w-full md:w-56">
+                        <button type="submit" class="px-4 py-2 text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-r-lg transition-colors cursor-pointer shrink-0">
+                            Get PDF
+                        </button>
+                    </form>
+                </div>
+
+            </section>
+
+        </div>
+
+        <!-- AD SLOT 3: Above Educational Guide -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-10 ad-slot" data-ad-slot="above-guide">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Horizontal Leaderboard (728x90 / 970x90)</span>
+            </div>
+        </div>
+
+        <!-- Comprehensive 1200+ Word Educational Guide -->
+        <article id="guide-section" class="max-w-4xl mx-auto space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm sm:text-base border-t border-slate-200 dark:border-slate-800 pt-10">
+            
+            <header class="space-y-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-brand-600 dark:text-brand-400">Institutional Financial Engineering Guide</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    The Complete Mathematical Guide to Loan Repayment and Debt Payoff
+                </h2>
+                <p class="text-slate-500 dark:text-slate-400 text-sm">
+                    An in-depth derivation of periodic amortization mechanics, logarithmic payoff duration formulas, biweekly payment acceleration, and regulatory compliance standards established by the Federal Reserve and the Consumer Financial Protection Bureau (CFPB).
+                </p>
+            </header>
+
+            <!-- Section 1: The Mathematics of Amortization Derivation -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    1. Mathematical Derivation of the Standard Loan Payment Formula
+                </h3>
+                <p>
+                    Every fixed-installment debt—whether an auto loan, consumer personal note, or residential mortgage—relies on compound interest amortization. Under an amortizing structure, each periodic payment \(M\) satisfies both the accrued interest for the cycle and a portion of the original borrowed principal \(P\).
+                </p>
+                <p>
+                    To derive the payment formula, consider the present value of all future equal payments \(M\) discounted at the periodic interest rate \(r\). If a loan spans \(n\) discrete payment cycles, the principal balance \(P\) equals the sum of the discounted cash flows:
+                </p>
+                
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs sm:text-sm overflow-x-auto my-3 border border-slate-200 dark:border-slate-700">
+                    $$P = \sum_{k=1}^{n} \frac{M}{(1+r)^k} = M \left[ \frac{1 - (1+r)^{-n}}{r} \right]$$
+                </div>
+
+                <p>
+                    Solving this finite geometric series directly for the periodic payment \(M\) yields the standard amortization formula:
+                </p>
+
+                <div class="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 text-center font-mono text-sm sm:text-base overflow-x-auto my-3 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200">
+                    $$M = P \left[ \frac{r(1+r)^n}{(1+r)^n - 1} \right]$$
+                </div>
+
+                <p>
+                    In this equation:
+                </p>
+                <ul class="list-disc pl-5 space-y-1 text-xs sm:text-sm">
+                    <li><strong>\(M\)</strong> represents the required payment per cycle (monthly, biweekly, or weekly).</li>
+                    <li><strong>\(P\)</strong> represents the initial loan principal balance.</li>
+                    <li><strong>\(r\)</strong> represents the periodic interest rate, calculated as the annual percentage rate (APR) divided by payment cycles per year (\(r = \text{APR} / f\)).</li>
+                    <li><strong>\(n\)</strong> represents the total number of repayment periods over the loan life (\(n = \text{Years} \times f\)).</li>
+                </ul>
+            </section>
+
+            <!-- Section 2: Logarithmic Payoff Duration Derivation -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    2. Solving for Time: The Logarithmic Payoff Duration Formula
+                </h3>
+                <p>
+                    When a borrower fixes a budgeted periodic payment \(M\) rather than fixing the term, calculating the exact number of cycles \(n\) to reach zero balance requires logarithmic transformation.
+                </p>
+                <p>
+                    Beginning with the future value balance equation of an amortizing loan after \(n\) cycles:
+                </p>
+
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs sm:text-sm overflow-x-auto my-3 border border-slate-200 dark:border-slate-700">
+                    $$B_n = P(1+r)^n - M \left[ \frac{(1+r)^n - 1}{r} \right] = 0$$
+                </div>
+
+                <p>
+                    Multiplying through by \(r\) and regrouping the \((1+r)^n\) terms:
+                </p>
+
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs sm:text-sm overflow-x-auto my-3 border border-slate-200 dark:border-slate-700">
+                    $$P r (1+r)^n - M (1+r)^n + M = 0 \implies (1+r)^n (M - P r) = M$$
+                </div>
+
+                <p>
+                    Dividing both sides by \(M\) and taking the natural logarithm:
+                </p>
+
+                <div class="p-4 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 text-center font-mono text-sm sm:text-base overflow-x-auto my-3 border border-emerald-200 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200">
+                    $$n = -\frac{\ln\left(1 - \frac{r P}{M}\right)}{\ln(1 + r)}$$
+                </div>
+
+                <div class="p-4 rounded-xl bg-amber-50 dark:bg-amber-950/30 border-l-4 border-amber-500 text-xs space-y-1">
+                    <span class="font-bold text-amber-900 dark:text-amber-200">The Minimum Payment Boundary Condition:</span>
+                    <p class="text-amber-800 dark:text-amber-300">
+                        Notice the numerator term \(1 - \frac{r P}{M}\). Because natural logarithms are only defined for positive values, the ratio \(\frac{r P}{M}\) must be strictly less than 1. If \(M \le r P\), the payment is insufficient to cover periodic interest, the denominator inside the logarithm becomes zero or negative, and the mathematical solution approaches infinity. This confirms why debt cannot amortize when payments fall below periodic finance charges.
+                    </p>
+                </div>
+            </section>
+
+            <!-- AD SLOT 4: In-Article AdSense -->
+            <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-6 ad-slot" data-ad-slot="in-article">
+                <div class="text-center p-3">
+                    <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                    <span class="text-[11px] text-slate-400 dark:text-slate-500">In-Article Contextual Banner</span>
+                </div>
+            </div>
+
+            <!-- Section 3: Biweekly Acceleration Mathematics -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    3. Biweekly Repayment Mechanics: The Calendar Anomaly
+                </h3>
+                <p>
+                    Biweekly repayment strategies represent one of the most effective methods for accelerating debt retirement without altering lifestyle spending. The underlying mechanism is purely calendar-driven.
+                </p>
+                <p>
+                    A standard monthly loan requires 12 discrete payments annually. However, an astronomical year spans 365.2422 days, which translates to 52 weeks and 1 day (or 2 days during leap years). When a borrower pays every two weeks:
+                </p>
+
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs sm:text-sm overflow-x-auto my-3 border border-slate-200 dark:border-slate-700">
+                    $$\text{Biweekly Cycles} = \frac{52 \text{ weeks}}{2} = 26 \text{ payment periods}$$
+                </div>
+
+                <p>
+                    If the biweekly remittance is established at exactly half the standard monthly payment (\(M_{\text{bi}} = M_{\text{mo}} / 2\)), the borrower completes 26 half-payments:
+                </p>
+
+                <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 text-center font-mono text-xs sm:text-sm overflow-x-auto my-3 border border-slate-200 dark:border-slate-700">
+                    $$26 \times \left(\frac{M_{\text{mo}}}{2}\right) = 13 \times M_{\text{mo}}$$
+                </div>
+
+                <p>
+                    The borrower delivers 13 full monthly payments every 12 months. That extra full monthly installment goes directly toward principal reduction because accrued monthly interest has already been satisfied. On a standard 30-year loan balance at 6.5% APR, this single automatic adjustment eliminates four to six years of payments and reduces total interest costs by roughly twenty percent.
+                </p>
+            </section>
+
+            <!-- Section 4: Federal Reserve & CFPB Regulatory Standards -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    4. Federal Reserve & CFPB Regulatory Standards
+                </h3>
+                <p>
+                    Loan calculations and creditor remittance handling are governed by strict federal statutory frameworks designed to protect consumers from deceptive amortization practices:
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide block">Federal Reserve Regulation Z & TILA</span>
+                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                            Codified under 12 CFR Part 1026, the Truth in Lending Act requires financial institutions to disclose the true Annual Percentage Rate (APR), financing charges, and total payments schedule prior to closing. Regulation Z mandates standardized rounding rules for compounding periodic payments and forbids deceptive quotation of base note rates in place of effective APR.
+                        </p>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-2">
+                        <span class="text-xs font-bold text-brand-600 dark:text-brand-400 uppercase tracking-wide block">CFPB Payment Crediting Rules (12 CFR § 1026.36)</span>
+                        <p class="text-xs text-slate-600 dark:text-slate-300">
+                            The Consumer Financial Protection Bureau explicitly mandates that loan servicers credit consumer payments on the actual date received. Under servicing standards, servicers may not hold partial or supplemental payments in unapplied 'suspense accounts' indefinitely, and must credit principal-designated remittances directly against outstanding debt.
+                        </p>
+                    </div>
+                </div>
+
+                <p>
+                    Additionally, according to the Federal Reserve Board Consumer Credit statistical releases (G.19), non-revolving credit balances (such as personal term loans, auto financing, and education loans) continue to represent a significant share of household obligations. Implementing disciplined repayment schedules protects household balance sheets against macroeconomic volatility and shifting benchmark interest rates.
+                </p>
+            </section>
+
+            <!-- Section 5: Worked Numerical Case Studies -->
+            <section class="space-y-4">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    5. Comprehensive Worked Numerical Scenarios
+                </h3>
+                <p>
+                    To understand the compound financial impact of extra principal payments, examine a real-world scenario evaluated with institutional precision.
+                </p>
+
+                <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-700 rounded-xl my-3">
+                    <table class="w-full text-left text-xs whitespace-nowrap">
+                        <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 uppercase font-semibold">
+                            <tr>
+                                <th class="py-2.5 px-3">Loan Metric</th>
+                                <th class="py-2.5 px-3">Baseline Plan ($0 Extra)</th>
+                                <th class="py-2.5 px-3">Plan A (+$100/mo Extra)</th>
+                                <th class="py-2.5 px-3">Plan B (+$250/mo Extra)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Starting Principal</td>
+                                <td class="py-2 px-3">$30,000.00</td>
+                                <td class="py-2 px-3">$30,000.00</td>
+                                <td class="py-2 px-3">$30,000.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Interest Rate (APR)</td>
+                                <td class="py-2 px-3">7.00%</td>
+                                <td class="py-2 px-3">7.00%</td>
+                                <td class="py-2 px-3">7.00%</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Original Term</td>
+                                <td class="py-2 px-3">5 Years (60 Months)</td>
+                                <td class="py-2 px-3">5 Years (60 Months)</td>
+                                <td class="py-2 px-3">5 Years (60 Months)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Monthly Payment Outlay</td>
+                                <td class="py-2 px-3">$594.04</td>
+                                <td class="py-2 px-3">$694.04</td>
+                                <td class="py-2 px-3">$844.04</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Actual Payoff Time</td>
+                                <td class="py-2 px-3">60 Months (5.0 Yrs)</td>
+                                <td class="py-2 px-3">50 Months (4.2 Yrs)</td>
+                                <td class="py-2 px-3">40 Months (3.3 Yrs)</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2 px-3 font-semibold">Total Interest Paid</td>
+                                <td class="py-2 px-3">$5,642.17</td>
+                                <td class="py-2 px-3">$4,611.83</td>
+                                <td class="py-2 px-3">$3,628.71</td>
+                            </tr>
+                            <tr class="bg-emerald-50/50 dark:bg-emerald-950/20 font-bold text-emerald-800 dark:text-emerald-300">
+                                <td class="py-2.5 px-3">Net Savings Achieved</td>
+                                <td class="py-2.5 px-3">$0.00 (0 mos saved)</td>
+                                <td class="py-2.5 px-3">$1,030.34 (10 mos saved)</td>
+                                <td class="py-2.5 px-3">$2,013.46 (20 mos saved)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="text-xs text-slate-500 dark:text-slate-400">
+                    In Plan B, adding $250 each month retires the five-year debt in just over three years, safeguarding more than $2,000 in cash that would otherwise go to financing costs.
+                </p>
+            </section>
+
+            <!-- FAQ Section -->
+            <section class="space-y-4 pt-6 border-t border-slate-200 dark:border-slate-800">
+                <h3 class="text-xl font-bold text-slate-900 dark:text-white">
+                    Frequently Asked Questions
+                </h3>
+                
+                <div class="space-y-3">
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>How does extra payment to principal alter future amortization?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            Every dollar applied directly to principal immediately reduces the outstanding balance on which future periodic interest is calculated. Because simple and compounding loans compute finance charges against current principal, early reductions trigger a cascading effect where smaller interest charges leave larger portions of future regular payments to extinguish the remaining debt.
+                        </p>
+                    </details>
+
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>What is the mathematical difference between APR and interest rate?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            The nominal interest rate represents the base rate charged on borrowed money. The Annual Percentage Rate (APR) reflects the total cost of credit expressed as an annual rate, incorporating origination fees, closing points, discount fees, and mandatory prepaid financing charges. When fees are zero, APR and interest rate are identical.
+                        </p>
+                    </details>
+
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>Can a borrower be penalized for paying off a loan ahead of schedule?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            Under Consumer Financial Protection Bureau regulations under Dodd-Frank, prepayment penalties are prohibited on residential qualified mortgages, conforming conventional mortgages, FHA/VA government-backed loans, and all federal education notes. For personal or commercial loans where prepayment penalties exist, they are restricted to early contract years and clearly delineated in Truth in Lending disclosures.
+                        </p>
+                    </details>
+
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>What is the difference between loan acceleration and a loan recast?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            Loan acceleration increases or maintains periodic payments to compress the total payoff timeline, eliminating years of scheduled payments. A loan recast applies a substantial lump sum to reduce the principal balance, after which the lender recalculates a lower required monthly payment over the original remaining duration, reducing monthly cash outflow without shortening the payoff milestone.
+                        </p>
+                    </details>
+
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>How does payment frequency affect daily compounding interest?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            For debts using daily simple interest accrual (such as automobile financing and student loans), interest accrues based on the exact balance remaining on each day. Making payments biweekly or weekly rather than once per month reduces the average daily balance across the billing cycle, reducing accrued interest between payment events.
+                        </p>
+                    </details>
+
+                    <details class="group bg-slate-50 dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer">
+                        <summary class="flex justify-between items-center font-semibold text-slate-900 dark:text-white list-none">
+                            <span>How do I verify that my loan servicer correctly credits extra payments?</span>
+                            <span class="transition group-open:rotate-180 text-brand-600 dark:text-brand-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                            </span>
+                        </summary>
+                        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-3 leading-relaxed">
+                            Examine monthly billing statements for a line item labeled 'Principal Reduction' or 'Additional Principal Paid'. If extra funds instead cause the 'Next Payment Due Date' to advance into future months, the servicer has applied the remittance as an advance payment rather than immediate debt reduction, which deprives the borrower of interest compounding benefits.
+                        </p>
+                    </details>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- AD SLOT 5: Footer Responsive Slot -->
+        <div class="w-full bg-slate-100 dark:bg-slate-800/80 rounded-xl border border-dashed border-slate-300 dark:border-slate-700 min-h-[90px] flex items-center justify-center text-slate-400 text-xs my-10 ad-slot" data-ad-slot="footer-leaderboard">
+            <div class="text-center p-3">
+                <span class="font-medium block text-slate-500 dark:text-slate-400">Sponsored Advertisement</span>
+                <span class="text-[11px] text-slate-400 dark:text-slate-500">Footer Leaderboard (728x90 / 320x50)</span>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="border-t border-slate-200 dark:border-slate-800 pt-8 pb-16 text-center text-xs text-slate-500 dark:text-slate-400 space-y-3">
+            <div class="flex justify-center items-center gap-6 text-slate-600 dark:text-slate-300 font-medium">
+                <a href="../index.html" class="hover:text-brand-600 transition-colors">Home</a>
+                <a href="amortization-calculator.html" class="hover:text-brand-600 transition-colors">Amortization</a>
+                <a href="debt-payoff-calculator.html" class="hover:text-brand-600 transition-colors">Debt Payoff</a>
+                <a href="mortgage-payoff-calculator.html" class="hover:text-brand-600 transition-colors">Mortgage Acceleration</a>
+                <a href="../index.html" class="hover:text-brand-600 transition-colors">Privacy Policy</a>
+                <a href="../index.html" class="hover:text-brand-600 transition-colors">Terms of Service</a>
+            </div>
+            <p>
+                CalcWorld financial tools are engineered for educational, analytical, and illustrative modeling. Lending guidelines, compounding practices, and payment crediting rules are subject to individual loan agreements and institutional policies.
+            </p>
+            <p>© 2026 CalcWorld Financial Engineering. All rights reserved.</p>
+        </footer>
+
+    </div>
+
+    <!-- JavaScript Application Engine -->
+    <script>
+        // Global State Variables
+        let currentMode = 'term'; // 'term' (Mode 1: Term -> Payment) or 'payment' (Mode 2: Payment -> Payoff Time)
+        let currencySymbol = '$';
+        let currencyCode = 'USD';
+        let lineChartInstance = null;
+        let barChartInstance = null;
+        let baselineSchedule = [];
+        let acceleratedSchedule = [];
+        let calculationState = {};
+
+        // Theme Management
+        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+
+        function initTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            } else {
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+                themeToggleDarkIcon.classList.remove('hidden');
+                themeToggleLightIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+                themeToggleLightIcon.classList.remove('hidden');
+                themeToggleDarkIcon.classList.add('hidden');
+            }
+            updateChartThemes();
+        }
+
+        // Currency Configuration
+        function changeCurrency(code) {
+            currencyCode = code;
+            const symbols = { 'USD': '$', 'GBP': '£', 'CAD': '$', 'AUD': '$' };
+            currencySymbol = symbols[code] || '$';
+            document.querySelectorAll('.currency-symbol').forEach(el => el.textContent = currencySymbol);
+            calculate();
+        }
+
+        function formatCurrency(val, decimals = 2) {
+            return currencySymbol + Number(val).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        function formatDate(dateObj) {
+            return dateObj.toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+        }
+
+        // Mode Switching
+        function setMode(mode) {
+            currentMode = mode;
+            const btnTerm = document.getElementById('btn-mode-term');
+            const btnPayment = document.getElementById('btn-mode-payment');
+            const fieldTerm = document.getElementById('field-term-container');
+            const fieldPayment = document.getElementById('field-payment-container');
+            const kpiLabel = document.getElementById('kpi-payment-label');
+
+            if (mode === 'term') {
+                btnTerm.className = 'py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400';
+                btnPayment.className = 'py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                fieldTerm.classList.remove('hidden');
+                fieldPayment.classList.add('hidden');
+                kpiLabel.textContent = 'Periodic Payment';
+            } else {
+                btnPayment.className = 'py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight shadow-sm bg-white dark:bg-slate-800 text-brand-600 dark:text-brand-400';
+                btnTerm.className = 'py-2 px-2 text-xs font-semibold rounded-lg transition-all text-center leading-tight text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                fieldPayment.classList.remove('hidden');
+                fieldTerm.classList.add('hidden');
+                kpiLabel.textContent = 'Budgeted Payment';
+            }
+
+            calculate();
+        }
+
+        // Frequency change handler
+        function handleFrequencyChange() {
+            const freq = parseInt(document.getElementById('input-frequency').value, 10);
+            const freqDesc = document.getElementById('freq-cycles-desc');
+            const extraUnit = document.getElementById('extra-freq-unit');
+            const desiredPmtLabel = document.getElementById('label-desired-pmt');
+
+            if (freq === 12) {
+                freqDesc.textContent = '12 payments / year';
+                extraUnit.textContent = 'per month';
+                desiredPmtLabel.textContent = 'Desired Monthly Payment';
+            } else if (freq === 26) {
+                freqDesc.textContent = '26 payments / year';
+                extraUnit.textContent = 'per biweek';
+                desiredPmtLabel.textContent = 'Desired Biweekly Payment';
+            } else {
+                freqDesc.textContent = '52 payments / year';
+                extraUnit.textContent = 'per week';
+                desiredPmtLabel.textContent = 'Desired Weekly Payment';
+            }
+
+            calculate();
+        }
+
+        // Tab Switching
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+            document.querySelectorAll('.tab-link').forEach(link => {
+                link.classList.remove('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'dark:border-brand-400');
+                link.classList.add('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+            });
+
+            const activePane = document.getElementById(tabId);
+            if (activePane) activePane.classList.remove('hidden');
+
+            const activeLink = document.querySelector(`.tab-link[data-tab="${tabId}"]`);
+            if (activeLink) {
+                activeLink.classList.remove('border-transparent', 'text-slate-500', 'dark:text-slate-400');
+                activeLink.classList.add('border-brand-600', 'text-brand-600', 'dark:text-brand-400', 'dark:border-brand-400');
+            }
+
+            if (tabId === 'tab-charts') {
+                setTimeout(updateCharts, 50);
+            }
+        }
+
+        // Presets Implementation
+        function applyPreset(presetType) {
+            if (presetType === 'standard5yr') {
+                setMode('term');
+                document.getElementById('input-balance').value = 25000;
+                document.getElementById('input-rate').value = 6.50;
+                document.getElementById('input-frequency').value = 12;
+                document.getElementById('input-term-years').value = 5;
+                document.getElementById('input-term-months').value = 0;
+                document.getElementById('input-extra-payment').value = 0;
+            } else if (presetType === 'aggressive') {
+                setMode('term');
+                document.getElementById('input-balance').value = 35000;
+                document.getElementById('input-rate').value = 7.20;
+                document.getElementById('input-frequency').value = 12;
+                document.getElementById('input-term-years').value = 5;
+                document.getElementById('input-term-months').value = 0;
+                document.getElementById('input-extra-payment').value = 200;
+            } else if (presetType === 'biweeklyHack') {
+                setMode('term');
+                document.getElementById('input-balance').value = 40000;
+                document.getElementById('input-rate').value = 6.80;
+                document.getElementById('input-frequency').value = 26;
+                document.getElementById('input-term-years').value = 7;
+                document.getElementById('input-term-months').value = 0;
+                document.getElementById('input-extra-payment').value = 50;
+            }
+            handleFrequencyChange();
+            showToast('Applied ' + presetType + ' preset!');
+        }
+
+        function resetDefaults() {
+            setMode('term');
+            document.getElementById('input-balance').value = 25000;
+            document.getElementById('input-rate').value = 6.50;
+            document.getElementById('input-frequency').value = 12;
+            document.getElementById('input-term-years').value = 5;
+            document.getElementById('input-term-months').value = 0;
+            document.getElementById('input-desired-pmt').value = 500;
+            document.getElementById('input-extra-payment').value = 50;
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('input-start-date').value = `${yyyy}-${mm}`;
+            handleFrequencyChange();
+            showToast('Reset to default values.');
+        }
+
+        // Date Addition Utility Helper
+        function addCyclesToDate(baseDate, cycles, frequency) {
+            const d = new Date(baseDate.getTime());
+            if (frequency === 12) {
+                d.setMonth(d.getMonth() + cycles);
+            } else if (frequency === 26) {
+                d.setDate(d.getDate() + (cycles * 14));
+            } else if (frequency === 52) {
+                d.setDate(d.getDate() + (cycles * 7));
+            }
+            return d;
+        }
+
+        // Core Calculation Engine
+        function calculate() {
+            const balance = parseFloat(document.getElementById('input-balance').value) || 0;
+            const apr = parseFloat(document.getElementById('input-rate').value) || 0;
+            const freq = parseInt(document.getElementById('input-frequency').value, 10) || 12;
+            const extra = parseFloat(document.getElementById('input-extra-payment').value) || 0;
+
+            const startDateInput = document.getElementById('input-start-date').value;
+            let startDate = new Date();
+            if (startDateInput) {
+                const parts = startDateInput.split('-');
+                if (parts.length === 2) {
+                    startDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
+                }
+            }
+
+            const alertBox = document.getElementById('negative-amort-alert');
+            const alertMinInterest = document.getElementById('alert-min-interest');
+
+            if (balance <= 0) {
+                alertBox.classList.add('hidden');
+                return;
+            }
+
+            const r = (apr / 100) / freq;
+            const minInterest = balance * r;
+
+            let basePmt = 0;
+            let totalPeriodsPlanned = 0;
+
+            if (currentMode === 'term') {
+                const termYears = parseFloat(document.getElementById('input-term-years').value) || 0;
+                const termMonths = parseFloat(document.getElementById('input-term-months').value) || 0;
+                const totalYears = termYears + (termMonths / 12);
+                totalPeriodsPlanned = Math.round(totalYears * freq);
+
+                if (totalPeriodsPlanned <= 0) {
+                    totalPeriodsPlanned = 1;
+                }
+
+                if (r === 0) {
+                    basePmt = balance / totalPeriodsPlanned;
+                } else {
+                    basePmt = balance * (r * Math.pow(1 + r, totalPeriodsPlanned)) / (Math.pow(1 + r, totalPeriodsPlanned) - 1);
+                }
+            } else {
+                basePmt = parseFloat(document.getElementById('input-desired-pmt').value) || 0;
+            }
+
+            const acceleratedPmt = basePmt + extra;
+
+            // Check negative amortization condition
+            if (r > 0 && acceleratedPmt <= minInterest) {
+                alertBox.classList.remove('hidden');
+                alertMinInterest.textContent = formatCurrency(minInterest);
+                document.getElementById('out-periodic-payment').textContent = formatCurrency(acceleratedPmt);
+                document.getElementById('out-interest-saved').textContent = '--';
+                document.getElementById('out-time-saved').textContent = 'Never';
+                document.getElementById('out-payoff-date').textContent = 'Perpetual';
+                document.getElementById('out-orig-payoff-date').textContent = 'Never';
+                document.getElementById('out-total-interest').textContent = 'Infinite';
+                document.getElementById('out-total-repaid').textContent = 'Infinite';
+                return;
+            } else {
+                alertBox.classList.add('hidden');
+            }
+
+            // Simulate Baseline Amortization (no extra payment)
+            baselineSchedule = runAmortizationSimulation(balance, basePmt, 0, r, freq, startDate);
+
+            // Simulate Accelerated Amortization (with extra payment)
+            acceleratedSchedule = runAmortizationSimulation(balance, basePmt, extra, r, freq, startDate);
+
+            // Calculate Metrics
+            const baseTotalInterest = baselineSchedule.reduce((sum, item) => sum + item.interest, 0);
+            const accTotalInterest = acceleratedSchedule.reduce((sum, item) => sum + item.interest, 0);
+            const interestSaved = Math.max(0, baseTotalInterest - accTotalInterest);
+
+            const basePeriods = baselineSchedule.length;
+            const accPeriods = acceleratedSchedule.length;
+            const periodsSaved = Math.max(0, basePeriods - accPeriods);
+
+            const basePayoffDate = baselineSchedule.length > 0 ? baselineSchedule[baselineSchedule.length - 1].date : startDate;
+            const accPayoffDate = acceleratedSchedule.length > 0 ? acceleratedSchedule[acceleratedSchedule.length - 1].date : startDate;
+
+            const totalRepaid = balance + accTotalInterest;
+
+            // Format Time Saved
+            let timeSavedText = '0 months';
+            if (periodsSaved > 0) {
+                if (freq === 12) {
+                    const y = Math.floor(periodsSaved / 12);
+                    const m = periodsSaved % 12;
+                    if (y > 0 && m > 0) timeSavedText = `${y} yr ${m} mo`;
+                    else if (y > 0) timeSavedText = `${y} yr${y > 1 ? 's' : ''}`;
+                    else timeSavedText = `${m} mo${m > 1 ? 's' : ''}`;
+                } else if (freq === 26) {
+                    const approxMonths = Math.round(periodsSaved * (12 / 26));
+                    const y = Math.floor(approxMonths / 12);
+                    const m = approxMonths % 12;
+                    if (y > 0 && m > 0) timeSavedText = `${y} yr ${m} mo (${periodsSaved} biwks)`;
+                    else if (y > 0) timeSavedText = `${y} yrs (${periodsSaved} biwks)`;
+                    else timeSavedText = `${periodsSaved} biweeks (~${approxMonths} mos)`;
+                } else {
+                    const approxMonths = Math.round(periodsSaved * (12 / 52));
+                    timeSavedText = `${periodsSaved} wks (~${approxMonths} mos)`;
+                }
+            }
+
+            // Update Global State
+            calculationState = {
+                balance, apr, freq, extra, basePmt, acceleratedPmt,
+                baseTotalInterest, accTotalInterest, interestSaved,
+                basePeriods, accPeriods, periodsSaved, timeSavedText,
+                basePayoffDate, accPayoffDate, totalRepaid
+            };
+
+            // Update UI KPIs
+            document.getElementById('out-periodic-payment').textContent = formatCurrency(acceleratedPmt);
+            document.getElementById('out-payment-subtext').textContent = extra > 0 ? `${formatCurrency(basePmt)} base + ${formatCurrency(extra)} extra` : `Base payment (${freq}x/yr)`;
+            document.getElementById('out-interest-saved').textContent = formatCurrency(interestSaved);
+            document.getElementById('out-interest-saved-sub').textContent = baseTotalInterest > 0 ? `${((interestSaved / baseTotalInterest) * 100).toFixed(1)}% interest eliminated` : 'No interest charge';
+            document.getElementById('out-time-saved').textContent = periodsSaved > 0 ? timeSavedText : '0 months';
+            document.getElementById('out-time-saved-sub').textContent = periodsSaved > 0 ? `${periodsSaved} payment cycles shortened` : 'Standard schedule';
+            document.getElementById('out-payoff-date').textContent = formatDate(accPayoffDate);
+            document.getElementById('out-orig-payoff-date').textContent = formatDate(basePayoffDate);
+            document.getElementById('out-total-interest').textContent = formatCurrency(accTotalInterest);
+            document.getElementById('out-total-repaid').textContent = formatCurrency(totalRepaid);
+
+            // Tab 1 Summary
+            document.getElementById('sum-std-pmt').textContent = formatCurrency(basePmt);
+            document.getElementById('sum-std-interest').textContent = formatCurrency(baseTotalInterest);
+            document.getElementById('sum-std-total').textContent = formatCurrency(balance + baseTotalInterest);
+            document.getElementById('sum-std-date').textContent = formatDate(basePayoffDate);
+            document.getElementById('sum-std-periods').textContent = `${basePeriods} payments`;
+
+            document.getElementById('sum-acc-pmt').textContent = formatCurrency(acceleratedPmt);
+            document.getElementById('sum-acc-interest').textContent = formatCurrency(accTotalInterest);
+            document.getElementById('sum-acc-total').textContent = formatCurrency(totalRepaid);
+            document.getElementById('sum-acc-date').textContent = formatDate(accPayoffDate);
+            document.getElementById('sum-acc-periods').textContent = `${accPeriods} payments`;
+
+            document.getElementById('summary-badge').textContent = periodsSaved > 0 ? `Advances payoff by ${timeSavedText}` : 'Standard Amortization';
+
+            const savedInterestRatio = baseTotalInterest > 0 ? ((interestSaved / baseTotalInterest) * 100).toFixed(1) : 0;
+            document.getElementById('sum-insight-text').textContent = extra > 0 
+                ? `Remitting an extra ${formatCurrency(extra)} per period saves ${formatCurrency(interestSaved)} in cumulative financing charges (${savedInterestRatio}% reduction) and accelerates debt freedom by ${timeSavedText}.`
+                : `No supplemental payments applied. Increasing your periodic installment applies 100% of additional funds toward principal, lowering compound interest and advancing your debt-free milestone.`;
+
+            // Render Amortization Table & Biweekly View
+            renderScheduleTable();
+            renderBiweeklyComparison(balance, apr, basePmt, startDate);
+            renderPrintSheet();
+            updateCharts();
+            syncUrlState();
+        }
+
+        // Discrete Period-by-Period Amortization Simulator
+        function runAmortizationSimulation(principal, basePmt, extraPmt, r, freq, startDate) {
+            const schedule = [];
+            let balance = principal;
+            let totalInterest = 0;
+            const maxCycles = 1200; // Protection cap (100 years of monthly or ~46 years of biweekly)
+            let period = 0;
+
+            while (balance > 0.005 && period < maxCycles) {
+                period++;
+                const periodDate = addCyclesToDate(startDate, period, freq);
+                const interestCharge = balance * r;
+                let regularPrincipal = basePmt - interestCharge;
+                let appliedExtra = extraPmt;
+
+                // Adjust for final payment balance
+                let totalPayment = basePmt + appliedExtra;
+                if (balance + interestCharge <= totalPayment) {
+                    totalPayment = balance + interestCharge;
+                    appliedExtra = Math.max(0, totalPayment - basePmt);
+                    regularPrincipal = totalPayment - interestCharge - appliedExtra;
+                    balance = 0;
+                } else {
+                    const totalPrincipalApplied = regularPrincipal + appliedExtra;
+                    balance -= totalPrincipalApplied;
+                }
+
+                totalInterest += interestCharge;
+
+                schedule.push({
+                    period,
+                    date: periodDate,
+                    payment: totalPayment,
+                    principalPaid: regularPrincipal + appliedExtra,
+                    regularPrincipal,
+                    extraPrincipal: appliedExtra,
+                    interest: interestCharge,
+                    cumulativeInterest: totalInterest,
+                    balance: Math.max(0, balance)
+                });
+            }
+
+            return schedule;
+        }
+
+        // Render Amortization Schedule Table
+        function renderScheduleTable() {
+            const tbody = document.getElementById('schedule-table-body');
+            const viewMode = document.getElementById('table-view-mode').value;
+            tbody.innerHTML = '';
+
+            const scheduleToRender = acceleratedSchedule;
+            if (scheduleToRender.length === 0) return;
+
+            if (viewMode === 'all') {
+                scheduleToRender.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+                    row.innerHTML = `
+                        <td class="py-2 px-3 text-slate-500 dark:text-slate-400">#${item.period} · ${formatDate(item.date)}</td>
+                        <td class="py-2 px-3 font-semibold">${formatCurrency(item.payment)}</td>
+                        <td class="py-2 px-3 text-emerald-600 dark:text-emerald-400 font-medium">${formatCurrency(item.principalPaid)}</td>
+                        <td class="py-2 px-3 text-rose-500 dark:text-rose-400 font-medium">${formatCurrency(item.interest)}</td>
+                        <td class="py-2 px-3 text-brand-600 dark:text-brand-400">${item.extraPrincipal > 0 ? formatCurrency(item.extraPrincipal) : '—'}</td>
+                        <td class="py-2 px-3 font-bold text-slate-900 dark:text-white">${formatCurrency(item.balance)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } else {
+                // Annual Grouped Summary
+                const freq = calculationState.freq || 12;
+                let currentYear = 1;
+                let yearlyPayment = 0;
+                let yearlyPrincipal = 0;
+                let yearlyInterest = 0;
+                let yearlyExtra = 0;
+                let endingBalance = 0;
+                let yearEndDate = scheduleToRender[0].date;
+
+                scheduleToRender.forEach((item, index) => {
+                    yearlyPayment += item.payment;
+                    yearlyPrincipal += item.principalPaid;
+                    yearlyInterest += item.interest;
+                    yearlyExtra += item.extraPrincipal;
+                    endingBalance = item.balance;
+                    yearEndDate = item.date;
+
+                    const isYearBoundary = ((item.period % freq === 0) || index === scheduleToRender.length - 1);
+                    if (isYearBoundary) {
+                        const row = document.createElement('tr');
+                        row.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors font-medium';
+                        row.innerHTML = `
+                            <td class="py-2.5 px-3 text-slate-700 dark:text-slate-300 font-semibold">Year ${currentYear} (${yearEndDate.getFullYear()})</td>
+                            <td class="py-2.5 px-3 font-bold">${formatCurrency(yearlyPayment)}</td>
+                            <td class="py-2.5 px-3 text-emerald-600 dark:text-emerald-400 font-semibold">${formatCurrency(yearlyPrincipal)}</td>
+                            <td class="py-2.5 px-3 text-rose-500 dark:text-rose-400 font-semibold">${formatCurrency(yearlyInterest)}</td>
+                            <td class="py-2.5 px-3 text-brand-600 dark:text-brand-400">${yearlyExtra > 0 ? formatCurrency(yearlyExtra) : '—'}</td>
+                            <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">${formatCurrency(endingBalance)}</td>
+                        `;
+                        tbody.appendChild(row);
+
+                        currentYear++;
+                        yearlyPayment = 0;
+                        yearlyPrincipal = 0;
+                        yearlyInterest = 0;
+                        yearlyExtra = 0;
+                    }
+                });
+            }
+        }
+
+        // Render Biweekly vs Monthly Comparison Tab
+        function renderBiweeklyComparison(principal, apr, baseMonthlyPmt, startDate) {
+            const tbody = document.getElementById('biweekly-comparison-body');
+            tbody.innerHTML = '';
+
+            const rMonthly = (apr / 100) / 12;
+            const rBiweekly = (apr / 100) / 26;
+            const rWeekly = (apr / 100) / 52;
+
+            // Strategy 1: Standard Monthly (12 PMTs)
+            const monthlySched = runAmortizationSimulation(principal, baseMonthlyPmt, 0, rMonthly, 12, startDate);
+            const monthlyInterest = monthlySched.reduce((s, x) => s + x.interest, 0);
+            const monthlyYears = (monthlySched.length / 12).toFixed(1);
+
+            // Strategy 2: True Biweekly (Half PMT every 2 weeks, 26 cycles)
+            const biweeklyPmt = baseMonthlyPmt / 2;
+            const biweeklySched = runAmortizationSimulation(principal, biweeklyPmt, 0, rBiweekly, 26, startDate);
+            const biweeklyInterest = biweeklySched.reduce((s, x) => s + x.interest, 0);
+            const biweeklyYears = (biweeklySched.length / 26).toFixed(1);
+            const biweeklySaved = Math.max(0, monthlyInterest - biweeklyInterest);
+
+            // Strategy 3: Accelerated Weekly (Quarter PMT every week, 52 cycles)
+            const weeklyPmt = baseMonthlyPmt / 4;
+            const weeklySched = runAmortizationSimulation(principal, weeklyPmt, 0, rWeekly, 52, startDate);
+            const weeklyInterest = weeklySched.reduce((s, x) => s + x.interest, 0);
+            const weeklyYears = (weeklySched.length / 52).toFixed(1);
+            const weeklySaved = Math.max(0, monthlyInterest - weeklyInterest);
+
+            // Strategy 4: Monthly + 1 Extra Payment Divided Across the Year (1/12th added each month)
+            const extraMonthlyPmt = baseMonthlyPmt / 12;
+            const extraMonthlySched = runAmortizationSimulation(principal, baseMonthlyPmt, extraMonthlyPmt, rMonthly, 12, startDate);
+            const extraMonthlyInterest = extraMonthlySched.reduce((s, x) => s + x.interest, 0);
+            const extraMonthlyYears = (extraMonthlySched.length / 12).toFixed(1);
+            const extraMonthlySaved = Math.max(0, monthlyInterest - extraMonthlyInterest);
+
+            const strategies = [
+                {
+                    name: 'Standard Monthly',
+                    payment: formatCurrency(baseMonthlyPmt) + ' / mo',
+                    cycles: '12 / yr',
+                    outlay: formatCurrency(baseMonthlyPmt * 12),
+                    time: `${monthlyYears} Years (${monthlySched.length} mos)`,
+                    interest: formatCurrency(monthlyInterest),
+                    saved: 'Baseline ($0.00)'
+                },
+                {
+                    name: 'Accelerated Biweekly',
+                    payment: formatCurrency(biweeklyPmt) + ' / biwk',
+                    cycles: '26 / yr',
+                    outlay: formatCurrency(biweeklyPmt * 26),
+                    time: `${biweeklyYears} Years (${biweeklySched.length} biwks)`,
+                    interest: formatCurrency(biweeklyInterest),
+                    saved: formatCurrency(biweeklySaved)
+                },
+                {
+                    name: 'Accelerated Weekly',
+                    payment: formatCurrency(weeklyPmt) + ' / wk',
+                    cycles: '52 / yr',
+                    outlay: formatCurrency(weeklyPmt * 52),
+                    time: `${weeklyYears} Years (${weeklySched.length} wks)`,
+                    interest: formatCurrency(weeklyInterest),
+                    saved: formatCurrency(weeklySaved)
+                },
+                {
+                    name: 'Monthly + 1 Full Extra / Yr',
+                    payment: formatCurrency(baseMonthlyPmt + extraMonthlyPmt) + ' / mo',
+                    cycles: '12 / yr',
+                    outlay: formatCurrency((baseMonthlyPmt + extraMonthlyPmt) * 12),
+                    time: `${extraMonthlyYears} Years (${extraMonthlySched.length} mos)`,
+                    interest: formatCurrency(extraMonthlyInterest),
+                    saved: formatCurrency(extraMonthlySaved)
+                }
+            ];
+
+            strategies.forEach((st, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = idx === 1 ? 'bg-emerald-50/60 dark:bg-emerald-950/30 font-medium' : 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        ${idx === 1 ? '<span class="w-2 h-2 rounded-full bg-emerald-500"></span>' : ''}
+                        ${st.name}
+                    </td>
+                    <td class="py-2.5 px-3">${st.payment}</td>
+                    <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400">${st.cycles}</td>
+                    <td class="py-2.5 px-3 font-medium">${st.outlay}</td>
+                    <td class="py-2.5 px-3 font-semibold">${st.time}</td>
+                    <td class="py-2.5 px-3 text-rose-500 dark:text-rose-400">${st.interest}</td>
+                    <td class="py-2.5 px-3 font-bold text-emerald-600 dark:text-emerald-400">${st.saved}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Render Print Sheet
+        function renderPrintSheet() {
+            const container = document.getElementById('print-sheet-content');
+            if (!container) return;
+
+            const st = calculationState;
+            container.innerHTML = `
+                <div><span class="text-slate-400">Calculation Date:</span> ${new Date().toLocaleDateString()}</div>
+                <div><span class="text-slate-400">Currency:</span> ${currencyCode} (${currencySymbol})</div>
+                <div><span class="text-slate-400">Principal Balance:</span> ${formatCurrency(st.balance)}</div>
+                <div><span class="text-slate-400">Interest Rate:</span> ${st.apr.toFixed(2)}% APR</div>
+                <div><span class="text-slate-400">Payment Frequency:</span> ${st.freq} cycles/year</div>
+                <div><span class="text-slate-400">Extra Payment:</span> ${formatCurrency(st.extra)}/cycle</div>
+                <div><span class="text-slate-400">Periodic Payment:</span> ${formatCurrency(st.acceleratedPmt)}</div>
+                <div><span class="text-slate-400">Accelerated Payoff:</span> ${formatDate(st.accPayoffDate)}</div>
+                <div><span class="text-slate-400">Baseline Payoff:</span> ${formatDate(st.basePayoffDate)}</div>
+                <div><span class="text-slate-400">Time Saved:</span> ${st.timeSavedText}</div>
+                <div><span class="text-slate-400">Total Interest Paid:</span> ${formatCurrency(st.accTotalInterest)}</div>
+                <div><span class="text-slate-400">Total Interest Saved:</span> ${formatCurrency(st.interestSaved)}</div>
+            `;
+        }
+
+        // Chart Visualizations
+        function updateCharts() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)';
+
+            // Prepare Sample Points for Line Chart (up to 40 evenly spaced points)
+            const maxPeriods = Math.max(baselineSchedule.length, acceleratedSchedule.length);
+            if (maxPeriods === 0) return;
+
+            const step = Math.max(1, Math.floor(maxPeriods / 35));
+            const labels = [];
+            const baselineData = [];
+            const acceleratedData = [];
+
+            const baseMap = new Map();
+            baselineSchedule.forEach(item => baseMap.set(item.period, item.balance));
+
+            const accMap = new Map();
+            acceleratedSchedule.forEach(item => accMap.set(item.period, item.balance));
+
+            for (let p = 1; p <= maxPeriods; p += step) {
+                labels.push(`P${p}`);
+                baselineData.push(baseMap.has(p) ? baseMap.get(p) : 0);
+                acceleratedData.push(accMap.has(p) ? accMap.get(p) : 0);
+            }
+
+            // Ensure final period is included
+            if (!labels.includes(`P${maxPeriods}`)) {
+                labels.push(`P${maxPeriods}`);
+                baselineData.push(baseMap.has(maxPeriods) ? baseMap.get(maxPeriods) : 0);
+                acceleratedData.push(accMap.has(maxPeriods) ? accMap.get(maxPeriods) : 0);
+            }
+
+            // 1. Line Chart
+            const lineCtx = document.getElementById('amortizationLineChart');
+            if (lineCtx) {
+                if (lineChartInstance) lineChartInstance.destroy();
+                lineChartInstance = new Chart(lineCtx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'Baseline Balance',
+                                data: baselineData,
+                                borderColor: '#94a3b8',
+                                backgroundColor: 'rgba(148, 163, 184, 0.08)',
+                                borderWidth: 2,
+                                borderDash: [4, 4],
+                                fill: false,
+                                tension: 0.1,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Accelerated Balance',
+                                data: acceleratedData,
+                                borderColor: '#10b981',
+                                backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                borderWidth: 2.5,
+                                fill: true,
+                                tension: 0.2,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: {
+                                labels: { color: textColor, font: { family: 'Inter', size: 11, weight: '500' } }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => ` ${context.dataset.label}: ${formatCurrency(context.parsed.y)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { color: textColor, font: { family: 'Inter', size: 10 } }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { family: 'Inter', size: 10 },
+                                    callback: (val) => currencySymbol + Number(val).toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // 2. Bar Chart: Interest Comparison
+            const barCtx = document.getElementById('interestBarChart');
+            if (barCtx) {
+                if (barChartInstance) barChartInstance.destroy();
+                document.getElementById('chart-interest-saved-badge').textContent = `Saved: ${formatCurrency(calculationState.interestSaved)}`;
+
+                barChartInstance = new Chart(barCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Baseline Interest', 'Accelerated Interest', 'Total Interest Saved'],
+                        datasets: [{
+                            data: [
+                                calculationState.baseTotalInterest || 0,
+                                calculationState.accTotalInterest || 0,
+                                calculationState.interestSaved || 0
+                            ],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+                            borderRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => ` Amount: ${formatCurrency(context.parsed.y)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: textColor, font: { family: 'Inter', size: 10, weight: '500' } }
+                            },
+                            y: {
+                                grid: { color: gridColor },
+                                ticks: {
+                                    color: textColor,
+                                    font: { family: 'Inter', size: 10 },
+                                    callback: (val) => currencySymbol + Number(val).toLocaleString()
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function updateChartThemes() {
+            if (lineChartInstance || barChartInstance) {
+                updateCharts();
+            }
+        }
+
+        // CSV Export Function
+        function exportCSV() {
+            if (acceleratedSchedule.length === 0) return;
+
+            let csv = "Period,Date,Payment,Principal Paid,Interest Paid,Extra Principal,Remaining Balance\n";
+            acceleratedSchedule.forEach(item => {
+                const dateStr = item.date.toISOString().split('T')[0];
+                csv += `${item.period},"${dateStr}",${item.payment.toFixed(2)},${item.principalPaid.toFixed(2)},${item.interest.toFixed(2)},${item.extraPrincipal.toFixed(2)},${item.balance.toFixed(2)}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `repayment_schedule_${calculationState.balance}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Schedule exported to CSV!');
+        }
+
+        // URL State Management
+        function syncUrlState() {
+            const url = new URL(window.location);
+            url.searchParams.set('mode', currentMode);
+            url.searchParams.set('bal', document.getElementById('input-balance').value);
+            url.searchParams.set('rate', document.getElementById('input-rate').value);
+            url.searchParams.set('freq', document.getElementById('input-frequency').value);
+            url.searchParams.set('extra', document.getElementById('input-extra-payment').value);
+            url.searchParams.set('curr', currencyCode);
+
+            if (currentMode === 'term') {
+                url.searchParams.set('ty', document.getElementById('input-term-years').value);
+                url.searchParams.set('tm', document.getElementById('input-term-months').value);
+                url.searchParams.delete('pmt');
+            } else {
+                url.searchParams.set('pmt', document.getElementById('input-desired-pmt').value);
+                url.searchParams.delete('ty');
+                url.searchParams.delete('tm');
+            }
+
+            window.history.replaceState({}, '', url);
+        }
+
+        function loadUrlState() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('curr')) {
+                const c = params.get('curr');
+                document.getElementById('currency-switcher').value = c;
+                changeCurrency(c);
+            }
+            if (params.has('bal')) document.getElementById('input-balance').value = params.get('bal');
+            if (params.has('rate')) document.getElementById('input-rate').value = params.get('rate');
+            if (params.has('freq')) document.getElementById('input-frequency').value = params.get('freq');
+            if (params.has('extra')) document.getElementById('input-extra-payment').value = params.get('extra');
+            if (params.has('ty')) document.getElementById('input-term-years').value = params.get('ty');
+            if (params.has('tm')) document.getElementById('input-term-months').value = params.get('tm');
+            if (params.has('pmt')) document.getElementById('input-desired-pmt').value = params.get('pmt');
+            if (params.has('mode')) setMode(params.get('mode'));
+            else handleFrequencyChange();
+        }
+
+        // Copy Summary to Clipboard
+        function copySummary() {
+            const st = calculationState;
+            const summaryText = `CalcWorld Repayment Calculator Summary:
+----------------------------------------
+Loan Balance: ${formatCurrency(st.balance)}
+Interest Rate: ${st.apr.toFixed(2)}% APR
+Payment Frequency: ${st.freq} cycles / year
+Periodic Payment: ${formatCurrency(st.acceleratedPmt)} (Extra: ${formatCurrency(st.extra)})
+Accelerated Payoff Date: ${formatDate(st.accPayoffDate)} (Saved: ${st.timeSavedText})
+Total Interest Paid: ${formatCurrency(st.accTotalInterest)} (Saved: ${formatCurrency(st.interestSaved)})
+Total Repaid: ${formatCurrency(st.totalRepaid)}
+----------------------------------------
+Calculate your loan payoff at: https://calcworld.net/financial/repayment-calculator`;
+
+            navigator.clipboard.writeText(summaryText).then(() => {
+                showToast('Summary copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy. Please check clipboard permissions.');
+            });
+        }
+
+        function shareState() {
+            syncUrlState();
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast('Shareable URL copied to clipboard!');
+            });
+        }
+
+        // Toast Helper
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            toastMsg.textContent = message;
+            toast.classList.remove('translate-y-[-160%]', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-[-160%]', 'opacity-0');
+            }, 2000);
+        }
+
+        function showLeadToast() {
+            const email = document.getElementById('lead-email').value;
+            if (email) {
+                showToast('Dossier sent to ' + email + '!');
+                document.getElementById('lead-email').value = '';
+            }
+        }
+
+        // Initialization on DOM Load
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            const now = new Date();
+            const yyyy = now.getFullYear();
+            const mm = String(now.getMonth() + 1).padStart(2, '0');
+            document.getElementById('input-start-date').value = `${yyyy}-${mm}`;
+
+            loadUrlState();
+            calculate();
+
+            // AdBlock Detection Check
+            setTimeout(() => {
+                const testAd = document.querySelector('.ad-slot');
+                if (testAd && (testAd.offsetHeight === 0 || testAd.style.display === 'none')) {
+                    document.getElementById('adblockRecovery').classList.remove('hidden');
+                }
+            }, 1200);
+        });
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>

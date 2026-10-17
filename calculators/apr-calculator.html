@@ -1,0 +1,2349 @@
+<!DOCTYPE html>
+<html lang="en" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>APR Calculator | True Annual Percentage Rate Regulation Z & TILA Tool 2026</title>
+    <meta name="description" content="Calculate your true Annual Percentage Rate (APR) under Truth in Lending Act (TILA) Regulation Z Appendix J using Newton-Raphson iteration. Model origination fees, discount points, upfront finance charges, and nominal rate spreads.">
+    <meta name="keywords" content="APR calculator, annual percentage rate, Regulation Z Appendix J, TILA APR calculation, Newton-Raphson APR, prepaid finance charges, nominal rate vs APR, mortgage APR, auto loan APR, personal loan APR">
+    <link rel="canonical" href="https://calcworld.net/calculators/apr-calculator.html">
+
+    <!-- FOUC Prevention & Theme Initialization -->
+    <script>
+        try {
+            if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        } catch (_) {}
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                            950: '#172554'
+                        },
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            200: '#c7d2fe',
+                            300: '#a5b4fc',
+                            400: '#818cf8',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            800: '#3730a3',
+                            900: '#312e81',
+                            950: '#1e1b4b',
+                        },
+                        emerald: {
+                            50: '#ecfdf5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- JSON-LD Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "True Annual Percentage Rate (APR) Calculator",
+          "url": "https://calcworld.net/calculators/apr-calculator",
+          "description": "Institutional-grade APR calculator implementing Truth in Lending Act (TILA) Regulation Z Appendix J actuarial formulas with Newton-Raphson internal rate of return convergence. Evaluates origination fees, discount points, upfront charges, and nominal-to-APR basis point spreads.",
+          "applicationCategory": "FinancialApplication",
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://calcworld.net/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Financial Calculators",
+              "item": "https://calcworld.net/calculators/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "APR Calculator",
+              "item": "https://calcworld.net/calculators/apr-calculator"
+            }
+          ]
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is the difference between the nominal interest rate and the APR?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The nominal interest rate is the base contractual interest rate agreed upon to calculate the monthly periodic interest payment on the remaining loan balance. The Annual Percentage Rate (APR) incorporates both this periodic interest rate and all upfront prepaid finance charges (such as origination fees, discount points, and processing fees) expressed as a single yearly percentage rate over the loan term."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is APR calculated under Regulation Z Appendix J?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Regulation Z Appendix J defines the actuarial method for computing the APR. The actuarial equation equates the Net Amount Financed (the total principal minus all prepaid finance charges) to the present value of all scheduled periodic loan payments discounted at the internal periodic rate. Because this polynomial equation cannot be resolved algebraically for multi-year loans, it is solved iteratively using numerical methods like the Newton-Raphson iteration until the rate converges."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What closing costs are included in the APR finance charge under 12 CFR § 1026.4?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Finance charges include fees charged directly or indirectly by the creditor as a condition of extending credit. Common included fees are loan origination charges, discount points, underwriting and processing fees, prepaid mortgage insurance premiums (PMI/MIP), and escrow waiver fees. Excluded items under 12 CFR § 1026.4(c)(7) include reasonable third-party appraisal fees, title examination and title insurance premiums, government recording fees, transfer taxes, and initial escrow reserves for property taxes and hazard insurance."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the statutory accuracy tolerance for APR disclosure?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Under 12 CFR § 1026.22(a)(2), the disclosed APR for a regular transaction (a single advance loan with equal payment periods and amounts) is legally considered accurate if it is within one-eighth of one percentage point (0.125%) above or below the exact actuarial APR computed under Appendix J. For irregular transactions with multiple advances or uneven payment streams, the permitted tolerance is one-quarter of one percentage point (0.25%)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Why is APR different from APY (Annual Percentage Yield)?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "APR applies to consumer debt under the Truth in Lending Act and represents the total annualized borrowing cost taking into account upfront closing expenses. APY (Annual Percentage Yield) applies to deposit accounts under the Truth in Savings Act (Regulation DD) and reflects the compound interest earned on savings over one full year based on the compounding frequency."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        /* Custom scrollbar for data tables */
+        .custom-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Remove default number spin buttons */
+        input[type="number"]::-webkit-inner-spin-button, 
+        input[type="number"]::-webkit-outer-spin-button { 
+            -webkit-appearance: none; margin: 0; 
+        }
+        input[type="number"] { -moz-appearance: textfield; }
+
+        /* AdSense Placeholders */
+        .ad-slot-box {
+            min-height: 90px;
+            background: repeating-linear-gradient(45deg, #f8fafc, #f8fafc 10px, #f1f5f9 10px, #f1f5f9 20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            border: 1px dashed #cbd5e1;
+            font-size: 0.85rem;
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+        .dark .ad-slot-box {
+            background: repeating-linear-gradient(45deg, #1e293b, #1e293b 10px, #0f172a 10px, #0f172a 20px);
+            color: #94a3b8;
+            border-color: #334155;
+        }
+
+        /* Toast Popup */
+        #toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease;
+            z-index: 9999;
+        }
+        #toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Floating Bar */
+        #floating-bar {
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        #floating-bar.bar-hidden {
+            transform: translateY(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Pulse animation for live calculations */
+        .pulse-highlight {
+            animation: pulse-update 0.4s ease-out;
+        }
+        @keyframes pulse-update {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); filter: brightness(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        /* Print formatting */
+        
+        /* ==========================================================================
+           UNIVERSAL PRINT ISOLATION STYLESHEET (TABBED PRINT DOSSIER) - CALCWORLD
+           Strictly prints ONLY the official calculation report/dossier.
+           Suppresses website chrome, inputs, educational articles, and FAQs.
+           ========================================================================== */
+        @media print {
+            /* 1. Hide website chrome, navigation, ads, sidebars, and popups */
+            header, footer, nav, aside,
+            .no-print, .ad-slot, .ad-unit, [id*="ad-slot"], [id*="adSlot"], [class*="ad-slot"],
+            [id*="adblock"], [id*="adblockRecovery"], #adblock-banner, #adblock-recovery,
+            #floatingBar, #floating-bar, #mobileBottomNav, #toast, #toastNotification, .toast-notify,
+            #shimmerOverlay, .shimmer, .shimmer-active,
+            .preset-btn, .tab-btn, .tab-trigger, .tab-nav-btn, .tab-btn-wrapper, .tab-buttons, #tabButtons,
+            .mode-btn, button, .btn-action, #presets-container, #preset-container,
+            .lead-box, [id*="lead-box"], [id*="leadBox"], [id*="email-report"],
+            .lg\:col-span-4, .lg\:col-span-5, .w-full.lg\:w-1\/3, aside {
+                display: none !important;
+            }
+
+            /* 2. Hide all calculation input forms and controls */
+            form, [id*="calc-form"], [id*="calcForm"], [id*="calculatorInputs"], [id*="inputs"],
+            [id*="calculator-form"], [id*="bodyFatForm"], [id*="bmiForm"], [id*="iraForm"],
+            [id*="rothForm"], [id*="mutualFundForm"], [id*="rmdForm"], [id*="discount-form"],
+            [id*="loan-form"], [id*="savings-form"], [id*="lead-form"] {
+                display: none !important;
+            }
+
+            /* 3. Hide all SEO educational articles, guides, and FAQ accordions */
+            article, [id*="seo-article"], .prose, .faq-section, #faq-accordion, #faq-container,
+            #faqSection, details, .faq-item, [id*="faq"] {
+                display: none !important;
+            }
+
+            /* 4. Reset page styling for pristine high-contrast print */
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 11pt !important;
+            }
+
+            .dark, .dark body {
+                background: #ffffff !important;
+                color: #000000 !important;
+            }
+
+            main, .max-w-7xl, .lg\:col-span-8, .lg\:col-span-7, .col-span-12, .w-full.lg\:w-2\/3 {
+                max-width: 100% !important;
+                width: 100% !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                display: block !important;
+            }
+
+            .grid {
+                display: block !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* 5. Hide all interactive non-print tabs */
+            #tab-calculator, #tab-tracker, #tab-habits, #tab-inputs, #tab-input, #tab-schedule,
+            #tab-amortization, #tab-visual, #tab-chart, #tab-charts, #tab-table, #tab-breakdown,
+            #tab-projection, #tab-methods, #tab-milestones, #tab-activity, #tab-macros,
+            #tabSummary, #tabBreakdown, #tabChart, #tabSchedule, #tabVisual, #tabTable,
+            #tab-summary, #pane-chart, #pane-schedule, #pane-table, #tab-history, #tab-analysis {
+                display: none !important;
+            }
+
+            /* 6. Force the Print Report Container to be the ONLY visible element */
+            #tab-print, #tabPrint, #tabContent-print, #tab-content-print, #tab-print-report,
+            #tab-print-content, #printableReportSection, #printableReceiptArea, #tabPrintView,
+            #printArea, #print-sheet-content, .card-print, .print-card, .printable-report,
+            .print-dossier, .print-only {
+                display: block !important;
+                visibility: visible !important;
+                width: 100% !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 0.5rem !important;
+                padding: 1.5rem !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: #ffffff !important;
+                color: #0f172a !important;
+                page-break-inside: avoid !important;
+            }
+
+            /* 7. Format clean print tables and charts */
+            table {
+                width: 100% !important;
+                border-collapse: collapse !important;
+            }
+            th, td {
+                border-bottom: 1px solid #e2e8f0 !important;
+                padding: 6px 8px !important;
+                color: #0f172a !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
+        }
+
+    </style>
+
+    <!-- Open Graph & Social SEO Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="APR Calculator | True Annual Percentage Rate Regulation Z & TILA Tool 2026">
+    <meta property="og:description" content="Calculate your true Annual Percentage Rate (APR) under Truth in Lending Act (TILA) Regulation Z Appendix J using Newton-Raphson iteration. Model origination fees, discount points, upfront finance charges, and nominal rate spreads.">
+    <meta property="og:url" content="https://calcworld.net/calculators/apr-calculator.html">
+    <meta property="og:site_name" content="CalcWorld">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="APR Calculator | True Annual Percentage Rate Regulation Z & TILA Tool 2026">
+    <meta name="twitter:description" content="Calculate your true Annual Percentage Rate (APR) under Truth in Lending Act (TILA) Regulation Z Appendix J using Newton-Raphson iteration. Model origination fees, discount points, upfront finance charges, and nominal rate spreads.">
+</head>
+<body class="bg-slate-50 dark:bg-[#070b14] text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-200 antialiased">
+
+    <!-- Top Navigation Header -->
+            <!-- Top Announcement Bar -->
+    <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 text-white text-[11px] sm:text-xs font-semibold py-1.5 px-4 text-center tracking-wide flex items-center justify-center gap-2 no-print">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>CalcWorld Engine 2026: Precision Computation &bull; Zero Server Latency &bull; 100% Private</span>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-200/90 dark:border-slate-800/90 bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl sticky top-0 z-40 no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            
+            <!-- Brand Logo -->
+            <a href="../index.html" class="flex items-center gap-2.5 group shrink-0" aria-label="CalcWorld Home">
+                <span class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-sky-400 flex items-center justify-center text-white font-extrabold text-xl shadow-md group-hover:scale-105 transition-transform">
+                    <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" width="24" height="24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                    </svg>
+                </span>
+                <div class="flex flex-col">
+                    <span class="font-black text-xl tracking-tight text-slate-900 dark:text-white leading-none flex items-baseline">Calc<span class="text-blue-600 dark:text-blue-400 ml-0.5">World</span></span>
+                    <span class="text-[10px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase mt-0.5">Engine 2026</span>
+                </div>
+            </a>
+
+            <!-- Suite Badge -->
+            <span class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200/60 dark:border-blue-800/60 uppercase tracking-wider">
+                FINANCIAL & TAX SUITE
+            </span>
+
+            <!-- Actions: All Calculators + Theme Toggle -->
+            <div class="flex items-center gap-2">
+                <a href="../index.html" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-blue-600 hover:text-white transition flex items-center gap-1.5">
+                    <span>&larr;</span>
+                    <span class="hidden sm:inline">All Calculators</span>
+                </a>
+
+                <button type="button" id="theme-toggle" data-theme-toggle="true" onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition" aria-label="Toggle Theme">
+                    <svg id="themeIconSun" class="w-5 h-5 hidden dark:block text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+                    </svg>
+                    <svg id="themeIconMoon" class="w-5 h-5 block dark:hidden text-slate-700" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Global Compatibility Proxies (Prevents Legacy Script Crashes) -->
+        <div class="hidden" aria-hidden="true" style="display:none!important">
+            <button id="themeToggle" type="button" onclick="toggleTheme()"></button>
+            <button id="themeToggleBtn" type="button" onclick="toggleTheme()"></button>
+            <button id="theme-btn" type="button" onclick="toggleTheme()"></button>
+            <span id="theme-label">Theme</span>
+            <svg id="theme-toggle-dark-icon"></svg>
+            <svg id="theme-toggle-light-icon"></svg>
+            <svg id="theme-dark-icon"></svg>
+            <svg id="theme-light-icon"></svg>
+            <svg id="sun-icon"></svg>
+            <svg id="moon-icon"></svg>
+            <svg id="sunIcon"></svg>
+            <svg id="moonIcon"></svg>
+            <svg id="theme-sun"></svg>
+            <svg id="theme-moon"></svg>
+            <svg id="theme-icon-dark"></svg>
+            <svg id="theme-icon-light"></svg>
+            <svg id="theme-sun-icon"></svg>
+            <svg id="theme-moon-icon"></svg>
+            <select id="currency-switcher"><option value="$" selected>$ USD</option><option value="€">€ EUR</option><option value="£">£ GBP</option></select>
+            <select id="currency-select"><option value="$" selected>$ USD</option></select>
+            <select id="currencySelector"><option value="$" selected>$ USD</option></select>
+            <select id="currency-selector"><option value="$" selected>$ USD</option></select>
+            <select id="formatSwitcher"><option value="iso" selected>ISO</option><option value="us">US</option></select>
+            <select id="chunk-mode-header"><option value="auto" selected>Auto</option></select>
+            <input id="decimalPlaces" type="number" value="4">
+            <input id="calc-amount" type="number" value="100">
+            <input id="calc-rate" type="number" value="7">
+            <select id="calc-direction"><option value="add" selected>Add</option></select>
+            <span id="quick-bar-payment"></span>
+            <span id="quick-bar-true"></span>
+            <button id="btnQuickAdd" type="button"></button>
+            <button id="btnQuickDiff" type="button"></button>
+            <button id="quickMetricBtn" type="button"></button>
+            <button id="quickImperialBtn" type="button"></button>
+            <button id="unit-imperial" type="button"></button>
+            <button id="unit-metric" type="button"></button>
+            <button id="unit-imperial-btn" type="button"></button>
+            <button id="unit-metric-btn" type="button"></button>
+            <button id="system-imperial-btn" type="button"></button>
+            <button id="system-metric-btn" type="button"></button>
+            <button id="btn-imperial" type="button"></button>
+            <button id="btn-metric" type="button"></button>
+            <button id="unitImp" type="button"></button>
+            <button id="unitMet" type="button"></button>
+            <button id="unitImperial" type="button"></button>
+            <button id="unitMetric" type="button"></button>
+            <button id="unit-miles-btn" type="button"></button>
+            <button id="unit-km-btn" type="button"></button>
+            <button id="unitBtnImperial" type="button"></button>
+            <button id="unitBtnMetric" type="button"></button>
+            <button id="btn-unit-imperial" type="button"></button>
+            <button id="btn-unit-metric" type="button"></button>
+            <button id="angle-unit-deg" type="button"></button>
+            <button id="angle-unit-rad" type="button"></button>
+            <button id="unit-deg-btn" type="button"></button>
+            <button id="unit-rad-btn" type="button"></button>
+            <button id="header-scale-4" type="button"></button>
+            <button id="header-scale-5" type="button"></button>
+            <button id="navModeConv" type="button"></button>
+            <button id="navModeArith" type="button"></button>
+            <button id="fmt12Btn" type="button"></button>
+            <button id="fmt24Btn" type="button"></button>
+            <input id="mixedMode" type="checkbox">
+            <button id="quickCopyHeader" type="button"></button>
+        </div>
+    </header>
+
+    <!-- AdSense Slot 1 (Top Header Leaderboard) -->
+    <div class="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 no-print">
+        <div id="ad-slot-1" class="ad-slot-box rounded-xl h-[90px] w-full" data-ad-slot="1">
+            <span class="opacity-75">Advertisement Slot 1 &bull; Responsive Top Leaderboard (728x90)</span>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-6 pb-24 sm:pb-16">
+
+        <!-- Semantic Breadcrumb Navigation -->
+        <nav class="flex text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-4" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 sm:space-x-2">
+                <li class="inline-flex items-center">
+                    <a href="/" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Home</a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <a href="/index.html" class="hover:text-primary-600 dark:hover:text-primary-400 transition-colors">Financial Calculators</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <span class="mx-1 text-slate-400">/</span>
+                        <span class="font-semibold text-slate-800 dark:text-slate-200">APR Calculator</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Tool Headline and Executive Context -->
+        <div class="mb-6 flex flex-col md:flex-row md:items-end justify-between gap-4">
+            <div>
+                <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+                    True Annual Percentage Rate (APR) Calculator
+                </h1>
+                <p class="mt-1.5 text-sm sm:text-base text-slate-600 dark:text-slate-400 max-w-3xl">
+                    Compute statutory APR under Truth in Lending Act (TILA) 15 U.S.C. § 1601 and Regulation Z (12 CFR Part 1026) Appendix J using high-precision Newton-Raphson iteration.
+                </p>
+            </div>
+
+            <!-- Preset Buttons Bar -->
+            <div id="preset-container" class="flex flex-wrap items-center gap-1.5 bg-slate-100 dark:bg-slate-800/80 p-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 no-print">
+                <span class="text-xs font-semibold px-2 text-slate-500 uppercase tracking-wide">Presets:</span>
+                <button type="button" class="preset-btn px-2.5 py-1 text-xs font-medium rounded-lg bg-white dark:bg-slate-700 shadow-sm text-slate-800 dark:text-slate-200 hover:text-primary-600 dark:hover:text-primary-400 transition" onclick="window.CalculatorApp.applyPreset('mortgage')">
+                    Mortgage with 1 Point & Fees
+                </button>
+                <button type="button" class="preset-btn px-2.5 py-1 text-xs font-medium rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition" onclick="window.CalculatorApp.applyPreset('auto')">
+                    Auto Loan with Doc Fee
+                </button>
+                <button type="button" class="preset-btn px-2.5 py-1 text-xs font-medium rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition" onclick="window.CalculatorApp.applyPreset('personal')">
+                    Personal Loan with 5% Origination
+                </button>
+            </div>
+        </div>
+
+        <!-- Calculator Workstation: Inputs Form (5 cols) & Results / Tabs (7 cols) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+            <!-- LEFT COLUMN: INPUT WORKBENCH (5 Cols) -->
+            <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 space-y-5">
+                <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+                    <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Loan & Cost Parameters
+                    </h2>
+                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-primary-50 dark:bg-primary-950/60 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">12 CFR § 1026</span>
+                </div>
+
+                <!-- Input Form -->
+                <form id="apr-form" onsubmit="event.preventDefault();" class="space-y-4">
+
+                    <!-- Loan Amount -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="loan-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                Loan Amount (Principal)
+                            </label>
+                            <span class="text-xs text-slate-400">Total Borrowed</span>
+                        </div>
+                        <div class="relative">
+                            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold currency-symbol">$</span>
+                            <input type="number" id="loan-amount" min="100" max="100000000" step="100" value="350000" class="w-full pl-8 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" oninput="window.CalculatorApp.calculate()">
+                        </div>
+                    </div>
+
+                    <!-- Nominal Interest Rate -->
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="nominal-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                Nominal Interest Rate (Note Rate)
+                            </label>
+                            <span class="text-xs text-slate-400">Stated Annual %</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="nominal-rate" min="0" max="99" step="0.01" value="6.50" class="w-full pl-3.5 pr-8 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" oninput="window.CalculatorApp.calculate()">
+                            <span class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 font-bold">%</span>
+                        </div>
+                    </div>
+
+                    <!-- Loan Term -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label for="loan-term" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Loan Term
+                            </label>
+                            <input type="number" id="loan-term" min="1" max="600" step="1" value="30" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition" oninput="window.CalculatorApp.calculate()">
+                        </div>
+                        <div>
+                            <label for="term-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1">
+                                Duration Unit
+                            </label>
+                            <select id="term-unit" class="w-full px-3 py-2.5 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-semibold focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none transition cursor-pointer" onchange="window.CalculatorApp.calculate()">
+                                <option value="years" selected>Years</option>
+                                <option value="months">Months</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- UPFRONT FINANCE CHARGES SECTION -->
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-800">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="text-xs font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                                Upfront Prepaid Finance Charges (12 CFR § 1026.4)
+                            </h3>
+                            <button type="button" onclick="document.querySelector('[data-tab-target=\'tab-classification\']').click();" class="text-[11px] text-primary-600 dark:text-primary-400 hover:underline">
+                                What counts? &rarr;
+                            </button>
+                        </div>
+
+                        <div class="space-y-3.5">
+                            <!-- Origination Fees -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="origination-fee" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        Origination Fee / Broker Fee
+                                    </label>
+                                    <div class="flex items-center text-[11px] space-x-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg">
+                                        <button type="button" id="orig-mode-dollar" class="px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs" onclick="window.CalculatorApp.setOriginationMode('dollar')">$</button>
+                                        <button type="button" id="orig-mode-percent" class="px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" onclick="window.CalculatorApp.setOriginationMode('percent')">%</button>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <span id="orig-sym" class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold currency-symbol">$</span>
+                                    <input type="number" id="origination-fee" min="0" step="any" value="1200" class="w-full pl-8 pr-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary-500 outline-none transition" oninput="window.CalculatorApp.calculate()">
+                                </div>
+                            </div>
+
+                            <!-- Discount Points -->
+                            <div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <label for="discount-points" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        Discount Points (Rate Buydown)
+                                    </label>
+                                    <div class="flex items-center text-[11px] space-x-1 bg-slate-200 dark:bg-slate-800 p-0.5 rounded-lg">
+                                        <button type="button" id="points-mode-percent" class="px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs" onclick="window.CalculatorApp.setPointsMode('percent')">%</button>
+                                        <button type="button" id="points-mode-dollar" class="px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white" onclick="window.CalculatorApp.setPointsMode('dollar')">$</button>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <input type="number" id="discount-points" min="0" step="any" value="1.0" class="w-full pl-3.5 pr-8 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary-500 outline-none transition" oninput="window.CalculatorApp.calculate()">
+                                    <span id="points-sym" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-500 font-bold">%</span>
+                                </div>
+                            </div>
+
+                            <!-- Underwriting & Processing Fees -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="underwriting-fees" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        Underwriting & Processing Fees
+                                    </label>
+                                    <span class="text-[11px] text-slate-400">Lender admin</span>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold currency-symbol">$</span>
+                                    <input type="number" id="underwriting-fees" min="0" step="10" value="1450" class="w-full pl-8 pr-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary-500 outline-none transition" oninput="window.CalculatorApp.calculate()">
+                                </div>
+                            </div>
+
+                            <!-- Mortgage Insurance Prepayments -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="mortgage-insurance" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        Mortgage Insurance Prepayment
+                                    </label>
+                                    <span class="text-[11px] text-slate-400">Upfront PMI / FHA UFMIP</span>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold currency-symbol">$</span>
+                                    <input type="number" id="mortgage-insurance" min="0" step="10" value="0" class="w-full pl-8 pr-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary-500 outline-none transition" oninput="window.CalculatorApp.calculate()">
+                                </div>
+                            </div>
+
+                            <!-- Other TILA Finance Charges -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label for="other-charges" class="text-xs font-medium text-slate-700 dark:text-slate-300">
+                                        Other TILA Finance Charges
+                                    </label>
+                                    <span class="text-[11px] text-slate-400">Tax svc, wire, lock fees</span>
+                                </div>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-500 font-bold currency-symbol">$</span>
+                                    <input type="number" id="other-charges" min="0" step="10" value="650" class="w-full pl-8 pr-3.5 py-2 bg-slate-50 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white text-sm font-semibold focus:ring-2 focus:ring-primary-500 outline-none transition" oninput="window.CalculatorApp.calculate()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upfront Charges Dynamic Subtotal Display -->
+                        <div class="mt-4 p-3 bg-slate-100 dark:bg-slate-800/90 rounded-xl border border-slate-200 dark:border-slate-700/80 flex justify-between items-center text-xs">
+                            <div>
+                                <span class="text-slate-500 dark:text-slate-400 block font-medium">Prepaid Finance Charges:</span>
+                                <span id="summary-prepaid-fees" class="font-bold text-slate-900 dark:text-white">$6,800.00</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-slate-500 dark:text-slate-400 block font-medium">Net Amount Financed:</span>
+                                <span id="summary-amount-financed" class="font-bold text-indigo-600 dark:text-indigo-400">$343,200.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="pt-2 flex gap-2">
+                        <button type="button" onclick="window.CalculatorApp.copySummary()" class="flex-1 py-2.5 px-4 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-xl font-semibold text-xs transition flex items-center justify-center gap-2 shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                            Copy Summary
+                        </button>
+                        <button type="button" onclick="window.CalculatorApp.resetDefaults()" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium text-xs transition">
+                            Reset
+                        </button>
+                    </div>
+                </form>
+
+                <!-- AdSense Slot 2 (Left Sidebar Rectangle) -->
+                <div class="pt-4 no-print">
+                    <div id="ad-slot-2" class="ad-slot-box rounded-xl h-[250px] w-full" data-ad-slot="2">
+                        <span class="opacity-75">Advertisement Slot 2 &bull; Mid-Workstation Rectangle (300x250)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: RESULTS & TABS (7 Cols) -->
+            <div class="lg:col-span-7 space-y-6">
+
+                <!-- MAIN OUTPUT HERO CARDS -->
+                <div id="hero-results" class="grid grid-cols-2 sm:grid-cols-3 gap-3.5">
+                    
+                    <!-- Card 1: True APR (Primary Focus) -->
+                    <div class="card-box col-span-2 sm:col-span-1 bg-gradient-to-br from-primary-600 to-indigo-700 text-white p-4 rounded-2xl shadow-md border border-primary-500 relative overflow-hidden">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-primary-200 mb-1">
+                            True Annual Percentage Rate
+                        </div>
+                        <div class="text-3xl sm:text-4xl font-extrabold tracking-tight" id="res-apr">
+                            6.721%
+                        </div>
+                        <div class="mt-2 flex items-center text-xs font-semibold bg-white/20 px-2 py-0.5 rounded w-fit">
+                            <span id="res-spread-badge">+22.1 bps spread</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Nominal vs APR Spread -->
+                    <div class="card-box bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Fee Spread Over Note
+                        </div>
+                        <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white" id="res-spread">
+                            +0.221%
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="res-spread-sub">
+                            22.1 basis points
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Monthly Payment -->
+                    <div class="card-box bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Monthly Payment (P&I)
+                        </div>
+                        <div class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white" id="res-payment">
+                            $2,212.24
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                            Principal & Interest
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Net Amount Financed -->
+                    <div class="card-box bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Net Amount Financed
+                        </div>
+                        <div class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white" id="res-financed">
+                            $343,200.00
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Proceeds Disbursed
+                        </div>
+                    </div>
+
+                    <!-- Card 5: Total Finance Charges -->
+                    <div class="card-box bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Total Finance Charges
+                        </div>
+                        <div class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white" id="res-total-finance">
+                            $453,206.40
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Interest + Upfront Fees
+                        </div>
+                    </div>
+
+                    <!-- Card 6: Total Paid -->
+                    <div class="card-box bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800">
+                        <div class="text-[11px] uppercase tracking-wider font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                            Total Cost of Loan
+                        </div>
+                        <div class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white" id="res-total-paid">
+                            $803,206.40
+                        </div>
+                        <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                            Principal + All Charges
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TILA Compliance Notice Badge -->
+                <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/80 rounded-xl flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+                    <div class="flex items-center space-x-2">
+                        <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        <span>Regulation Z 12 CFR § 1026.22(a)(2) Actuarial Compliance Standard (±0.125% Tolerance)</span>
+                    </div>
+                    <span class="font-mono text-[10px] font-bold uppercase tracking-wider bg-emerald-200/60 dark:bg-emerald-900/60 px-2 py-0.5 rounded">Verified Root</span>
+                </div>
+
+                <!-- TABBED CONTAINER -->
+                <div class="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
+                    
+                    <!-- Tabs Navigation Bar -->
+                    <div class="border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 px-4 pt-2">
+                        <nav class="flex space-x-2 sm:space-x-4 overflow-x-auto custom-scrollbar" aria-label="Calculator Views">
+                            <button type="button" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400 flex items-center gap-1.5 whitespace-nowrap" data-tab-target="tab-summary" onclick="window.CalculatorApp.switchTab('tab-summary')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                                Visual Summary
+                            </button>
+                            <button type="button" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap" data-tab-target="tab-formula" onclick="window.CalculatorApp.switchTab('tab-formula')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                                TILA Appendix J Iteration
+                            </button>
+                            <button type="button" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap" data-tab-target="tab-classification" onclick="window.CalculatorApp.switchTab('tab-classification')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                                12 CFR § 1026.4 Classification
+                            </button>
+                            <button type="button" class="tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap" data-tab-target="tab-print" onclick="window.CalculatorApp.switchTab('tab-print')">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                Print Report
+                            </button>
+                        </nav>
+                    </div>
+
+                    <!-- Tab Contents Body -->
+                    <div id="tab-contents" class="p-5 sm:p-6 min-h-[380px]">
+
+                        <!-- TAB 1: SUMMARY & CHARTS -->
+                        <div id="tab-summary" class="tab-pane block space-y-6">
+                            
+                            <!-- Visual Charts Section -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- Chart 1: Nominal vs APR Bar Comparison -->
+                                <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                            Nominal Rate vs True APR
+                                        </h4>
+                                        <span class="text-[11px] font-mono text-primary-600 dark:text-primary-400 font-semibold" id="chart-spread-label">+22.1 bps</span>
+                                    </div>
+                                    <div class="h-[220px] w-full relative">
+                                        <canvas id="rateComparisonChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <!-- Chart 2: Total Finance Charges Breakdown Doughnut -->
+                                <div class="bg-slate-50 dark:bg-slate-800/60 p-4 rounded-xl border border-slate-200 dark:border-slate-700/80">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                                            Finance Charges Breakdown
+                                        </h4>
+                                        <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400" id="chart-charges-label">$453.2k Total</span>
+                                    </div>
+                                    <div class="h-[220px] w-full relative">
+                                        <canvas id="financeChargesChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Summary Comparison Table -->
+                            <div class="overflow-x-auto custom-scrollbar">
+                                <table class="w-full text-xs text-left text-slate-600 dark:text-slate-400">
+                                    <thead class="text-[11px] uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                                        <tr>
+                                            <th class="py-2.5 px-3 rounded-l-lg">Metric</th>
+                                            <th class="py-2.5 px-3">Note Terms (Without Fees)</th>
+                                            <th class="py-2.5 px-3">TILA Full Disclosure</th>
+                                            <th class="py-2.5 px-3 rounded-r-lg">Discrepancy / Impact</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Annual Rate</td>
+                                            <td class="py-2.5 px-3" id="tab-note-rate">6.500%</td>
+                                            <td class="py-2.5 px-3 font-bold text-primary-600 dark:text-primary-400" id="tab-apr-rate">6.721%</td>
+                                            <td class="py-2.5 px-3 text-amber-600 dark:text-amber-400 font-semibold" id="tab-spread-diff">+0.221% (+22.1 bps)</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Principal Borrowed</td>
+                                            <td class="py-2.5 px-3" id="tab-stated-principal">$350,000.00</td>
+                                            <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white" id="tab-net-financed">$343,200.00</td>
+                                            <td class="py-2.5 px-3 text-slate-500" id="tab-prepaid-diff">-$6,800.00 withheld</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Total Periodic Payments</td>
+                                            <td class="py-2.5 px-3" id="tab-base-payments">$796,406.40</td>
+                                            <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white" id="tab-total-payments">$796,406.40</td>
+                                            <td class="py-2.5 px-3 text-slate-500">360 monthly payments</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">Lifetime Finance Cost</td>
+                                            <td class="py-2.5 px-3" id="tab-interest-only">$446,406.40</td>
+                                            <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white" id="tab-all-finance">$453,206.40</td>
+                                            <td class="py-2.5 px-3 text-indigo-600 dark:text-indigo-400 font-semibold">+$6,800.00 in closing fees</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: STEP-BY-STEP TILA REG Z CALCULATION BREAKDOWN -->
+                        <div id="tab-formula" class="tab-pane hidden space-y-5">
+                            <div class="bg-indigo-50/50 dark:bg-indigo-950/30 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/60 text-xs text-slate-700 dark:text-slate-300 space-y-2">
+                                <h4 class="font-bold text-sm text-indigo-900 dark:text-indigo-300">
+                                    Regulation Z 12 CFR Part 1026 Appendix J Actuarial Equation
+                                </h4>
+                                <p>
+                                    Under Appendix J Paragraph (a)(3), the annual percentage rate is determined by equating the Net Amount Financed ($A$) to the sum of the present values of all future payments ($P_t$) discounted at the periodic rate ($j$):
+                                </p>
+                                <div class="bg-white dark:bg-slate-900 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800 font-mono text-center text-xs sm:text-sm text-indigo-700 dark:text-indigo-300 overflow-x-auto">
+                                    Amount Financed (A) = &sum; [ P_{t} / (1 + j)^{t} ] = PMT &times; [ (1 - (1 + j)^{-n}) / j ]
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                                    Where: <strong class="text-slate-700 dark:text-slate-300">A</strong> = Principal - Prepaid Finance Charges; <strong class="text-slate-700 dark:text-slate-300">PMT</strong> = Monthly payment; <strong class="text-slate-700 dark:text-slate-300">n</strong> = Number of monthly periods; <strong class="text-slate-700 dark:text-slate-300">j</strong> = Periodic internal rate of return (Monthly APR &divide; 12).
+                                </p>
+                            </div>
+
+                            <!-- Live Newton-Raphson Iteration Log -->
+                            <div>
+                                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+                                    <span>Newton-Raphson Numerical Root-Finding Convergence</span>
+                                    <span class="text-[11px] text-slate-500 font-normal">Tolerance: &epsilon; &lt; 10^{-7}</span>
+                                </h4>
+                                <div class="overflow-x-auto custom-scrollbar border border-slate-200 dark:border-slate-800 rounded-xl">
+                                    <table class="w-full text-xs text-left">
+                                        <thead class="text-[10px] uppercase bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+                                            <tr>
+                                                <th class="py-2 px-3">Iter #</th>
+                                                <th class="py-2 px-3">Periodic Rate Guess (j)</th>
+                                                <th class="py-2 px-3">Present Value PV(j)</th>
+                                                <th class="py-2 px-3">Error (PV - A)</th>
+                                                <th class="py-2 px-3">Derivative f'(j)</th>
+                                                <th class="py-2 px-3">Annualized APR %</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="iteration-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
+                                            <!-- Dynamically filled by JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                                    The algorithm initializes at the note rate ($j_0 = \text{rate}/12$), evaluates the present value function $f(j) = \text{PV}(j) - A$, computes the analytical first derivative $f'(j)$, and computes the next step via $j_{k+1} = j_k - \frac{f(j_k)}{f'(j_k)}$.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: 12 CFR § 1026.4 PREPAID FINANCE CHARGES GUIDE -->
+                        <div id="tab-classification" class="tab-pane hidden space-y-4">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 pb-2 border-b border-slate-200 dark:border-slate-800">
+                                <div>
+                                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">
+                                        Prepaid Finance Charges Under 12 CFR § 1026.4
+                                    </h4>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">
+                                        Interactive classification of closing expenses included in vs excluded from the APR calculation.
+                                    </p>
+                                </div>
+                                <input type="text" id="fee-search-input" placeholder="Search fee (e.g. title, points, wire)..." class="w-full sm:w-56 px-3 py-1.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-primary-500" oninput="window.CalculatorApp.filterFees(this.value)">
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="fee-classification-container">
+                                <!-- Included Charges -->
+                                <div class="bg-red-50/50 dark:bg-red-950/20 p-4 rounded-xl border border-red-200/60 dark:border-red-900/40">
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-red-700 dark:text-red-400 mb-2 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                                        Included In APR (Increases APR)
+                                    </h5>
+                                    <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300 fee-list" id="included-fees-list">
+                                        <li class="fee-item" data-keywords="origination broker admin processing points">
+                                            <strong>Loan Origination & Broker Fees:</strong> All charges imposed by the lender or mortgage broker for originating, evaluating, or processing the loan.
+                                        </li>
+                                        <li class="fee-item" data-keywords="discount points buydown prepaid interest">
+                                            <strong>Discount Points:</strong> Upfront payments made directly to lower the contractual note interest rate for the life of the loan.
+                                        </li>
+                                        <li class="fee-item" data-keywords="underwriting processing doc prep administration">
+                                            <strong>Underwriting & Document Preparation:</strong> Fees charged by the creditor for internal credit decisioning and legal loan packaging.
+                                        </li>
+                                        <li class="fee-item" data-keywords="mortgage insurance pmi mip upfront premium">
+                                            <strong>Private Mortgage Insurance (PMI / MIP):</strong> Upfront insurance premiums required by the lender to protect against borrower default.
+                                        </li>
+                                        <li class="fee-item" data-keywords="escrow waiver lock tax service flood">
+                                            <strong>Escrow Waiver, Tax Service & Life-of-Loan Flood:</strong> Administrative service fees necessary to maintain credit monitoring.
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <!-- Excluded Charges -->
+                                <div class="bg-emerald-50/50 dark:bg-emerald-950/20 p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/40">
+                                    <h5 class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 mb-2 flex items-center gap-1.5">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                                        Excluded From APR (12 CFR § 1026.4(c))
+                                    </h5>
+                                    <ul class="text-xs space-y-2 text-slate-700 dark:text-slate-300 fee-list" id="excluded-fees-list">
+                                        <li class="fee-item" data-keywords="title examination insurance settlement closing attorney">
+                                            <strong>Title & Settlement Charges:</strong> Title search, title examination, lender's title insurance, and closing attorney fees (if bona fide and reasonable).
+                                        </li>
+                                        <li class="fee-item" data-keywords="appraisal inspection property valuation">
+                                            <strong>Appraisal & Home Inspection Fees:</strong> Independent third-party fees paid to inspect and appraise the real property.
+                                        </li>
+                                        <li class="fee-item" data-keywords="recording taxes transfer stamp government">
+                                            <strong>Government Recording & Transfer Taxes:</strong> Statutory state, county, or municipal charges to record mortgage deeds.
+                                        </li>
+                                        <li class="fee-item" data-keywords="credit report bureau scoring">
+                                            <strong>Credit Report Fees:</strong> Actual out-of-pocket costs charged by credit repositories to verify consumer credit history.
+                                        </li>
+                                        <li class="fee-item" data-keywords="escrow property taxes hazard insurance homeowner">
+                                            <strong>Initial Escrow Reserves:</strong> Prepaid reserves deposited for future property taxes and hazard / homeowners insurance.
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 4: PRINT REPORT PREVIEW -->
+                        <div id="tab-print" class="tab-pane hidden space-y-6">
+                            <div class="border border-slate-300 dark:border-slate-700 p-6 rounded-xl bg-white dark:bg-slate-900 shadow-sm print:border-none print:p-0">
+                                <!-- Print Header -->
+                                <div class="flex justify-between items-start pb-4 border-b border-slate-200 dark:border-slate-800">
+                                    <div>
+                                        <div class="text-xl font-extrabold text-slate-900 dark:text-white">Federal Truth in Lending Act Disclosure</div>
+                                        <div class="text-xs text-slate-500">Model TILA Regulation Z Format &bull; 15 U.S.C. § 1601 &bull; Generated for Consumer Records</div>
+                                    </div>
+                                    <button type="button" onclick="window.print()" class="no-print px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-xs font-bold transition flex items-center gap-1.5 shadow">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                        Print / Save PDF
+                                    </button>
+                                </div>
+
+                                <!-- Standard 4-Box TILA Disclosure -->
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 my-5">
+                                    <div class="border-2 border-slate-900 dark:border-slate-100 p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">ANNUAL PERCENTAGE RATE</div>
+                                        <div class="text-2xl font-black mt-1" id="print-apr">6.721%</div>
+                                        <div class="text-[9px] text-slate-500 mt-0.5">The cost of your credit as a yearly rate.</div>
+                                    </div>
+                                    <div class="border-2 border-slate-900 dark:border-slate-100 p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">FINANCE CHARGE</div>
+                                        <div class="text-2xl font-black mt-1" id="print-finance-charge">$453,206.40</div>
+                                        <div class="text-[9px] text-slate-500 mt-0.5">The dollar amount the credit will cost you.</div>
+                                    </div>
+                                    <div class="border-2 border-slate-900 dark:border-slate-100 p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">AMOUNT FINANCED</div>
+                                        <div class="text-2xl font-black mt-1" id="print-amount-financed">$343,200.00</div>
+                                        <div class="text-[9px] text-slate-500 mt-0.5">The amount of credit provided to you or on your behalf.</div>
+                                    </div>
+                                    <div class="border-2 border-slate-900 dark:border-slate-100 p-3 text-center">
+                                        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">TOTAL OF PAYMENTS</div>
+                                        <div class="text-2xl font-black mt-1" id="print-total-payments">$796,406.40</div>
+                                        <div class="text-[9px] text-slate-500 mt-0.5">The amount you will have paid after all scheduled payments.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Detailed Terms Statement -->
+                                <div class="grid grid-cols-2 gap-4 text-xs">
+                                    <div class="space-y-1.5 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+                                        <div class="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1">Payment Schedule</div>
+                                        <div class="flex justify-between"><span>Number of Payments:</span> <strong id="print-num-pmts">360</strong></div>
+                                        <div class="flex justify-between"><span>Regular Monthly Payment:</span> <strong id="print-monthly-pmt">$2,212.24</strong></div>
+                                        <div class="flex justify-between"><span>Nominal Note Rate:</span> <strong id="print-note-rate">6.500%</strong></div>
+                                        <div class="flex justify-between"><span>Total Lifetime Interest:</span> <strong id="print-lifetime-interest">$446,406.40</strong></div>
+                                    </div>
+                                    <div class="space-y-1.5 border border-slate-200 dark:border-slate-800 p-3 rounded-lg">
+                                        <div class="font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-1">Prepaid Finance Charges Itemization</div>
+                                        <div class="flex justify-between"><span>Origination Fees:</span> <span id="print-orig-fee">$1,200.00</span></div>
+                                        <div class="flex justify-between"><span>Discount Points:</span> <span id="print-points-fee">$3,500.00</span></div>
+                                        <div class="flex justify-between"><span>Underwriting & Processing:</span> <span id="print-underwriting-fee">$1,450.00</span></div>
+                                        <div class="flex justify-between"><span>Mortgage Insurance Prepayment:</span> <span id="print-mi-fee">$0.00</span></div>
+                                        <div class="flex justify-between"><span>Other TILA Charges:</span> <span id="print-other-fee">$650.00</span></div>
+                                        <div class="flex justify-between border-t border-slate-200 dark:border-slate-800 pt-1 font-bold"><span>Total Prepaid Charges:</span> <span id="print-total-prepaid">$6,800.00</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- PDF Lead Generation Box -->
+                <div class="bg-gradient-to-r from-primary-50 via-indigo-50 to-slate-100 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900 p-5 rounded-2xl border border-primary-200/80 dark:border-slate-700 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm no-print">
+                    <div class="space-y-1 text-center md:text-left">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm sm:text-base flex items-center justify-center md:justify-start gap-2">
+                            <svg class="w-5 h-5 text-primary-600 dark:text-primary-400 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M6 2a2 2 0 00-2 2v12a2 2 0 002 2h8a2 2 0 002-2V7.414A2 2 0 0015.414 6L12 2.586A2 2 0 0010.586 2H6zm5 6a1 1 0 10-2 0v3.586l-1.293-1.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V8z" clip-rule="evenodd"></path></svg>
+                            Export Official TILA APR Disclosure & Amortization Schedule
+                        </h4>
+                        <p class="text-xs text-slate-600 dark:text-slate-400">
+                            Receive a clean PDF disclosure summary with full 360-month actuarial cash flow schedule emailed immediately.
+                        </p>
+                    </div>
+                    <form class="flex w-full md:w-auto" onsubmit="event.preventDefault(); window.CalculatorApp.handlePdfLead(this);">
+                        <input type="email" placeholder="name@domain.com" required class="w-full md:w-60 px-3.5 py-2 text-xs rounded-l-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-primary-500">
+                        <button type="submit" class="px-4 py-2 bg-primary-600 hover:bg-primary-700 active:bg-primary-800 text-white rounded-r-xl text-xs font-bold transition whitespace-nowrap shadow-sm">
+                            Send PDF
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- AdSense Slot 3 (Mid-Content Responsive Banner) -->
+        <div class="w-full max-w-7xl mx-auto my-8 no-print">
+            <div id="ad-slot-3" class="ad-slot-box rounded-2xl h-[90px] w-full" data-ad-slot="3">
+                <span class="opacity-75">Advertisement Slot 3 &bull; Responsive Mid-Content Display (728x90)</span>
+            </div>
+        </div>
+
+        <!-- SEO ARTICLE & TECHNICAL COMPANION GUIDE (1200+ Words, Strict Anti-AI Protocol) -->
+        <article class="prose prose-slate dark:prose-invert max-w-4xl mx-auto mt-12 pt-8 border-t border-slate-200 dark:border-slate-800">
+            <header>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                    The Legal and Mathematical Mechanics of True Annual Percentage Rate (APR)
+                </h2>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    An authoritative guide to 15 U.S.C. § 1601, Regulation Z Appendix J actuarial formulas, and 12 CFR § 1026.4 finance charge accounting.
+                </p>
+            </header>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                1. Statutory Foundations: Truth in Lending Act (TILA)
+            </h3>
+            <p>
+                In 1968, the United States Congress enacted the Truth in Lending Act (TILA), codified at <a href="https://www.law.cornell.edu/uscode/text/15/1601" target="_blank" rel="noopener noreferrer" class="text-primary-600 dark:text-primary-400 underline font-semibold">15 U.S.C. § 1601 et seq.</a>, as Title I of the Consumer Credit Protection Act. Prior to this legislation, consumers faced fragmented, deceptive disclosures from creditors. Lenders frequently advertised attractive interest rates while burying upfront administrative fees, points, and non-refundable retainers in ancillary paperwork. This obfuscation made fair comparisons between competing loan products impossible.
+            </p>
+            <p>
+                The primary declaration of purpose in 15 U.S.C. § 1601(a) mandates that the terms of credit be stated plainly so that consumers can compare available terms with precision and avoid the uninformed use of credit. The regulatory implementation of TILA, known as <a href="https://www.consumerfinance.gov/rules-policy/regulations/1026/" target="_blank" rel="noopener noreferrer" class="text-primary-600 dark:text-primary-400 underline font-semibold">Regulation Z (12 CFR Part 1026)</a>, was originally promulgated by the Board of Governors of the Federal Reserve System and subsequently transferred to the Consumer Financial Protection Bureau (CFPB) pursuant to the Dodd-Frank Wall Street Reform and Consumer Protection Act of 2010.
+            </p>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                2. Actuarial Mathematics: Regulation Z Appendix J Formula
+            </h3>
+            <p>
+                Under 12 CFR § 1026.22, the Annual Percentage Rate is declared to be a measure of the cost of credit, expressed as a yearly rate, that relates the amount and timing of value received by the consumer to the amount and timing of payments made. Appendix J to Part 1026 establishes the official mathematical standards for computing the actuarial APR for closed-end consumer transactions.
+            </p>
+            <p>
+                For standard installment contracts characterized by single advance funding and regular monthly amortizing installments, Appendix J prescribes the foundational actuarial equation:
+            </p>
+            <div class="p-4 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl my-4 font-mono text-xs sm:text-sm text-slate-900 dark:text-slate-100 overflow-x-auto">
+                A = &sum;<sub>k=1...n</sub> [ P_{k} / (1 + j)^{k} ] = PMT &times; [ (1 - (1 + j)^{-n}) / j ]
+            </div>
+            <p>
+                In this equation:
+            </p>
+            <ul>
+                <li><strong>A (Net Amount Financed):</strong> The initial cash proceeds delivered to the borrower or disbursed on their behalf. By legal definition under 12 CFR § 1026.18(b), <code>Amount Financed = Principal Loan Amount - Prepaid Finance Charges</code>.</li>
+                <li><strong>PMT (Periodic Payment):</strong> The contractual monthly installment computed from the nominal note rate and principal.</li>
+                <li><strong>n:</strong> The total number of regular monthly compounding periods (e.g., 360 periods for a 30-year loan).</li>
+                <li><strong>j:</strong> The internal periodic interest rate per period that satisfies the present-value identity.</li>
+            </ul>
+            <p>
+                Once the internal periodic rate \( j \) is established, the annualized statutory APR is determined by multiplying \( j \) by the annual unit frequency \( m \) (where \( m = 12 \) for monthly schedules):
+            </p>
+            <div class="p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl my-3 font-mono text-center text-xs sm:text-sm text-indigo-600 dark:text-indigo-400">
+                True APR = j &times; 12 &times; 100%
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                3. The Newton-Raphson Iterative Convergence Algorithm
+            </h3>
+            <p>
+                The equation defined in Regulation Z Appendix J cannot be rearranged through standard algebra to isolate the periodic rate \( j \) when the loan term exceeds two periods. In a 360-month mortgage, setting the present value equal to the Net Amount Financed creates a polynomial equation of degree 360.
+            </p>
+            <p>
+                To resolve this high-order polynomial, our calculation engine employs the Newton-Raphson method, a robust numerical root-finding algorithm. We define the objective residual function \( f(j) \) as the discrepancy between the present value of scheduled installments and the net amount financed:
+            </p>
+            <div class="p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl my-3 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200">
+                f(j) = PMT &times; [ (1 - (1 + j)^{-n}) / j ] - A
+            </div>
+            <p>
+                The analytical first derivative with respect to \( j \), denoted \( f'(j) \), is computed as:
+            </p>
+            <div class="p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl my-3 font-mono text-xs sm:text-sm text-slate-800 dark:text-slate-200">
+                f'(j) = PMT &times; [ - (1 - (1 + j)^{-n}) / j^{2} + (n &times; (1 + j)<sup>-n-1</sup>) / j ]
+            </div>
+            <p>
+                Beginning with an initial guess \( j_0 = \frac{\text{nominal rate}}{12} \), each successive iteration updates the periodic estimate:
+            </p>
+            <div class="p-3 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl my-3 font-mono text-xs sm:text-sm text-indigo-600 dark:text-indigo-400">
+                j<sub>k+1</sub> = j_{k} - [ f(j_{k}) / f'(j_{k}) ]
+            </div>
+            <p>
+                Because \( f(j) \) is monotonic and continuously differentiable over positive interest rates, this formulation demonstrates quadratic convergence, terminating in approximately 4 to 6 iterations when the absolute error falls below \( 10^{-9} \).
+            </p>
+
+            <!-- AdSense Slot 4 (In-Article Display) -->
+            <div class="w-full my-8 no-print">
+                <div id="ad-slot-4" class="ad-slot-box rounded-xl h-[90px] w-full" data-ad-slot="4">
+                    <span class="opacity-75">Advertisement Slot 4 &bull; In-Article Responsive Banner (728x90)</span>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                4. Classification of Finance Charges Under 12 CFR § 1026.4
+            </h3>
+            <p>
+                A frequent source of discrepancy during consumer credit analysis involves determining which fees must be incorporated into the APR calculation and which costs may be excluded. Under <a href="https://www.consumerfinance.gov/rules-policy/regulations/1026/4/" target="_blank" rel="noopener noreferrer" class="text-primary-600 dark:text-primary-400 underline font-semibold">12 CFR § 1026.4(a)</a>, the term <em>finance charge</em> encompasses any charge payable directly or indirectly by the consumer and imposed directly or indirectly by the creditor as an incident to or a condition of the extension of credit.
+            </p>
+            <p>
+                The regulation articulates clear boundaries between mandatory inclusions and statutory exclusions:
+            </p>
+            
+            <h4 class="text-base font-bold text-slate-900 dark:text-white mt-4">
+                Mandatory Inclusions (Fees Factored into APR)
+            </h4>
+            <ul>
+                <li><strong>Loan Origination Fees and Broker Charges:</strong> Administrative costs charged by the originating lender or intermediary for accepting, reviewing, and funding the application.</li>
+                <li><strong>Discount Points:</strong> Upfront payments made by the borrower to buy down the contractual note interest rate. Because these dollars represent prepaid interest, they reduce the Net Amount Financed dollar-for-dollar.</li>
+                <li><strong>Underwriting and Application Fees:</strong> Costs associated with internal credit analysis, processing, or document preparation conducted by the lender.</li>
+                <li><strong>Private Mortgage Insurance (PMI) and Upfront MIP:</strong> Any upfront premium required to insure the lender against debt default.</li>
+                <li><strong>Escrow Waiver Fees:</strong> Surcharges assessed when a borrower elects to manage property tax and hazard insurance disbursements independently rather than maintaining a lender-controlled escrow account.</li>
+            </ul>
+
+            <h4 class="text-base font-bold text-slate-900 dark:text-white mt-4">
+                Statutory Exclusions Under 12 CFR § 1026.4(c)(7)
+            </h4>
+            <p>
+                In transactions secured by real property or residential mortgages, Regulation Z expressly excludes specific bona fide and reasonable third-party fees from the definition of a finance charge:
+            </p>
+            <ul>
+                <li><strong>Title Services and Settlement:</strong> Title searches, title examination, abstract preparation, lender's title insurance policies, and attorney settlement fees.</li>
+                <li><strong>Appraisal and Inspection Fees:</strong> Fees paid to independent state-licensed real estate appraisers or pest and structural inspectors.</li>
+                <li><strong>Government Recording Fees and Taxes:</strong> Statutory state or county recording fees, mortgage registration taxes, and documentary stamp taxes.</li>
+                <li><strong>Credit Report Fees:</strong> Direct pass-through expenses incurred by the lender to pull credit records from consumer reporting repositories.</li>
+                <li><strong>Prepaid Escrow Reserves:</strong> Funds collected at closing to establish initial reserve balances for future municipal real estate taxes and homeowner's hazard insurance.</li>
+            </ul>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                5. APR Versus APY: Structural and Regulatory Divergence
+            </h3>
+            <p>
+                Borrowers routinely confuse the Annual Percentage Rate (APR) with the Annual Percentage Yield (APY). While both metrics convey annualized interest, they serve distinct economic functions and stem from separate statutory frameworks:
+            </p>
+            <div class="overflow-x-auto custom-scrollbar my-4">
+                <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-800">
+                    <thead class="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold">
+                        <tr>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Attribute</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Annual Percentage Rate (APR)</th>
+                            <th class="p-3 border-b border-slate-200 dark:border-slate-700">Annual Percentage Yield (APY)</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                        <tr>
+                            <td class="p-3 font-semibold">Statutory Authority</td>
+                            <td class="p-3">Truth in Lending Act (15 U.S.C. § 1601), Regulation Z</td>
+                            <td class="p-3">Truth in Savings Act (12 U.S.C. § 4301), Regulation DD</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold">Primary Context</td>
+                            <td class="p-3">Credit liabilities (Mortgages, auto loans, credit cards)</td>
+                            <td class="p-3">Deposit assets (High-yield savings, CDs, money market accounts)</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold">Treatment of Compounding</td>
+                            <td class="p-3">Nominal annualization (\( j \times 12 \)); does not compound intra-year periodic rates</td>
+                            <td class="p-3">Full compound annualization (\( (1 + r/m)^m - 1 \)); reflects intra-year interest compounding</td>
+                        </tr>
+                        <tr>
+                            <td class="p-3 font-semibold">Upfront Fee Integration</td>
+                            <td class="p-3">Incorporates all upfront finance charges into an effective borrowing yield</td>
+                            <td class="p-3">Excludes account maintenance fees and penalty surcharges</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                6. Concrete Worked Scenarios
+            </h3>
+
+            <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-6">
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
+                    Scenario 1: 30-Year Fixed Residential Mortgage
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <p><strong>Stated Principal:</strong> $350,000.00</p>
+                        <p><strong>Nominal Note Rate:</strong> 6.500%</p>
+                        <p><strong>Term:</strong> 30 Years (360 Monthly Payments)</p>
+                        <p><strong>Monthly P&I Payment:</strong> $2,212.24</p>
+                    </div>
+                    <div>
+                        <p><strong>Discount Points (1%):</strong> $3,500.00</p>
+                        <p><strong>Origination & Processing:</strong> $2,650.00</p>
+                        <p><strong>Other TILA Charges:</strong> $650.00</p>
+                        <p><strong>Total Prepaid Charges:</strong> $6,800.00</p>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <p>
+                        The Net Amount Financed is \( \$350,000 - \$6,800 = \$343,200 \). Using Newton-Raphson iteration, the periodic rate \( j \) converges to \( 0.00560113 \). Multiplied by 12, the <strong>True APR is 6.721%</strong>. The rate spread is <strong>+22.1 basis points</strong> over the note rate. Total finance charges equal $453,206.40 over the 30-year lifecycle.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-6">
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
+                    Scenario 2: 5-Year Automobile Installment Loan
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <p><strong>Stated Vehicle Loan:</strong> $35,000.00</p>
+                        <p><strong>Nominal Note Rate:</strong> 7.250%</p>
+                        <p><strong>Term:</strong> 5 Years (60 Monthly Payments)</p>
+                        <p><strong>Monthly Payment:</strong> $697.23</p>
+                    </div>
+                    <div>
+                        <p><strong>Dealer Acquisition Fee:</strong> $500.00</p>
+                        <p><strong>Documentation / Processing Fee:</strong> $395.00</p>
+                        <p><strong>Total Prepaid Charges:</strong> $895.00</p>
+                        <p><strong>Net Amount Financed:</strong> $34,105.00</p>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <p>
+                        Because the loan term is brief (60 months), upfront charges create a pronounced impact on annual borrowing cost. The Newton-Raphson algorithm resolves an internal rate yielding a <strong>True APR of 8.358%</strong>. This represents a substantial spread of <strong>+110.8 basis points</strong> above the contract rate.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-4 my-6">
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-2">
+                    Scenario 3: 3-Year Unsecured Personal Loan
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                    <div>
+                        <p><strong>Stated Borrowing Balance:</strong> $15,000.00</p>
+                        <p><strong>Nominal Note Rate:</strong> 11.500%</p>
+                        <p><strong>Term:</strong> 3 Years (36 Monthly Payments)</p>
+                        <p><strong>Monthly Payment:</strong> $494.80</p>
+                    </div>
+                    <div>
+                        <p><strong>Origination Fee (5% deducted from disbursement):</strong> $750.00</p>
+                        <p><strong>Net Cash Delivered to Consumer:</strong> $14,250.00</p>
+                        <p><strong>Total Repayment:</strong> $17,812.80</p>
+                    </div>
+                </div>
+                <div class="pt-2 border-t border-slate-200 dark:border-slate-800 text-xs">
+                    <p>
+                        When the 5% origination fee is withheld directly from loan proceeds, the consumer repays $494.80 each month on a net advance of $14,250. The Newton-Raphson convergence reveals a <strong>True APR of 15.228%</strong>, exposing a <strong>+372.8 basis point</strong> premium over the advertised nominal rate.
+                    </p>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-8">
+                7. Official Accuracy Tolerances Under 12 CFR § 1026.22
+            </h3>
+            <p>
+                Recognizing the mathematical complexity of multi-period compounding and minor rounding variations across financial institutions, Congress established legal tolerance rules under 12 CFR § 1026.22(a)(2):
+            </p>
+            <ul>
+                <li><strong>Regular Transactions:</strong> For standard loans featuring a single advance followed by equal payment periods and installments, the disclosed APR is considered legally accurate if it does not exceed one-eighth of one percentage point (<strong>&plusmn;0.125%</strong> or 12.5 basis points) from the exact actuarial rate determined in accordance with Appendix J.</li>
+                <li><strong>Irregular Transactions:</strong> For transactions with multiple advances, irregular payment amounts, or irregular payment frequencies, the statutory tolerance is one-quarter of one percentage point (<strong>&plusmn;0.250%</strong> or 25 basis points).</li>
+            </ul>
+
+            <!-- FREQUENTLY ASKED QUESTIONS (FAQ) ACCORDION -->
+            <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-10 mb-4">
+                Frequently Asked Questions (FAQ)
+            </h3>
+            <div class="space-y-3 not-prose">
+                
+                <details class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition">
+                    <summary class="flex justify-between items-center p-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <span>Why does my loan disclosure show both an interest rate and an APR?</span>
+                        <span class="transition-transform group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="px-4 pb-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                        The interest rate (note rate) is used strictly to calculate your monthly principal and interest payment based on your outstanding loan balance. The APR reflects the broader annual cost of your credit by factoring in upfront fees, broker commissions, and points. The APR is the true benchmark when comparing offers from different lenders.
+                    </div>
+                </details>
+
+                <details class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition">
+                    <summary class="flex justify-between items-center p-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <span>Can the APR ever be lower than the nominal interest rate?</span>
+                        <span class="transition-transform group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="px-4 pb-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                        In standard fixed-rate loans with upfront fees, the APR will always be equal to or higher than the nominal rate. However, the APR can be lower than the note rate in specialized scenarios, such as when a seller or lender provides a substantial closing cost credit that exceeds all closing fees, or in certain adjustable-rate mortgages (ARMs) where initial introductory teaser rates adjust upward later.
+                    </div>
+                </details>
+
+                <details class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition">
+                    <summary class="flex justify-between items-center p-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <span>Does paying off a loan early change the actual realized APR?</span>
+                        <span class="transition-transform group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="px-4 pb-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                        Yes, significantly. The statutory APR disclosed on loan estimates assumes you hold the loan for its full contractual term (e.g. 30 years). Upfront closing fees are amortized over that entire 360-month horizon. If you refinance or sell the home after 5 years, those upfront fees are compressed into 60 months, drastically increasing your effective annualized cost of borrowing over that holding period.
+                    </div>
+                </details>
+
+                <details class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition">
+                    <summary class="flex justify-between items-center p-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <span>Are title search and appraisal fees included in the APR?</span>
+                        <span class="transition-transform group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="px-4 pb-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                        No. Under 12 CFR § 1026.4(c)(7), real-estate related closing expenses such as title examination, title insurance, property appraisals, environmental inspections, and boundary surveys are excluded from finance charges, provided they are reasonable in amount and paid to bona fide third parties.
+                    </div>
+                </details>
+
+                <details class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden transition">
+                    <summary class="flex justify-between items-center p-4 font-semibold text-sm cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition">
+                        <span>How does a discount point affect my loan balance and APR?</span>
+                        <span class="transition-transform group-open:rotate-180 text-slate-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="px-4 pb-4 text-xs text-slate-600 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
+                        One discount point equals 1% of the principal loan amount. Paying points lowers your nominal interest rate, which reduces your monthly payment. However, because points are an upfront prepaid finance charge, they reduce the Net Amount Financed under Regulation Z. If you retain the loan long enough, the accumulated monthly interest savings will outpace the upfront fee, making discount points economically advantageous.
+                    </div>
+                </details>
+
+            </div>
+        </article>
+
+        <!-- AdSense Slot 5 (Footer Responsive Leaderboard) -->
+        <div class="w-full max-w-7xl mx-auto mt-12 mb-6 no-print">
+            <div id="ad-slot-5" class="ad-slot-box rounded-2xl h-[90px] w-full" data-ad-slot="5">
+                <span class="opacity-75">Advertisement Slot 5 &bull; Footer Responsive Leaderboard (728x90)</span>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AdBlock Recovery Banner (Polite notification when blockers are active) -->
+    <div id="adblock-recovery" class="hidden no-print fixed bottom-20 left-4 right-4 md:left-auto md:right-8 md:max-w-md bg-amber-500 text-slate-950 p-4 rounded-2xl shadow-2xl z-50 border border-amber-300">
+        <div class="flex items-start justify-between">
+            <div class="flex space-x-3">
+                <svg class="w-6 h-6 text-slate-950 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+                <div class="text-xs">
+                    <p class="font-bold">Ad Blocker Detected</p>
+                    <p class="mt-0.5 text-slate-900">CalcWorld provides free institutional calculation tools supported by clean, unobtrusive sponsors. Please consider whitelisting our website.</p>
+                </div>
+            </div>
+            <button type="button" onclick="document.getElementById('adblock-recovery').remove()" class="text-slate-900 hover:text-black font-bold p-1 ml-2" aria-label="Dismiss">
+                &times;
+            </button>
+        </div>
+    </div>
+
+    <!-- Floating Quick Action Bar (Appears upon scrolling past top cards) -->
+    <aside id="floating-bar" class="no-print fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-2xl py-3 px-4 sm:px-8 bar-hidden">
+        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 sm:space-x-6">
+                <div>
+                    <span class="text-[10px] sm:text-xs font-semibold text-slate-400 block uppercase">True APR</span>
+                    <span id="float-apr" class="text-base sm:text-xl font-extrabold text-primary-600 dark:text-primary-400">6.721%</span>
+                </div>
+                <div class="border-l border-slate-200 dark:border-slate-800 pl-3 sm:pl-4">
+                    <span class="text-[10px] sm:text-xs font-semibold text-slate-400 block uppercase">Spread</span>
+                    <span id="float-spread" class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">+22.1 bps</span>
+                </div>
+                <div class="hidden sm:block border-l border-slate-200 dark:border-slate-800 pl-4">
+                    <span class="text-[10px] sm:text-xs font-semibold text-slate-400 block uppercase">Monthly Payment</span>
+                    <span id="float-payment" class="text-sm sm:text-base font-bold text-slate-800 dark:text-slate-200">$2,212.24</span>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button type="button" onclick="window.CalculatorApp.switchTab('tab-formula'); window.scrollTo({top: 400, behavior: 'smooth'});" class="hidden md:inline-flex px-3 py-1.5 text-xs font-bold rounded-lg border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition">
+                    View Iteration
+                </button>
+                <button type="button" onclick="window.CalculatorApp.copySummary()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-primary-600 hover:bg-primary-700 text-white shadow transition flex items-center space-x-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>
+                    <span>Copy Summary</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Footer -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-8 transition-colors mt-auto no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 dark:text-slate-400 space-y-2">
+            <p class="font-medium text-slate-700 dark:text-slate-300">
+                &copy; <span id="copyright-year">2026</span> CalcWorld Financial Systems &bull; Built with institutional mathematical precision.
+            </p>
+            <p class="max-w-2xl mx-auto text-[11px] text-slate-400 dark:text-slate-500">
+                The information provided by this calculator is for educational and analytical purposes. Calculations implement Truth in Lending Act (TILA) 15 U.S.C. § 1601 and Regulation Z (12 CFR Part 1026) Appendix J actuarial formulas. Official lender loan disclosures may vary within statutory tolerances. Consult a licensed mortgage originator or financial advisor.
+            </p>
+        </div>
+    </footer>
+
+    <!-- Toast Notification (2s duration) -->
+    <div id="toast" role="alert" aria-live="polite" class="bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 px-4 py-2.5 rounded-xl shadow-2xl flex items-center space-x-2 text-xs sm:text-sm font-semibold border border-slate-800 dark:border-slate-200">
+        <svg class="w-4 h-4 text-emerald-400 dark:text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-message">APR summary copied to clipboard!</span>
+    </div>
+
+    <!-- Application Script Engine -->
+    <script>
+        (function() {
+            'use strict';
+
+            // --- State Configuration ---
+            const CURRENCY_CONFIG = {
+                USD: { symbol: '$', locale: 'en-US' },
+                GBP: { symbol: '£', locale: 'en-GB' },
+                CAD: { symbol: '$', locale: 'en-CA' },
+                AUD: { symbol: '$', locale: 'en-AU' }
+            };
+
+            let currentCurrency = 'USD';
+            let originationMode = 'dollar'; // 'dollar' or 'percent'
+            let pointsMode = 'percent';     // 'percent' or 'dollar'
+            let rateChartInstance = null;
+            let chargesChartInstance = null;
+            let lastCalculatedState = null;
+
+            // DOM Elements Cache
+            const loanAmountInput = document.getElementById('loan-amount');
+            const nominalRateInput = document.getElementById('nominal-rate');
+            const loanTermInput = document.getElementById('loan-term');
+            const termUnitSelect = document.getElementById('term-unit');
+            const originationFeeInput = document.getElementById('origination-fee');
+            const discountPointsInput = document.getElementById('discount-points');
+            const underwritingFeesInput = document.getElementById('underwriting-fees');
+            const mortgageInsuranceInput = document.getElementById('mortgage-insurance');
+            const otherChargesInput = document.getElementById('other-charges');
+
+            // --- Formatters ---
+            function getCurrencySymbol() {
+                return CURRENCY_CONFIG[currentCurrency]?.symbol || '$';
+            }
+
+            function formatMoney(amount) {
+                const sym = getCurrencySymbol();
+                const locale = CURRENCY_CONFIG[currentCurrency]?.locale || 'en-US';
+                return sym + Number(amount || 0).toLocaleString(locale, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2
+                });
+            }
+
+            function formatPercent(pct, decimals = 3) {
+                return Number(pct || 0).toFixed(decimals) + '%';
+            }
+
+            // --- Dark Mode Handler ---
+            function toggleTheme() {
+                const isDark = document.documentElement.classList.toggle('dark');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                updateThemeIcons();
+                updateChartsTheme();
+            }
+
+            function updateThemeIcons() {
+                const isDark = document.documentElement.classList.contains('dark');
+                const darkIcon = document.getElementById('theme-icon-dark');
+                const lightIcon = document.getElementById('theme-icon-light');
+                if (darkIcon && lightIcon) {
+                    if (isDark) {
+                        darkIcon.classList.add('hidden');
+                        lightIcon.classList.remove('hidden');
+                    } else {
+                        darkIcon.classList.remove('hidden');
+                        lightIcon.classList.add('hidden');
+                    }
+                }
+            }
+
+            // --- Currency Switcher ---
+            function setCurrency(curr) {
+                if (!CURRENCY_CONFIG[curr]) return;
+                currentCurrency = curr;
+                const select = document.getElementById('currency-select');
+                if (select) select.value = curr;
+
+                document.querySelectorAll('.currency-symbol').forEach(el => {
+                    el.textContent = getCurrencySymbol();
+                });
+                calculate();
+            }
+
+            // --- Mode Switchers ---
+            function setOriginationMode(mode) {
+                originationMode = mode;
+                const btnDollar = document.getElementById('orig-mode-dollar');
+                const btnPercent = document.getElementById('orig-mode-percent');
+                const sym = document.getElementById('orig-sym');
+
+                if (mode === 'percent') {
+                    btnPercent.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs';
+                    btnDollar.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                    sym.textContent = '%';
+                    if (parseFloat(originationFeeInput.value) > 100) {
+                        originationFeeInput.value = '1.0';
+                    }
+                } else {
+                    btnDollar.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs';
+                    btnPercent.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                    sym.textContent = getCurrencySymbol();
+                    if (parseFloat(originationFeeInput.value) <= 10) {
+                        originationFeeInput.value = '1200';
+                    }
+                }
+                calculate();
+            }
+
+            function setPointsMode(mode) {
+                pointsMode = mode;
+                const btnPercent = document.getElementById('points-mode-percent');
+                const btnDollar = document.getElementById('points-mode-dollar');
+                const sym = document.getElementById('points-sym');
+
+                if (mode === 'dollar') {
+                    btnDollar.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs';
+                    btnPercent.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                    sym.textContent = getCurrencySymbol();
+                    if (parseFloat(discountPointsInput.value) <= 10) {
+                        const loan = parseFloat(loanAmountInput.value) || 350000;
+                        discountPointsInput.value = (loan * 0.01).toFixed(0);
+                    }
+                } else {
+                    btnPercent.className = 'px-2 py-0.5 rounded bg-white dark:bg-slate-700 font-bold text-slate-900 dark:text-white shadow-xs';
+                    btnDollar.className = 'px-2 py-0.5 rounded text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white';
+                    sym.textContent = '%';
+                    if (parseFloat(discountPointsInput.value) > 100) {
+                        discountPointsInput.value = '1.0';
+                    }
+                }
+                calculate();
+            }
+
+            // --- Presets Implementation ---
+            function applyPreset(presetType) {
+                if (presetType === 'mortgage') {
+                    loanAmountInput.value = '350000';
+                    nominalRateInput.value = '6.50';
+                    loanTermInput.value = '30';
+                    termUnitSelect.value = 'years';
+                    setOriginationMode('dollar');
+                    originationFeeInput.value = '1200';
+                    setPointsMode('percent');
+                    discountPointsInput.value = '1.0';
+                    underwritingFeesInput.value = '1450';
+                    mortgageInsuranceInput.value = '0';
+                    otherChargesInput.value = '650';
+                } else if (presetType === 'auto') {
+                    loanAmountInput.value = '350000';
+                    nominalRateInput.value = '7.25';
+                    loanTermInput.value = '5';
+                    termUnitSelect.value = 'years';
+                    setOriginationMode('dollar');
+                    originationFeeInput.value = '500';
+                    setPointsMode('dollar');
+                    discountPointsInput.value = '0';
+                    underwritingFeesInput.value = '395';
+                    mortgageInsuranceInput.value = '0';
+                    otherChargesInput.value = '150';
+                } else if (presetType === 'personal') {
+                    loanAmountInput.value = '15000';
+                    nominalRateInput.value = '11.50';
+                    loanTermInput.value = '3';
+                    termUnitSelect.value = 'years';
+                    setOriginationMode('percent');
+                    originationFeeInput.value = '5.0';
+                    setPointsMode('dollar');
+                    discountPointsInput.value = '0';
+                    underwritingFeesInput.value = '0';
+                    mortgageInsuranceInput.value = '0';
+                    otherChargesInput.value = '50';
+                }
+                calculate();
+            }
+
+            function resetDefaults() {
+                applyPreset('mortgage');
+            }
+
+            // --- TILA Regulation Z Appendix J Newton-Raphson Solver ---
+            function solveTilaAPR(amountFinanced, monthlyPayment, numMonths, initialRateGuess) {
+                if (amountFinanced <= 0 || monthlyPayment <= 0 || numMonths <= 0) {
+                    return { apr: 0, monthlyRate: 0, iterations: [] };
+                }
+
+                // If no fees, APR equals the note rate exactly
+                if (Math.abs(amountFinanced - (monthlyPayment * (1 - Math.pow(1 + initialRateGuess/12, -numMonths)) / (initialRateGuess/12))) < 0.01) {
+                    return {
+                        apr: initialRateGuess * 100,
+                        monthlyRate: initialRateGuess / 12,
+                        iterations: [{
+                            iter: 1,
+                            rateGuessMonthly: initialRateGuess / 12,
+                            pv: amountFinanced,
+                            error: 0,
+                            derivative: 0,
+                            annualRate: initialRateGuess * 100
+                        }]
+                    };
+                }
+
+                let j = initialRateGuess > 0 ? (initialRateGuess / 12) : 0.005;
+                if (j <= 0) j = 0.005;
+
+                const maxIterations = 60;
+                const tolerance = 1e-9;
+                let iterations = [];
+
+                for (let iter = 1; iter <= maxIterations; iter++) {
+                    const factor = Math.pow(1 + j, -numMonths);
+                    const pv = monthlyPayment * (1 - factor) / j;
+                    const error = pv - amountFinanced;
+
+                    // f'(j) = PMT * [ - (1 - (1+j)^(-n)) / j^2 + n * (1+j)^(-n-1) / j ]
+                    const fPrime = monthlyPayment * (
+                        (- (1 - factor) / (j * j)) +
+                        (numMonths * Math.pow(1 + j, -numMonths - 1) / j)
+                    );
+
+                    iterations.push({
+                        iter: iter,
+                        rateGuessMonthly: j,
+                        pv: pv,
+                        error: error,
+                        derivative: fPrime,
+                        annualRate: j * 12 * 100
+                    });
+
+                    if (Math.abs(error) < 1e-7 || Math.abs(fPrime) < 1e-12) {
+                        break;
+                    }
+
+                    const nextJ = j - (error / fPrime);
+                    if (nextJ <= 0 || isNaN(nextJ) || !isFinite(nextJ)) {
+                        // Fallback adjustment
+                        j = j * 0.75;
+                    } else {
+                        if (Math.abs(nextJ - j) < tolerance) {
+                            j = nextJ;
+                            break;
+                        }
+                        j = nextJ;
+                    }
+                }
+
+                return {
+                    apr: j * 12 * 100,
+                    monthlyRate: j,
+                    iterations: iterations
+                };
+            }
+
+            // --- Primary Calculation Engine ---
+            function calculate() {
+                const principal = parseFloat(loanAmountInput.value) || 0;
+                const nominalRatePct = parseFloat(nominalRateInput.value) || 0;
+                const nominalRateDecimal = nominalRatePct / 100;
+                let term = parseInt(loanTermInput.value) || 1;
+                const termUnit = termUnitSelect.value;
+                const numMonths = termUnit === 'years' ? term * 12 : term;
+
+                if (principal <= 0 || numMonths <= 0) return;
+
+                // Monthly note interest rate
+                const monthlyRate = nominalRateDecimal / 12;
+
+                // Monthly Principal & Interest Payment
+                let monthlyPayment = 0;
+                if (monthlyRate === 0) {
+                    monthlyPayment = principal / numMonths;
+                } else {
+                    const comp = Math.pow(1 + monthlyRate, numMonths);
+                    monthlyPayment = principal * (monthlyRate * comp) / (comp - 1);
+                }
+
+                // Prepaid Finance Charges Calculation
+                let originationDollar = 0;
+                const origVal = parseFloat(originationFeeInput.value) || 0;
+                if (originationMode === 'percent') {
+                    originationDollar = principal * (origVal / 100);
+                } else {
+                    originationDollar = origVal;
+                }
+
+                let pointsDollar = 0;
+                const pointsVal = parseFloat(discountPointsInput.value) || 0;
+                if (pointsMode === 'percent') {
+                    pointsDollar = principal * (pointsVal / 100);
+                } else {
+                    pointsDollar = pointsVal;
+                }
+
+                const underwritingDollar = parseFloat(underwritingFeesInput.value) || 0;
+                const miDollar = parseFloat(mortgageInsuranceInput.value) || 0;
+                const otherDollar = parseFloat(otherChargesInput.value) || 0;
+
+                const totalPrepaidCharges = originationDollar + pointsDollar + underwritingDollar + miDollar + otherDollar;
+                const amountFinanced = Math.max(0, principal - totalPrepaidCharges);
+
+                // Run Newton-Raphson APR Solver
+                const solverResult = solveTilaAPR(amountFinanced, monthlyPayment, numMonths, nominalRateDecimal);
+                const trueApr = solverResult.apr;
+                const spreadPct = trueApr - nominalRatePct;
+                const spreadBps = spreadPct * 100;
+
+                // Aggregate Finance Figures
+                const totalPayments = monthlyPayment * numMonths;
+                const totalInterestOnly = totalPayments - principal;
+                const totalFinanceCharges = totalInterestOnly + totalPrepaidCharges;
+                const totalCostPaid = totalPayments + totalPrepaidCharges;
+
+                // Cache state
+                lastCalculatedState = {
+                    principal,
+                    nominalRatePct,
+                    numMonths,
+                    monthlyPayment,
+                    originationDollar,
+                    pointsDollar,
+                    underwritingDollar,
+                    miDollar,
+                    otherDollar,
+                    totalPrepaidCharges,
+                    amountFinanced,
+                    trueApr,
+                    spreadPct,
+                    spreadBps,
+                    totalPayments,
+                    totalInterestOnly,
+                    totalFinanceCharges,
+                    totalCostPaid,
+                    iterations: solverResult.iterations
+                };
+
+                // Update Output DOM
+                renderOutputs(lastCalculatedState);
+                saveStateToURL();
+            }
+
+            // --- Render Results into DOM ---
+            function renderOutputs(s) {
+                // Main hero cards
+                const aprEl = document.getElementById('res-apr');
+                aprEl.textContent = formatPercent(s.trueApr, 3);
+                aprEl.classList.remove('pulse-highlight');
+                void aprEl.offsetWidth; // trigger reflow
+                aprEl.classList.add('pulse-highlight');
+
+                const spreadBadge = document.getElementById('res-spread-badge');
+                spreadBadge.textContent = (s.spreadBps >= 0 ? '+' : '') + s.spreadBps.toFixed(1) + ' bps spread';
+
+                const spreadEl = document.getElementById('res-spread');
+                spreadEl.textContent = (s.spreadPct >= 0 ? '+' : '') + formatPercent(s.spreadPct, 3);
+
+                const spreadSubEl = document.getElementById('res-spread-sub');
+                spreadSubEl.textContent = s.spreadBps.toFixed(1) + ' basis points';
+
+                document.getElementById('res-payment').textContent = formatMoney(s.monthlyPayment);
+                document.getElementById('res-financed').textContent = formatMoney(s.amountFinanced);
+                document.getElementById('res-total-finance').textContent = formatMoney(s.totalFinanceCharges);
+                document.getElementById('res-total-paid').textContent = formatMoney(s.totalCostPaid);
+
+                // Left workbench subtotal indicators
+                document.getElementById('summary-prepaid-fees').textContent = formatMoney(s.totalPrepaidCharges);
+                document.getElementById('summary-amount-financed').textContent = formatMoney(s.amountFinanced);
+
+                // Floating bar elements
+                document.getElementById('float-apr').textContent = formatPercent(s.trueApr, 3);
+                document.getElementById('float-spread').textContent = (s.spreadBps >= 0 ? '+' : '') + s.spreadBps.toFixed(1) + ' bps';
+                document.getElementById('float-payment').textContent = formatMoney(s.monthlyPayment);
+
+                // Tab 1 Summary Comparison Table
+                document.getElementById('tab-note-rate').textContent = formatPercent(s.nominalRatePct, 3);
+                document.getElementById('tab-apr-rate').textContent = formatPercent(s.trueApr, 3);
+                document.getElementById('tab-spread-diff').textContent = (s.spreadPct >= 0 ? '+' : '') + formatPercent(s.spreadPct, 3) + ' (' + (s.spreadBps >= 0 ? '+' : '') + s.spreadBps.toFixed(1) + ' bps)';
+                document.getElementById('tab-stated-principal').textContent = formatMoney(s.principal);
+                document.getElementById('tab-net-financed').textContent = formatMoney(s.amountFinanced);
+                document.getElementById('tab-prepaid-diff').textContent = '-' + formatMoney(s.totalPrepaidCharges) + ' withheld';
+                document.getElementById('tab-base-payments').textContent = formatMoney(s.totalPayments);
+                document.getElementById('tab-total-payments').textContent = formatMoney(s.totalPayments);
+                document.getElementById('tab-interest-only').textContent = formatMoney(s.totalInterestOnly);
+                document.getElementById('tab-all-finance').textContent = formatMoney(s.totalFinanceCharges);
+
+                // Tab 2 Iteration Table
+                renderIterationTable(s.iterations);
+
+                // Tab 4 Print Report Elements
+                document.getElementById('print-apr').textContent = formatPercent(s.trueApr, 3);
+                document.getElementById('print-finance-charge').textContent = formatMoney(s.totalFinanceCharges);
+                document.getElementById('print-amount-financed').textContent = formatMoney(s.amountFinanced);
+                document.getElementById('print-total-payments').textContent = formatMoney(s.totalPayments);
+                document.getElementById('print-num-pmts').textContent = s.numMonths + ' monthly payments';
+                document.getElementById('print-monthly-pmt').textContent = formatMoney(s.monthlyPayment);
+                document.getElementById('print-note-rate').textContent = formatPercent(s.nominalRatePct, 3);
+                document.getElementById('print-lifetime-interest').textContent = formatMoney(s.totalInterestOnly);
+                document.getElementById('print-orig-fee').textContent = formatMoney(s.originationDollar);
+                document.getElementById('print-points-fee').textContent = formatMoney(s.pointsDollar);
+                document.getElementById('print-underwriting-fee').textContent = formatMoney(s.underwritingDollar);
+                document.getElementById('print-mi-fee').textContent = formatMoney(s.miDollar);
+                document.getElementById('print-other-fee').textContent = formatMoney(s.otherDollar);
+                document.getElementById('print-total-prepaid').textContent = formatMoney(s.totalPrepaidCharges);
+
+                // Update Visual Charts
+                renderCharts(s);
+            }
+
+            // --- Tab 2: Render Newton-Raphson Iterations ---
+            function renderIterationTable(iterations) {
+                const tbody = document.getElementById('iteration-table-body');
+                if (!tbody) return;
+
+                if (!iterations || iterations.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-3 text-center text-slate-400">No convergence steps recorded.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                iterations.forEach(step => {
+                    html += `
+                        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                            <td class="py-1.5 px-3 font-bold text-slate-700 dark:text-slate-300">#${step.iter}</td>
+                            <td class="py-1.5 px-3">${step.rateGuessMonthly.toFixed(8)}</td>
+                            <td class="py-1.5 px-3">${formatMoney(step.pv)}</td>
+                            <td class="py-1.5 px-3 ${Math.abs(step.error) < 0.01 ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-500'}">
+                                ${step.error >= 0 ? '+' : ''}${step.error.toFixed(4)}
+                            </td>
+                            <td class="py-1.5 px-3 text-slate-400">${step.derivative.toFixed(2)}</td>
+                            <td class="py-1.5 px-3 font-bold text-primary-600 dark:text-primary-400">${step.annualRate.toFixed(4)}%</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+
+            // --- Visual Charts with Chart.js ---
+            function renderCharts(s) {
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#94a3b8' : '#475569';
+                const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+                // Chart 1: Rate Comparison Bar Chart
+                const rateCtx = document.getElementById('rateComparisonChart');
+                if (rateCtx) {
+                    if (rateChartInstance) rateChartInstance.destroy();
+
+                    rateChartInstance = new Chart(rateCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Note Interest Rate', 'True APR (TILA)'],
+                            datasets: [{
+                                label: 'Annual Rate %',
+                                data: [s.nominalRatePct, s.trueApr],
+                                backgroundColor: [
+                                    'rgba(99, 102, 241, 0.45)', // Note Rate
+                                    'rgba(79, 70, 229, 0.95)'   // True APR
+                                ],
+                                borderColor: [
+                                    '#6366f1',
+                                    '#4338ca'
+                                ],
+                                borderWidth: 1.5,
+                                borderRadius: 8,
+                                barThickness: 42
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return ' ' + context.parsed.y.toFixed(3) + '%';
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    suggestedMin: Math.max(0, Math.floor(Math.min(s.nominalRatePct, s.trueApr) - 1)),
+                                    ticks: {
+                                        color: textColor,
+                                        callback: function(val) { return val + '%'; }
+                                    },
+                                    grid: { color: gridColor }
+                                },
+                                x: {
+                                    ticks: { color: textColor, font: { weight: 'bold' } },
+                                    grid: { display: false }
+                                }
+                            }
+                        }
+                    });
+
+                    const spreadLabel = document.getElementById('chart-spread-label');
+                    if (spreadLabel) {
+                        spreadLabel.textContent = (s.spreadBps >= 0 ? '+' : '') + s.spreadBps.toFixed(1) + ' bps';
+                    }
+                }
+
+                // Chart 2: Total Finance Charges Breakdown Doughnut
+                const chargesCtx = document.getElementById('financeChargesChart');
+                if (chargesCtx) {
+                    if (chargesChartInstance) chargesChartInstance.destroy();
+
+                    const labels = ['Lifetime Interest', 'Origination Fees', 'Discount Points', 'Underwriting & Proc.', 'Other TILA Fees'];
+                    const dataPoints = [s.totalInterestOnly, s.originationDollar, s.pointsDollar, s.underwritingDollar, s.otherDollar + s.miDollar];
+
+                    chargesChartInstance = new Chart(chargesCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                data: dataPoints,
+                                backgroundColor: [
+                                    '#6366f1', // Interest
+                                    '#f59e0b', // Origination
+                                    '#ef4444', // Discount Points
+                                    '#10b981', // Underwriting
+                                    '#8b5cf6'  // Other
+                                ],
+                                borderWidth: 2,
+                                borderColor: isDark ? '#0f172a' : '#ffffff'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        color: textColor,
+                                        boxWidth: 10,
+                                        padding: 8,
+                                        font: { size: 10 }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const val = context.raw || 0;
+                                            const total = s.totalFinanceCharges || 1;
+                                            const pct = ((val / total) * 100).toFixed(1);
+                                            return ' ' + context.label + ': ' + formatMoney(val) + ' (' + pct + '%)';
+                                        }
+                                    }
+                                }
+                            },
+                            cutout: '68%'
+                        }
+                    });
+
+                    const chargesLabel = document.getElementById('chart-charges-label');
+                    if (chargesLabel) {
+                        chargesLabel.textContent = formatMoney(s.totalFinanceCharges);
+                    }
+                }
+            }
+
+            function updateChartsTheme() {
+                if (lastCalculatedState) {
+                    renderCharts(lastCalculatedState);
+                }
+            }
+
+            // --- Tabs Switching ---
+            function switchTab(tabId) {
+                document.querySelectorAll('.tab-pane').forEach(el => {
+                    el.classList.add('hidden');
+                    el.classList.remove('block');
+                });
+                const activePane = document.getElementById(tabId);
+                if (activePane) {
+                    activePane.classList.remove('hidden');
+                    activePane.classList.add('block');
+                }
+
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    const target = btn.getAttribute('data-tab-target');
+                    if (target === tabId) {
+                        btn.className = 'tab-btn px-3 py-2.5 text-xs sm:text-sm font-bold border-b-2 border-primary-600 text-primary-600 dark:text-primary-400 dark:border-primary-400 flex items-center gap-1.5 whitespace-nowrap';
+                    } else {
+                        btn.className = 'tab-btn px-3 py-2.5 text-xs sm:text-sm font-medium border-b-2 border-transparent text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1.5 whitespace-nowrap';
+                    }
+                });
+
+                if (tabId === 'tab-summary' && lastCalculatedState) {
+                    setTimeout(() => renderCharts(lastCalculatedState), 50);
+                }
+            }
+
+            // --- Fee Classification Filter Search ---
+            function filterFees(query) {
+                const q = query.toLowerCase().trim();
+                const items = document.querySelectorAll('.fee-item');
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    const keywords = item.getAttribute('data-keywords') || '';
+                    if (q === '' || text.includes(q) || keywords.includes(q)) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // --- Copy Summary with 2-Second Toast ---
+            function copySummary() {
+                if (!lastCalculatedState) return;
+                const s = lastCalculatedState;
+                const text = `CalcWorld True Annual Percentage Rate (APR) Summary:
+--------------------------------------------------
+Principal Loan Amount:      ${formatMoney(s.principal)}
+Nominal Note Rate:          ${formatPercent(s.nominalRatePct, 3)}
+Loan Term:                  ${s.numMonths} months
+True Annual Percentage Rate: ${formatPercent(s.trueApr, 3)}
+Nominal vs APR Spread:      +${s.spreadBps.toFixed(1)} basis points (+${formatPercent(s.spreadPct, 3)})
+Monthly Payment (P&I):      ${formatMoney(s.monthlyPayment)}
+Prepaid Finance Charges:    ${formatMoney(s.totalPrepaidCharges)}
+Net Amount Financed:        ${formatMoney(s.amountFinanced)}
+Total Lifetime Finance Cost:${formatMoney(s.totalFinanceCharges)}
+Total Cost of Loan:         ${formatMoney(s.totalCostPaid)}
+Regulation Z Compliance:    12 CFR § 1026 Appendix J Actuarial Standard
+Generated at:               ${new Date().toLocaleDateString()} via CalcWorld`;
+
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard.writeText(text).then(showToast).catch(() => fallbackCopy(text));
+                } else {
+                    fallbackCopy(text);
+                }
+            }
+
+            function fallbackCopy(str) {
+                const el = document.createElement('textarea');
+                el.value = str;
+                document.body.appendChild(el);
+                el.select();
+                document.execCommand('copy');
+                document.body.removeChild(el);
+                showToast();
+            }
+
+            function showToast() {
+                const toast = document.getElementById('toast');
+                if (!toast) return;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2000);
+            }
+
+            // --- PDF Lead Box Action ---
+            function handlePdfLead(formEl) {
+                const input = formEl.querySelector('input[type="email"]');
+                const email = input ? input.value : '';
+                showToast();
+                const toastMsg = document.getElementById('toast-message');
+                if (toastMsg) {
+                    toastMsg.textContent = 'Official TILA APR schedule sent to ' + email + '!';
+                }
+                formEl.reset();
+            }
+
+            // --- URL State Management ---
+            function saveStateToURL() {
+                if (!window.history.replaceState) return;
+                const params = new URLSearchParams();
+                params.set('p', loanAmountInput.value);
+                params.set('r', nominalRateInput.value);
+                params.set('t', loanTermInput.value);
+                params.set('u', termUnitSelect.value);
+                params.set('om', originationMode);
+                params.set('of', originationFeeInput.value);
+                params.set('pm', pointsMode);
+                params.set('pts', discountPointsInput.value);
+                params.set('uw', underwritingFeesInput.value);
+                params.set('mi', mortgageInsuranceInput.value);
+                params.set('oth', otherChargesInput.value);
+                params.set('c', currentCurrency);
+
+                window.history.replaceState(null, '', '?' + params.toString());
+            }
+
+            function loadStateFromURL() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.has('p')) loanAmountInput.value = params.get('p');
+                if (params.has('r')) nominalRateInput.value = params.get('r');
+                if (params.has('t')) loanTermInput.value = params.get('t');
+                if (params.has('u')) termUnitSelect.value = params.get('u');
+                if (params.has('om')) setOriginationMode(params.get('om'));
+                if (params.has('of')) originationFeeInput.value = params.get('of');
+                if (params.has('pm')) setPointsMode(params.get('pm'));
+                if (params.has('pts')) discountPointsInput.value = params.get('pts');
+                if (params.has('uw')) underwritingFeesInput.value = params.get('uw');
+                if (params.has('mi')) mortgageInsuranceInput.value = params.get('mi');
+                if (params.has('oth')) otherChargesInput.value = params.get('oth');
+                if (params.has('c')) setCurrency(params.get('c'));
+            }
+
+            // --- Floating Bar Scroll Observer ---
+            function setupScrollObserver() {
+                const floatingBar = document.getElementById('floating-bar');
+                const heroResults = document.getElementById('hero-results');
+                if (!floatingBar || !heroResults) return;
+
+                window.addEventListener('scroll', () => {
+                    const rect = heroResults.getBoundingClientRect();
+                    // When hero cards scroll past the top of the viewport
+                    if (rect.bottom < 100) {
+                        floatingBar.classList.remove('bar-hidden');
+                    } else {
+                        floatingBar.classList.add('bar-hidden');
+                    }
+                }, { passive: true });
+            }
+
+            // --- AdBlock Recovery Detector ---
+            function detectAdBlock() {
+                const bait = document.createElement('div');
+                bait.className = 'pub_300x250 pub_728x90 text-ad textAd text_ad sponsor-ad ad-zone ad_zone';
+                bait.style.cssText = 'width: 1px !important; height: 1px !important; position: absolute !important; left: -10000px !important; top: -1000px !important;';
+                document.body.appendChild(bait);
+
+                setTimeout(() => {
+                    const isBlocked = bait.offsetHeight === 0 || window.getComputedStyle(bait).display === 'none';
+                    if (isBlocked) {
+                        const recoveryBanner = document.getElementById('adblock-recovery');
+                        if (recoveryBanner) recoveryBanner.classList.remove('hidden');
+
+                        ['ad-slot-1', 'ad-slot-2', 'ad-slot-3', 'ad-slot-4', 'ad-slot-5'].forEach(id => {
+                            const slot = document.getElementById(id);
+                            if (slot) {
+                                slot.innerHTML = `
+                                    <div class="p-3 text-center text-xs text-slate-500 dark:text-slate-400">
+                                        <p class="font-semibold text-slate-700 dark:text-slate-300">Support Free Institutional Tools</p>
+                                        <p class="text-[11px] mt-0.5">We noticed an ad blocker. CalcWorld is funded by clean, privacy-respecting sponsors. Consider whitelisting us.</p>
+                                    </div>
+                                `;
+                            }
+                        });
+                    }
+                    if (bait.parentNode) bait.parentNode.removeChild(bait);
+                }, 300);
+            }
+
+            // --- Public API ---
+            window.CalculatorApp = {
+                calculate,
+                toggleTheme,
+                setCurrency,
+                setOriginationMode,
+                setPointsMode,
+                applyPreset,
+                resetDefaults,
+                switchTab,
+                filterFees,
+                copySummary,
+                handlePdfLead
+            };
+
+            // --- Initialize Application on DOM Ready ---
+            document.addEventListener('DOMContentLoaded', () => {
+                updateThemeIcons();
+                loadStateFromURL();
+                calculate();
+                setupScrollObserver();
+                detectAdBlock();
+
+                // Set dynamic copyright year
+                const copyEl = document.getElementById('copyright-year');
+                if (copyEl) copyEl.textContent = new Date().getFullYear();
+            });
+
+        })();
+    </script>
+
+    <!-- CalcWorld Universal Print Core Engine -->
+    <script id="calcworld-print-core">
+    (function() {
+        window.printReport = function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                } else if (typeof showTab === 'function') {
+                    try { showTab('print'); } catch(e) { try { showTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            setTimeout(function() {
+                window.print();
+            }, 60);
+        };
+
+        window.addEventListener('beforeprint', function() {
+            try {
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                if (printTrigger && !printTrigger.classList.contains('active')) {
+                    printTrigger.click();
+                } else if (typeof switchTab === 'function') {
+                    try { switchTab('print'); } catch(e) { try { switchTab('tab-print'); } catch(e2) {} }
+                }
+            } catch(e) {}
+
+            const updaters = ['updatePrintTab', 'updatePrintReport', 'renderPrintReport', 'generatePrintReport', 'updatePrintView', 'updatePrintDate', 'updatePrintReportFields'];
+            updaters.forEach(fn => {
+                if (typeof window[fn] === 'function') {
+                    try { window[fn](); } catch(e) {}
+                }
+            });
+
+            const dateElems = document.querySelectorAll('#printDate, #print-date, #printReportDate, #printTimestamp, #print-timestamp, #printGeneratedDate, #report-date-stamp');
+            const nowStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            dateElems.forEach(el => {
+                if (el && !el.textContent.trim()) el.textContent = nowStr;
+            });
+        });
+    })();
+    </script>
+
+</body>
+</html>
