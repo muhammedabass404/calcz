@@ -467,8 +467,8 @@
             <button id="quickImperialBtn" type="button"></button>
             <button id="unit-imperial" type="button"></button>
             <button id="unit-metric" type="button"></button>
-            <button id="unit-imperial-btn" type="button"></button>
-            <button id="unit-metric-btn" type="button"></button>
+            <button id="header-unit-metric" type="button"></button>
+            <button id="header-unit-imperial" type="button"></button>
             <button id="system-imperial-btn" type="button"></button>
             <button id="system-metric-btn" type="button"></button>
             <button id="btn-imperial" type="button"></button>
@@ -543,6 +543,17 @@
             <!-- LEFT COLUMN: Inputs (5 Cols) -->
             <div class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm p-5 sm:p-6 space-y-6">
                 
+                <!-- Measurement Unit System Switcher -->
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                        Measurement System
+                    </label>
+                    <div class="grid grid-cols-2 gap-2 p-1 bg-slate-100 dark:bg-slate-800/80 rounded-xl text-xs font-semibold">
+                        <button type="button" id="unit-imperial-btn" class="py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition">Imperial (lbs, ft, in)</button>
+                        <button type="button" id="unit-metric-btn" class="py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition">Metric (kg, cm)</button>
+                    </div>
+                </div>
+
                 <!-- Quick Configuration Presets -->
                 <div>
                     <label for="preset-select" class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -1472,6 +1483,8 @@
             // Units
             headerUnitMetric: document.getElementById('header-unit-metric'),
             headerUnitImperial: document.getElementById('header-unit-imperial'),
+            unitMetricBtn: document.getElementById('unit-metric-btn'),
+            unitImperialBtn: document.getElementById('unit-imperial-btn'),
             floatingUnitSelect: document.getElementById('floating-unit-select'),
             floatingThemeBtn: document.getElementById('floating-theme-btn'),
             themeToggle: document.getElementById('theme-toggle'),
@@ -1578,38 +1591,62 @@
         }
 
         // --- UNIT SYSTEM SWITCHER ---
-        function setUnitSystem(unit) {
+        function setUnitSystem(unit, force = false) {
+            if (appState.unit === unit && !force) return;
+            const prevUnit = appState.unit;
             appState.unit = unit;
+
+            // Toggle visible segmented buttons
+            if (el.unitMetricBtn && el.unitImperialBtn) {
+                if (unit === 'metric') {
+                    el.unitMetricBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
+                    el.unitImperialBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
+                } else {
+                    el.unitImperialBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
+                    el.unitMetricBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
+                }
+            }
+
+            if (el.headerUnitMetric && el.headerUnitImperial) {
+                if (unit === 'metric') {
+                    el.headerUnitMetric.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+                    el.headerUnitMetric.classList.remove('text-slate-600', 'dark:text-slate-300');
+                    el.headerUnitImperial.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+                    el.headerUnitImperial.classList.add('text-slate-600', 'dark:text-slate-300');
+                } else {
+                    el.headerUnitImperial.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+                    el.headerUnitImperial.classList.remove('text-slate-600', 'dark:text-slate-300');
+                    el.headerUnitMetric.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
+                    el.headerUnitMetric.classList.add('text-slate-600', 'dark:text-slate-300');
+                }
+            }
+
+            if (el.floatingUnitSelect) el.floatingUnitSelect.value = unit;
+
             if (unit === 'metric') {
-                el.headerUnitMetric.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
-                el.headerUnitMetric.classList.remove('text-slate-600', 'dark:text-slate-300');
-                el.headerUnitImperial.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
-                el.headerUnitImperial.classList.add('text-slate-600', 'dark:text-slate-300');
-                el.floatingUnitSelect.value = 'metric';
-                el.directWeightUnit.textContent = 'kg';
-                el.tdeeWeightUnit.textContent = 'kg';
-                el.heightImperialFields.classList.add('hidden');
-                el.heightMetricFields.classList.remove('hidden');
+                if (el.directWeightUnit) el.directWeightUnit.textContent = 'kg';
+                if (el.tdeeWeightUnit) el.tdeeWeightUnit.textContent = 'kg';
+                if (el.heightImperialFields) el.heightImperialFields.classList.add('hidden');
+                if (el.heightMetricFields) el.heightMetricFields.classList.remove('hidden');
 
-                // Convert weight values
-                const currentLbs = parseFloat(el.directWeight.value) || 165;
-                el.directWeight.value = Math.round(currentLbs / 2.20462);
-                el.tdeeWeight.value = Math.round(currentLbs / 2.20462);
+                // Convert weight values only if switched from imperial
+                if (prevUnit === 'imperial' && el.directWeight && el.tdeeWeight) {
+                    const currentLbs = parseFloat(el.directWeight.value) || 165;
+                    el.directWeight.value = Math.round(currentLbs / 2.20462);
+                    el.tdeeWeight.value = Math.round(currentLbs / 2.20462);
+                }
             } else {
-                el.headerUnitImperial.classList.add('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
-                el.headerUnitImperial.classList.remove('text-slate-600', 'dark:text-slate-300');
-                el.headerUnitMetric.classList.remove('bg-white', 'dark:bg-slate-700', 'text-brand-600', 'dark:text-brand-400', 'shadow-sm');
-                el.headerUnitMetric.classList.add('text-slate-600', 'dark:text-slate-300');
-                el.floatingUnitSelect.value = 'imperial';
-                el.directWeightUnit.textContent = 'lbs';
-                el.tdeeWeightUnit.textContent = 'lbs';
-                el.heightImperialFields.classList.remove('hidden');
-                el.heightMetricFields.classList.add('hidden');
+                if (el.directWeightUnit) el.directWeightUnit.textContent = 'lbs';
+                if (el.tdeeWeightUnit) el.tdeeWeightUnit.textContent = 'lbs';
+                if (el.heightImperialFields) el.heightImperialFields.classList.remove('hidden');
+                if (el.heightMetricFields) el.heightMetricFields.classList.add('hidden');
 
-                // Convert weight values
-                const currentKg = parseFloat(el.directWeight.value) || 75;
-                el.directWeight.value = Math.round(currentKg * 2.20462);
-                el.tdeeWeight.value = Math.round(currentKg * 2.20462);
+                // Convert weight values only if switched from metric
+                if (prevUnit === 'metric' && el.directWeight && el.tdeeWeight) {
+                    const currentKg = parseFloat(el.directWeight.value) || 75;
+                    el.directWeight.value = Math.round(currentKg * 2.20462);
+                    el.tdeeWeight.value = Math.round(currentKg * 2.20462);
+                }
             }
             calculateAndRender();
         }
@@ -2107,42 +2144,50 @@
         // --- ATTACH EVENT LISTENERS ---
         function initEventListeners() {
             // Units
-            el.headerUnitMetric.addEventListener('click', () => setUnitSystem('metric'));
-            el.headerUnitImperial.addEventListener('click', () => setUnitSystem('imperial'));
-            el.floatingUnitSelect.addEventListener('change', (e) => setUnitSystem(e.target.value));
+            if (el.unitMetricBtn) el.unitMetricBtn.addEventListener('click', () => setUnitSystem('metric'));
+            if (el.unitImperialBtn) el.unitImperialBtn.addEventListener('click', () => setUnitSystem('imperial'));
+            if (el.headerUnitMetric) el.headerUnitMetric.addEventListener('click', () => setUnitSystem('metric'));
+            if (el.headerUnitImperial) el.headerUnitImperial.addEventListener('click', () => setUnitSystem('imperial'));
+            if (el.floatingUnitSelect) el.floatingUnitSelect.addEventListener('change', (e) => setUnitSystem(e.target.value));
 
             // Themes
-            el.themeToggle.addEventListener('click', toggleTheme);
-            el.floatingThemeBtn.addEventListener('click', toggleTheme);
+            if (el.themeToggle) el.themeToggle.addEventListener('click', toggleTheme);
+            if (el.floatingThemeBtn) el.floatingThemeBtn.addEventListener('click', toggleTheme);
 
             // Calculation Modes
-            el.modeDirectBtn.addEventListener('click', () => {
-                appState.mode = 'direct';
-                el.modeDirectBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
-                el.modeTdeeBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
-                el.directCalorieContainer.classList.remove('hidden');
-                el.tdeeContainer.classList.add('hidden');
-                calculateAndRender();
-            });
+            if (el.modeDirectBtn) {
+                el.modeDirectBtn.addEventListener('click', () => {
+                    appState.mode = 'direct';
+                    el.modeDirectBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
+                    el.modeTdeeBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
+                    if (el.directCalorieContainer) el.directCalorieContainer.classList.remove('hidden');
+                    if (el.tdeeContainer) el.tdeeContainer.classList.add('hidden');
+                    calculateAndRender();
+                });
+            }
 
-            el.modeTdeeBtn.addEventListener('click', () => {
-                appState.mode = 'tdee';
-                el.modeTdeeBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
-                el.modeDirectBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
-                el.directCalorieContainer.classList.add('hidden');
-                el.tdeeContainer.classList.remove('hidden');
-                calculateAndRender();
-            });
+            if (el.modeTdeeBtn) {
+                el.modeTdeeBtn.addEventListener('click', () => {
+                    appState.mode = 'tdee';
+                    el.modeTdeeBtn.className = "py-2 px-3 rounded-lg bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm text-center transition";
+                    el.modeDirectBtn.className = "py-2 px-3 rounded-lg text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white text-center transition";
+                    if (el.directCalorieContainer) el.directCalorieContainer.classList.add('hidden');
+                    if (el.tdeeContainer) el.tdeeContainer.classList.remove('hidden');
+                    calculateAndRender();
+                });
+            }
 
             // Calorie Inputs synchronization
-            el.inputCalories.addEventListener('input', (e) => {
-                el.inputCaloriesRange.value = e.target.value;
-                calculateAndRender();
-            });
-            el.inputCaloriesRange.addEventListener('input', (e) => {
-                el.inputCalories.value = e.target.value;
-                calculateAndRender();
-            });
+            if (el.inputCalories && el.inputCaloriesRange) {
+                el.inputCalories.addEventListener('input', (e) => {
+                    el.inputCaloriesRange.value = e.target.value;
+                    calculateAndRender();
+                });
+                el.inputCaloriesRange.addEventListener('input', (e) => {
+                    el.inputCalories.value = e.target.value;
+                    calculateAndRender();
+                });
+            }
 
             // TDEE inputs
             [el.tdeeAge, el.tdeeSex, el.tdeeWeight, el.tdeeHeightFt, el.tdeeHeightIn, el.tdeeHeightCm, el.tdeeActivity, el.tdeeGoal, el.directWeight].forEach(element => {
@@ -2153,42 +2198,48 @@
             });
 
             // Sex Buttons
-            el.sexMaleBtn.addEventListener('click', () => setSex('male'));
-            el.sexFemaleBtn.addEventListener('click', () => setSex('female'));
+            if (el.sexMaleBtn) el.sexMaleBtn.addEventListener('click', () => setSex('male'));
+            if (el.sexFemaleBtn) el.sexFemaleBtn.addEventListener('click', () => setSex('female'));
 
             // Protocol
-            el.dietProtocol.addEventListener('change', (e) => {
-                if (e.target.value === 'custom_pct') {
-                    el.customPctContainer.classList.remove('hidden');
-                } else {
-                    el.customPctContainer.classList.add('hidden');
-                }
-                calculateAndRender();
-            });
+            if (el.dietProtocol) {
+                el.dietProtocol.addEventListener('change', (e) => {
+                    if (e.target.value === 'custom_pct') {
+                        if (el.customPctContainer) el.customPctContainer.classList.remove('hidden');
+                    } else {
+                        if (el.customPctContainer) el.customPctContainer.classList.add('hidden');
+                    }
+                    calculateAndRender();
+                });
+            }
 
-            el.customPctSlider.addEventListener('input', (e) => {
-                el.customPctVal.textContent = `${e.target.value}%`;
-                calculateAndRender();
-            });
+            if (el.customPctSlider) {
+                el.customPctSlider.addEventListener('input', (e) => {
+                    if (el.customPctVal) el.customPctVal.textContent = `${e.target.value}%`;
+                    calculateAndRender();
+                });
+            }
 
             // Modifiers
-            el.modCholesterol.addEventListener('change', calculateAndRender);
-            el.modHormone.addEventListener('change', calculateAndRender);
-            el.modAthletic.addEventListener('change', calculateAndRender);
+            if (el.modCholesterol) el.modCholesterol.addEventListener('change', calculateAndRender);
+            if (el.modHormone) el.modHormone.addEventListener('change', calculateAndRender);
+            if (el.modAthletic) el.modAthletic.addEventListener('change', calculateAndRender);
 
             // Presets
-            el.presetSelect.addEventListener('change', (e) => applyPreset(e.target.value));
+            if (el.presetSelect) el.presetSelect.addEventListener('change', (e) => applyPreset(e.target.value));
 
             // Recalculate CTA
-            el.recalcBtn.addEventListener('click', calculateAndRender);
+            if (el.recalcBtn) el.recalcBtn.addEventListener('click', calculateAndRender);
 
             // Copy summary
-            el.copySummaryBtn.addEventListener('click', copySummary);
+            if (el.copySummaryBtn) el.copySummaryBtn.addEventListener('click', copySummary);
 
             // Grocery Search Filter
-            el.grocerySearch.addEventListener('input', (e) => {
-                renderGroceryTable(e.target.value);
-            });
+            if (el.grocerySearch) {
+                el.grocerySearch.addEventListener('input', (e) => {
+                    renderGroceryTable(e.target.value);
+                });
+            }
         }
 
         // --- APPLICATION BOOTSTRAP ---
@@ -2214,7 +2265,7 @@
     (function() {
         window.printReport = function() {
             try {
-                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="print"]');
                 if (printTrigger) {
                     printTrigger.click();
                 } else if (typeof switchTab === 'function') {
@@ -2238,7 +2289,7 @@
 
         window.addEventListener('beforeprint', function() {
             try {
-                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="'print'"]');
+                const printTrigger = document.querySelector('[data-tab="tab-print"], [data-tab="print"], [data-target="tab-print"], [data-tab-target="tab-print"], [data-target="#tab-print"], [onclick*="tab-print"], [onclick*="print"]');
                 if (printTrigger && !printTrigger.classList.contains('active')) {
                     printTrigger.click();
                 } else if (typeof switchTab === 'function') {
